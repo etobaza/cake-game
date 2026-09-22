@@ -1,0 +1,10 @@
+[package]
+name = "miscliq/cake-game-server"
+description = "Server-only dependencies for the cake game (installs into ServerStorage/ServerPackages)"
+version = "0.0.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "server"
+private = true
+
+[server-dependencies]
+profilestore = "lm-loleris/profilestore@=1.0.3"

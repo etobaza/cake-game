@@ -1,0 +1,14 @@
+[package]
+name = "miscliq/cake-game"
+description = "Shared dependencies for the cake game (installs into ReplicatedStorage/Packages)"
+version = "0.0.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+private = true
+
+[dependencies]
+cmdr = "evaera/cmdr@=1.12.0"
+flux = "kohltastrophe/flux@=0.2.0"
+janitor = "howmanysmall/janitor@=1.18.3"
+topbar-plus = "1foreverhd/topbarplus@=3.4.0"
+typed-promise = "howmanysmall/typed-promise@=4.0.6"

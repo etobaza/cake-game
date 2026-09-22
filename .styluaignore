@@ -1,0 +1,6 @@
+ReplicatedStorage/Packages/
+ServerStorage/ServerPackages/
+ReplicatedStorage/Shared/Libs/Packet/
+ReplicatedStorage/Shared/Libs/PartCache/
+ReplicatedStorage/Shared/Libs/Ripple/
+ReplicatedStorage/Shared/Libs/Signal.luau

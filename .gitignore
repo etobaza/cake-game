@@ -1,0 +1,16 @@
+# Generated tool output
+sourcemap.json
+debug.log
+
+# Wally-managed dependencies (restore with `wally install` in ReplicatedStorage and ServerStorage)
+ReplicatedStorage/Packages/
+ServerStorage/ServerPackages/
+
+# Roblox place files and Studio locks
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
+
+# Local editor state
+.cursor/

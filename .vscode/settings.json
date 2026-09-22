@@ -1,0 +1,20 @@
+{
+  "stylua.targetReleaseVersion": "latest",
+  "luau-lsp.platform.type": "roblox",
+  "luau-lsp.sourcemap.enabled": true,
+  "luau-lsp.sourcemap.autogenerate": true,
+  "luau-lsp.sourcemap.generatorCommand": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .vscode/generate-sourcemap.ps1",
+  "luau-lsp.sourcemap.useVSCodeWatcher": true,
+  "luau-lsp.studioPlugin.enabled": true,
+  "luau-lsp.studioPlugin.port": 3668,
+  "luau-lsp.studioPlugin.maximumRequestBodySize": "50mb",
+  "luau-lsp.ignoreGlobs": [
+    "ReplicatedStorage/Packages/**",
+    "ServerStorage/ServerPackages/**",
+    "ReplicatedStorage/Shared/Libs/Packet/**",
+    "ReplicatedStorage/Shared/Libs/PartCache/**",
+    "ReplicatedStorage/Shared/Libs/Ripple/**",
+    "ReplicatedStorage/Shared/Libs/Signal.luau"
+  ],
+  "luau-lsp.diagnostics.workspace": true
+}
