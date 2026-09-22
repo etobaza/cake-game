@@ -1,75 +1,75 @@
-# Игровые системы Lemon Cake
+# Lemon Cake gameplay systems
 
-Область: установленный build `6596857`. Ниже — функциональная карта по данным и разобранному Blueprint-байткоду. Точные поля и вызовы можно искать через [инструменты](REPRODUCE.md), числа — в [FORMULAS.md](FORMULAS.md). Наличие функции в архиве не доказывает, что каждый её путь достижим при обычной игре.
+Scope: installed build `6596857`. This is a functional map based on data and decoded Blueprint bytecode. Use the [tools](REPRODUCE.md) to locate exact fields and calls, and [FORMULAS.md](FORMULAS.md) for values. A function's presence in the archive does not prove every path is reachable during normal play.
 
-## Основной цикл
+## Core loop
 
-Игрок управляет пекарней: планирует меню, получает ингредиенты, смешивает продукты, использует печи/морозильник, обслуживает клиентов, убирает и покупает улучшения. Greenhouse, Kitchen, Store и Bedroom явно представлены в `ENUM_Location`. Состояние и UI организованы вокруг одного `BP_Player`, а не серверной многопользовательской архитектуры.
+The player manages a bakery: plans a menu, obtains ingredients, mixes products, uses ovens/the freezer, serves customers, cleans, and buys upgrades. Greenhouse, Kitchen, Store, and Bedroom are explicitly represented in `ENUM_Location`. State and UI are organized around a single `BP_Player`, rather than a multiplayer server architecture.
 
 ```mermaid
 flowchart LR
-    A[Планирование меню] --> B[Подготовка ингредиентов]
-    B --> C[Открытие дня]
-    C --> D[Клиенты и заказы]
-    D --> E[Миксер / печь / морозильник]
-    E --> F[Стол или витрина]
-    F --> G[Деньги / XP / отчёт]
-    G --> H[Улучшения / изучение рецептов]
+    A[Menu planning] --> B[Ingredient preparation]
+    B --> C[Open for the day]
+    C --> D[Customers and orders]
+    D --> E[Mixer / oven / freezer]
+    E --> F[Table or display]
+    F --> G[Money / XP / report]
+    G --> H[Upgrades / recipe learning]
     H --> A
-    B --> I[Полив / животные / запасы]
-    E --> J[Дрова / уборка / переноска]
+    B --> I[Watering / animals / stock]
+    E --> J[Firewood / cleaning / carrying]
     I --> E
     J --> E
 ```
 
-Это аналитическая схема связей, не восстановленный граф редактора.
+This is an analytical relationship diagram, not a recovered editor graph.
 
-## Владельцы и точки входа
+## Owners and entry points
 
-| Система | Основные пакеты | Что сохранено / где продолжать |
+| System | Main packages | Preserved evidence / where to continue |
 | --- | --- | --- |
-| Время суток | `Daily/BP_DailyCycle`, `INT_Daily` | `StartDailyCycle`, `StartDailyTimer`, `SetDayStage`, `AddTime`, `EndDayEarly`, `CheckClients`, `DailyReset` |
-| Игрок, XP, деньги, sprint | `Player/BP_Player` | `AddMoney`, `GainExperience`, `LevelUp`, `CheckLevel`, input events, achievement events |
-| Доступные ингредиенты и рецепты | `Items/BP_RecipeBook` | `UnlockedIngredients`, `UnlockedRecipes`, `LearnedRecipes`, `NewRecipes`, `DailyRecipes`, history arrays |
-| Приготовление | `BP_KitchenMixer`, `BP_KitchenOven`, `BP_Freezer`, `BP_Item` | Проверки предмета/рецепта, готовность, cooked/burned item, таймеры, перемещение предметов |
-| Выращивание | `BP_ItemSpawner`, `Greenhouse/BP_Animal`, `BP_Chicken`, `BP_Coww` | Разблокировка, вода, уход, spawn timers; overrides уровня в WORLD |
-| Заказы и витрина | `Shop/BP_Client`, `BP_ClientSpawner`, `BP_StoreCounter` | Поиск стола, выбор еды, покупка с витрины, ожидание, реакция, уход |
-| Столы и посуда | `BP_ClientChair`, `BP_ClientDish` | Занятость, plate/menu/coffee, обслуживание и очистка |
-| Помощник | `BP_Assistant` | Вызовы подачи кофе/еды и очистки посуды, взаимодействие с клиентами |
-| Кошки | `BP_CatCafe`, `BP_Cat`, `BP_Client` | Создание кошек, поиск/усыновление, награда, число доступных кошек |
-| Уборка и скорость | `BP_SpillSpawner`, `BP_Spill`, `BP_MagicBroom` | Создание пятен, очистка, связь с игроком и достижениями |
-| Доставка ингредиентов | `BP_ItemRail`, `BP_ItemRailSpawner` | Позиции рельса, предметы и передача миксеру |
-| Спальня | `Bedroom/BP_Bed`, `BP_Library`, `BP_Wardrobe`, `BP_BedroomTable`, `BP_Pet*` | Сон/переходы, книги, гардероб, кошка/собака/кролик |
-| Мини-игра | `Minigame/BP_BugMinigame`, `BP_BugSpawner`, `BP_Bug`, `BP_Net` | Типы насекомых Common/Rare/Epic, отдельный таймер, диалоги до/после |
-| Обучение и диалоги | `BP_Ghost`, `BP_TutorialArrow`, `WBP_Dialogue`, `DAT_Tutorial` | 21 строка шагов, 3D-arrow coordinates, tutorial dialogue |
-| Музыка и переходы | `Music/BP_Music`, `Location/BP_Location` | Вызовы и зависимости, конфигурация и ссылка на ассеты |
+| Time of day | `Daily/BP_DailyCycle`, `INT_Daily` | `StartDailyCycle`, `StartDailyTimer`, `SetDayStage`, `AddTime`, `EndDayEarly`, `CheckClients`, `DailyReset` |
+| Player, XP, money, sprint | `Player/BP_Player` | `AddMoney`, `GainExperience`, `LevelUp`, `CheckLevel`, input events, achievement events |
+| Available ingredients and recipes | `Items/BP_RecipeBook` | `UnlockedIngredients`, `UnlockedRecipes`, `LearnedRecipes`, `NewRecipes`, `DailyRecipes`, history arrays |
+| Cooking | `BP_KitchenMixer`, `BP_KitchenOven`, `BP_Freezer`, `BP_Item` | Item/recipe checks, readiness, cooked/burned items, timers, item movement |
+| Growing | `BP_ItemSpawner`, `Greenhouse/BP_Animal`, `BP_Chicken`, `BP_Coww` | Unlocking, water, care, spawn timers; level overrides in WORLD |
+| Orders and displays | `Shop/BP_Client`, `BP_ClientSpawner`, `BP_StoreCounter` | Finding a table, choosing food, display purchases, waiting, reactions, leaving |
+| Tables and dishes | `BP_ClientChair`, `BP_ClientDish` | Occupancy, plate/menu/coffee, serving and cleaning |
+| Assistant | `BP_Assistant` | Coffee/food service and dish-cleaning calls, customer interaction |
+| Cats | `BP_CatCafe`, `BP_Cat`, `BP_Client` | Cat creation, search/adoption, rewards, available cat count |
+| Cleaning and speed | `BP_SpillSpawner`, `BP_Spill`, `BP_MagicBroom` | Spill creation, cleaning, connections to the player and achievements |
+| Ingredient delivery | `BP_ItemRail`, `BP_ItemRailSpawner` | Rail positions, items, transfer to the mixer |
+| Bedroom | `Bedroom/BP_Bed`, `BP_Library`, `BP_Wardrobe`, `BP_BedroomTable`, `BP_Pet*` | Sleep/transitions, books, wardrobe, cat/dog/bunny |
+| Minigame | `Minigame/BP_BugMinigame`, `BP_BugSpawner`, `BP_Bug`, `BP_Net` | Common/Rare/Epic bug types, separate timer, before/after dialogue |
+| Tutorial and dialogue | `BP_Ghost`, `BP_TutorialArrow`, `WBP_Dialogue`, `DAT_Tutorial` | 21 step rows, 3D arrow coordinates, tutorial dialogue |
+| Music and transitions | `Music/BP_Music`, `Location/BP_Location` | Calls and dependencies, configuration, asset references |
 
-Префикс `Blueprints/` опущен. Точные пути и полный набор функций: [ASSET_MAP.md](ASSET_MAP.md).
+The `Blueprints/` prefix is omitted. Exact paths and the full function inventory: [ASSET_MAP.md](ASSET_MAP.md).
 
-## День и подготовка
+## Day and preparation
 
-Enum стадий: `Start Day`, `Morning`, `Lunch`, `Evening`. `BP_DailyCycle` управляет таймерами и рассылает события через `INT_Daily`; HUD отображает время. Стартовая подготовка и переходы обучения имеют отдельные ветви. После прекращения появления клиентов есть проверка оставшихся клиентов с периодом 3 секунды. Не сводить все состояния к одному фиксированному восьмиминутному таймеру: это уже адаптация cake-game.
+Stage enum: `Start Day`, `Morning`, `Lunch`, `Evening`. `BP_DailyCycle` manages timers and broadcasts events through `INT_Daily`; the HUD displays time. Initial preparation and tutorial transitions have separate branches. After customer spawning stops, remaining customers are checked every 3 seconds. Do not reduce all states to one fixed eight-minute timer: that is a cake-game adaptation.
 
-## Приготовление и переноска
+## Cooking and carrying
 
-`DAT_Item` описывает 98 предметных строк. Типы `Ingredient`, `Mixed`, `Food`, `Tool` различаются; enum `Food` имеет ID `NewEnumerator3`, поэтому нельзя предполагать непрерывную авторскую нумерацию enum-имён. `DAT_Recipe` содержит 42 строки, семь категорий: Bread, Cookie, Donut, Cake, Pie, Candy, Frozen.
+`DAT_Item` describes 98 item rows. `Ingredient`, `Mixed`, `Food`, and `Tool` are distinct types; the `Food` enum ID is `NewEnumerator3`, so authored enum names must not be assumed to have consecutive numbering. `DAT_Recipe` contains 42 rows across seven categories: Bread, Cookie, Donut, Cake, Pie, Candy, Frozen.
 
-`BP_RecipeBook` собирает доступные ингредиенты из разблокированных `BP_ItemSpawner`. Он хранит отдельные списки доступных и изученных рецептов. `WBP_RecipeNew` добавляет выбранный рецепт в `LearnedRecipes`. Следовательно, поле `unlockLevel` нельзя восстановить просто из индекса строки DAT_Recipe: в самой таблице такого поля нет.
+`BP_RecipeBook` collects available ingredients from unlocked `BP_ItemSpawner` instances. It keeps separate lists of available and learned recipes. `WBP_RecipeNew` adds the selected recipe to `LearnedRecipes`. Therefore, `unlockLevel` cannot be recovered from the DAT_Recipe row index: the table has no such field.
 
-Печь берёт `CompletedCookTime` из `DAT_Recipe.BakeTime`; время до сгорания — отдельное поле. Морозильник и миксер имеют собственные ветви. Нулевой `BakeTime` означает отсутствие печного времени в таблице, но не измеренную длительность всей работы игрока. Активная переноска связана с `BP_Player.CurrentItem`, дополнительными counter/tray/rail объектами.
+The oven takes `CompletedCookTime` from `DAT_Recipe.BakeTime`; the grace period before burning is a separate field. The freezer and mixer have their own branches. Zero `BakeTime` means no oven time is recorded in the table, not that the player's entire preparation time was measured as zero. Carrying uses `BP_Player.CurrentItem` and additional counter/tray/rail objects.
 
-## Клиенты
+## Customers
 
-`BP_ClientSpawner` создаёт клиентов и назначает им параметры. `BP_Client` содержит разные пути покупки с витрины и обслуживания за столом: `FindTable`, `PickFood`, `FindCounterFood`, `BuyCounterFood`, `EatFood`, `FoodReaction`, `LeaveShop`.
+`BP_ClientSpawner` creates customers and assigns their parameters. `BP_Client` has separate paths for display purchases and table service: `FindTable`, `PickFood`, `FindCounterFood`, `BuyCounterFood`, `EatFood`, `FoodReaction`, `LeaveShop`.
 
-`Patience` — накопленное ожидание: оно растёт, а не убывает. Путь `ServeCoffee` сбрасывает его в ноль. Обучающий клиент исключён из обычного наращивания ожидания. Для занятого места сохраняются ссылки на chair/dish; после продажи идут анимации, реакция и освобождение ресурсов. Поток клиентов зависит от стадии, уровня и `ClientMultiplier`; не приписывайте его напрямую `BonusPercentage`, который используется в найденном пути чаевых.
+`Patience` is accumulated waiting: it increases rather than decreases. `ServeCoffee` resets it to zero. Tutorial customers are excluded from normal waiting accumulation. Occupied seats retain chair/dish references; sales are followed by animations, reactions, and resource release. Customer flow depends on the stage, level, and `ClientMultiplier`; do not attribute it directly to `BonusPercentage`, which appears in the identified tip path.
 
-## Прогресс и облегчение работы
+## Progression and workload reduction
 
-Четыре категории покупки по 12 записей: Store, Kitchen, Greenhouse, Bedroom. Внутри них встречаются дополнительные витрины, печи, растения, кофе, кошачье кафе, помощник, рельс, полив и украшения. `WBP_ShopSingle` исполняет последствия покупки, включая изменение существующих акторов по тегам. `Number` и положение строки сами по себе не восстанавливают все prerequisites дерева.
+There are four purchase categories with 12 entries each: Store, Kitchen, Greenhouse, Bedroom. They include additional displays, ovens, plants, coffee, the cat cafe, assistant, rail, watering, and decorations. `WBP_ShopSingle` applies purchase effects, including changing existing actors by tag. `Number` and row position alone do not recover every tree prerequisite.
 
-Пример связи по коду: улучшение печи присваивает `BurnedCookTime=60`, тогда как class default равен 30. Это уменьшает требование к скорости забора готовой еды; не изменяет автоматически `DAT_Recipe.BakeTime`.
+One code-confirmed example: the oven upgrade assigns `BurnedCookTime=60`, while the class default is 30. This gives the player more time to collect cooked food; it does not automatically change `DAT_Recipe.BakeTime`.
 
-## Вне основного цикла
+## Outside the core loop
 
-Архив также содержит гардероб, сохранение внешности, книги, питомцев спальни и мини-игру ловли насекомых. Эти системы проиндексированы, но последовательности событий, все условия доступа и визуальные детали не пройдены в runtime. Полные локальные диалоги и string table сохранены отдельно; [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) перечисляет оставшуюся проверку.
+The archive also contains the wardrobe, appearance saving, books, bedroom pets, and the bug-catching minigame. These systems are indexed, but their event sequences, all access conditions, and visual details have not been exercised at runtime. Complete local dialogue and the string table are preserved separately; [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) lists remaining verification.

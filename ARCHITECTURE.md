@@ -2,6 +2,8 @@
 
 ## Repository guidance
 
+Repository content is English-only: documentation, memory notes, source comments, user-facing strings, tooling, and generated reports follow the mandatory [repository language rule](AGENTS.md#repository-language-mandatory). Generators must preserve this rule when rebuilding their output.
+
 `AGENTS.md` is the shared session/startup and verification contract. `CODE_STYLE.md` defines Luau conventions for new and touched code; `PACKAGES.md` maps the actual dependencies and call-site boundaries. `CLAUDE.md` and `GEMINI.md` import the shared rules, while `.github/copilot-instructions.md` directs Copilot to them and includes the core verification requirements. Cursor uses root `AGENTS.md` directly. Zed's filename precedence selects the Copilot entry here, which directs it to the shared rules. `AI_INSTRUCTIONS.md` records discovery behavior, limitations, and new-session checks. Keep these entry files thin instead of maintaining independent architecture copies.
 
 Generated sourcemaps, installed Wally packages, logs, temporary files, editor backups, and operating-system metadata are excluded through `.gitignore`. Keep dependency manifests and lock files under version control.

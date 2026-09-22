@@ -1,8 +1,8 @@
-# Исследования референсов
+# Reference research
 
-`Exeperience` — написание, заданное пользователем. Здесь хранятся исследования других игр для работы над cake-game.
+`Exeperience` preserves the spelling requested by the user. This folder contains research on other games to support work on cake-game.
 
-- [Lemon Cake](LemonCake/README.md): статический разбор установленной Steam-сборки, каталоги, формулы и воспроизводимые инструменты.
-- [Память проекта](../mem/README.md): короткие ориентиры для следующих сессий.
+- [Lemon Cake](LemonCake/README.md): static analysis of the installed Steam build, catalogs, formulas, and reproducible tools.
+- [Project memory](../mem/README.md): brief navigation notes for future sessions.
 
-Материалы референса не меняют архитектуру Roblox-проекта. Каждое исследование должно указывать сборку, источник, фактически проверенное покрытие и оставшиеся вопросы. Установленный `roblox` skill на дату исследования не задавал структуру этих папок; это локальная организация по запросу пользователя.
+Reference material does not change the Roblox project's architecture. Each investigation must identify its build, sources, verified coverage, and remaining questions. The installed `roblox` skill did not define this folder structure on the research date; this is a local organization created at the user's request.

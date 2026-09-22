@@ -1,12 +1,12 @@
-# Каталог рецептов
+# Recipe catalog
 
-Источник: `Blueprints/Items/DAT_Recipe.uasset`, build `6596857`. Табличные значения; не измерение полного цикла приготовления.
+Source: `Blueprints/Items/DAT_Recipe.uasset`, build `6596857`. These are table values, not measurements of the complete preparation cycle.
 
-`Value` — базовое значение таблицы, `BakeTime` — поле времени. Нулевое `BakeTime` не доказывает мгновенное приготовление: существуют миксер и морозильник. Диетические флаги сохранены буквально, даже если противоречат составу. Порядок строк не означает уровень открытия.
+`Value` is the base table value; `BakeTime` is the timing field. Zero `BakeTime` does not prove instant preparation: the mixer and freezer also exist. Dietary flags are preserved literally, even when they contradict the ingredients. Row order does not indicate unlock level.
 
-Полные записи, ссылки на иконки и исходные enum IDs: [DAT_Recipe.json](data/tables/DAT_Recipe.json).
+Complete records, icon references, and original enum IDs: [DAT_Recipe.json](data/tables/DAT_Recipe.json).
 
-| № | ID | Категория | Value | BakeTime | Ингредиенты | Vegan | GlutenFree |
+| Index | ID | Category | Value | BakeTime | Ingredients | Vegan | GlutenFree |
 | --- | --- | --- | ---: | ---: | --- | --- | --- |
 | 0 | `FrenchBaguette` | Bread | 1.5 | 5 | Flour | True | False |
 | 1 | `SweetRoll` | Donut | 1.75 | 8 | Flour, Sugar | True | False |

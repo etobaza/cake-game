@@ -1,10 +1,10 @@
-# Карта ассетов и функций
+# Asset and function map
 
-Все пути относительны `LemonCake/Content`. Полный индекс зависимостей: [assets.jsonl](data/assets.jsonl); вызовы: [functions.jsonl](data/functions.jsonl). Это статические ссылки и вызовы, не runtime-трасса.
+All paths are relative to `LemonCake/Content`. Complete dependency index: [assets.jsonl](data/assets.jsonl); calls: [functions.jsonl](data/functions.jsonl). These are static references and calls, not a runtime trace.
 
-## Функциональные Blueprint-пакеты
+## Blueprint packages containing functions
 
-| Пакет | Функций | Statements |
+| Package | Functions | Statements |
 | --- | ---: | ---: |
 | `Art/Animation/ABP_Player.uasset` | 3 | 14 |
 | `Art/Animation/Broom/ABP_Broom.uasset` | 2 | 6 |
@@ -83,9 +83,9 @@
 | `Blueprints/Shop/BP_ClientSpawner.uasset` | 5 | 38 |
 | `Level/LVL_Game.umap` | 25 | 195 |
 
-## Группы Content
+## Content groups
 
-| Папка верхнего уровня | Пакетов |
+| Top-level folder | Packages |
 | --- | ---: |
 | Art | 1110 |
 | Blueprints | 427 |

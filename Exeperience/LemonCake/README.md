@@ -1,49 +1,49 @@
-# Lemon Cake — база исследования
+# Lemon Cake research database
 
-Статический разбор установленной Steam-сборки **6596857** от **2026-09-22**, подготовленный для дальнейшей работы над cake-game. Это исследование файлов, данных и исполняемого Blueprint-байткода; не восстановленный исходный проект и не пройденная в runtime игра.
+Static analysis of installed Steam build **6596857**, dated **2026-09-22**, prepared to support future work on cake-game. This examines files, data, and executable Blueprint bytecode; it is not a recovered source project or a runtime playthrough.
 
-## Что извлечено
+## Extracted coverage
 
-| Область | Покрытие |
+| Area | Coverage |
 | --- | ---: |
-| Файлы PAK, с путями, размерами и SHA256 | 11 123 |
-| Игровые пакеты `.uasset` / `.umap` | 4 511 |
-| Blueprint-функции, AST и адреса инструкций | 914 |
-| Таблицы / строки | 15 / 623 |
-| Рецепты / предметы | 42 / 98 |
-| Покупки / меню-бонусы | 48 / 13 |
-| Записи внешности / шаги обучения | 105 / 21 |
-| Выгруженные объекты уровня выбранных типов | 1 946 |
+| PAK files, with paths, sizes, and SHA256 hashes | 11,123 |
+| Game `.uasset` / `.umap` packages | 4,511 |
+| Blueprint functions, ASTs, and instruction offsets | 914 |
+| Tables / rows | 15 / 623 |
+| Recipes / items | 42 / 98 |
+| Purchases / menu bonuses | 48 / 13 |
+| Appearance records / tutorial steps | 105 / 21 |
+| Exported level objects of selected types | 1,946 |
 
-Все игровые пакеты прошли парсер без исключений и `RawExport`; вычисленные размеры всех 914 функций совпали с записанными размерами. Это подтверждает покрытие и структурную согласованность, но не равнозначно проверке каждой ветви в игре. Полный результат: [coverage.json](data/coverage.json), [verification.json](data/verification.json).
+All game packages passed the parser without exceptions or `RawExport` entries; computed sizes matched recorded sizes for all 914 functions. This confirms coverage and structural consistency, but does not verify every branch in the game. Full results: [coverage.json](data/coverage.json), [verification.json](data/verification.json).
 
-При этом **7 677 exports** сохраняют поле бинарного остатка `Extras` — суммарно **243 925 387 байт**. Эти данные сохранены, но не все декодированы семантически; среди них специализированные данные ресурсов и хвосты сериализации. Нулевое число `RawExport` не означает полного восстановления геометрии, звука и native-кода.
+However, **7,677 exports** retain a binary remainder in `Extras`, totaling **243,925,387 bytes**. These bytes are preserved but not all are semantically decoded; they include specialized resource payloads and serialization tails. Zero `RawExport` entries does not mean complete recovery of geometry, audio, or native code.
 
-## Где искать
+## Where to look
 
-| Вопрос | Материал |
+| Question | Material |
 | --- | --- |
-| Как устроены игровые системы | [SYSTEMS.md](SYSTEMS.md) |
-| Точные формулы, пороги и адреса байткода | [FORMULAS.md](FORMULAS.md) |
-| Состав, цены, время, диетические флаги | [RECIPES.md](RECIPES.md), [таблица](data/tables/DAT_Recipe.json) |
-| Покупки и цены | [UPGRADES.md](UPGRADES.md), [таблица](data/tables/DAT_Shop.json) |
-| Мир, источники ингредиентов, экземпляры | [WORLD.md](WORLD.md) |
-| Ассеты, Blueprint-владельцы, зависимости | [ASSET_MAP.md](ASSET_MAP.md) |
-| Сохранение, настройки, UI | [SAVE_UI.md](SAVE_UI.md) |
-| Куда относится механика в cake-game | [ROBLOX_MAPPING.md](ROBLOX_MAPPING.md) |
-| Повторить выгрузку или точечно достать функцию | [REPRODUCE.md](REPRODUCE.md) |
-| Источники, версия, границы достоверности | [SOURCES.md](SOURCES.md), [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) |
-| Краткая память для следующего чата | [mem/lemon-cake.md](../../mem/lemon-cake.md) |
+| How gameplay systems work | [SYSTEMS.md](SYSTEMS.md) |
+| Exact formulas, thresholds, and bytecode offsets | [FORMULAS.md](FORMULAS.md) |
+| Ingredients, prices, timing, dietary flags | [RECIPES.md](RECIPES.md), [table](data/tables/DAT_Recipe.json) |
+| Purchases and prices | [UPGRADES.md](UPGRADES.md), [table](data/tables/DAT_Shop.json) |
+| World, ingredient sources, instances | [WORLD.md](WORLD.md) |
+| Assets, Blueprint owners, dependencies | [ASSET_MAP.md](ASSET_MAP.md) |
+| Saving, settings, UI | [SAVE_UI.md](SAVE_UI.md) |
+| Where a mechanic belongs in cake-game | [ROBLOX_MAPPING.md](ROBLOX_MAPPING.md) |
+| Repeat extraction or retrieve a specific function | [REPRODUCE.md](REPRODUCE.md) |
+| Sources, version, evidence limits | [SOURCES.md](SOURCES.md), [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) |
+| Brief memory for the next chat | [mem/lemon-cake.md](../../mem/lemon-cake.md) |
 
-## Устройство хранения
+## Storage layout
 
-`data/` содержит переносимые индексы, таблицы, схемы и fingerprints. `tools/` содержит собственные воспроизводимые инструменты. `.local/` содержит полную распаковку оригинальных ресурсов, UAssetAPI JSON, декодированный AST, читаемое представление инструкций и диалоги. `.local/` исключена из Git; она доступна на текущей машине и восстанавливается из той же сборки игры.
+`data/` contains portable indexes, tables, schemas, and fingerprints. `tools/` contains custom reproducible tools. `.local/` contains the full extraction of original resources, UAssetAPI JSON, decoded ASTs, readable instructions, and dialogue. `.local/` is excluded from Git; it is available on the current machine and can be restored from the same game build.
 
-Оригинальные бинарные ассеты не встроены в Roblox-проект. Индексы описывают их для исследования. Факты о Lemon Cake и рекомендации по адаптации разделены; изменения баланса Roblox не входят в эту работу.
+Original binary assets have not been embedded in the Roblox project. The indexes describe them for research. Lemon Cake facts and adaptation recommendations are kept separate; Roblox balance changes are outside this work.
 
-## Быстрый поиск
+## Quick search
 
-Из корня репозитория:
+From the repository root:
 
 ```powershell
 python Exeperience/LemonCake/tools/query.py recipe LemonCake

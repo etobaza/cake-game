@@ -1,8 +1,8 @@
-# Воспроизведение и точечный поиск
+# Reproduction and targeted lookup
 
-Все команды выполняются из корня `D:/Github/Rojo/cake-game`. Рабочие инструменты читают установленную игру; записи идут только в `Exeperience/LemonCake`. Они не запускают игру, не меняют PAK и не трогают пользовательские сохранения.
+Run all commands from `D:/Github/Rojo/cake-game`. The tools read the installed game and write only under `Exeperience/LemonCake`. They do not launch the game, modify the PAK, or touch user saves.
 
-## Готовые данные
+## Existing data
 
 ```powershell
 python Exeperience/LemonCake/tools/query.py recipe LemonCake
@@ -14,9 +14,9 @@ python Exeperience/LemonCake/tools/query.py function GainExperience
 python Exeperience/LemonCake/tools/query.py default BP_DailyCycle
 ```
 
-Поиск регистронезависимый и выводит ограниченное число совпадений. Увеличивайте `--limit`, если нужно. Оригинальные row IDs и названия полей при этом не меняются.
+Search is case-insensitive and prints a limited number of matches. Increase `--limit` when needed. Original row IDs and field names remain unchanged.
 
-Для функции с байткодом:
+To inspect a bytecode function:
 
 ```powershell
 python Exeperience/LemonCake/tools/query.py code BP_Client --function ExecuteUbergraph_BP_Client --start 636 --limit 13
@@ -24,27 +24,27 @@ rg -n 'BurnedCookTime' Exeperience/LemonCake/.local/readable
 rg -n 'SaveGameToSlot' Exeperience/LemonCake/.local/readable
 ```
 
-`--start` — индекс top-level инструкции, а `@...` в выводе — её Kismet byte offset. Это разные величины. JSON AST сохраняет все формы узлов; текстовый renderer — вспомогательное чтение, не компилируемый C++/Luau.
+`--start` is the top-level instruction index; `@...` in the output is its Kismet byte offset. These are different values. The JSON AST preserves every node form; the text renderer is a reading aid, not compilable C++/Luau.
 
-## Полное восстановление локальной базы
+## Restoring the complete local database
 
-Требования: PowerShell, Python 3.11+ (`hashlib.file_digest`), .NET SDK 10, установленная игра с SHA256 из [build.json](data/build.json). Для первого запуска нужен интернет для portable repak и NuGet. Wally/Rokit и Roblox runtime здесь не участвуют.
+Requirements: PowerShell, Python 3.11+ (`hashlib.file_digest`), .NET SDK 10, and an installed game matching the SHA256 in [build.json](data/build.json). The first run needs internet access for portable repak and NuGet. Wally/Rokit and the Roblox runtime are not involved.
 
 ```powershell
 ./Exeperience/LemonCake/tools/restore.ps1
 ```
 
-При другой Steam library:
+For a different Steam library:
 
 ```powershell
 ./Exeperience/LemonCake/tools/restore.ps1 -GameRoot 'D:/SteamLibrary/steamapps/common/Lemon Cake'
 ```
 
-Скрипт проверяет fingerprint PAK, checksum repak ZIP, распаковывает 11 123 файла, сверяет их с сохранёнными SHA256, восстанавливает закреплённые NuGet dependencies, разбирает игровые пакеты и генерирует индексы/каталоги. Итоговая проверка также убеждается, что установленные файлы игры остались прежними. Если локальная распаковка неполная или изменилась, скрипт останавливается с точным путём; он не удаляет каталоги автоматически.
+The script checks the PAK fingerprint and repak ZIP checksum, extracts 11,123 files, compares them with the recorded SHA256 hashes, restores pinned NuGet dependencies, parses game packages, and generates indexes/catalogs. Final verification also checks that installed game files are unchanged. If the local extraction is incomplete or modified, the script stops with the exact path; it does not delete directories automatically.
 
-Установленная сборка с другим hash не принимается молча. Для новой версии нужен отдельный snapshot, обновлённые fingerprints и сравнение результатов.
+An installed build with a different hash is not silently accepted. A new version requires a separate snapshot, updated fingerprints, and a comparison of results.
 
-## Отдельные стадии
+## Individual stages
 
 ```powershell
 dotnet build Exeperience/LemonCake/tools/AssetDump --nologo
@@ -54,37 +54,37 @@ python Exeperience/LemonCake/tools/catalogs.py
 python Exeperience/LemonCake/tools/verify.py
 ```
 
-`AssetDump` поддерживает четвёртый аргумент — подстроку пути для узкого исследования. Запускайте такой разбор **в другой output-каталог**: каждый запуск создаёт свой `parse-report.json`; частичный отчёт не должен заменить полный.
+`AssetDump` accepts a fourth argument: a path substring for focused investigation. Run that extraction **into a different output directory**: each run creates its own `parse-report.json`, and a partial report must not replace the complete one.
 
-## Форматы
+## Formats
 
-| Путь | Назначение |
+| Path | Purpose |
 | --- | --- |
-| `data/build.json` | Идентичность сборки, инструменты, hashes установленных файлов |
-| `data/files.csv` | Каждая запись PAK: path, bytes, SHA256 |
-| `data/assets.jsonl` | Классы экспортов и импортируемые пакеты каждого игрового ассета |
-| `data/functions.jsonl` | Функции, число инструкций, статические вызовы |
-| `data/defaults.jsonl` | Сериализованные defaults игровых Blueprint-классов |
-| `data/enums.json` | Точное enum ID → display label |
-| `data/tables.json` | Каталог всех таблиц, схемы и пути результатов |
-| `data/tables/*.json` | Табличные данные для запросов |
-| `data/curves.json` | Игровые кривые с сохранением ключей/tangents |
-| `data/save-schema.json` | Поля SaveGame и типы |
-| `data/map-gameplay-objects.json` | Размещённые игровые акторы и их overrides |
-| `data/coverage.json`, `data/verification.json` | Покрытие парсинга и реально выполненная проверка |
-| `.local/unpacked` | Полная распаковка PAK, включая Engine resources и локализацию |
-| `.local/json` | Полные UAssetAPI JSON всех игровых пакетов |
-| `.local/bytecode`, `.local/readable` | AST и читаемое представление 914 функций |
-| `.local/map-objects.json` | 1 946 выбранных exports уровня с component references |
-| `.local/property-schemas.json` | Поля Blueprint, включая параметры функций |
-| `.local/tables`, `.local/string-tables` | Полные локальные диалоги, уведомления и string table |
+| `data/build.json` | Build identity, tools, hashes of installed files |
+| `data/files.csv` | Every PAK entry: path, bytes, SHA256 |
+| `data/assets.jsonl` | Export classes and imported packages for each game asset |
+| `data/functions.jsonl` | Functions, instruction counts, static calls |
+| `data/defaults.jsonl` | Serialized defaults of gameplay Blueprint classes |
+| `data/enums.json` | Exact enum ID → display label |
+| `data/tables.json` | Catalog of all tables, schemas, and output paths |
+| `data/tables/*.json` | Tabular data for queries |
+| `data/curves.json` | Gameplay curves with preserved keys/tangents |
+| `data/save-schema.json` | SaveGame fields and types |
+| `data/map-gameplay-objects.json` | Placed gameplay actors and their overrides |
+| `data/coverage.json`, `data/verification.json` | Parsing coverage and verification actually performed |
+| `.local/unpacked` | Full PAK extraction, including Engine resources and localization |
+| `.local/json` | Complete UAssetAPI JSON for all gameplay packages |
+| `.local/bytecode`, `.local/readable` | ASTs and readable output for 914 functions |
+| `.local/map-objects.json` | 1,946 selected level exports with component references |
+| `.local/property-schemas.json` | Blueprint fields, including function parameters |
+| `.local/tables`, `.local/string-tables` | Complete local dialogue, notifications, and string table |
 
-Сокращённые таблицы разрешают ссылки на UObject через import/export index и enum display map. User-defined struct suffix вида `_35_<GUID>` удаляется только в удобных именах полей; полный оригинал сохраняется в `.local/json`. `textKey` хранится вместе с таблицей; это не перевод. UAssetAPI иногда записывает float zero как строку `"+0"`; она сохраняется, а не маскируется ложным преобразованием.
+The simplified tables resolve UObject references through import/export indexes and enum display maps. User-defined struct suffixes such as `_35_<GUID>` are removed only from convenient field names; the complete original remains in `.local/json`. `textKey` is stored with its table reference; it is not a translation. UAssetAPI sometimes writes floating-point zero as the string `"+0"`; this representation is preserved rather than hidden by an incorrect conversion.
 
-Class defaults содержат только сериализованные поля: отсутствие поля не даёт права объявить его `false`/`0`. Дополнительно проверяйте наследование, overrides уровня и присваивания в Blueprint.
+Class defaults contain only serialized fields: an absent field cannot be declared `false`/`0` on that basis. Also check inheritance, level overrides, and Blueprint assignments.
 
-## Что проверяет verifier
+## Verifier coverage
 
-Согласованность числа пакетов/таблиц/функций, уникальность ключевых row IDs, отсутствие RawExport и ошибок, совпадение размеров байткода, SHA256 каждого распакованного файла и каждого установленного файла игры, JSON-читаемость и локальные Markdown-ссылки. Результат сохраняется в `data/verification.json`.
+The verifier checks package/table/function counts, uniqueness of key row IDs, absence of RawExport entries and errors, bytecode size agreement, SHA256 of every extracted and installed game file, JSON readability, and local Markdown links. Results are saved to `data/verification.json`.
 
-Verifier не симулирует Unreal Engine, не проверяет каждую ветвь управления и не подтверждает visuals/audio. Luau gate не запускался: исходники Roblox этой работой не изменялись.
+The verifier does not simulate Unreal Engine, check every control-flow branch, or establish visual/audio correctness. The Luau gate was not run: this work did not modify Roblox source.

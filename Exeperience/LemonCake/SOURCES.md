@@ -1,32 +1,32 @@
-# Источники и достоверность
+# Sources and evidence quality
 
-## Основной источник: локальная установленная игра
+## Primary source: the locally installed game
 
 - Steam app `1338330`, build `6596857`, depot `1338331`, manifest `3131561033263652299`.
-- Каталог: `C:/Program Files (x86)/Steam/steamapps/common/Lemon Cake`.
-- Архив: `LemonCake/Content/Paks/LemonCake-WindowsNoEditor.pak`, **480 756 603 байта**, `V8B`, индекс не зашифрован, compression `None` по repak.
-- Движок: `LemonCake.uproject` → `EngineAssociation=4.24`; строки shipping EXE → `++UE4+Release-4.24-CL-11590370`.
-- [build.json](data/build.json) содержит SHA256 архива и каждого установленного файла. Steam owner/account ID не переносился в базу.
-- [files.csv](data/files.csv) содержит все 11 123 записи распакованного архива. Их общий размер — **472 915 295 байт**; он отличается от размера контейнера из-за служебных данных.
+- Directory: `C:/Program Files (x86)/Steam/steamapps/common/Lemon Cake`.
+- Archive: `LemonCake/Content/Paks/LemonCake-WindowsNoEditor.pak`, **480,756,603 bytes**, `V8B`, unencrypted index, compression `None` according to repak.
+- Engine: `LemonCake.uproject` → `EngineAssociation=4.24`; shipping EXE strings → `++UE4+Release-4.24-CL-11590370`.
+- [build.json](data/build.json) contains the SHA256 of the archive and every installed file. Steam owner/account IDs were not copied into the database.
+- [files.csv](data/files.csv) contains all 11,123 extracted archive entries. Their combined size is **472,915,295 bytes**; it differs from the container size because of archive metadata.
 
-Пути исходных игровых ассетов в документации относительны `LemonCake/Content`. Например, `Blueprints/Items/DAT_Recipe.uasset` находится в `.local/unpacked/LemonCake/Content/Blueprints/Items/`. Исходные `.uexp` и `.ubulk` сохраняются рядом.
+Source game asset paths in the documentation are relative to `LemonCake/Content`. For example, `Blueprints/Items/DAT_Recipe.uasset` is located under `.local/unpacked/LemonCake/Content/Blueprints/Items/`. Original `.uexp` and `.ubulk` files remain alongside their assets.
 
-## Дополнительные первичные источники
+## Additional primary sources
 
-Проверены 2026-09-22:
+Checked on 2026-09-22:
 
-- [Steam: Lemon Cake](https://store.steampowered.com/app/1338330/Lemon_Cake/?l=english): название, разработчик/издатель Cozy Bee Games, выпуск 18 февраля 2021 года, одиночная игра, Steam Cloud, 17 достижений; общий цикл пекарни. Магазин — описание продукта, не источник точных формул установленной сборки.
-- [repak](https://github.com/trumank/repak), [release v0.2.3](https://github.com/trumank/repak/releases/tag/v0.2.3): использован portable Windows CLI; SHA256 ZIP проверен по опубликованному checksum и закреплён в restore-скрипте.
-- [UAssetAPI](https://github.com/atenfyr/UAssetAPI), [Basic Usage](https://atenfyr.github.io/UAssetAPI/guide/basic.html): использован NuGet `1.1.0`, сериализатор сообщает commit `7353081`; движок явно `VER_UE4_24`. Зависимости закреплены в [packages.lock.json](tools/AssetDump/packages.lock.json).
-- [Epic: FName, UE 4.27](https://dev.epicgames.com/documentation/en-us/unreal-engine/fname?application_version=4.27): имена FName сравниваются без учёта регистра. Это объясняет, почему `chocolatePancake` в DAT_Recipe и `ChocolatePancake` в DAT_Item нужно сопоставлять регистронезависимо, сохраняя исходное написание выгрузки.
+- [Steam: Lemon Cake](https://store.steampowered.com/app/1338330/Lemon_Cake/?l=english): title, developer/publisher Cozy Bee Games, February 18, 2021 release, single-player, Steam Cloud, 17 achievements, and the general bakery loop. The store describes the product; it is not a source for exact formulas in the installed build.
+- [repak](https://github.com/trumank/repak), [release v0.2.3](https://github.com/trumank/repak/releases/tag/v0.2.3): the portable Windows CLI was used; its ZIP SHA256 was checked against the published checksum and pinned in the restore script.
+- [UAssetAPI](https://github.com/atenfyr/UAssetAPI), [Basic Usage](https://atenfyr.github.io/UAssetAPI/guide/basic.html): NuGet `1.1.0` was used; the serializer reports commit `7353081`, with engine explicitly set to `VER_UE4_24`. Dependencies are pinned in [packages.lock.json](tools/AssetDump/packages.lock.json).
+- [Epic: FName, UE 4.27](https://dev.epicgames.com/documentation/en-us/unreal-engine/fname?application_version=4.27): FName comparison is case-insensitive. This explains why `chocolatePancake` in DAT_Recipe and `ChocolatePancake` in DAT_Item should be matched without regard to case while retaining the original extracted spelling.
 
-Страница Steam и сторонние описания не использовались для подстановки отсутствующих чисел в таблицы. Точные игровые значения извлечены локально.
+The Steam page and third-party descriptions were not used to fill missing numeric table values. Exact game values were extracted locally.
 
-## Уровни доказательности
+## Evidence levels
 
-1. **Данные**: поле таблицы, class default, override карты, строка конфигурации. Может быть изменено логикой в runtime.
-2. **Статическая логика**: восстановленные операции Blueprint, ветви, вызовы и константы. Адрес `@...` — смещение в функции Kismet, не адрес машинного кода EXE.
-3. **Вывод**: интерпретация связи нескольких операций. Указываем условия и ограничения; runtime не проверен.
-4. **Runtime**: в этом исследовании отсутствует. Ни скриншоты магазина, ни стартовый лог не считаются прохождением механики.
+1. **Data**: a table field, class default, map override, or configuration entry. Runtime logic may change it.
+2. **Static logic**: recovered Blueprint operations, branches, calls, and constants. An `@...` address is an offset within a Kismet function, not a machine-code address in the EXE.
+3. **Inference**: interpretation of relationships between operations. Conditions and limits are stated; runtime behavior is unverified.
+4. **Runtime**: absent from this investigation. Neither store screenshots nor a startup log count as exercising a mechanic.
 
-`SerializeJson` не означает восстановление авторского исходника. Cooked-пакеты не содержат полный редакторский контекст графов; native-библиотеки, визуальная корректность мешей, звук и все варианты поведения не проверены исчерпывающе.
+`SerializeJson` does not recover the author's source code. Cooked packages lack the complete editor graph context; native libraries, visual mesh correctness, audio, and all behavior variants have not been exhaustively verified.

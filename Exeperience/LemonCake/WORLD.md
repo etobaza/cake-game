@@ -1,12 +1,12 @@
-# Мир и источники предметов
+# World and item sources
 
-В игровом Content найден один уровень: `Level/LVL_Game.umap`. Полная локальная выгрузка объектов: `.local/map-objects.json`; игровые объекты: [map-gameplay-objects.json](data/map-gameplay-objects.json). Координаты компонентов находятся в полной выгрузке, а не в сокращённой таблице ниже.
+One level was found in game Content: `Level/LVL_Game.umap`. Complete local object export: `.local/map-objects.json`; gameplay objects: [map-gameplay-objects.json](data/map-gameplay-objects.json). Component coordinates are in the complete export, not the simplified table below.
 
-Зоны enum `ENUM_Location`: Greenhouse, Kitchen, Store, Bedroom. Авторские модельные названия и таблицы не заменяют визуальную проверку карты.
+`ENUM_Location` zones: Greenhouse, Kitchen, Store, Bedroom. Authored model names and tables do not replace visual map inspection.
 
-## Размещённые BP_ItemSpawner
+## Placed BP_ItemSpawner instances
 
-Значения ниже — overrides уровня. Базовый `SpawnTimer=10` не следует применять ко всем растениям: на уровне он заменён. Начальный `IsUnlocked=false` также не означает, что источник останется закрытым после обучения/загрузки.
+The values below are level overrides. The base `SpawnTimer=10` must not be applied to every plant: the level overrides it. An initial `IsUnlocked=false` also does not mean the source remains locked after the tutorial or loading.
 
 | Actor | ItemToSpawn | SpawnTimer | IsPlant | Tags |
 | --- | --- | ---: | --- | --- |
@@ -26,11 +26,11 @@
 | `BP_ItemSpawner9` | Blueberry | 15.0 | True | ShopBlueberryPlant, ShopFertilizerUpgrade, SprinklersPlant |
 | `BP_ItemSpawner_2` | Coffee | 2.0 | False | ShopCoffeeMachine |
 
-## Количество игровых объектов по классу
+## Gameplay object counts by class
 
-Это число размещённых объектов, не число одновременно активных или доступных объектов.
+These are placed-object counts, not counts of simultaneously active or available objects.
 
-| Класс | Количество |
+| Class | Count |
 | --- | ---: |
 | `BP_Bed_C` | 1 |
 | `BP_BedroomTable_C` | 1 |

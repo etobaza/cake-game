@@ -1,33 +1,33 @@
-# Границы и продолжение
+# Limits and follow-up work
 
-Полностью распакован доступный PAK и выполнен машинный разбор всех 4 511 игровых пакетов. Это не означает, что вся игра семантически и визуально восстановлена. 914 функций доступны для точечного анализа, но не все ветви вручную объяснены в документации.
+The available PAK was fully extracted, and all 4,511 game packages were machine-parsed. This does not mean the entire game has been recovered semantically and visually. All 914 functions are available for targeted analysis, but not every branch has been manually explained in the documentation.
 
-Парсер сохранил `Extras` у 7 677 exports, всего 243 925 387 байт бинарных остатков. Это включает специализированные payloads ресурсов и хвосты сериализации; отсутствие `RawExport` не следует использовать как доказательство их полного декодирования.
+The parser retained `Extras` in 7,677 exports, totaling 243,925,387 bytes of binary remainders. These include specialized resource payloads and serialization tails; the absence of `RawExport` must not be treated as evidence of complete decoding.
 
-## Что пока не подтверждено
+## Unverified areas
 
-| Область | Что есть | Что требуется |
+| Area | Available evidence | Required follow-up |
 | --- | --- | --- |
-| Полное прохождение | Таблицы, class defaults, функции, tutorial steps | Новый тестовый слот; пройти tutorial, обычный день, средний/поздний прогресс |
-| Чаевые и бонусы | `Divide_IntInt`, clamp каждой суммы, точные пороги | Сравнить выплаты при бонусах 0, 50, 99, 100 и нескольких значениях ожидания |
-| Время и спавн | Формулы стадии и периода, initial delay | Измерить первый клиент, утро/обед/закрытие, паузы и early close |
-| Разблокировка меню | Learned/Unlocked/NewRecipes, ветви UI, требования ингредиентов | Проследить все условия выбора и слотов; не назначать уровень по индексу рецепта |
-| Дерево улучшений | Все 48 цен и ID, логика покупки | Восстановить и проверить все prerequisites и эффекты по ветвям `WBP_ShopSingle`/`WBP_ShopTree` |
-| XP и ranks | Нормализованное поле, кривая и UI-функции | Проверить overflow при level-up, показ XP, rank history, late-game cap |
-| Печь / морозильник / миксер | Точные таблицы и timer/cook branches | Измерить полный цикл, уход дров, паузу, забирание на границе тика и все апгрейды |
-| Garden и уход | Overrides каждого спавнера, water/brush branches | Измерить capacity, высыхание, остановку/возобновление, удобрения и автополив |
-| Помощник / кошки | Функции, defaults, статические награды | Очередь действий помощника, ошибки пути, условия adoption и caps |
-| Мини-игра / спальня | Классы, enum, диалоги, save fields | Условия триггера, длительность, награды, полная последовательность событий |
-| UI и визуальные ассеты | Widget exports, модели/материалы/текстуры в архиве | Проверка экранов, анимаций, scale/occlusion, предпросмотр meshes/textures |
-| Звук | Все пути и извлечённые ресурсы | Прослушивание, микширование и фактические триггеры |
-| Переводы | Исходные ключи, string table, локализованные файлы | Декодирование и сравнение всех `.locres` |
-| Save/Steam | Схема SaveGame, API calls, fingerprints | Save/reload, смена слотов, Steam achievements/Cloud в runtime |
-| Native EXE | Файлы, SHA256, UE build strings | Машинный код C++/движка не декомпилировался полностью; оригинальные исходники не восстановлены |
+| Full playthrough | Tables, class defaults, functions, tutorial steps | Use a new test slot; play the tutorial, a normal day, and mid/late progression |
+| Tips and bonuses | `Divide_IntInt`, per-addition clamping, exact thresholds | Compare payments at bonuses 0, 50, 99, 100 and several waiting values |
+| Timing and spawning | Stage/interval formulas, initial delay | Measure the first customer, morning/lunch/closing, pauses, and early closing |
+| Menu unlocking | Learned/Unlocked/NewRecipes, UI branches, ingredient requirements | Trace every selection and slot condition; do not assign levels from recipe indexes |
+| Upgrade tree | All 48 prices and IDs, purchase logic | Recover and verify every prerequisite and effect in `WBP_ShopSingle`/`WBP_ShopTree` branches |
+| XP and ranks | Normalized field, curve, UI functions | Check level-up overflow, displayed XP, rank history, and the late-game cap |
+| Oven / freezer / mixer | Exact tables and timer/cooking branches | Measure the complete cycle, fuel consumption, pauses, collection at tick boundaries, and all upgrades |
+| Garden and care | Each spawner's overrides, watering/brushing branches | Measure capacity, drying, stopping/resuming, fertilizer, and automatic watering |
+| Assistant / cats | Functions, defaults, static rewards | Check assistant task ordering, path failures, adoption conditions, and caps |
+| Minigame / bedroom | Classes, enums, dialogue, save fields | Check triggers, duration, rewards, and the complete event sequence |
+| UI and visual assets | Widget exports, archived models/materials/textures | Inspect screens, animations, scale/occlusion, and mesh/texture previews |
+| Audio | All paths and extracted resources | Listen to audio; check mixing and actual triggers |
+| Translations | Original keys, string table, localized files | Decode and compare all `.locres` files |
+| Save/Steam | SaveGame schema, API calls, fingerprints | Test save/reload, slot changes, and Steam achievements/Cloud at runtime |
+| Native EXE | Files, SHA256, UE build strings | C++/engine machine code was not fully decompiled; original source was not recovered |
 
-## Как продолжать без повторного реверса
+## Continuing without repeating the extraction
 
-Сначала ищите владельца в [ASSET_MAP.md](ASSET_MAP.md), затем функцию в `data/functions.jsonl` и `.local/readable`. Для ветвей с `ExecuteUbergraph_*` маленькая event-функция обычно передаёт entrypoint в общий граф: открывайте оба файла и сопоставляйте адреса. Читаемый renderer оставляет неподдержанные формы как JSON, не выдумывает высокоуровневый исходник.
+Find the owner in [ASSET_MAP.md](ASSET_MAP.md), then locate its function in `data/functions.jsonl` and `.local/readable`. For `ExecuteUbergraph_*` branches, a small event function typically passes an entry point into the shared graph: open both files and match offsets. The readable renderer leaves unsupported forms as JSON rather than inventing high-level source code.
 
-Если `.local` отсутствует, используйте [REPRODUCE.md](REPRODUCE.md). Если SHA256 игры изменился, создайте отдельный snapshot сборки и сравните его с этой базой. Не перезаписывайте старые выводы новыми числами без указания версии.
+If `.local` is missing, follow [REPRODUCE.md](REPRODUCE.md). If the game's SHA256 has changed, create a separate build snapshot and compare it with this database. Do not overwrite old findings with new numbers without identifying the version.
 
-Для runtime-проверки нужен доступный интерфейс управления Windows-игрой. В данной сессии native computer API отключён, поэтому прохождение не выполнялось. Существующие сохранения и облачные данные не нужно использовать как расходный тестовый материал.
+Runtime verification requires an available interface for controlling the Windows game. Native computer APIs were disabled in the research session, so no playthrough was performed. Existing saves and cloud data should not be used as disposable test material.

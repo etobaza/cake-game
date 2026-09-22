@@ -1,12 +1,12 @@
-# Каталог улучшений
+# Upgrade catalog
 
-Источник: `Blueprints/Interface/DAT_Shop.uasset`, build `6596857`. 48 строк, по 12 в каждой категории. `Number` имеет смысл внутри категории; `BaseName` может повторяться. Для точной записи используйте исходный row ID.
+Source: `Blueprints/Interface/DAT_Shop.uasset`, build `6596857`. There are 48 rows, 12 per category. `Number` is meaningful within its category; `BaseName` can repeat. Use the original row ID to identify an exact record.
 
-Цена и порядок в таблице не доказывают зависимости дерева. Реализация покупки и воздействия: `WBP_ShopSingle`, структура дерева: `WBP_ShopTree`. Полные записи: [DAT_Shop.json](data/tables/DAT_Shop.json).
+Price and table order do not establish tree dependencies. Purchases and their effects are implemented in `WBP_ShopSingle`; the tree structure is in `WBP_ShopTree`. Complete records: [DAT_Shop.json](data/tables/DAT_Shop.json).
 
 ## Store
 
-| Number | Row ID | BaseName | Название | Cost |
+| Number | Row ID | BaseName | Name | Cost |
 | ---: | --- | --- | --- | ---: |
 | 0 | `NewRow` | `DisplayCounter` | Display Counter | 5.25 |
 | 1 | `NewRow_0` | `DisplayCounter` | Display Counter | 12.5 |
@@ -21,11 +21,11 @@
 | 10 | `NewRow_9` | `CatCafeUpgrade` | Cat Cafe Upgrade | 375 |
 | 11 | `NewRow_10` | `Assistant` | Assistant | 525.5 |
 
-Сумма табличных цен: **1955.75**. Это арифметическая сумма, не симуляция прохождения.
+Total table prices: **1955.75**. This is an arithmetic sum, not a playthrough simulation.
 
 ## Kitchen
 
-| Number | Row ID | BaseName | Название | Cost |
+| Number | Row ID | BaseName | Name | Cost |
 | ---: | --- | --- | --- | ---: |
 | 0 | `NewRow_11` | `KitchenCounter` | Kitchen Counter | 9.5 |
 | 1 | `NewRow_12` | `FirewoodUpgrade` | Firewood Upgrade | 17.5 |
@@ -40,11 +40,11 @@
 | 10 | `NewRow_21` | `OvenUpgrade` | Oven Upgrade | 210.5 |
 | 11 | `NewRow_22` | `MagicBroom` | Magic Broom | 365 |
 
-Сумма табличных цен: **1851**. Это арифметическая сумма, не симуляция прохождения.
+Total table prices: **1851**. This is an arithmetic sum, not a playthrough simulation.
 
 ## Greenhouse
 
-| Number | Row ID | BaseName | Название | Cost |
+| Number | Row ID | BaseName | Name | Cost |
 | ---: | --- | --- | --- | ---: |
 | 0 | `NewRow_23` | `CocoaTree` | Cocoa Tree | 7.25 |
 | 1 | `NewRow_24` | `CherryTree` | Cherry Tree | 25.75 |
@@ -59,11 +59,11 @@
 | 10 | `NewRow_29` | `Beehive` | Beehive | 225.5 |
 | 11 | `NewRow_34` | `LemonTree` | Lemon Tree | 415 |
 
-Сумма табличных цен: **1727.5**. Это арифметическая сумма, не симуляция прохождения.
+Total table prices: **1727.5**. This is an arithmetic sum, not a playthrough simulation.
 
 ## Bedroom
 
-| Number | Row ID | BaseName | Название | Cost |
+| Number | Row ID | BaseName | Name | Cost |
 | ---: | --- | --- | --- | ---: |
 | 0 | `NewRow_35` | `Rugs` | Rugs | 17.5 |
 | 1 | `NewRow_36` | `Library` | Library | 35.25 |
@@ -78,4 +78,4 @@
 | 10 | `NewRow_45` | `Table&Cake` | Table & Cake | 230.5 |
 | 11 | `NewRow_46` | `Bunny` | Bunny | 480.5 |
 
-Сумма табличных цен: **2053.75**. Это арифметическая сумма, не симуляция прохождения.
+Total table prices: **2053.75**. This is an arithmetic sum, not a playthrough simulation.

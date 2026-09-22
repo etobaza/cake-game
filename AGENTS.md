@@ -12,6 +12,13 @@ Shared operating rules for coding agents working in this repository. Keep projec
 
 Keep user-facing replies brief. Use the installed `caveman` skill at `ultra` intensity when available, unless the user says `stop caveman` or `normal mode`. Keep code, durable documentation, commits, PRs, and safety-critical steps in clear normal prose.
 
+## Repository language (mandatory)
+
+- Write all repository content in English: source comments, documentation, instructions, memory notes, research, examples, configuration descriptions, test descriptions, UI text, logs, errors, tool output, and generated reports. Do not add Cyrillic or other non-English prose.
+- Use English for new identifiers, file and directory names, commit messages, and pull request titles and descriptions. Preserve established API names and persistent identifiers when editing existing code.
+- Apply this rule to every new or edited file, including `Exeperience/` and `mem/`. Update generators and templates as well as their output so regeneration remains English-only.
+- Chat replies may follow the user's language; this does not change the language required for repository content.
+
 ## Project contract
 
 This is an existing Roblox bakery game, not a blank template. Disk folders mirror DataModel services through Studio Script Sync. Wally manages dependencies; Rokit pins CLI tools. The repository location does not imply a Rojo build workflow.

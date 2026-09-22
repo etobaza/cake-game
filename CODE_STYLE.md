@@ -4,6 +4,8 @@ Luau style for new and changed application code. Read [AGENTS.md](AGENTS.md) and
 
 ## Structure and names
 
+- Follow the mandatory [repository language rule](AGENTS.md#repository-language-mandatory): write comments, documentation, strings, and new names in English.
+
 - Every application module must start with `--!strict` on its first line, new files included; `scripts/check.ps1` fails otherwise (only Wally packages and vendored libraries are exempt, through `luau-lsp.ignoreGlobs`). Never use `--!nonstrict` or `--!nocheck`, remove the directive, or add broad diagnostic suppression to hide errors. Annotate named function parameters and returns.
 - Use tabs, double-quoted strings, trailing commas in multiline tables, a final newline, and no trailing whitespace. Follow StyLua defaults and adjacent code. Avoid whole-file formatting churn; section comments can be rewritten by StyLua.
 - Use PascalCase for module/type names and public methods, UPPER_SNAKE_CASE for constants, and descriptive camelCase for parameters and function-local variables. Keep nearby private helper/field naming; do not import the Template's snakeCase locals or new `T_` prefixes into existing modules.
