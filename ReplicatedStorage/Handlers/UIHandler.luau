@@ -28,6 +28,9 @@ local Pages = require(_Shared.UI.Stores.Pages)
 local UIText = require(_Configs.UIText)
 
 --[[ Constants ]]--
+-- The screens ship as one Roblox package, so StarterGui copies them into PlayerGui inside this folder.
+local SCREENS_FOLDER = "MainGui"
+local SCREENS_TIMEOUT = 10
 local TOAST_SECONDS = 2.5
 -- The XP plate is a notification: it slides in with what was just earned and leaves.
 local XP_SECONDS = 2.5
@@ -59,6 +62,10 @@ end
 
 function UIHandler.OnStart(self: UIHandler): ()
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+	local screensRoot = playerGui:WaitForChild(SCREENS_FOLDER, SCREENS_TIMEOUT)
+	if not screensRoot then
+		error(`[UIHandler] StarterGui.{SCREENS_FOLDER} never arrived in PlayerGui`)
+	end
 
 	-- The first snapshot arrives as one push and does not ring the per-path signals, so a node bound
 	-- before it lands keeps its placeholder until something happens to change that field. Waiting
@@ -75,7 +82,7 @@ function UIHandler.OnStart(self: UIHandler): ()
 		HasQuest = self.HasQuest,
 		XPText = self.XPText,
 		XPVisible = self.XPVisible,
-	}, playerGui)
+	}, screensRoot)
 
 	self.Scope = scope
 	self.Hud = mounted.Hud
@@ -86,7 +93,7 @@ function UIHandler.OnStart(self: UIHandler): ()
 	self.Gui = mounted.Hud
 	self.Screens = mounted.Screens
 	-- Tutorial is an overlay, outside the mutually exclusive modal page router.
-	local tutorial = playerGui:WaitForChild("Tutorial", 10)
+	local tutorial = screensRoot:WaitForChild("Tutorial", SCREENS_TIMEOUT)
 	if tutorial and tutorial:IsA("ScreenGui") then
 		self.Screens.Tutorial = tutorial
 	end

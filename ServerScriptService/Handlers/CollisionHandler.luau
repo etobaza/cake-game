@@ -13,11 +13,11 @@ local _Configs = _Shared.Configs
 local _Handlers = ServerScriptService.Handlers
 
 --[[ Modules ]]--
-local BaseConfig = require(_Configs.Base)
 local BaseHandler = require(_Handlers.BaseHandler)
 local CollisionConfig = require(_Configs.Collision)
 local BuildingsConfig = require(_Configs.Buildings)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local World = require(_Shared.World)
 
 --[[ Tables ]]--
 local CollisionHandler = {
@@ -82,7 +82,7 @@ end
 -- a player or a guest has to walk straight through. Done for EVERY bakery once at boot rather than
 -- per claimed base — an unclaimed bakery still has to be walkable to reach.
 function CollisionHandler.OpenDoors(self: CollisionHandler): ()
-	local bakeries = workspace:FindFirstChild(BaseConfig.BakeriesFolderName)
+	local bakeries = World.Bakeries()
 	if not bakeries then
 		return
 	end

@@ -6,13 +6,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --[[ References ]]--
 local _Shared = ReplicatedStorage.Shared
-local _Configs = _Shared.Configs
 local _Libs = _Shared.Libs
 
 --[[ Modules ]]--
-local BaseConfig = require(_Configs.Base)
 local LoggerUtil = require(_Libs.Logger)
 local VacantView = require(script.Parent.BuildingHandler.VacantView)
+local World = require(_Shared.World)
 
 --[[ Private Variables ]]--
 local Logger = LoggerUtil.new({ name = "PlotHandler" })
@@ -25,7 +24,7 @@ local PlotHandler = {
 
 --[[ Handling ]]--
 function PlotHandler.OnInit(self: PlotHandler): ()
-	self.Folder = workspace:WaitForChild(BaseConfig.BakeriesFolderName) :: Folder
+	self.Folder = World.WaitForBakeries() :: Folder
 	self.Owners = {}
 	self.Assigned = {}
 	self.Views = {}

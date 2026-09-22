@@ -5,8 +5,12 @@
 
 --[[ Tables ]]--
 local Base = {
-	-- Folder in Workspace holding the pre-built bakeries.
+	-- The authored world is one Roblox package mounted in Workspace; the folders below sit inside it.
+	WorldFolderName = "World",
+	-- Pre-built bakeries.
 	BakeriesFolderName = "Bakeries",
+	-- Authored 3D templates that systems clone from (cat rigs and the like).
+	WorldAssetsFolderName = "Assets",
 
 	-- The bakery that carries the Anchors folder; the rest map onto it by origin.
 	TemplateName = "BakeryOrange",

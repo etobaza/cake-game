@@ -1,6 +1,6 @@
 # Repository instructions
 
-When reviewing, creating, or modifying Luau code, you can read `ARCHITECTURE.md` before acting depending if it's needed, and follow its ownership and change boundaries. Update the `ARCHITECTURE.md` if you modify things by the end of your response.
+When reviewing, creating, or modifying Luau code, you can read `ARCHITECTURE.md` before acting to not spend tokens on inspcection, depending if it's needed, and follow its ownership and change boundaries. Update the `ARCHITECTURE.md` if you modify things by the end of your response.
 
 ## Required Luau verification
 

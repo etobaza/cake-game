@@ -2,6 +2,7 @@
 -- Read the authored sidewalk nearest the entrance; keep street legs on that same side.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Configs.Guests).Street
+local World = require(ReplicatedStorage.Shared.World)
 
 local StreetRoute = {}
 export type Route = {
@@ -14,10 +15,7 @@ export type Route = {
 }
 
 function StreetRoute.Build(door: BasePart, porch: Vector3): Route?
-	local folder: Instance? = workspace
-	for _, name in Config.SidewalkPath do
-		folder = folder and folder:FindFirstChild(name)
-	end
+	local folder = World.Find(Config.SidewalkPath)
 	if not folder then
 		return nil
 	end
@@ -74,10 +72,7 @@ function StreetRoute.Enter(route: Route, position: Vector3): { Vector3 }
 end
 
 function StreetRoute.Circuit(): { Vector3 }
-	local folder: Instance? = workspace
-	for _, name in Config.SidewalkPath do
-		folder = folder and folder:FindFirstChild(name)
-	end
+	local folder = World.Find(Config.SidewalkPath)
 	if not folder then
 		return {}
 	end

@@ -21,6 +21,7 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local LoggerUtil = require(_Libs.Logger)
 local PlotHandler = require(_Handlers.PlotHandler)
 local Signal = require(_Libs.Signal)
+local World = require(_Shared.World)
 
 --[[ Private Variables ]]--
 local Logger = LoggerUtil.new({ name = "BaseHandler" })
@@ -65,12 +66,10 @@ local function resolveOrigin(bakery: Instance): CFrame
 end
 
 local function resolveTemplate(): Instance
-	local bakeries = workspace:WaitForChild(BaseConfig.BakeriesFolderName)
+	local bakeries = World.WaitForBakeries()
 	local template = bakeries:FindFirstChild(BaseConfig.TemplateName)
 	if not template then
-		error(
-			`[BaseHandler] Template bakery not found: Workspace.{BaseConfig.BakeriesFolderName}.{BaseConfig.TemplateName}`
-		)
+		error(`[BaseHandler] Template bakery not found: {bakeries:GetFullName()}.{BaseConfig.TemplateName}`)
 	end
 
 	return template

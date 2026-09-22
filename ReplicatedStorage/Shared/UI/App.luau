@@ -1,9 +1,10 @@
 --!strict
 -- Wires the UI up. It does not build any of it.
 --
--- Every screen is authored in StarterGui and arrives in PlayerGui on its own; this module finds
--- them, binds the HUD to player data, and makes each page's visibility follow Stores/Pages. That
--- keeps the layout in the editor where it can be drawn, and keeps the behaviour in code.
+-- Every screen is authored in StarterGui and arrives in PlayerGui on its own, inside the folder the
+-- UI package is mounted as; this module finds them under that root, binds the HUD to player data,
+-- and makes each page's visibility follow Stores/Pages. That keeps the layout in the editor where
+-- it can be drawn, and keeps the behaviour in code.
 --
 -- Returns the scope; destroy it to drop every binding and connection at once. The instances are not
 -- ours and are left alone.
@@ -152,11 +153,11 @@ local function borrowClose(screen: ScreenGui, donor: GuiButton): GuiButton
 end
 
 --[[ Handling ]]--
---- Binds everything under `playerGui`. Returns the scope and what was found.
-return function(deps: Deps, playerGui: Instance): (Flux.Node<any>, Mounted)
-	local hudScreen = playerGui:WaitForChild(HUD_SCREEN, FIND_TIMEOUT) :: ScreenGui?
+--- Binds every authored screen found directly under `root`. Returns the scope and what was found.
+return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
+	local hudScreen = root:WaitForChild(HUD_SCREEN, FIND_TIMEOUT) :: ScreenGui?
 	if not hudScreen then
-		error(`[UI.App] '{HUD_SCREEN}' is missing from PlayerGui`)
+		error(`[UI.App] '{HUD_SCREEN}' is missing from {root:GetFullName()}`)
 	end
 
 	local hudRoot = hudScreen:WaitForChild(HUD_ROOT, FIND_TIMEOUT)
@@ -164,9 +165,9 @@ return function(deps: Deps, playerGui: Instance): (Flux.Node<any>, Mounted)
 		error(`[UI.App] '{HUD_SCREEN}.{HUD_ROOT}' is missing`)
 	end
 
-	local statusScreen = playerGui:WaitForChild(STATUS_SCREEN, FIND_TIMEOUT)
+	local statusScreen = root:WaitForChild(STATUS_SCREEN, FIND_TIMEOUT)
 	local statusFrame = statusScreen and statusScreen:FindFirstChild(STATUS_FRAME)
-	local backdropScreen = playerGui:WaitForChild(BACKDROP_SCREEN, FIND_TIMEOUT)
+	local backdropScreen = root:WaitForChild(BACKDROP_SCREEN, FIND_TIMEOUT)
 	local dim = backdropScreen and backdropScreen:FindFirstChild(BACKDROP_FRAME)
 
 	local screens: { [string]: ScreenGui } = {}
@@ -183,18 +184,18 @@ return function(deps: Deps, playerGui: Instance): (Flux.Node<any>, Mounted)
 				continue
 			end
 
-			local screen = playerGui:WaitForChild(pageName, FIND_TIMEOUT)
+			local screen = root:WaitForChild(pageName, FIND_TIMEOUT)
 			if screen and screen:IsA("ScreenGui") then
 				screens[pageName] = screen
 			else
-				warn(`[UI.App] '{pageName}' never arrived in PlayerGui`)
+				warn(`[UI.App] '{pageName}' never arrived in {root:GetFullName()}`)
 			end
 		end
 	end
 
 	collect(Pages.Names)
 	collect(Pages.Planned)
-	local bakeryMenu = playerGui:WaitForChild("BakeryMenu", FIND_TIMEOUT) :: ScreenGui
+	local bakeryMenu = root:WaitForChild("BakeryMenu", FIND_TIMEOUT) :: ScreenGui
 	assert(bakeryMenu and bakeryMenu:IsA("ScreenGui"), "[UI.App] StarterGui.BakeryMenu is missing")
 
 	--- Visibility follows the store, and the screen's own close button clears it.

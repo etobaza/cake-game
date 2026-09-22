@@ -14,6 +14,7 @@ local Bus = require(ReplicatedStorage.Shared.Bus)
 local Config = require(ReplicatedStorage.Shared.Configs.Cats)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Sanitize = require(ReplicatedStorage.Shared.Sanitize)
+local World = require(ReplicatedStorage.Shared.World)
 local Logger = require(ReplicatedStorage.Shared.Libs.Logger).new({ name = "CatHandler" })
 
 type Cat = {
@@ -88,8 +89,8 @@ function CatHandler.OnInit(self: CatHandler): ()
 	self.Templates.Name = "CafeCatTemplates"
 	self.Templates.Parent = ServerStorage
 	self.Janitor:Add(self.Templates, "Destroy")
-	local assets = workspace:FindFirstChild("Asset")
-	for _, model in if assets then assets:GetChildren() else {} do
+	local assets = World.Assets()
+	for _, model in (if assets then assets:GetChildren() else {}) :: { Instance } do
 		if model.Name == "cat" and model:IsA("Model") and model:FindFirstChildWhichIsA("MeshPart", true) then
 			local template = model:Clone()
 			template.Parent = self.Templates
@@ -101,7 +102,7 @@ function CatHandler.OnInit(self: CatHandler): ()
 			< (b:FindFirstChildWhichIsA("MeshPart", true) :: MeshPart).MeshId
 	end)
 	if #self.Sources == 0 then
-		Logger:Warn("Workspace.Asset.cat templates are missing")
+		Logger:Warn("Workspace.World.Assets has no cat templates")
 	end
 end
 

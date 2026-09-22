@@ -29,6 +29,7 @@ local Guests = {
 		EndInset = 20,
 		ExitTimeout = 90,
 		FadeSeconds = 1,
+		-- Child names below the world package root (Workspace.World).
 		SidewalkPath = { "Environment", "Sidewalk" },
 		SidewalkName = "Sidewalk",
 	},

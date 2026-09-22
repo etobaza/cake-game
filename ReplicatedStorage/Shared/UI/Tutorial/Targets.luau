@@ -13,6 +13,7 @@ local Geometry = require(script.Parent.Geometry)
 local Interact = require(ReplicatedStorage.Handlers.InteractHandler)
 local Types = require(ReplicatedStorage.Shared.GameTypes)
 local UIHandler = require(ReplicatedStorage.Handlers.UIHandler)
+local World = require(ReplicatedStorage.Shared.World)
 
 --[[ Tables ]]--
 local Targets = {}
@@ -54,10 +55,11 @@ local function ui(path: string): GuiObject?
 end
 
 local function seat(part: BasePart, index: number): (CFrame?, Vector3?)
-	local bakeries = workspace:FindFirstChild(Base.BakeriesFolderName)
+	local bakeries = World.Bakeries()
 	local reference = bakeries and bakeries:FindFirstChild(Base.TemplateName)
 	local anchors = reference and reference:FindFirstChild(Base.AnchorsFolderName)
-	local anchor = anchors and anchors:FindFirstChild(part:GetAttribute(Buildings.IdAttribute))
+	local id = part:GetAttribute(Buildings.IdAttribute)
+	local anchor = if anchors and typeof(id) == "string" then anchors:FindFirstChild(id) else nil
 	if not anchor or not anchor:IsA("BasePart") then
 		return nil, nil
 	end

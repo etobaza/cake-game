@@ -7,21 +7,14 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Path = require(ReplicatedStorage.Shared.TrafficPath)
 local Simulation = require(ReplicatedStorage.Shared.TrafficSimulation)
 local TickHandler = require(script.Parent.TickHandler)
+local World = require(ReplicatedStorage.Shared.World)
 local Logger = require(ReplicatedStorage.Shared.Libs.Logger).new({ name = "TrafficHandler" })
 
 local TrafficHandler = { dependencies = { "TickHandler" } }
 
-local function find(path: { string }): Instance?
-	local current: Instance? = workspace
-	for _, name in path do
-		current = current and current:FindFirstChild(name)
-	end
-	return current
-end
-
 local function signals(janitor: any, road: BasePart, path: Path.Path): { number }
 	local stops: { number } = {}
-	local folder = find(Config.Signals.Path)
+	local folder = World.Find(Config.Signals.Path)
 	if not folder then
 		Logger:Warn("Traffic signal folder is missing")
 		return stops
@@ -84,9 +77,14 @@ function TrafficHandler.OnStart(self: TrafficHandler): ()
 	if not Config.Enabled then
 		return
 	end
-	local road, source = find(Config.RoadPath), find(Config.SourcePath)
-	if not road or not road:IsA("BasePart") or not source then
-		Logger:Warn("Authored road or vehicle pack is missing; traffic was not started")
+	local road = World.Find(Config.RoadPath)
+	if not road or not road:IsA("BasePart") then
+		Logger:Warn(`Authored road Workspace.World.{table.concat(Config.RoadPath, ".")} is missing; traffic was not started`)
+		return
+	end
+	local source = ReplicatedStorage.Assets.Models:FindFirstChild(Config.VehiclesFolder)
+	if not source then
+		Logger:Warn(`Assets.Models.{Config.VehiclesFolder} is missing; traffic was not started`)
 		return
 	end
 	local vehicles: { BasePart } = {}
@@ -96,7 +94,7 @@ function TrafficHandler.OnStart(self: TrafficHandler): ()
 		end
 	end
 	if #vehicles == 0 then
-		Logger:Warn("Vehicle pack contains no meshes")
+		Logger:Warn(`Assets.Models.{Config.VehiclesFolder} contains no meshes; traffic was not started`)
 		return
 	end
 	-- Publish every variant, then use a sparse random subset for this server's moving traffic.

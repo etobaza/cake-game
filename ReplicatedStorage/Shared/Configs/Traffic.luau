@@ -1,11 +1,12 @@
 --!strict
 -- Decorative traffic follows the authored road; the server supplies a shared clock origin.
+-- World paths are child names below the world package root (Workspace.World).
 return {
 	Enabled = true,
 	StateName = "TrafficState",
 	VisualName = "TrafficVisuals",
 	RoadPath = { "Environment", "Road", "road" },
-	SourcePath = { "vehicles-shared-atlas-fixed" },
+	VehiclesFolder = "Vehicles",
 	Speed = 44,
 	SpeedVariation = 0.12,
 	HeadwaySeconds = 1.2,
