@@ -1,3 +1,5 @@
+--!strict
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packet = require(ReplicatedStorage.Shared.Libs.Packet)
 
@@ -25,7 +27,11 @@ return {
 	Data = {
 		GetCloud = Packet("DataGetCloud", Packet.Nil):Response(Packet.Any),
 		GetSession = Packet("DataGetSession", Packet.Nil):Response(Packet.Any),
-		Update = Packet("DataUpdate", { Cloud = { Packet.Any }, Session = { Packet.Any } }),
+		-- Packet only serializes declared keys; Revision lets the client drop stale snapshots.
+		Update = Packet(
+			"DataUpdate",
+			{ Cloud = { Packet.Any }, Session = { Packet.Any }, Revision = Packet.NumberU32 }
+		),
 	},
 
 	Purchase = {

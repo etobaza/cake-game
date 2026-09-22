@@ -1,3 +1,4 @@
+--!strict
 -- Binds the player to their claimed pre-built bakery and tears the binding down on leave.
 -- Nothing is cloned: anchors live in the reference bakery (BaseConfig.TemplateName) and are mapped
 -- into the claimed one through the origin part transform. The artist's upgrade models in the bakery

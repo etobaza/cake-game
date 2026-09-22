@@ -1,3 +1,4 @@
+--!strict
 -- The one-slot hotbar. ToolViewHandler owns tools; TrayHandler owns food and ingredient/fuel visuals.
 
 --[[ Services ]]--
@@ -119,22 +120,26 @@ local function FitNameLabel(label: TextLabel): ()
 	label.TextXAlignment = Enum.TextXAlignment.Center
 	label.TextYAlignment = Enum.TextYAlignment.Center
 	label.LineHeight = 1
-	local constraint = label:FindFirstChildOfClass("UITextSizeConstraint")
-	if not constraint then
-		constraint = Instance.new("UITextSizeConstraint")
-		constraint.Parent = label
-	end
+	local constraint = label:FindFirstChildOfClass("UITextSizeConstraint") or Instance.new("UITextSizeConstraint")
+	constraint.Parent = label
 	constraint.MinTextSize = NAME_MIN_TEXT_SIZE
 	constraint.MaxTextSize = NAME_MAX_TEXT_SIZE
 end
 
-local function BuildName(slot: Frame): TextLabel
+local function FindNameLabel(slot: Frame): TextLabel
 	local label = slot:FindFirstChild(NAME_LABEL) :: TextLabel?
-	if not label then
-		label = (slot:FindFirstChild(NAME_SOURCE) :: TextLabel):Clone()
-		label.Name = NAME_LABEL
-		label.Parent = slot
+	if label then
+		return label
 	end
+
+	local clone = (slot:FindFirstChild(NAME_SOURCE) :: TextLabel):Clone()
+	clone.Name = NAME_LABEL
+	clone.Parent = slot
+	return clone
+end
+
+local function BuildName(slot: Frame): TextLabel
+	local label = FindNameLabel(slot)
 	-- Authored ItemName instances need the same normalization as freshly cloned numbers.
 	label.AnchorPoint = NAME_ANCHOR
 	label.Position = NAME_POSITION

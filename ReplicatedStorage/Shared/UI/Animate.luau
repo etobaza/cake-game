@@ -1,3 +1,4 @@
+--!strict
 -- Motion for the HUD, built on Ripple: springs that own one property of one element.
 -- Screens ask for an effect ("pop this", "fill that"), the tuning lives here and nowhere else.
 
@@ -65,6 +66,11 @@ local function GetScaler(element: GuiObject): UIScale
 	return scaler
 end
 
+-- Fit written by SetLayoutScale; an element that was never fitted keeps its authored scale.
+local function GetLayoutScale(element: GuiObject): number
+	return (element:GetAttribute("LayoutScale") :: number?) or 1
+end
+
 --[[ Handling ]]--
 -- The scale spring is a multiplier of the authored UIScale, so opening or pressing an element
 -- preserves its designed size. Callers use 1 for rest and 0 for fully hidden.
@@ -80,7 +86,7 @@ function Animate.Scale(element: GuiObject): any
 	local motion = Ripple.createMotion(1, { start = true, spring = POP_SPRING })
 
 	motion:onChange(function(value: number)
-		scaler.Scale = baseScale * (element:GetAttribute("LayoutScale") or 1) * value
+		scaler.Scale = baseScale * GetLayoutScale(element) * value
 	end)
 
 	Scales[element] = motion
@@ -126,7 +132,7 @@ function Animate.Enter(element: GuiObject, rise: number?): ()
 		motion = Ripple.createMotion(0, { start = true, spring = POP_SPRING })
 		motion:onChange(function(value: number)
 			RiseOffsets[element] = value
-			element.Position = (element:GetAttribute("RestPosition") or base) + UDim2.fromOffset(0, value)
+			element.Position = ((element:GetAttribute("RestPosition") :: UDim2?) or base) + UDim2.fromOffset(0, value)
 		end)
 
 		Rises[element] = motion
@@ -239,7 +245,7 @@ function Animate.Press(hitbox: GuiObject, target: GuiObject?, owner: any?): () -
 		motion:setPosition(1)
 		motion:setVelocity(0)
 		-- An already-idle spring need not emit another onChange. Restore the rendered scale now.
-		GetScaler(element).Scale = ScaleBases[element] * (element:GetAttribute("LayoutScale") or 1)
+		GetScaler(element).Scale = ScaleBases[element] * GetLayoutScale(element)
 	end
 end
 

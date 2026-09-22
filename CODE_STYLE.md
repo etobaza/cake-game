@@ -4,7 +4,7 @@ Luau style for new and changed application code. Read [AGENTS.md](AGENTS.md) and
 
 ## Structure and names
 
-- Start new application modules with `--!strict`; annotate named function parameters and returns. Preserve existing typed contracts when modifying older nonstrict framework/data files; do not turn a focused edit into a strictness migration. Never remove strict checking or add broad diagnostic suppression to hide errors.
+- Every application module must start with `--!strict` on its first line, new files included; `scripts/check.ps1` fails otherwise (only Wally packages and vendored libraries are exempt, through `luau-lsp.ignoreGlobs`). Never use `--!nonstrict` or `--!nocheck`, remove the directive, or add broad diagnostic suppression to hide errors. Annotate named function parameters and returns.
 - Use tabs, double-quoted strings, trailing commas in multiline tables, a final newline, and no trailing whitespace. Follow StyLua defaults and adjacent code. Avoid whole-file formatting churn; section comments can be rewritten by StyLua.
 - Use PascalCase for module/type names and public methods, UPPER_SNAKE_CASE for constants, and descriptive camelCase for parameters and function-local variables. Keep nearby private helper/field naming; do not import the Template's snakeCase locals or new `T_` prefixes into existing modules.
 - Folder references commonly use `_Shared`, `_Configs`, `_Handlers`, `_Packages`. Require package links by their actual lowercase/hyphenated names, such as `_Packages.janitor` and `_Packages["typed-promise"]`.

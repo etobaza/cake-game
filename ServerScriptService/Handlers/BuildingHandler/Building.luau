@@ -1,3 +1,4 @@
+--!strict
 -- One base building: a part in the world, a data node and an FSM over it.
 
 --[[ Services ]]--
@@ -10,6 +11,7 @@ local _Libs = _Shared.Libs
 
 --[[ Modules ]]--
 local BuildingsConfig = require(_Configs.Buildings)
+local FoodSurfaceView = require(script.Parent.FoodSurfaceView)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local LoggerUtil = require(_Libs.Logger)
 local StateMachine = require(_Libs.StateMachine)
@@ -45,7 +47,7 @@ export type Building = typeof(setmetatable(
 		State: any?,
 		FSM: any?,
 		Visual: Visual?,
-		FoodVisual: (Visual & { Frame: CFrame, SetFrame: (self: any, frame: CFrame) -> () })?,
+		FoodVisual: FoodSurfaceView.FoodSurfaceView?,
 		Janitor: any,
 		GardenAccumulator: number?,
 		RailPath: any?,

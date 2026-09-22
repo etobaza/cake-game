@@ -1,3 +1,4 @@
+--!strict
 -- Prompt view of one display slot: the dish on it, or an offer to put one down.
 
 --[[ Services ]]--

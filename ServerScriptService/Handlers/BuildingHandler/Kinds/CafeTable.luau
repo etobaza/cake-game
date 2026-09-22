@@ -1,3 +1,4 @@
+--!strict
 -- Cafe table FSM with independent dining places. A dirty place never evicts its occupied neighbour.
 -- Customer ids reserve seats before their bodies arrive; only cleaning makes a used seat available.
 

@@ -442,7 +442,16 @@ local list: { [string]: UpgradeDefinition } = {
 	},
 }
 
-local methods = {
+type UpgradesMethods = {
+	GetRemainingCost: (self: UpgradesRegistry, levels: { [string]: number }) -> number,
+	GetMissingRequirement: (self: UpgradesRegistry, entry: UpgradeEntry, levels: { [string]: number }) -> string?,
+	GetBranch: (self: UpgradesRegistry, category: GameTypes.UpgradeCategory) -> { UpgradeEntry },
+	GetCost: (self: UpgradesRegistry, upgradeId: string, currentLevel: number) -> number?,
+	GetDisplayName: (self: UpgradesRegistry, upgradeId: string, currentLevel: number) -> string,
+}
+export type UpgradesRegistry = Registry.Registry<UpgradeEntry> & UpgradesMethods
+
+local methods: UpgradesMethods = {
 	-- Sum in cents so an admin budget covers every remaining level without float drift.
 	GetRemainingCost = function(self: UpgradesRegistry, levels: { [string]: number }): number
 		local cents = 0
@@ -523,7 +532,6 @@ local methods = {
 	end,
 }
 
-local UpgradesRegistry = Registry.Build("Upgrades", list, methods)
-export type UpgradesRegistry = typeof(UpgradesRegistry)
+local UpgradesRegistry: UpgradesRegistry = Registry.Build("Upgrades", list, methods)
 
 return UpgradesRegistry

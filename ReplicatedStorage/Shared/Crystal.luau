@@ -1,3 +1,4 @@
+--!strict
 --[[
 Crystal.luau Framework
 Version 1.3.0
@@ -16,7 +17,7 @@ local Logger = LoggerUtil.new({ name = "Crystal" })
 local Crystal = {}
 Crystal.__index = Crystal
 
-local HANDLERS = {}
+local HANDLERS: { [string]: any } = {}
 local INSTANCES = {}
 local TOPOLOGICAL_ORDER: any = {}
 local MIDDLEWARE = {}
@@ -105,7 +106,7 @@ local function topologicalSort()
 	end
 
 	while #queue > 0 do
-		local name = table.remove(queue, 1)
+		local name = table.remove(queue, 1) :: string
 		table.insert(result, HANDLERS[name])
 		count += 1
 
@@ -169,7 +170,8 @@ end
 --[[ Public API ]]
 --- Registers a new handler module
 function Crystal.Register(module: ModuleScript)
-	local handlerDef = require(module)
+	-- Handlers are discovered at runtime, so strict mode cannot resolve this require statically.
+	local handlerDef = (require :: any)(module)
 
 	handlerDef.name = handlerDef.name or module.Name
 

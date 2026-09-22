@@ -1,3 +1,4 @@
+--!strict
 -- This data gets reset each session
 -- Data gets initialized and edited with other systems durning runtime
 

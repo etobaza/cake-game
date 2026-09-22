@@ -1,3 +1,5 @@
+--!strict
+
 export type ProfilerStats = {
 	total: number,
 	count: number,

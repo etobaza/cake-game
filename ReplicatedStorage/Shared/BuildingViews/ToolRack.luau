@@ -1,3 +1,4 @@
+--!strict
 -- Prompt view of a tool rack: take the tool it holds, put it back when done.
 -- One view for every rack — which tool it gives is the ToolId of the building kind.
 

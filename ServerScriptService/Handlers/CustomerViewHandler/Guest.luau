@@ -1,3 +1,4 @@
+--!strict
 -- One guest body: an avatar rig that walks to a spot, sits down and walks back out.
 -- Orders and patience are presented by the owner's HUD, without overhead UI.
 
@@ -74,11 +75,8 @@ export type Guest = typeof(setmetatable(
 -- The rig comes straight from the avatar service, so it has no Animate script of its own: without
 -- these tracks a guest slides across the room in a T-pose.
 local function LoadTracks(humanoid: Humanoid): { [string]: AnimationTrack }
-	local animator = humanoid:FindFirstChildOfClass("Animator")
-	if not animator then
-		animator = Instance.new("Animator")
-		animator.Parent = humanoid
-	end
+	local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator")
+	animator.Parent = humanoid
 
 	local ids = {
 		[IDLE] = GuestsConfig.Avatar.IdleAnimation,
@@ -91,7 +89,7 @@ local function LoadTracks(humanoid: Humanoid): { [string]: AnimationTrack }
 		local animation = Instance.new("Animation")
 		animation.AnimationId = id
 
-		tracks[name] = (animator :: Animator):LoadAnimation(animation)
+		tracks[name] = animator:LoadAnimation(animation)
 		animation:Destroy()
 	end
 

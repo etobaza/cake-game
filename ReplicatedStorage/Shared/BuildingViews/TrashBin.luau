@@ -1,3 +1,4 @@
+--!strict
 -- Prompt view of the trash bin: throws away whatever the player carries.
 
 --[[ Services ]]--

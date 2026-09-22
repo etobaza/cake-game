@@ -1,3 +1,4 @@
+--!strict
 -- Guest bodies in the world. The simulation lives in Session.Customers; this only says how a guest
 -- looks, where they stand and how fast they walk there.
 -- Offsets are measured from the building the guest came for, along that building's own facing,

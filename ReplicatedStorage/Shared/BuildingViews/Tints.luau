@@ -1,3 +1,4 @@
+--!strict
 -- Colours a building takes on while it is in a state worth noticing from across the room.
 -- One shared meaning per colour: the player learns four colours instead of one per station kind.
 -- A view returning no tint leaves the building its own colour from the registry.

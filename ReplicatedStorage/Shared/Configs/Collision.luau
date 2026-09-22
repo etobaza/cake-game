@@ -1,3 +1,4 @@
+--!strict
 -- Who walks through whom. Groups are registered once at boot by CollisionHandler; everything else
 -- only names the group it belongs to.
 -- The rule of the room: guests must never be blocked by anything except the shell of the building.

@@ -1,3 +1,4 @@
+--!strict
 -- Pre-built bakeries: one per player, claimed on join, released on leave.
 -- Anchors (building/entrance/spawn/spill points) are authored ONCE, in the reference bakery's
 -- Anchors folder: drag parts in Studio, every bakery follows. The other bakeries are rigid copies;

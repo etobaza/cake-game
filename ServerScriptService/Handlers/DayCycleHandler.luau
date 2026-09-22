@@ -1,3 +1,4 @@
+--!strict
 -- Day cycle: untimed prep, a timed shift, then manual end-of-day planning.
 -- One StateMachine per player owns the phase transitions; other systems subscribe to the signals.
 
@@ -48,12 +49,12 @@ DayCycleHandler.ShiftEnded = Signal() :: Signal.Signal<Player>
 DayCycleHandler.DayStarted = Signal() :: Signal.Signal<Player, number>
 
 --[[ Private Functions ]]--
--- Weak keys let destroyed guest bodies drop out of the set on their own.
-local function newGuestBodySet()
-	return setmetatable({} :: { [Model]: boolean }, { __mode = "k" })
-end
+type GuestBodySet = { [Model]: boolean }
 
-type GuestBodySet = typeof(newGuestBodySet())
+-- Weak keys let destroyed guest bodies drop out of the set on their own.
+local function newGuestBodySet(): GuestBodySet
+	return setmetatable({}, { __mode = "k" }) :: any
+end
 
 local function getDay(player: Player): any?
 	local data = DataHandler:GetData(player)
@@ -361,6 +362,9 @@ function DayCycleHandler.EnterSummary(self: DayCycleHandler, player: Player): ()
 	local completedFullShift = day.Phase == "Closing"
 	-- Early closing settles unfinished guests once before publishing the report.
 	local data = DataHandler:GetData(player)
+	if not data then
+		return
+	end
 	for _, customer in data.Session.Customers do
 		if customer.State == "Eating" then
 			self:AddResult(player, 0, 0, 1, 0)
@@ -547,6 +551,9 @@ function DayCycleHandler.AddResult(
 		return
 	end
 	local data = DataHandler:GetData(player)
+	if not data then
+		return
+	end
 	local before = data.Cloud.Cash
 	EconomyHandler:AddCash(player, coins)
 	day.Summary.Coins = math.round((day.Summary.Coins + data.Cloud.Cash - before) * 100) / 100

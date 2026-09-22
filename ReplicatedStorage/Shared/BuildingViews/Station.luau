@@ -1,3 +1,4 @@
+--!strict
 -- Prompt view of a kitchen station: what it is doing now and what the player can do with it.
 
 --[[ Services ]]--

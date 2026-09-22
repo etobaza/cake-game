@@ -98,7 +98,12 @@ local list: { [string]: IngredientDefinition } = {
 	},
 }
 
-local methods = {
+type IngredientsMethods = {
+	IsInfinite: (self: IngredientsRegistry, ingredientId: string) -> boolean,
+}
+export type IngredientsRegistry = Registry.Registry<IngredientEntry> & IngredientsMethods
+
+local methods: IngredientsMethods = {
 	-- Infinite ingredients are not stored in the pantry and are never spent.
 	IsInfinite = function(self: IngredientsRegistry, ingredientId: string): boolean
 		local entry = self:Get(ingredientId)
@@ -106,7 +111,6 @@ local methods = {
 	end,
 }
 
-local IngredientsRegistry = Registry.Build("Ingredients", list, methods)
-export type IngredientsRegistry = typeof(IngredientsRegistry)
+local IngredientsRegistry: IngredientsRegistry = Registry.Build("Ingredients", list, methods)
 
 return IngredientsRegistry

@@ -1,3 +1,4 @@
+--!strict
 -- Base buildings: stations, display, tables, garden, firewood and trash.
 -- Builds them from the player's stats, owns the instances, drives their FSMs and routes player actions.
 
@@ -506,7 +507,7 @@ function BuildingHandler.Update(self: BuildingHandler, deltaTime: number): ()
 		local data = DataHandler:GetData(player)
 		local day = data and data.Session.Day
 		local paused = day ~= nil and day.Phase == "Summary"
-		local simulationTime = if paused then day.SummaryStartedAt else now
+		local simulationTime = if paused and day then day.SummaryStartedAt else now
 		for _, building in base.Buildings do
 			building:Update(if paused then 0 else deltaTime, simulationTime, paused)
 		end
@@ -640,8 +641,9 @@ function BuildingHandler.Discard(self: BuildingHandler, player: Player, trashId:
 	end
 
 	local visual = building.Visual
-	if visual and visual.Play then
-		visual:Play()
+	local play = visual and visual.Play
+	if play then
+		play(visual)
 	end
 
 	return true
@@ -737,7 +739,7 @@ function BuildingHandler.Dispatch(
 	local building = self:GetBuilding(player, buildingId)
 	local behavior = building and building.Behavior
 	local perform = behavior and behavior[action]
-	if not perform or not building.State then
+	if not building or not perform or not building.State then
 		return
 	end
 

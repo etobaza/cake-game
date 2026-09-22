@@ -1,3 +1,4 @@
+--!strict
 -- Guests as physical figures: they walk in through the door wearing a real avatar, take a chair or
 -- step up to the display, react to their order, eat and walk back out.
 -- The simulation stays entirely in CustomerHandler; this handler only mirrors it into the world,

@@ -72,6 +72,27 @@ try {
         & selene .
     }
 
+    # Every first-party module is strict; vendored code is exempt through the analyzer's own ignore globs.
+    Invoke-Step -Name "Strict mode" -Action {
+        $settings = Get-Content -Raw -LiteralPath (Join-Path $projectRoot ".vscode\settings.json") | ConvertFrom-Json
+        $ignored = @($settings."luau-lsp.ignoreGlobs" | ForEach-Object { $_ -replace "\*\*", "*" })
+        $missing = @(foreach ($root in $roots) {
+            Get-ChildItem -LiteralPath (Join-Path $projectRoot $root) -Recurse -File |
+                Where-Object { $_.Extension -in ".lua", ".luau" } |
+                ForEach-Object {
+                    $relative = $_.FullName.Substring($projectRoot.Length + 1) -replace "\\", "/"
+                    $isIgnored = @($ignored | Where-Object { $relative -like $_ }).Count -gt 0
+                    if (-not $isIgnored -and (Get-Content -LiteralPath $_.FullName -TotalCount 1) -notmatch "^--!strict\s*$") {
+                        $relative
+                    }
+                }
+        })
+        foreach ($path in $missing) {
+            Write-Host "Missing --!strict on the first line: $path" -ForegroundColor Red
+        }
+        $global:LASTEXITCODE = [int]($missing.Count -gt 0)
+    }
+
     Invoke-Step -Name "Luau analysis (luau-lsp $(& luau-lsp --version))" -Action {
         & luau-lsp analyze `
             --platform roblox `

@@ -1,3 +1,4 @@
+--!strict
 -- Base buildings: how they look, how many there are and which class runs them.
 -- Where they stand is the reference bakery's Anchors folder (see Configs/Base): a part named after
 -- the building id, mapped into each bakery by BaseHandler's transform.
@@ -434,7 +435,7 @@ end
 function Buildings.GetToolId(buildingId: string): string?
 	for _, kind in Buildings.Kinds do
 		if kind.ToolId then
-			for _, single in kind.Singles or {} do
+			for _, single in (kind.Singles or {}) :: { Single } do
 				if single.Id == buildingId then
 					return kind.ToolId
 				end
@@ -460,7 +461,7 @@ end
 function Buildings.GivesFuel(buildingId: string): boolean
 	local kind = Buildings.FuelPileKind()
 
-	for _, single in (kind and kind.Singles) or {} do
+	for _, single in ((kind and kind.Singles) or {}) :: { Single } do
 		if single.Id == buildingId then
 			return true
 		end
@@ -512,7 +513,7 @@ function Buildings.WorldModel(part: BasePart): Instance?
 	local kind = if typeof(kindName) == "string" then Buildings.Kinds[kindName] else nil
 	local path = kind and kind.WorldModel
 	local propId = part:GetAttribute(Buildings.IdAttribute)
-	for _, single in (kind and kind.Singles) or {} do
+	for _, single in ((kind and kind.Singles) or {}) :: { Single } do
 		if single.Id == propId and single.WorldModel then
 			path = single.WorldModel
 			break

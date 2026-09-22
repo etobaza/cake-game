@@ -55,6 +55,11 @@ This is an existing Roblox bakery game, not a blank template. Disk folders mirro
 - Do not edit generated Wally packages or vendored `Shared/Libs/{Packet,PartCache,Ripple,Signal}`. `Logger` and `StateMachine` in the same folder are project-owned.
 - After changing either `wally.toml`, run `scripts/install-packages.ps1`, never bare `wally install`. It installs, flattens packages for Script Sync, regenerates the sourcemap, and fixes package link types. Keep manifests and lock files together; do not hand-edit generated links.
 
+## Strict Luau (mandatory)
+
+- Every first-party `.lua` / `.luau` file must begin with `--!strict` on line 1, new files included. Only generated Wally packages and the vendored `Shared/Libs/{Packet,PartCache,Ripple,Signal}` are exempt; `scripts/check.ps1` rejects any other file without the header.
+- Never use `--!nonstrict` or `--!nocheck`, remove or move the directive, or widen `luau-lsp.ignoreGlobs` to escape analysis. Fix type errors instead of silencing them; cast to `any` only at a genuinely dynamic boundary, as narrowly as [CODE_STYLE.md](CODE_STYLE.md) describes.
+
 ## Required Luau verification
 
 After adding, removing, or modifying any `.lua` or `.luau` file:
@@ -70,7 +75,7 @@ After adding, removing, or modifying any `.lua` or `.luau` file:
 5. Do not report completion until both Selene and full-project type analysis exit successfully.
 6. If the editor reports an error that the CLI does not, compare the editor and CLI `luau-lsp` versions and reproduce the check using the editor’s exact version.
 
-`scripts/check.ps1` runs steps 1–3 with the correct arguments. A bare `luau-lsp analyze .` is not a valid check: without the definitions, sourcemap and settings it reports every Roblox global and `require` as unknown.
+`scripts/check.ps1` runs steps 1–3 with the correct arguments and also fails when a first-party module does not start with `--!strict`. A bare `luau-lsp analyze .` is not a valid check: without the definitions, sourcemap and settings it reports every Roblox global and `require` as unknown.
 
 After changing a `wally.toml`, run `scripts/install-packages.ps1` (never a bare `wally install`): it also flattens the packages into the layout Studio's Script Sync expects and regenerates the sourcemap and link-file types.
 

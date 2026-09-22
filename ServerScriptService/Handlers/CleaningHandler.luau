@@ -1,3 +1,4 @@
+--!strict
 -- Spills: dough dropped while cooking and mopped by hand with the broom.
 --
 -- The puddles are the artist's own models, standing in the kitchen's `Spills` folder. Nothing is
@@ -105,10 +106,14 @@ end
 local function GetKitchenFloor(player: Player): BasePart?
 	local kitchen = GetKitchen(player)
 	local ground = kitchen and kitchen:FindFirstChild("Up/Ground")
+	if not ground then
+		return nil
+	end
+
 	local best: BasePart? = nil
 	local bestArea = 0
 
-	for _, child in (ground and ground:GetDescendants() or {}) do
+	for _, child in ground:GetDescendants() do
 		if child:IsA("BasePart") then
 			local area = child.Size.X * child.Size.Z
 			if area > bestArea then
@@ -296,12 +301,11 @@ function CleaningHandler.ClearSpills(self: CleaningHandler, player: Player): ()
 	end
 
 	local runtime = self.Runtime[player]
-	for part, home in if runtime then runtime.Homes else {} do
-		SetSpillShown(part, false)
-		MoveProp(part, home)
-	end
-
 	if runtime then
+		for part, home in runtime.Homes do
+			SetSpillShown(part, false)
+			MoveProp(part, home)
+		end
 		table.clear(runtime.Parts)
 	end
 

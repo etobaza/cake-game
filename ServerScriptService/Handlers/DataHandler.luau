@@ -1,3 +1,4 @@
+--!strict
 --[[
 	⚠️ WARNING: PROXIED DATA TABLES ⚠️
 
@@ -98,13 +99,19 @@ export type PlayerData = {
 -- Fired when a player's profile has attached and proxies are ready.
 DataHandler.PlayerReady = Signal() :: Signal.Signal<Player, PlayerData>
 
-local PlayerStore = ProfileStore.New(DataHandler.StoreName, cloudDataTemplate)
+local LiveStore = ProfileStore.New(DataHandler.StoreName, cloudDataTemplate)
+local PlayerStore: typeof(LiveStore.Mock) = LiveStore
 
 if (IS_STUDIO and not DataHandler.StudioSavingEnabled) or DataHandler.ForceMockData then
-	PlayerStore = PlayerStore.Mock
+	PlayerStore = LiveStore.Mock
 end
 
-local Profiles: { [Player]: typeof(PlayerStore:StartSessionAsync()) } = {}
+-- Game code reaches profile data through the proxies; this map only drives the session lifecycle.
+type ActiveProfile = {
+	IsActive: (self: any) -> boolean,
+	EndSession: (self: any) -> (),
+}
+local Profiles: { [Player]: ActiveProfile } = {}
 
 local PENDING_UPDATES: { [Player]: PlayerUpdates } = {}
 local UPDATE_THROTTLE: number = 1 / 30
@@ -258,7 +265,7 @@ end
 
 local function processUpdateQueue()
 	for player in UPDATE_QUEUE do
-		if player and player.Parent == Players then
+		if player.Parent == Players then
 			flushPlayerUpdates(player)
 		else
 			UPDATE_QUEUE[player] = nil
@@ -347,6 +354,11 @@ local function createProxy(t: any, player: Player, dataType: DataKind, basePath:
 	return setmetatable(proxy, metatable)
 end
 
+-- The raw table a createProxy proxy wraps.
+local function originalOf(proxy: any): any
+	return getmetatable(proxy).__originalTable
+end
+
 -- Both stores as one full snapshot, sent once the profile is attached.
 local function sendInitialSnapshot(handler: any, player: Player)
 	task.defer(function()
@@ -355,8 +367,8 @@ local function sendInitialSnapshot(handler: any, player: Player)
 			return
 		end
 
-		local originalData = getmetatable(current.Cloud).__originalTable
-		local originalSessionData = getmetatable(current.Session).__originalTable
+		local originalData = originalOf(current.Cloud)
+		local originalSessionData = originalOf(current.Session)
 
 		DataUpdateRemote:FireClient(player, {
 			Cloud = { { path = {}, value = deepClone(originalData) } },
@@ -394,11 +406,11 @@ function DataHandler.OnInit(self: DataHandler)
 		profile:Reconcile()
 
 		-- Deep-clone session template so players never share nested tables
-		profile.SessionData = deepClone(sessionDataTemplate)
+		local sessionData = deepClone(sessionDataTemplate)
 
 		local playerData: PlayerData = {
 			Cloud = createProxy(profile.Data, player, K.Cloud, {}, self),
-			Session = createProxy(profile.SessionData, player, K.Session, {}, self),
+			Session = createProxy(sessionData, player, K.Session, {}, self),
 			CloudDataUpdated = Signal() :: Signal.Signal<typeof(cloudDataTemplate)>,
 			SessionDataUpdated = Signal() :: Signal.Signal<typeof(sessionDataTemplate)>,
 			DataUpdated = Signal() :: Signal.Signal<PlayerData>,
@@ -465,7 +477,7 @@ function DataHandler.OnInit(self: DataHandler)
 		local profile = self:GetData(plr)
 		if profile then
 			initialSent[plr].Session = true
-			return getmetatable(profile.Session).__originalTable
+			return originalOf(profile.Session)
 		end
 		return nil
 	end
@@ -474,7 +486,7 @@ function DataHandler.OnInit(self: DataHandler)
 		local profile = self:GetData(plr)
 		if profile then
 			initialSent[plr].Cloud = true
-			return getmetatable(profile.Cloud).__originalTable
+			return originalOf(profile.Cloud)
 		end
 		return nil
 	end
@@ -536,9 +548,9 @@ function DataHandler.GetOriginalTable(self: DataHandler, player: Player, dataTyp
 	end
 
 	if dataType == K.Cloud then
-		return getmetatable(profile.Cloud).__originalTable
+		return originalOf(profile.Cloud)
 	else
-		return getmetatable(profile.Session).__originalTable
+		return originalOf(profile.Session)
 	end
 end
 

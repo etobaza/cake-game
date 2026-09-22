@@ -1,3 +1,4 @@
+--!strict
 -- Prompt view of a shared cafe table. A matching held dish selects its waiting guest;
 -- cleaning clears dirty places while another guest may still be ordering or eating.
 

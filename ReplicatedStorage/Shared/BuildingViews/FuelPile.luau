@@ -1,3 +1,4 @@
+--!strict
 -- Prompt view of the firewood pile: one visit puts one log into the player's hands. The log is then
 -- carried to an oven, which is where it actually turns into fuel (Kinds/Station.Refuel).
 

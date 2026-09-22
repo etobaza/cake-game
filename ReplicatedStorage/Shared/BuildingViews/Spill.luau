@@ -1,3 +1,4 @@
+--!strict
 -- Prompt view of a floor spill: mop it, but only while the broom is in the player's hands.
 
 --[[ Services ]]--

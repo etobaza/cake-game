@@ -1,3 +1,4 @@
+--!strict
 --[[
 	Replicated player data cache (Cloud + Session). Server pushes updates via Bus.Data.Update;
 	this handler mirrors the server store and exposes read/subscribe APIs.
@@ -15,6 +16,13 @@ type DataPath = { string | number }
 type DataKind = "Cloud" | "Session"
 type SubscribeChannel = DataKind | "Any"
 
+type StoreUpdate = { path: DataPath?, value: any }
+type UpdatePacket = {
+	Revision: number?,
+	Cloud: { StoreUpdate }?,
+	Session: { StoreUpdate }?,
+}
+
 type CloudData = typeof(require(script.Config.CloudData))
 type SessionData = typeof(require(script.Config.SessionData))
 
@@ -30,7 +38,7 @@ local DataHandlerClient = {
 }
 
 -- Helper function to set value by path in nested table
-local function setValueByPath(tbl, path: DataPath, value)
+local function setValueByPath(tbl: { [any]: any }, path: DataPath, value: any): ()
 	local current = tbl
 	for i = 1, #path - 1 do
 		local key = path[i]
@@ -45,7 +53,7 @@ local function setValueByPath(tbl, path: DataPath, value)
 end
 
 -- Helper function to get value by path in nested table
-local function getValueByPath(tbl, path: DataPath)
+local function getValueByPath(tbl: { [any]: any }, path: DataPath): any
 	local current = tbl
 	for i = 1, #path do
 		local key = path[i]
@@ -99,7 +107,11 @@ function DataHandlerClient.OnStart(self: DataHandlerClient)
 end
 
 --- Applies one store's deltas. An empty path means a full snapshot of that store.
-function DataHandlerClient._applyStoreUpdates(self: DataHandlerClient, kind: DataKind, updates): boolean
+function DataHandlerClient._applyStoreUpdates(
+	self: DataHandlerClient,
+	kind: DataKind,
+	updates: { StoreUpdate }
+): boolean
 	local hasUpdates = false
 	local isCloud = kind == K.Cloud
 
@@ -125,7 +137,7 @@ function DataHandlerClient._applyStoreUpdates(self: DataHandlerClient, kind: Dat
 	return hasUpdates
 end
 
-function DataHandlerClient._handleDataUpdate(self: DataHandlerClient, updatePacket)
+function DataHandlerClient._handleDataUpdate(self: DataHandlerClient, updatePacket: UpdatePacket)
 	local revision = updatePacket.Revision
 	if typeof(revision) == "number" then
 		-- Drop stale/out-of-order packets so a delayed snapshot cannot wipe newer deltas.
@@ -223,7 +235,7 @@ end
 
 --- @param path Path from store root; `{}` returns the full Cloud or Session table.
 --- @param dataType Defaults to Cloud.
-function DataHandlerClient.GetData(self: DataHandlerClient, path: DataPath, dataType: DataKind?)
+function DataHandlerClient.GetData(self: DataHandlerClient, path: DataPath, dataType: DataKind?): any
 	dataType = dataType or K.Cloud
 
 	if dataType ~= K.Cloud and dataType ~= K.Session then

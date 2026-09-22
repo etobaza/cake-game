@@ -1,3 +1,4 @@
+--!strict
 -- Which packet triggers which building action. Adding an action is one row here, not a new listener.
 -- Every route validates its argument before the handler dispatches it to the building.
 

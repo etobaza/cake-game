@@ -1,3 +1,4 @@
+--!strict
 -- This data gets saved in to the cloud
 
 return {

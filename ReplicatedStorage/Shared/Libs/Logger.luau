@@ -1,3 +1,4 @@
+--!strict
 -- Logger.luau
 -- Advanced logging system with configurable outputs and diagnostics
 -- koi-code <3

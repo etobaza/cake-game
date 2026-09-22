@@ -1,3 +1,4 @@
+--!strict
 -- Physical view of a building: a placeholder part and the prompt.
 -- No state here: the prompt is filled in by the client from the data. There is no floating name
 -- label -- the custom prompt plate carries the name and status when the player is near.

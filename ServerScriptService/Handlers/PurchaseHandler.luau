@@ -1,3 +1,5 @@
+--!strict
+
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -51,9 +53,9 @@ end
 local function createPurchasePromise(key: string): PurchasePromise
 	local promise = {
 		_key = key,
-		_resolveCallback = nil,
-		_rejectCallback = nil,
-		_finallyCallback = nil,
+		_resolveCallback = nil :: (() -> ())?,
+		_rejectCallback = nil :: ((err: string) -> ())?,
+		_finallyCallback = nil :: (() -> ())?,
 	}
 
 	function promise:andThen(callback: () -> ())
@@ -278,10 +280,9 @@ local function processReceipt(receiptInfo: any): Enum.ProductPurchaseDecision
 	end
 
 	-- Phase 3: side effects. Failures must not trigger Roblox retry (would double-fire).
-	local grantOk, grantErr = pcall(grantProduct, resolved.recipient, resolved.grantProductId, resolved.isGift)
-	if not grantOk then
+	xpcall(grantProduct, function(grantErr: any)
 		Logger:Error(`ProcessReceipt grant notify failed for {receiptId}: {grantErr}`)
-	end
+	end, resolved.recipient, resolved.grantProductId, resolved.isGift)
 
 	return Enum.ProductPurchaseDecision.PurchaseGranted
 end

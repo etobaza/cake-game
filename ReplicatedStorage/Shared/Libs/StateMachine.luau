@@ -1,3 +1,4 @@
+--!strict
 --[[
 	StateMachine.luau
 	Optimized Finite State Machine Implementation
@@ -29,7 +30,7 @@
 		• from: string | {string} - Source state(s) or "*" for any state
 		• to: string - Target state name
 		• condition: (params: {any}) -> boolean - Function that must return true for transition
-		• onTransition: (() -> ())? - Optional callback during transition
+		• onTransition: ((params, fromState, toState) -> ())? - Optional callback during transition
 		• priority: number? - Higher priority transitions are evaluated first
 
 	StateMachineConfig: Configuration object for creating a state machine
@@ -108,7 +109,7 @@ export type Transition = {
 	from: string | { string },
 	to: string,
 	condition: (params: { any }) -> boolean,
-	onTransition: (() -> ())?,
+	onTransition: ((params: { [any]: any }, fromState: string, toState: string) -> ())?,
 	priority: number?,
 }
 
@@ -121,13 +122,29 @@ type StateMachineConfig = {
 	errorHandler: ((string) -> ())?,
 }
 
+export type StateMachine = typeof(setmetatable(
+	{} :: {
+		current: State?,
+		states: { [string]: State },
+		fromTransitions: { [string]: { Transition } },
+		params: { [any]: any },
+		history: { string },
+		onStateChange: Signal.Signal<State, State?>,
+		historySize: number,
+		errorHandler: (message: string) -> (),
+		_historyIndex: number,
+		_transitionCache: { [string]: { Transition } },
+	},
+	StateMachine
+))
+
 --[[
 	Creates a new StateMachine instance
 	@param config: StateMachineConfig - Configuration object defining states, transitions, and behavior
 	@return StateMachine - New state machine instance
 	@throws Error if initial state is undefined or transitions reference undefined states
 ]]
-function StateMachine.new(config: StateMachineConfig)
+function StateMachine.new(config: StateMachineConfig): StateMachine
 	local self = setmetatable({
 		current = nil :: State?, -- Current active state
 		states = {}, -- Registered states by name
@@ -139,7 +156,7 @@ function StateMachine.new(config: StateMachineConfig)
 		errorHandler = config.errorHandler or error, -- Custom error handler
 		_historyIndex = 0, -- Circular buffer current position
 		_transitionCache = {}, -- Cached sorted transitions by state
-	}, StateMachine)
+	}, StateMachine) :: StateMachine
 
 	self:_validateConfig(config)
 	self:_registerStates(config.states)
@@ -163,7 +180,7 @@ end
 	- Fires onStateChange signal
 	- Adds previous state to history
 ]]
-function StateMachine:SetState(newState: string, ...: any)
+function StateMachine.SetState(self: StateMachine, newState: string, ...: any): ()
 	local nextState = self.states[newState]
 	if not nextState then
 		self.errorHandler(`Attempted to switch to undefined state '${newState}'`)
@@ -204,7 +221,7 @@ end
 	- Uses cached transitions for performance
 	- Only executes the highest priority valid transition per update
 ]]
-function StateMachine:Update(dt: number)
+function StateMachine.Update(self: StateMachine, dt: number): ()
 	if not self.current then
 		return
 	end
@@ -253,7 +270,7 @@ end
 	Gets the name of the current state
 	@return string? - Current state name or nil if no state active
 ]]
-function StateMachine:GetCurrentState(): string?
+function StateMachine.GetCurrentState(self: StateMachine): string?
 	return self.current and self.current.name
 end
 
@@ -261,7 +278,7 @@ end
 	Gets state transition history in chronological order (oldest first)
 	@return {string} - Array of state names representing transition history
 ]]
-function StateMachine:GetStateHistory(): { string }
+function StateMachine.GetStateHistory(self: StateMachine): { string }
 	local count = #self.history
 	if count == 0 then
 		return {}
@@ -296,7 +313,7 @@ end
 	@param key: any - Parameter key
 	@param value: any - Parameter value
 ]]
-function StateMachine:SetParam(key: any, value: any)
+function StateMachine.SetParam(self: StateMachine, key: any, value: any): ()
 	self.params[key] = value
 end
 
@@ -304,27 +321,31 @@ end
 	Adds a new transition to the state machine
 	@param transition: Transition - Transition to add
 ]]
-function StateMachine:AddTransition(transition: Transition)
+function StateMachine.AddTransition(self: StateMachine, transition: Transition): ()
 	self:_registerTransitions({ transition })
 end
 
 --[[ PRIVATE METHODS ]]
+
+-- A transition names one source state or a list of them.
+local function sourceStates(transition: Transition): { string }
+	local from = transition.from
+	return if type(from) == "table" then from else { from }
+end
 
 --[[
 	Validates configuration for correctness
 	@param config: StateMachineConfig - Configuration to validate
 	@throws Error if initial state is missing or transitions reference undefined states
 ]]
-function StateMachine:_validateConfig(config: StateMachineConfig)
+function StateMachine._validateConfig(_self: StateMachine, config: StateMachineConfig): ()
 	if not config.states[config.initialState] then
 		error(`Initial state '{config.initialState}' not found in states`)
 	end
 
 	if config.transitions ~= nil then
 		for _, transition in config.transitions do
-			local fromStates = type(transition.from) == "table" and transition.from or { transition.from }
-
-			for _, fromState in fromStates do
+			for _, fromState in sourceStates(transition) do
 				if fromState ~= "*" and not config.states[fromState] then
 					error(`Transition from undefined state '${fromState}'`)
 				end
@@ -341,7 +362,7 @@ end
 	@param states: {[string]: StateDefinition} - Table of state names to state definitions
 	@throws Error if duplicate state names are detected
 ]]
-function StateMachine:_registerStates(states: { [string]: StateDefinition })
+function StateMachine._registerStates(self: StateMachine, states: { [string]: StateDefinition }): ()
 	for name, state in states do
 		if self.states[name] then
 			error(`Duplicate state registration: '${name}'`)
@@ -371,7 +392,7 @@ end
 	Registers and sorts transitions by priority
 	@param transitions: {Transition}? - Optional list of transitions to register
 ]]
-function StateMachine:_registerTransitions(transitions: { Transition }?)
+function StateMachine._registerTransitions(self: StateMachine, transitions: { Transition }?): ()
 	if transitions then
 		-- Sort transitions by priority (highest first)
 		table.sort(transitions, function(a, b)
@@ -379,9 +400,7 @@ function StateMachine:_registerTransitions(transitions: { Transition }?)
 		end)
 
 		for _, transition in transitions do
-			local fromStates = type(transition.from) == "table" and transition.from or { transition.from }
-
-			for _, fromState in fromStates do
+			for _, fromState in sourceStates(transition) do
 				self.fromTransitions[fromState] = self.fromTransitions[fromState] or {}
 				table.insert(self.fromTransitions[fromState], transition)
 			end
@@ -393,7 +412,7 @@ end
 	Adds state to history using circular buffer
 	@param state: State - State to add to history
 ]]
-function StateMachine:_addToHistory(state: State)
+function StateMachine._addToHistory(self: StateMachine, state: State): ()
 	self._historyIndex = (self._historyIndex % self.historySize) + 1
 	self.history[self._historyIndex] = state.name
 end

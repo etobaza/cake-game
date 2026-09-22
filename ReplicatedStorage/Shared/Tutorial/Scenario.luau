@@ -131,7 +131,8 @@ function Scenario.Resolve(cloud: any, session: any, props: any, page: string, no
 	end
 	local customer = session.Customers[context.GuestId]
 	local held = session.Hands[1]
-	local recipe = Recipes:Get(Policy.Recipe(session))
+	local recipeId = Policy.Recipe(session)
+	local recipe = recipeId and Recipes:Get(recipeId)
 	if not recipe then
 		return nil
 	end

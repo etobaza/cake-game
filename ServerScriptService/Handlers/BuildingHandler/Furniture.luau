@@ -1,3 +1,4 @@
+--!strict
 -- Real props for a building: the room's own table and chairs instead of a placeholder block.
 -- Models clone from the template. Artist copies near the spawned slot come down; extras stay.
 
@@ -151,7 +152,7 @@ end
 -- Hides every part under a model, remembering what to put back. Used both for the artist copies a
 -- spawned building replaces and for a tool that has been picked up off its stand.
 function Furniture.Hide(root: Instance, hidden: { Hidden }): ()
-	local pieces = if root:IsA("BasePart") then { root } else {}
+	local pieces: { BasePart } = if root:IsA("BasePart") then { root } else {}
 	for _, piece in root:GetDescendants() do
 		if piece:IsA("BasePart") then
 			table.insert(pieces, piece)

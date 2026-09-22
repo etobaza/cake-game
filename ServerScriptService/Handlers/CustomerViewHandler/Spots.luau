@@ -1,3 +1,4 @@
+--!strict
 -- Where a guest belongs in the room: the chair at their table, a place at the display, or the queue
 -- by the door. Pure geometry over the buildings that already stand, no state of its own.
 -- Offsets are measured in the building's own space, so they survive the room being re-laid out.

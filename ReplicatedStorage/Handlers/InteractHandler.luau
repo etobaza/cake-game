@@ -1,3 +1,4 @@
+--!strict
 -- World interaction: keeps the prompts and labels of the player's own buildings up to date
 -- and sends the intent when one is triggered.
 -- What each building says and fires lives in Shared/BuildingViews; this handler only routes.
@@ -214,7 +215,7 @@ function InteractHandler.RefreshAll(self: InteractHandler): ()
 
 	for part in self.Props do
 		if part.Parent then
-			self:RefreshProp(part)
+			self:RefreshProp(part :: BasePart)
 		else
 			self.Props[part] = nil
 		end
@@ -226,7 +227,7 @@ function InteractHandler.RefreshProp(self: InteractHandler, part: BasePart): ()
 	local kindName = part:GetAttribute(BuildingsConfig.KindAttribute) :: string
 	local view = ResolveView(kindName)
 	local context = BuildContext(propId, kindName, part)
-	local state = if view then view.Describe(context) else { Label = kindName }
+	local state: Types.PromptState = if view then view.Describe(context) else { Label = kindName }
 	local prompt = part:FindFirstChildOfClass("ProximityPrompt")
 	local kind = BuildingsConfig.Kinds[kindName]
 

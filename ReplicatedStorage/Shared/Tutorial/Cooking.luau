@@ -236,7 +236,7 @@ function Cooking.Resolve(cloud: any, session: any, props: any, recipe: any, page
 	if held and held.Kind == "Dough" then
 		local doughRecipe = Recipes:Get(held.Id)
 		local id = doughRecipe and State.Station(session, doughRecipe.station, "Idle")
-		if id then
+		if doughRecipe and id then
 			return State.Goal(
 				"load_dough",
 				"Put the dough in the " .. string.lower(doughRecipe.station),

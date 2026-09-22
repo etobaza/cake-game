@@ -1,3 +1,4 @@
+--!strict
 -- Pantry: the stock of garden ingredients. Flour and sugar are infinite and are not kept here.
 
 --[[ Services ]]--
@@ -26,6 +27,15 @@ local PantryHandler = {
 local function GetPantry(player: Player): { [string]: number }?
 	local data = DataHandler:GetData(player)
 	return data and data.Cloud.Pantry
+end
+
+-- An ingredient that runs out leaves the pantry instead of staying at zero.
+local function SetAmount(pantry: { [string]: number }, ingredientId: string, amount: number): ()
+	if amount > 0 then
+		pantry[ingredientId] = amount
+	else
+		pantry[ingredientId] = nil
+	end
 end
 
 --[[ Handling ]]--
@@ -70,7 +80,7 @@ function PantryHandler.Take(
 	end
 
 	assert(pantry, "finite ingredients require a pantry")
-	pantry[ingredientId] = if amount > 1 then amount - 1 else nil
+	SetAmount(pantry, ingredientId, amount - 1)
 	return true
 end
 
@@ -137,8 +147,7 @@ function PantryHandler.ConsumeAll(self: PantryHandler, player: Player, ingredien
 			continue
 		end
 
-		local left = (pantry[ingredientId] or 0) - amount
-		pantry[ingredientId] = if left > 0 then left else nil
+		SetAmount(pantry, ingredientId, (pantry[ingredientId] or 0) - amount)
 	end
 
 	return true

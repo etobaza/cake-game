@@ -1,3 +1,4 @@
+--!strict
 -- Kitchen station: mixer, ovens, freezer, coffee.
 -- Transitions Idle/Loaded -> Mixing/Cooking -> Ready -> Burnt are declared in the FSM.
 
@@ -27,6 +28,7 @@ local PantryHandler = require(_Handlers.PantryHandler)
 local PickupOrigin = require(script.Parent.Parent.PickupOrigin)
 local PlayerHandler = require(_Handlers.PlayerHandler)
 local Recipes = require(_Configs.Registries.Recipes)
+local StateMachine = require(_Libs.StateMachine)
 local UpgradeHandler = require(_Handlers.UpgradeHandler)
 
 --[[ Constants ]]--
@@ -233,7 +235,7 @@ local function BuildStates(building: any, state: any): any
 end
 
 -- The only transitions the player does not push: the timers.
-local function BuildTransitions(state: any): any
+local function BuildTransitions(state: any): { StateMachine.Transition }
 	local function IsBaked(params: any): boolean
 		return HeatTime(state, params.Now) >= state.ReadyAt
 	end
@@ -320,14 +322,14 @@ function Station.Mix(building: any): boolean
 		return Reject(building, "wrong_station")
 	end
 
-	if not DayCycleHandler:IsOnMenu(building.Player, recipeId) then
+	if not DayCycleHandler:IsOnMenu(building.Player, recipe.id) then
 		return Reject(building, "not_on_menu")
 	end
 
 	if building.Definition.Mixes then
 		-- A stale Mix prompt must not bypass the ingredient refusal shown by the current prompt.
 		local held = InventoryHandler:Peek(building.Player)
-		local failure = held and held.Kind == "Ingredient" and ingredientFailure(recipe, state, held.Id)
+		local failure = if held and held.Kind == "Ingredient" then ingredientFailure(recipe, state, held.Id) else nil
 		if failure then
 			return Reject(building, failure)
 		end
@@ -379,7 +381,7 @@ function Station.LoadRailIngredient(building: any, ingredientId: string): boolea
 	if
 		not recipe
 		or building.Kind ~= Recipes:GetStartStation(recipe)
-		or not DayCycleHandler:IsOnMenu(building.Player, recipeId)
+		or not DayCycleHandler:IsOnMenu(building.Player, recipe.id)
 	then
 		return false
 	end
@@ -509,7 +511,7 @@ function Station.Collect(building: any): boolean
 	local state = building.State
 
 	if state.State == "Burnt" then
-		local item = { Kind = "Burnt", Id = state.RecipeId or "" }
+		local item: GameTypes.ItemStack = { Kind = "Burnt", Id = state.RecipeId or "" }
 		if not InventoryHandler:Push(building.Player, item, PickupOrigin.ForBuilding(building)) then
 			return Reject(building, "hands_full")
 		end
@@ -531,7 +533,7 @@ function Station.Collect(building: any): boolean
 
 	-- Dough leaves the mixer when the recipe continues on another station.
 	local isFinished = not building.Definition.Mixes or recipe.cookSeconds == 0
-	local item = { Kind = if isFinished then "Dish" else "Dough", Id = recipe.id }
+	local item: GameTypes.ItemStack = { Kind = if isFinished then "Dish" else "Dough", Id = recipe.id }
 
 	if not InventoryHandler:Push(building.Player, item, PickupOrigin.ForBuilding(building)) then
 		return Reject(building, "hands_full")

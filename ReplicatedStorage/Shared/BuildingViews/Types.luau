@@ -1,3 +1,4 @@
+--!strict
 -- What a building view gets and what it returns.
 -- The context is built by InteractHandler: views read state through it and never touch handlers.
 

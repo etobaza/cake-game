@@ -1,3 +1,5 @@
+--!strict
+
 local RegistryFactory = {}
 
 --[[

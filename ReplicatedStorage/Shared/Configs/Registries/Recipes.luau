@@ -693,7 +693,16 @@ local STATION_ICONS: { [string]: string } = {
 	Coffee = "rbxassetid://95112718749723",
 }
 
-local methods = {
+type RecipesMethods = {
+	GetDirectRecipe: (self: RecipesRegistry, menu: { string }, station: string, selectedId: string?) -> RecipeEntry?,
+	GetStartStation: (self: RecipesRegistry, entry: RecipeEntry) -> GameTypes.StationKind,
+	GetIcon: (self: RecipesRegistry, entry: RecipeEntry) -> string,
+	GetUnlockedAt: (self: RecipesRegistry, level: number) -> { RecipeEntry },
+	GetAvailable: (self: RecipesRegistry, level: number) -> { RecipeEntry },
+}
+export type RecipesRegistry = Registry.Registry<RecipeEntry> & RecipesMethods
+
+local methods: RecipesMethods = {
 	-- Direct stations can prepare their sole menu recipe without taking the mixer's selection.
 	GetDirectRecipe = function(
 		self: RecipesRegistry,
@@ -746,7 +755,6 @@ local methods = {
 	end,
 }
 
-local RecipesRegistry = Registry.Build("Recipes", list, methods)
-export type RecipesRegistry = typeof(RecipesRegistry)
+local RecipesRegistry: RecipesRegistry = Registry.Build("Recipes", list, methods)
 
 return RecipesRegistry

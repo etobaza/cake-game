@@ -1,3 +1,4 @@
+--!strict
 -- Collision groups of the game: registers them and puts player characters and room decorations
 -- into theirs. What passes through what is decided in Configs/Collision, not here.
 

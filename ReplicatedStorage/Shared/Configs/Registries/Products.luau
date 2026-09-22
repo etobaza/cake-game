@@ -1,3 +1,5 @@
+--!strict
+
 local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -120,7 +122,16 @@ local list: { [string]: ProductDefinition } = {
 	},
 }
 
-local methods = {
+type ProductsMethods = {
+	GetByProductId: (self: ProductsRegistry, productId: number) -> ProductEntry?,
+	GetByGiftId: (self: ProductsRegistry, giftId: number) -> ProductEntry?,
+	GetCashMultiplier: (self: ProductsRegistry, owned: { string }?) -> number,
+	GetStatBonus: (self: ProductsRegistry, owned: { string }?, statKey: string) -> number,
+	GetRobuxPrice: (self: ProductsRegistry, entryId: string) -> number?,
+}
+export type ProductsRegistry = Registry.Registry<ProductEntry> & ProductsMethods
+
+local methods: ProductsMethods = {
 	-- Find product by productId (for ProcessReceipt lookup)
 	GetByProductId = function(self: ProductsRegistry, productId: number): ProductEntry?
 		return self:Query()
@@ -190,7 +201,6 @@ local methods = {
 	end,
 }
 
-local ProductsRegistry = Registry.Build("Products", list, methods)
-export type ProductsRegistry = typeof(ProductsRegistry)
+local ProductsRegistry: ProductsRegistry = Registry.Build("Products", list, methods)
 
 return ProductsRegistry

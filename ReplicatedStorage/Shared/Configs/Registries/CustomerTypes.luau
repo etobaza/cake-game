@@ -82,7 +82,12 @@ local list: { [string]: CustomerTypeDefinition } = {
 	},
 }
 
-local methods = {
+type CustomerTypesMethods = {
+	GetAvailable: (self: CustomerTypesRegistry, level: number) -> { CustomerTypeEntry },
+}
+export type CustomerTypesRegistry = Registry.Registry<CustomerTypeEntry> & CustomerTypesMethods
+
+local methods: CustomerTypesMethods = {
 	-- Types available to the player at their level. Coffee is ordered by regulars if it is on the day menu.
 	GetAvailable = function(self: CustomerTypesRegistry, level: number): { CustomerTypeEntry }
 		return self:Query()
@@ -93,7 +98,6 @@ local methods = {
 	end,
 }
 
-local CustomerTypesRegistry = Registry.Build("CustomerTypes", list, methods)
-export type CustomerTypesRegistry = typeof(CustomerTypesRegistry)
+local CustomerTypesRegistry: CustomerTypesRegistry = Registry.Build("CustomerTypes", list, methods)
 
 return CustomerTypesRegistry

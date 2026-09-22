@@ -1,3 +1,4 @@
+--!strict
 -- Who may run Admin-group console commands. Lives under ServerScriptService, not in the shared
 -- registries: ReplicatedStorage replicates to every client, and this list is a target list.
 

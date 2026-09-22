@@ -1,3 +1,4 @@
+--!strict
 -- Prompt view of a pantry dispenser: how much of the ingredient is left and taking one.
 
 --[[ Services ]]--

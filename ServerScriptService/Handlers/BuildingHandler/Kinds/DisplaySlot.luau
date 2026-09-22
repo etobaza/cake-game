@@ -1,3 +1,4 @@
+--!strict
 -- Display slot: Empty <-> Filled. The dish itself is the state, so the machine follows the data
 -- instead of mirroring a separate field.
 
@@ -12,11 +13,22 @@ local _Handlers = ServerScriptService.Handlers
 --[[ Modules ]]--
 local Bus = require(_Shared.Bus)
 local DataHandler = require(_Handlers.DataHandler)
+local GameTypes = require(_Shared.GameTypes)
 local InventoryHandler = require(_Handlers.InventoryHandler)
 local PickupOrigin = require(script.Parent.Parent.PickupOrigin)
 
 --[[ Tables ]]--
 local DisplaySlot = {}
+
+--[[ Private Functions ]]--
+-- A slot's leftover flag is either set or absent, never stored as false.
+local function SetLeftover(leftovers: { [number]: boolean }, index: number, isLeftover: boolean): ()
+	if isLeftover then
+		leftovers[index] = true
+	else
+		leftovers[index] = nil
+	end
+end
 
 --[[ Handling ]]--
 -- The whole shelf is one table keyed by slot index, so the node is the shelf and Index is the key.
@@ -76,13 +88,13 @@ function DisplaySlot.Place(building: any): boolean
 		if not previous then
 			return false
 		end
-		leftovers[building.Index] = if heldLeftover then true else nil
+		SetLeftover(leftovers, building.Index, heldLeftover)
 		display[building.Index] = previous
 		return true
 	end
 
 	InventoryHandler:Pop(building.Player)
-	leftovers[building.Index] = if heldLeftover then true else nil
+	SetLeftover(leftovers, building.Index, heldLeftover)
 	display[building.Index] = held.Id
 
 	building:SetState("Filled")
@@ -102,7 +114,7 @@ function DisplaySlot.Take(building: any): boolean
 		return false
 	end
 	local leftovers = data.Session.DisplayLeftovers
-	local kind = if leftovers[building.Index] then "Leftover" else "Dish"
+	local kind: GameTypes.ItemKind = if leftovers[building.Index] then "Leftover" else "Dish"
 	if
 		not InventoryHandler:Push(building.Player, { Kind = kind, Id = recipeId }, PickupOrigin.ForBuilding(building))
 	then
