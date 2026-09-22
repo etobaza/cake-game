@@ -1,0 +1,165 @@
+{
+  "source": "Blueprints/Interface/DAT_Library.uasset",
+  "rows": [
+    {
+      "id": "NewRow",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator0",
+        "label": "Cookbook"
+      },
+      "TextID": 1,
+      "Title": "Tip #1",
+      "Dialogue": "Always remember that you can directly swap an item you’re holding with an item on the counter!"
+    },
+    {
+      "id": "NewRow_0",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator0",
+        "label": "Cookbook"
+      },
+      "TextID": 2,
+      "Title": "Tip #2",
+      "Dialogue": "To get a perfect order, be sure to serve the customer quickly! Keep an eye on the customer’s patience bar... As long as it’s blue, you’ll get a perfect order. At the very least, serve it before it turns orange, or else it’ll be late!"
+    },
+    {
+      "id": "NewRow_1",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator0",
+        "label": "Cookbook"
+      },
+      "TextID": 3,
+      "Title": "Tip #3",
+      "Dialogue": "Remember to add a pastry to your daily menu to increase your pastry score. You can get up to an A+! As your pastry score increases, the value of the pastry will also go up!"
+    },
+    {
+      "id": "NewRow_2",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator0",
+        "label": "Cookbook"
+      },
+      "TextID": 4,
+      "Title": "Tip #4",
+      "Dialogue": "You’ll be able to unlock a new menu slot at level 10, 20 & 30! You can have up to six menu slots at once... As long as you can manage all those recipes!"
+    },
+    {
+      "id": "NewRow_3",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator0",
+        "label": "Cookbook"
+      },
+      "TextID": 5,
+      "Title": "Tip #5",
+      "Dialogue": "Every time a cat is adopted in the bakery, you’ll earn 7.50 coins as an adoption fee!"
+    },
+    {
+      "id": "NewRow_4",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator0",
+        "label": "Cookbook"
+      },
+      "TextID": 6,
+      "Title": "Tip #6",
+      "Dialogue": "Don’t forget that pastries left on counters at the end of the day become leftover pastries! They can be sold for half of their value the next day."
+    },
+    {
+      "id": "NewRow_5",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator0",
+        "label": "Cookbook"
+      },
+      "TextID": 7,
+      "Title": "Tip #7",
+      "Dialogue": "Be sure to pet a cat to increase its chance of being adopted that day!"
+    },
+    {
+      "id": "NewRow_6",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator1",
+        "label": "Diary"
+      },
+      "TextID": 1,
+      "Title": "Wednesday April 29th, 2020",
+      "Dialogue": "Woah, what happened?! I’m a ghost now! Wait, I can’t even knead dough or bake bread anymore... What am I supposed to do?"
+    },
+    {
+      "id": "NewRow_7",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator1",
+        "label": "Diary"
+      },
+      "TextID": 2,
+      "Title": "Tuesday October 13th, 2020",
+      "Dialogue": "I’ve had a visitor for the first time in forever today! {player} was so kind and helpful, we were able to open the bakery again for a few days... I hope they’ll come back!"
+    },
+    {
+      "id": "NewRow_8",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator1",
+        "label": "Diary"
+      },
+      "TextID": 3,
+      "Title": "Thursday February 18th, 2021",
+      "Dialogue": "Today we celebrated the reopening of the bakery... And my favorite apprentice baker, {player}, really came back! It’s been so much fun having them around to rebuild the bakery together!"
+    },
+    {
+      "id": "NewRow_9",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator1",
+        "label": "Diary"
+      },
+      "TextID": 4,
+      "Title": "Sunday March 21th, 2021",
+      "Dialogue": "Inspector Mustache came back today! I couldn’t believe my eyes, it’s been so long since I’ve seen him... Of course he had to come by and make some trouble! Well, it was kinda nice to have him visit too..."
+    },
+    {
+      "id": "NewRow_10",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator1",
+        "label": "Diary"
+      },
+      "TextID": 5,
+      "Title": "Saturday April 24th, 2021",
+      "Dialogue": "Finally, I figured out how to open the bedroom staircase again! {player} will finally have somewhere to rest, after all that hard work they’ve done! They definitely deserve it!"
+    },
+    {
+      "id": "NewRow_11",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator2",
+        "label": "Notes"
+      },
+      "TextID": 1,
+      "Title": "Secret Note #1",
+      "Dialogue": "Woah, I gave Mabel a carrot today and she turned orange! I wonder if there’s anything else I could feed her..."
+    },
+    {
+      "id": "NewRow_12",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator2",
+        "label": "Notes"
+      },
+      "TextID": 2,
+      "Title": "Secret Note #2",
+      "Dialogue": "Aw, I have to remember to bring some eggs back to the chickens! They’ll warm them up and hatch a tiny chick!"
+    },
+    {
+      "id": "NewRow_13",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator2",
+        "label": "Notes"
+      },
+      "TextID": 3,
+      "Title": "Secret Note #3",
+      "Dialogue": "The cat playing in the bakery looked a bit thirsty, so I made sure to give it a bowl of milk!"
+    },
+    {
+      "id": "NewRow_14",
+      "BookType": {
+        "id": "ENUM_Library::NewEnumerator2",
+        "label": "Notes"
+      },
+      "TextID": 4,
+      "Title": "Secret Note #4",
+      "Dialogue": "Oh, I wish I could take a break from work and eat a lemon cake..."
+    }
+  ]
+}

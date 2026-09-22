@@ -27,11 +27,6 @@ function World.WaitForBakeries(): Instance
 	return World.WaitForRoot():WaitForChild(Base.BakeriesFolderName)
 end
 
-function World.Assets(): Instance?
-	local root = World.Root()
-	return if root then root:FindFirstChild(Base.WorldAssetsFolderName) else nil
-end
-
 --- Walks a path of child names down from the package root; nil as soon as a name is missing.
 function World.Find(path: { string }): Instance?
 	local current = World.Root()

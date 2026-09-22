@@ -17,6 +17,16 @@ $packageDirectories = @(
 )
 $scriptExtensions = @(".lua", ".luau")
 
+function Assert-ContainedPath {
+    param([string]$Root, [string]$Path)
+
+    $absoluteRoot = [System.IO.Path]::GetFullPath($Root).TrimEnd([char[]]"\/")
+    $absolutePath = [System.IO.Path]::GetFullPath($Path)
+    if (-not $absolutePath.StartsWith($absoluteRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Path escapes its owning directory: $absolutePath"
+    }
+}
+
 function Invoke-Tool {
     param(
         [Parameter(Mandatory = $true)][string]$WorkingDirectory,
@@ -50,7 +60,9 @@ function Get-ProjectRoot {
         return $null
     }
 
-    return Join-Path $PackageDirectory.FullName ([string]$pathProperty.Value)
+    $mappedPath = Join-Path $PackageDirectory.FullName ([string]$pathProperty.Value)
+    Assert-ContainedPath -Root $PackageDirectory.FullName -Path $mappedPath
+    return $mappedPath
 }
 
 function Remove-NonScriptContent {
@@ -92,6 +104,7 @@ function Convert-Package {
 
     $parent = $PackageDirectory.Parent.FullName
     $name = $PackageDirectory.Name
+    Assert-ContainedPath -Root $parent -Path $PackageDirectory.FullName
 
     if (Test-Path -LiteralPath $mappedRoot -PathType Leaf) {
         # A single-file root becomes `<name>/init.luau`: still one ModuleScript in Studio, and it
@@ -131,24 +144,110 @@ function Convert-PackagesDirectory {
     Rename-LuaToLuau -Directory $directory
 }
 
-# Wally does not clear files it did not write, so start from empty trees for a deterministic result.
-foreach ($packagesDirectory in $packageDirectories) {
-    if (Test-Path -LiteralPath $packagesDirectory -PathType Container) {
+# Never install raw Wally output into a watched service directory. Script Sync can import its
+# folders/test runners before flattening, then write that stale hierarchy back over the result.
+# Build and type the complete replacement outside the project before exposing either tree.
+# A sibling uses the same filesystem, so publishing is a directory rename rather than a
+# cross-volume copy that could expose children before their init.luau module root arrives.
+$stagingParent = Split-Path -Parent $projectRoot
+$stagingRoot = Join-Path $stagingParent (".cake-game-packages-" + [guid]::NewGuid().ToString("N"))
+$published = [System.Collections.Generic.List[string]]::new()
+$backups = @{}
+$originalLocks = @{}
+$cleanupStaging = $true
+try {
+    New-Item -ItemType Directory -Path (Join-Path $stagingRoot ".vscode") -Force | Out-Null
+    Copy-Item -LiteralPath (Join-Path $projectRoot "rokit.toml") -Destination $stagingRoot
+    Copy-Item -LiteralPath (Join-Path $projectRoot ".vscode/generate-sourcemap.ps1") -Destination (Join-Path $stagingRoot ".vscode")
+
+    foreach ($serviceName in @("ReplicatedStorage", "ServerStorage")) {
+        $servicePath = Join-Path $stagingRoot $serviceName
+        New-Item -ItemType Directory -Path $servicePath | Out-Null
+        foreach ($fileName in @("wally.toml", "wally.lock")) {
+            $sourcePath = Join-Path (Join-Path $projectRoot $serviceName) $fileName
+            if (Test-Path -LiteralPath $sourcePath) {
+                Copy-Item -LiteralPath $sourcePath -Destination $servicePath
+            }
+        }
+        Invoke-Tool -WorkingDirectory $servicePath -Tool "wally" install
+    }
+
+    foreach ($relativePath in @("ReplicatedStorage/Packages", "ServerStorage/ServerPackages")) {
+        $stagedPackages = Join-Path $stagingRoot $relativePath
+        if (-not (Test-Path -LiteralPath $stagedPackages -PathType Container)) {
+            throw "Wally did not produce $relativePath"
+        }
+        Convert-PackagesDirectory -Path $stagedPackages
+        # Every installed root must be a ModuleScript, never the original Wally wrapper folder.
+        foreach ($entry in Get-ChildItem -LiteralPath (Join-Path $stagedPackages "_Index") -Directory) {
+            foreach ($package in Get-ChildItem -LiteralPath $entry.FullName -Directory) {
+                if (-not (Test-Path -LiteralPath (Join-Path $package.FullName "init.luau") -PathType Leaf)) {
+                    throw "Package root is not a ModuleScript: $($package.FullName)"
+                }
+            }
+        }
+    }
+
+    & (Join-Path $stagingRoot ".vscode/generate-sourcemap.ps1")
+    Invoke-Tool -WorkingDirectory $stagingRoot -Tool "wally-package-types" `
+        --sourcemap sourcemap.json ReplicatedStorage/Packages ServerStorage/ServerPackages
+
+    foreach ($serviceName in @("ReplicatedStorage", "ServerStorage")) {
+        $lockPath = Join-Path $projectRoot "$serviceName/wally.lock"
+        $originalLocks[$lockPath] = if (Test-Path -LiteralPath $lockPath) {
+            [System.IO.File]::ReadAllBytes($lockPath)
+        } else {
+            $null
+        }
+    }
+
+    foreach ($packagesDirectory in $packageDirectories) {
+        Assert-ContainedPath -Root $projectRoot -Path $packagesDirectory
+        $relativePath = $packagesDirectory.Substring($projectRoot.Length).TrimStart([char[]]"\/")
+        if (Test-Path -LiteralPath $packagesDirectory) {
+            $backupPath = Join-Path $stagingRoot ("backup-" + [System.IO.Path]::GetFileName($packagesDirectory))
+            Assert-ContainedPath -Root $stagingRoot -Path $backupPath
+            Move-Item -LiteralPath $packagesDirectory -Destination $backupPath
+            $backups[$packagesDirectory] = $backupPath
+        }
+        Move-Item -LiteralPath (Join-Path $stagingRoot $relativePath) -Destination $packagesDirectory
+        $published.Add($packagesDirectory)
+    }
+
+    foreach ($serviceName in @("ReplicatedStorage", "ServerStorage")) {
+        Copy-Item -LiteralPath (Join-Path $stagingRoot "$serviceName/wally.lock") `
+            -Destination (Join-Path $projectRoot "$serviceName/wally.lock") -Force
+    }
+    & (Join-Path $projectRoot ".vscode/generate-sourcemap.ps1")
+    Write-Host "Prepared package trees installed. Verify Script Sync has imported ModuleScript roots before Play."
+}
+catch {
+    # If rollback itself fails, retain the staging directory and its backups for recovery.
+    $cleanupStaging = $false
+    foreach ($packagesDirectory in $published) {
+        Assert-ContainedPath -Root $projectRoot -Path $packagesDirectory
         Remove-Item -LiteralPath $packagesDirectory -Recurse -Force
     }
+    foreach ($packagesDirectory in $backups.Keys) {
+        Assert-ContainedPath -Root $projectRoot -Path $packagesDirectory
+        Assert-ContainedPath -Root $stagingRoot -Path $backups[$packagesDirectory]
+        Move-Item -LiteralPath $backups[$packagesDirectory] -Destination $packagesDirectory
+    }
+    foreach ($lockPath in $originalLocks.Keys) {
+        if ($null -ne $originalLocks[$lockPath]) {
+            [System.IO.File]::WriteAllBytes($lockPath, $originalLocks[$lockPath])
+        } elseif (Test-Path -LiteralPath $lockPath) {
+            Remove-Item -LiteralPath $lockPath -Force
+        }
+    }
+    $cleanupStaging = $true
+    throw
 }
-
-foreach ($manifestDirectory in @("ReplicatedStorage", "ServerStorage")) {
-    Invoke-Tool -WorkingDirectory (Join-Path $projectRoot $manifestDirectory) -Tool "wally" install
-}
-
-foreach ($packagesDirectory in $packageDirectories) {
-    if (Test-Path -LiteralPath $packagesDirectory -PathType Container) {
-        Convert-PackagesDirectory -Path $packagesDirectory
+finally {
+    if ($cleanupStaging -and (Test-Path -LiteralPath $stagingRoot)) {
+        Assert-ContainedPath -Root $stagingParent -Path $stagingRoot
+        Remove-Item -LiteralPath $stagingRoot -Recurse -Force
+    } elseif (-not $cleanupStaging) {
+        Write-Warning "Package rollback was interrupted. Backups retained at $stagingRoot"
     }
 }
-
-& (Join-Path $PSScriptRoot "..\.vscode\generate-sourcemap.ps1")
-
-Invoke-Tool -WorkingDirectory $projectRoot -Tool "wally-package-types" `
-    --sourcemap sourcemap.json ReplicatedStorage/Packages ServerStorage/ServerPackages

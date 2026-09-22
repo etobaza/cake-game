@@ -1,0 +1,83 @@
+{
+  "source": "Blueprints/Interface/DAT_Bonus.uasset",
+  "rows": [
+    {
+      "id": "CheapPastry",
+      "Icon": "/Game/Blueprints/Interface/Interface/UI_Bonus_CheapPastry.UI_Bonus_CheapPastry",
+      "Description": "The average price of your pastries is affordable!",
+      "Bonus": 10.0
+    },
+    {
+      "id": "QuickBake",
+      "Icon": "/Game/Blueprints/Interface/Interface/UI_Bonus_BakeTimeGreen.UI_Bonus_BakeTimeGreen",
+      "Description": "The average bake time of your pastries is fast!",
+      "Bonus": 10.0
+    },
+    {
+      "id": "DifferentType",
+      "Icon": "/Game/Blueprints/Interface/Interface/UI_Bonus_DifferentType.UI_Bonus_DifferentType",
+      "Description": "The types of pastries in your menu have a lot of variety!",
+      "Bonus": 20.0
+    },
+    {
+      "id": "VeganOption",
+      "Icon": "/Game/Blueprints/Interface/Interface/UI_Bonus_Vegan.UI_Bonus_Vegan",
+      "Description": "A vegan option is included in your menu!",
+      "Bonus": 15.0
+    },
+    {
+      "id": "GlutenFreeOption",
+      "Icon": "/Game/Blueprints/Interface/Interface/UI_Bonus_GlutenFree.UI_Bonus_GlutenFree",
+      "Description": "A gluten free option is included in your menu!",
+      "Bonus": 15.0
+    },
+    {
+      "id": "NewRecipe",
+      "Icon": "/Game/Blueprints/Interface/Interface/UI_Bonus_NewRecipe.UI_Bonus_NewRecipe",
+      "Description": "A new recipe is included in your menu!",
+      "Bonus": 50.0
+    },
+    {
+      "id": "PricyPastry",
+      "Icon": "/Game/Blueprints/Interface/Interface/UI_Bonus_PricyPastry.UI_Bonus_PricyPastry",
+      "Description": "The average price of your pastries is expensive!",
+      "Bonus": -10.0
+    },
+    {
+      "id": "SlowBake",
+      "Icon": "/Game/Blueprints/Interface/Interface/UI_Bonus_BakeTimeRed.UI_Bonus_BakeTimeRed",
+      "Description": "The average bake time of your pastries is slow!",
+      "Bonus": -10.0
+    },
+    {
+      "id": "SameType",
+      "Icon": "/Game/Blueprints/Interface/Interface/UI_Bonus_SameType.UI_Bonus_SameType",
+      "Description": "The types of pastries in your menu don't have a lot of variety!",
+      "Bonus": -12.0
+    },
+    {
+      "id": "OldRecipe",
+      "Icon": "/Game/Blueprints/Interface/Interface/UI_Bonus_OldRecipe.UI_Bonus_OldRecipe",
+      "Description": "A recipe has been on the menu too often recently!",
+      "Bonus": -25.0
+    },
+    {
+      "id": "NoBakeOption",
+      "Icon": "/Game/Blueprints/Interface/Interface/UI_Bonus_NoBakeOption.UI_Bonus_NoBakeOption",
+      "Description": "There are no baked pastries in your menu!",
+      "Bonus": -15.0
+    },
+    {
+      "id": "LowOption",
+      "Icon": "/Game/Blueprints/Interface/Interface/UI_Bonus_LessOption.UI_Bonus_LessOption",
+      "Description": "There aren't a lot of options in your menu!",
+      "Bonus": -10.0
+    },
+    {
+      "id": "HighOption",
+      "Icon": "/Game/Blueprints/Interface/Interface/UI_Bonus_MoreOption.UI_Bonus_MoreOption",
+      "Description": "There are a lot of options in your menu!",
+      "Bonus": 10.0
+    }
+  ]
+}

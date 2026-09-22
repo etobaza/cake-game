@@ -1,0 +1,996 @@
+[
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_PlayerName",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UTextProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ControlKeys",
+    "outer": "SV_SaveGame_C.SV_ControlKeys",
+    "property": {
+      "op": "UStructProperty",
+      "Struct": -27,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_None",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ControlKeys",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UArrayProperty",
+      "Inner": 4,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ControlName",
+    "outer": "SV_SaveGame_C.SV_ControlName",
+    "property": {
+      "op": "UNameProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_None",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ControlName",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UArrayProperty",
+      "Inner": 6,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_DailyRecipes",
+    "outer": "SV_SaveGame_C.SV_DailyRecipes",
+    "property": {
+      "op": "UNameProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_None",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_DailyRecipes",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UArrayProperty",
+      "Inner": 8,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_IsBedroomUpgradePurchased",
+    "outer": "SV_SaveGame_C.SV_IsBedroomUpgradePurchased",
+    "property": {
+      "op": "UBoolProperty",
+      "NativeBool": true,
+      "ArrayDim": "TArray",
+      "ElementSize": 1,
+      "PropertyFlags": "CPF_None",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_IsBedroomUpgradePurchased",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UArrayProperty",
+      "Inner": 10,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_IsGreenhouseUpgradePurchased",
+    "outer": "SV_SaveGame_C.SV_IsGreenhouseUpgradePurchased",
+    "property": {
+      "op": "UBoolProperty",
+      "NativeBool": true,
+      "ArrayDim": "TArray",
+      "ElementSize": 1,
+      "PropertyFlags": "CPF_None",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_IsGreenhouseUpgradePurchased",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UArrayProperty",
+      "Inner": 12,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_IsKitchenUpgradePurchased",
+    "outer": "SV_SaveGame_C.SV_IsKitchenUpgradePurchased",
+    "property": {
+      "op": "UBoolProperty",
+      "NativeBool": true,
+      "ArrayDim": "TArray",
+      "ElementSize": 1,
+      "PropertyFlags": "CPF_None",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_IsKitchenUpgradePurchased",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UArrayProperty",
+      "Inner": 14,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_IsStoreUpgradePurchased",
+    "outer": "SV_SaveGame_C.SV_IsStoreUpgradePurchased",
+    "property": {
+      "op": "UBoolProperty",
+      "NativeBool": true,
+      "ArrayDim": "TArray",
+      "ElementSize": 1,
+      "PropertyFlags": "CPF_None",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_IsStoreUpgradePurchased",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UArrayProperty",
+      "Inner": 16,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_LearnedRecipes",
+    "outer": "SV_SaveGame_C.SV_LearnedRecipes",
+    "property": {
+      "op": "UNameProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_None",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_LearnedRecipes",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UArrayProperty",
+      "Inner": 18,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_LibraryCurrentPage",
+    "outer": "SV_SaveGame_C.SV_LibraryCurrentPage",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_None",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_LibraryCurrentPage",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UArrayProperty",
+      "Inner": 20,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_NewRecipes",
+    "outer": "SV_SaveGame_C.SV_NewRecipes",
+    "property": {
+      "op": "UNameProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_None",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_NewRecipes",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UArrayProperty",
+      "Inner": 22,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_RecipeActiveDays",
+    "outer": "SV_SaveGame_C.SV_RecipeActiveDays",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_None",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_RecipeActiveDays",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UArrayProperty",
+      "Inner": 24,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_RecipeDayOldBonus",
+    "outer": "SV_SaveGame_C.SV_RecipeDayOldBonus",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_None",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_RecipeDayOldBonus",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UArrayProperty",
+      "Inner": 26,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_CompletedGame",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UBoolProperty",
+      "NativeBool": true,
+      "ArrayDim": "TArray",
+      "ElementSize": 1,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_IsFogHidden",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UBoolProperty",
+      "NativeBool": true,
+      "ArrayDim": "TArray",
+      "ElementSize": 1,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_IsNewGame",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UBoolProperty",
+      "NativeBool": true,
+      "ArrayDim": "TArray",
+      "ElementSize": 1,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ClientMultiplier",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UFloatProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_Experience",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UFloatProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_HairSwitch_01",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UFloatProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_HairSwitch_02",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UFloatProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_HairSwitch_03",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UFloatProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_Money",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UFloatProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_MusicVolume",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UFloatProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_SoundVolume",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UFloatProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_SprintRecharge",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UFloatProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_WalkSpeed",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UFloatProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ACVCatsAdopted",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ACVCoinsEarned",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ACVLevelReached",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ACVPerfectOrders",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ACVSpillsCleaned",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ACVSprintCounter",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_BonusPercentage",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_Day",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_DaysSinceMinigame",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_DetailMode",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_Level",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_TotalMinigamePlayed",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UIntProperty",
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ApronOutfit",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -16,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ApronTexture",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -18,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_BottomOutfit",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -16,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_BottomOutfitTexture",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -18,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_EyeColor",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -14,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_EyeShape",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -14,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_HairColor",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -14,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_Hairstyle",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -17,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_HatOutfit",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -17,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_HatTexture",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -18,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_ShoesOutfit",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -16,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_Skintone",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -14,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_TopOutfit",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -16,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  },
+  {
+    "source": "Blueprints/Player/SV_SaveGame.uasset",
+    "name": "SV_TopOutfitTexture",
+    "outer": "SV_SaveGame_C",
+    "property": {
+      "op": "UObjectProperty",
+      "PropertyClass": -18,
+      "ArrayDim": "TArray",
+      "ElementSize": 0,
+      "PropertyFlags": "CPF_Edit, CPF_BlueprintVisible, CPF_DisableEditOnInstance",
+      "RepNotifyFunc": "None",
+      "BlueprintReplicationCondition": "COND_None",
+      "RawValue": null,
+      "Next": null
+    }
+  }
+]

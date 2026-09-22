@@ -1,0 +1,212 @@
+[
+  {
+    "name": "DAT_Bonus",
+    "source": "Blueprints/Interface/DAT_Bonus.uasset",
+    "rows": 13,
+    "output": "data/tables/DAT_Bonus.json",
+    "fields": [
+      "id",
+      "Icon",
+      "Description",
+      "Bonus"
+    ]
+  },
+  {
+    "name": "DAT_Dialogue_DailyOverview",
+    "source": "Blueprints/Interface/DAT_Dialogue_DailyOverview.uasset",
+    "rows": 18,
+    "output": ".local/tables/DAT_Dialogue_DailyOverview.json",
+    "fields": [
+      "id",
+      "Conversation",
+      "Line",
+      "Reaction",
+      "Dialogue",
+      "IsMissBonbonTalking"
+    ]
+  },
+  {
+    "name": "DAT_Dialogue_EndGame",
+    "source": "Blueprints/Interface/DAT_Dialogue_EndGame.uasset",
+    "rows": 7,
+    "output": ".local/tables/DAT_Dialogue_EndGame.json",
+    "fields": [
+      "id",
+      "Conversation",
+      "Line",
+      "Reaction",
+      "Dialogue",
+      "IsMissBonbonTalking"
+    ]
+  },
+  {
+    "name": "DAT_Dialogue_Tutorial",
+    "source": "Blueprints/Interface/DAT_Dialogue_Tutorial.uasset",
+    "rows": 44,
+    "output": ".local/tables/DAT_Dialogue_Tutorial.json",
+    "fields": [
+      "id",
+      "Conversation",
+      "Line",
+      "Reaction",
+      "Dialogue",
+      "IsMissBonbonTalking"
+    ]
+  },
+  {
+    "name": "DAT_DialogueNewRecipe",
+    "source": "Blueprints/Interface/DAT_DialogueNewRecipe.uasset",
+    "rows": 9,
+    "output": ".local/tables/DAT_DialogueNewRecipe.json",
+    "fields": [
+      "id",
+      "Conversation",
+      "Line",
+      "Reaction",
+      "Dialogue",
+      "IsMissBonbonTalking"
+    ]
+  },
+  {
+    "name": "DAT_DialogueShop",
+    "source": "Blueprints/Interface/DAT_DialogueShop.uasset",
+    "rows": 114,
+    "output": ".local/tables/DAT_DialogueShop.json",
+    "fields": [
+      "id",
+      "Conversation",
+      "Line",
+      "Reaction",
+      "Dialogue",
+      "IsMissBonbonTalking"
+    ]
+  },
+  {
+    "name": "DAT_Library",
+    "source": "Blueprints/Interface/DAT_Library.uasset",
+    "rows": 16,
+    "output": "data/tables/DAT_Library.json",
+    "fields": [
+      "id",
+      "BookType",
+      "TextID",
+      "Title",
+      "Dialogue"
+    ]
+  },
+  {
+    "name": "DAT_MinigameBugAfter",
+    "source": "Blueprints/Interface/DAT_MinigameBugAfter.uasset",
+    "rows": 28,
+    "output": ".local/tables/DAT_MinigameBugAfter.json",
+    "fields": [
+      "id",
+      "Conversation",
+      "Line",
+      "Reaction",
+      "Dialogue",
+      "IsMissBonbonTalking"
+    ]
+  },
+  {
+    "name": "DAT_MinigameBugBefore",
+    "source": "Blueprints/Interface/DAT_MinigameBugBefore.uasset",
+    "rows": 42,
+    "output": ".local/tables/DAT_MinigameBugBefore.json",
+    "fields": [
+      "id",
+      "Conversation",
+      "Line",
+      "Reaction",
+      "Dialogue",
+      "IsMissBonbonTalking"
+    ]
+  },
+  {
+    "name": "DAT_Notification",
+    "source": "Blueprints/Interface/DAT_Notification.uasset",
+    "rows": 18,
+    "output": ".local/tables/DAT_Notification.json",
+    "fields": [
+      "id",
+      "Icon",
+      "Description"
+    ]
+  },
+  {
+    "name": "DAT_Shop",
+    "source": "Blueprints/Interface/DAT_Shop.uasset",
+    "rows": 48,
+    "output": "data/tables/DAT_Shop.json",
+    "fields": [
+      "id",
+      "Number",
+      "BaseName",
+      "Name",
+      "Description",
+      "Icon",
+      "Cost",
+      "Type",
+      "IsAvailableInDemo"
+    ]
+  },
+  {
+    "name": "DAT_Item",
+    "source": "Blueprints/Items/DAT_Item.uasset",
+    "rows": 98,
+    "output": "data/tables/DAT_Item.json",
+    "fields": [
+      "id",
+      "Name",
+      "Type",
+      "Mesh",
+      "Icon",
+      "Value"
+    ]
+  },
+  {
+    "name": "DAT_Recipe",
+    "source": "Blueprints/Items/DAT_Recipe.uasset",
+    "rows": 42,
+    "output": "data/tables/DAT_Recipe.json",
+    "fields": [
+      "id",
+      "Name",
+      "Icon",
+      "Type",
+      "Value",
+      "BakeTime",
+      "IsVegan",
+      "IsGlutenFree",
+      "IngredientsName",
+      "IngredientsIcon"
+    ]
+  },
+  {
+    "name": "DAT_PlayerStyle",
+    "source": "Blueprints/Player/DAT_PlayerStyle.uasset",
+    "rows": 105,
+    "output": "data/tables/DAT_PlayerStyle.json",
+    "fields": [
+      "id",
+      "Type",
+      "StaticMesh",
+      "SkeletalMesh",
+      "Material",
+      "Texture"
+    ]
+  },
+  {
+    "name": "DAT_Tutorial",
+    "source": "Blueprints/Player/DAT_Tutorial.uasset",
+    "rows": 21,
+    "output": "data/tables/DAT_Tutorial.json",
+    "fields": [
+      "id",
+      "Step",
+      "Tutorial",
+      "IsArrowVisible",
+      "3DArrowLocation"
+    ]
+  }
+]

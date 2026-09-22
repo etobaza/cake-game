@@ -12,6 +12,7 @@ local _Libs = _Shared.Libs
 
 --[[ Modules ]]--
 local Bus = require(_Shared.Bus)
+local AdminConfig = require(_Configs.Admin)
 local DataHandler = require(ServerScriptService.Handlers.DataHandler)
 local Economy = require(_Configs.Economy)
 local LoggerUtil = require(_Libs.Logger)
@@ -87,6 +88,19 @@ function EconomyHandler.AddCash(_self: EconomyHandler, player: Player, amount: n
 	local multiplier = Products:GetCashMultiplier(cloud.Passes)
 
 	cloud.Cash = math.round((cloud.Cash + amount * multiplier) * 100) / 100
+end
+
+-- Server-only support operation: exact balance, deliberately unaffected by pass multipliers.
+function EconomyHandler.SetAdminCash(_self: EconomyHandler, player: Player, amount: number): boolean
+	if amount ~= amount or amount < 0 or amount > AdminConfig.MaxCash then
+		return false
+	end
+	local cloud = GetCloud(player)
+	if not cloud or cloud.ProgressResetPending then
+		return false
+	end
+	cloud.Cash = math.round(amount * 100) / 100
+	return true
 end
 
 -- Spends coins if there are enough. Returns false without touching the data.

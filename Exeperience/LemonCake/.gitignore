@@ -1,0 +1,5 @@
+.local/
+tools/AssetDump/bin/
+tools/AssetDump/obj/
+__pycache__/
+tools/__pycache__/

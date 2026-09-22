@@ -197,7 +197,7 @@ function Get-ProjectSourceFiles {
     Get-ChildItem -LiteralPath $Directory.FullName -File -Force |
     Where-Object { $_.Extension -in $sourceExtensions }
 
-    $ignoredRootDirectories = @(".agents", ".codex", ".cursor", ".git", ".vscode", "node_modules")
+    $ignoredRootDirectories = @(".agents", ".codex", ".cursor", ".git", ".vscode", ".zed", "node_modules")
     foreach ($childDirectory in Get-ChildItem -LiteralPath $Directory.FullName -Directory -Force) {
         if ($IsProjectRoot -and $childDirectory.Name -in $ignoredRootDirectories) {
             continue

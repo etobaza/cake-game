@@ -1,0 +1,278 @@
+{
+  "source": "Blueprints/Player/DAT_Tutorial.uasset",
+  "rows": [
+    {
+      "id": "NewRow",
+      "Step": 1,
+      "Tutorial": "Use WASD to move around.",
+      "IsArrowVisible": false,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": "+0"
+        }
+      }
+    },
+    {
+      "id": "NewRow_0",
+      "Step": 2,
+      "Tutorial": "Press Left Shift and sprint to the kitchen!",
+      "IsArrowVisible": false,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": "+0"
+        }
+      }
+    },
+    {
+      "id": "NewRow_1",
+      "Step": 3,
+      "Tutorial": "Press Space Bar to interact with the ghost...",
+      "IsArrowVisible": false,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": 350.0,
+          "Y": -450.0,
+          "Z": 75.0
+        }
+      }
+    },
+    {
+      "id": "NewRow_14",
+      "Step": 4,
+      "Tutorial": "Pick up the broom!",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": 805.0,
+          "Y": -1328.69091796875,
+          "Z": 67.1343994140625
+        }
+      }
+    },
+    {
+      "id": "NewRow_15",
+      "Step": 5,
+      "Tutorial": "Sweep up the spills around the kitchen...",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": 212.01904296875,
+          "Y": -1077.8118896484375,
+          "Z": 74.625732421875
+        }
+      }
+    },
+    {
+      "id": "NewRow_17",
+      "Step": 6,
+      "Tutorial": "Place the broom back in the corner.",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": 805.0,
+          "Y": -1328.69091796875,
+          "Z": 67.1343994140625
+        }
+      }
+    },
+    {
+      "id": "NewRow_16",
+      "Step": 7,
+      "Tutorial": "Tell Miss Bonbon you cleaned up the kitchen!",
+      "IsArrowVisible": false,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": "+0"
+        }
+      }
+    },
+    {
+      "id": "NewRow_2",
+      "Step": 8,
+      "Tutorial": "Select the French Baguette recipe in your active menu!",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": "+0"
+        }
+      }
+    },
+    {
+      "id": "NewRow_3",
+      "Step": 9,
+      "Tutorial": "Pick up the bag of flour.",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": -42.9210205078125,
+          "Y": -586.2232666015625,
+          "Z": 69.8719482421875
+        }
+      }
+    },
+    {
+      "id": "NewRow_4",
+      "Step": 10,
+      "Tutorial": "Place your ingredient in the mixing bowl.",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": -43.92340087890625,
+          "Y": -817.681396484375,
+          "Z": 77.30746459960938
+        }
+      }
+    },
+    {
+      "id": "NewRow_5",
+      "Step": 11,
+      "Tutorial": "Mix the ingredients to make the French Baguette dough.",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": -43.92340087890625,
+          "Y": -817.681396484375,
+          "Z": 77.30746459960938
+        }
+      }
+    },
+    {
+      "id": "NewRow_6",
+      "Step": 12,
+      "Tutorial": "Place your dough in the oven!",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": 710.0,
+          "Y": -818.4769287109375,
+          "Z": 83.03064727783203
+        }
+      }
+    },
+    {
+      "id": "NewRow_7",
+      "Step": 13,
+      "Tutorial": "Pick up some firewood.",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": 715.5511474609375,
+          "Y": -333.5975036621094,
+          "Z": 82.62875366210938
+        }
+      }
+    },
+    {
+      "id": "NewRow_8",
+      "Step": 14,
+      "Tutorial": "Place your log in the oven to get a fire started.",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": 710.0,
+          "Y": -818.4769287109375,
+          "Z": 83.03064727783203
+        }
+      }
+    },
+    {
+      "id": "NewRow_9",
+      "Step": 15,
+      "Tutorial": "Pick up your pastry once it’s ready, and don’t let it burn!",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": 710.0,
+          "Y": -818.4769287109375,
+          "Z": 83.03064727783203
+        }
+      }
+    },
+    {
+      "id": "NewRow_10",
+      "Step": 16,
+      "Tutorial": "Show your baked pastry to Miss Bonbon!",
+      "IsArrowVisible": false,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": "+0"
+        }
+      }
+    },
+    {
+      "id": "NewRow_11",
+      "Step": 17,
+      "Tutorial": "Talk with the customer to learn their order...",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": -51.429443359375,
+          "Y": -2079.0,
+          "Z": 200.0
+        }
+      }
+    },
+    {
+      "id": "NewRow_12",
+      "Step": 18,
+      "Tutorial": "Serve the customer a French Baguette.",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": -51.429443359375,
+          "Y": -2079.0,
+          "Z": 200.0
+        }
+      }
+    },
+    {
+      "id": "NewRow_13",
+      "Step": 19,
+      "Tutorial": "Tell Miss Bonbon you served a pastry!",
+      "IsArrowVisible": false,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": "+0"
+        }
+      }
+    },
+    {
+      "id": "NewRow_18",
+      "Step": 20,
+      "Tutorial": "Clean the table once the customer is done eating.",
+      "IsArrowVisible": true,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": -51.429443359375,
+          "Y": -2079.0,
+          "Z": 200.0
+        }
+      }
+    },
+    {
+      "id": "NewRow_19",
+      "Step": 21,
+      "Tutorial": "Talk with Miss Bonbon again!",
+      "IsArrowVisible": false,
+      "3DArrowLocation": {
+        "3DArrowLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": "+0"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+{
+  "captured": "2026-09-22",
+  "appId": 1338330,
+  "name": "Lemon Cake",
+  "steamBuildId": "6596857",
+  "depotId": 1338331,
+  "depotManifest": "3131561033263652299",
+  "gameRoot": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Lemon Cake",
+  "engine": "4.24",
+  "engineEvidence": [
+    "LemonCake.uproject EngineAssociation",
+    "Shipping executable UTF-16 string ++UE4+Release-4.24-CL-11590370"
+  ],
+  "pak": {
+    "relativePath": "LemonCake/Content/Paks/LemonCake-WindowsNoEditor.pak",
+    "bytes": 480756603,
+    "sha256": "7f1d3571abea92fee2397e9004c038a4444bb58a94a4343881490f86a8214f1f",
+    "version": "V8B",
+    "encryptedIndex": false,
+    "compression": null,
+    "entries": 11123
+  },
+  "tools": {
+    "repak": "0.2.3",
+    "repakZipSha256": "6720d602144d75df477a99d5bedb6ea780997546afc335901d4937cafeaa73fa",
+    "UAssetAPI": "1.1.0 (7353081)",
+    "parserEngine": "VER_UE4_24"
+  },
+  "installedFiles": [
+    {
+      "path": "Engine/Binaries/ThirdParty/DbgHelp/dbghelp.dll",
+      "bytes": 1369936,
+      "sha256": "159b30d9f1bbe69ae03e0d19669d4fcb565246d81672b7034a69cef9f466dcbe"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/libsndfile/Win64/libsndfile-1.dll",
+      "bytes": 1810944,
+      "sha256": "7eedfc90e7440944c0a57dff9a95781ceb8e836665ca8726f393c24675fb299c"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/NVIDIA/NVaftermath/Win64/GFSDK_Aftermath_Lib.x64.dll",
+      "bytes": 117760,
+      "sha256": "41e6d6e6b691b8aca94aa35bf04e7a204f02ec843e192cc4d28f421ec517934a"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/Ogg/Win64/VS2015/libogg_64.dll",
+      "bytes": 49152,
+      "sha256": "284a6e70a6dce01f8a02d93e1bb78baf0efb6140459c587d8986d59fb6bd675b"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/PhysX3/Win64/VS2015/APEX_Clothing_x64.dll",
+      "bytes": 1219072,
+      "sha256": "12e2803bca4a46990b6a00d2cb0869931181d82942e3a7853afb4ff795def072"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/PhysX3/Win64/VS2015/APEX_Legacy_x64.dll",
+      "bytes": 3329536,
+      "sha256": "58ac9873ad9f1a4b6c7e607a86980fe00d992ec08138c16a5021b4890ef25b1c"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/PhysX3/Win64/VS2015/ApexFramework_x64.dll",
+      "bytes": 1043968,
+      "sha256": "cce437454486fd7fdeb7b24ae2afc3e3b5123a1b739c7de0061b313bfff88e3b"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/PhysX3/Win64/VS2015/NvCloth_x64.dll",
+      "bytes": 265728,
+      "sha256": "46bc7ad33191c1fc72192002e6a432c1b9399d42c8849bcbd6a9487a777fc254"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/PhysX3/Win64/VS2015/PhysX3_x64.dll",
+      "bytes": 2105344,
+      "sha256": "09c50ddccf9b31dcf97e57505f0b4616c8a963b6d4502ce10d836f0c460a1b00"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/PhysX3/Win64/VS2015/PhysX3Common_x64.dll",
+      "bytes": 1598976,
+      "sha256": "1ed491817611f251cdea84d438ccd9d9ab8cb7cf42a1ecd7476834b7bbe53be4"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/PhysX3/Win64/VS2015/PhysX3Cooking_x64.dll",
+      "bytes": 244736,
+      "sha256": "bff31ef9eaded496fecdb1e2f89f3108b9529d6e221e56d53c7321cf2575bcd4"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/PhysX3/Win64/VS2015/PxFoundation_x64.dll",
+      "bytes": 54784,
+      "sha256": "7690c1572c74cf8029258fa1feeb00ba938d6a6c4b5fea34b9fb421224672dbe"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/PhysX3/Win64/VS2015/PxPvdSDK_x64.dll",
+      "bytes": 188928,
+      "sha256": "39a7088bb1cb810fc2d6e461d3517339b34769d61ae5447df9ec3a629e048cf5"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/Steamworks/Steamv146/Win64/steam_api64.dll",
+      "bytes": 289568,
+      "sha256": "f1eb582e607a1e43cdb1654bfb7cb29ad46f6728b3fb89a14f7727e0e8daab69"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbis_64.dll",
+      "bytes": 1714176,
+      "sha256": "0f66dcb5837e9b59c499277fd272b862043356aa9145802cf0a63e00a1bcca59"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbisfile_64.dll",
+      "bytes": 37888,
+      "sha256": "a9d6f5538f44011c1f65d7ace64216a237636717cb0c8c59f4f89cc08dd3d24f"
+    },
+    {
+      "path": "Engine/Binaries/ThirdParty/Windows/DirectX/x64/WinPixEventRuntime.dll",
+      "bytes": 44752,
+      "sha256": "0afaa35527ac034861ffa5564e5f6bd9e4d54e79132b3283cdd98e41f5584d19"
+    },
+    {
+      "path": "Engine/Extras/Redist/en-us/UE4PrereqSetup_x64.exe",
+      "bytes": 41562088,
+      "sha256": "b745d7a6b2ae0d0869fbd45582bf69d6a4b66facd46051694f47b18888be3129"
+    },
+    {
+      "path": "LemonCake/Binaries/Win64/LemonCake-Win64-Shipping.exe",
+      "bytes": 56112640,
+      "sha256": "1885a1875ecae11ed81cac0eed2bc69303c01a5bf895153c46e87947034b9c3e"
+    },
+    {
+      "path": "LemonCake/Content/Paks/LemonCake-WindowsNoEditor.pak",
+      "bytes": 480756603,
+      "sha256": "7f1d3571abea92fee2397e9004c038a4444bb58a94a4343881490f86a8214f1f"
+    },
+    {
+      "path": "LemonCake.exe",
+      "bytes": 215040,
+      "sha256": "8382878d028a13b2be31b8999b16385dfb893d422f7f95dc154c9a5a721be725"
+    },
+    {
+      "path": "Manifest_NonUFSFiles_Win64.txt",
+      "bytes": 1755,
+      "sha256": "6a2d29b18ed06bd9f385b1d060b3472edc4a90d00cbad39852f583c56fbc5123"
+    }
+  ],
+  "runtimePlayed": false,
+  "scope": "Static local installed-build research; no recovered original C++ or editor Blueprint graphs."
+}

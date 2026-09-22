@@ -74,7 +74,8 @@ local DataHandler = {
 	StoreName = "dev_0",
 	StudioSavingEnabled = true,
 
-	ForceMockData = false,
+	-- Opt-in, Studio-only QA sessions; never changes the live store identity or saving policy.
+	ForceMockData = IS_STUDIO and script:GetAttribute("AdminTestMockData") == true,
 }
 
 local Logger = LoggerUtil.new({ name = "DataHandler" }) :: any
@@ -421,7 +422,7 @@ function DataHandler.OnInit(self: DataHandler)
 			REVISION[player] = nil
 			self.Data[player] = nil
 			local message = if playerData.Cloud.ProgressResetPending
-				then "Progress reset requested. Rejoin for a fresh start with money for every upgrade."
+				then "Progress reset requested. Rejoin for a fresh start. Paid ownership is preserved."
 				else "Profile session end - Please rejoin"
 			player:Kick(message)
 		end)
@@ -555,7 +556,7 @@ function DataHandler.RequestProgressReset(self: DataHandler, player: Player): st
 	data.Cloud.ProgressResetPending = true
 	Logger:Info(`Progress reset requested for {player.Name}`)
 	profile:EndSession()
-	return `Progress reset requested for {player.Name}. Rejoin to start again with upgrade money.`
+	return `Progress reset requested for {player.Name}. Rejoin for a fresh start. Paid ownership is preserved.`
 end
 
 function DataHandler.WipeData(self: DataHandler, player: Player)
@@ -587,6 +588,12 @@ function DataHandler.ForceSync(_self: DataHandler, player: Player?): ()
 			flushPlayerUpdates(playerKey)
 		end
 	end
+end
+
+-- Flush older deltas before sending the current full state through the existing revision channel.
+function DataHandler.ResendSnapshot(self: DataHandler, player: Player): ()
+	flushPlayerUpdates(player)
+	sendInitialSnapshot(self, player)
 end
 
 function DataHandler.GetSyncStats(_self: DataHandler)

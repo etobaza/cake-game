@@ -1,0 +1,25 @@
+{
+  "fileCount": 11123,
+  "extractedBytes": 472915295,
+  "assets": 4511,
+  "functions": 914,
+  "functionsWithUnparsedBytecode": [],
+  "defaultObjects": 78,
+  "bytecodeSizeMismatches": [],
+  "tables": 15,
+  "tableRows": 623,
+  "mapObjects": 1946,
+  "enumLabels": 47,
+  "exportTypes": {
+    "PropertyExport": 6511,
+    "ClassExport": 87,
+    "NormalExport": 14465,
+    "FunctionExport": 914,
+    "EnumExport": 10,
+    "DataTableExport": 15,
+    "UserDefinedStructExport": 9,
+    "StringTableExport": 1,
+    "LevelExport": 1
+  },
+  "rawExportAssets": []
+}

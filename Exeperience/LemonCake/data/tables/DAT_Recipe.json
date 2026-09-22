@@ -1,0 +1,1314 @@
+{
+  "source": "Blueprints/Items/DAT_Recipe.uasset",
+  "rows": [
+    {
+      "id": "FrenchBaguette",
+      "Name": "French Baguette",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_FrenchBaguette.ICO_FrenchBaguette",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator0",
+        "label": "Bread"
+      },
+      "Value": 1.5,
+      "BakeTime": 5.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour"
+      ]
+    },
+    {
+      "id": "SweetRoll",
+      "Name": "Sweet Roll",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_SweetRoll.ICO_SweetRoll",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator2",
+        "label": "Donut"
+      },
+      "Value": 1.75,
+      "BakeTime": 8.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar"
+      ]
+    },
+    {
+      "id": "MarshmallowTwist",
+      "Name": "Marshmallow Twist",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_MarshmallowTwist.ICO_MarshmallowTwist",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator5",
+        "label": "Candy"
+      },
+      "Value": 0.75,
+      "BakeTime": "+0",
+      "IsVegan": true,
+      "IsGlutenFree": true,
+      "IngredientsName": [
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar"
+      ]
+    },
+    {
+      "id": "SweetPretzel",
+      "Name": "Sweet Pretzel",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_SweetPretzel.ICO_SweetPretzel",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator0",
+        "label": "Bread"
+      },
+      "Value": 1.75,
+      "BakeTime": 10.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar"
+      ]
+    },
+    {
+      "id": "ChocolateCookie",
+      "Name": "Chocolate Cookie",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_ChocolateCookie.ICO_ChocolateCookie",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator1",
+        "label": "Cookie"
+      },
+      "Value": 2.0,
+      "BakeTime": 12.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Cocoa",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Cocoa.ICO_Cocoa"
+      ]
+    },
+    {
+      "id": "ChocolateCroissant",
+      "Name": "Chocolate Croissant",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_ChocolateCroissant.ICO_ChocolateCroissant",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator0",
+        "label": "Bread"
+      },
+      "Value": 2.25,
+      "BakeTime": 12.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Cocoa",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Cocoa.ICO_Cocoa"
+      ]
+    },
+    {
+      "id": "StrawberryDonut",
+      "Name": "Strawberry Donut",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_StrawberryDonut.ICO_StrawberryDonut",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator2",
+        "label": "Donut"
+      },
+      "Value": 2.5,
+      "BakeTime": 14.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Strawberry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Strawberry.ICO_Strawberry"
+      ]
+    },
+    {
+      "id": "EggBenedict",
+      "Name": "Egg Benedict",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_EggBenedict.ICO_EggBenedict",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator0",
+        "label": "Bread"
+      },
+      "Value": 2.0,
+      "BakeTime": 12.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Egg",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Egg.ICO_Egg"
+      ]
+    },
+    {
+      "id": "CherryJelly",
+      "Name": "Cherry Jelly",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CherryJelly.ICO_CherryJelly",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator2",
+        "label": "Donut"
+      },
+      "Value": 2.25,
+      "BakeTime": 12.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Cherry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Cherry.ICO_Cherry"
+      ]
+    },
+    {
+      "id": "ChocolateStrawberry",
+      "Name": "Chocolate Strawberry",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_ChocolateStrawberry.ICO_ChocolateStrawberry",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator5",
+        "label": "Candy"
+      },
+      "Value": 2.0,
+      "BakeTime": "+0",
+      "IsVegan": true,
+      "IsGlutenFree": true,
+      "IngredientsName": [
+        {
+          "textKey": "Strawberry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Cocoa",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Strawberry.ICO_Strawberry",
+        "/Game/Blueprints/Interface/Icon/ICO_Cocoa.ICO_Cocoa"
+      ]
+    },
+    {
+      "id": "BlueberryBagel",
+      "Name": "Blueberry Bagel",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_BlueberryBagel.ICO_BlueberryBagel",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator0",
+        "label": "Bread"
+      },
+      "Value": 2.5,
+      "BakeTime": 14.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Blueberry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Blueberry.ICO_Blueberry"
+      ]
+    },
+    {
+      "id": "HoneyTaffy",
+      "Name": "Honey Taffy",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_HoneyTaffy.ICO_HoneyTaffy",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator5",
+        "label": "Candy"
+      },
+      "Value": 1.75,
+      "BakeTime": "+0",
+      "IsVegan": false,
+      "IsGlutenFree": true,
+      "IngredientsName": [
+        {
+          "textKey": "Honey",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Honey.ICO_Honey"
+      ]
+    },
+    {
+      "id": "BerryCrumble",
+      "Name": "Berry Crumble",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_BerryCrumble.ICO_BerryCrumble",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator4",
+        "label": "Pie"
+      },
+      "Value": 3.0,
+      "BakeTime": 20.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Strawberry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Blueberry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Strawberry.ICO_Strawberry",
+        "/Game/Blueprints/Interface/Icon/ICO_Blueberry.ICO_Blueberry"
+      ]
+    },
+    {
+      "id": "RaisinBread",
+      "Name": "Raisin Bread",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_RaisinBread.ICO_RaisinBread",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator0",
+        "label": "Bread"
+      },
+      "Value": 2.5,
+      "BakeTime": 15.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Grape",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Grape.ICO_Grape"
+      ]
+    },
+    {
+      "id": "AppleTart",
+      "Name": "Apple Tart",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_AppleTart.ICO_AppleTart",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator4",
+        "label": "Pie"
+      },
+      "Value": 3.0,
+      "BakeTime": 25.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Apple",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Apple.ICO_Apple"
+      ]
+    },
+    {
+      "id": "StrawberryScone",
+      "Name": "Strawberry Scone",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_StrawberryScone.ICO_StrawberryScone",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator1",
+        "label": "Cookie"
+      },
+      "Value": 2.5,
+      "BakeTime": 14.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Egg",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Strawberry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Egg.ICO_Egg",
+        "/Game/Blueprints/Interface/Icon/ICO_Strawberry.ICO_Strawberry"
+      ]
+    },
+    {
+      "id": "ChocolateEclair",
+      "Name": "Chocolate Eclair",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_ChocolateEclair.ICO_ChocolateEclair",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator2",
+        "label": "Donut"
+      },
+      "Value": 3.0,
+      "BakeTime": 16.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Cocoa",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Cocoa.ICO_Cocoa"
+      ]
+    },
+    {
+      "id": "RainbowLollipop",
+      "Name": "Rainbow Lollipop",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_RainbowLollipop.ICO_RainbowLollipop",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator5",
+        "label": "Candy"
+      },
+      "Value": 2.75,
+      "BakeTime": "+0",
+      "IsVegan": true,
+      "IsGlutenFree": true,
+      "IngredientsName": [
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Blueberry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Strawberry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Grape",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Blueberry.ICO_Blueberry",
+        "/Game/Blueprints/Interface/Icon/ICO_Strawberry.ICO_Strawberry",
+        "/Game/Blueprints/Interface/Icon/ICO_Grape.ICO_Grape"
+      ]
+    },
+    {
+      "id": "CarrotGranolaBar",
+      "Name": "Carrot Granola Bar",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CarrotGranolaBar.ICO_CarrotGranolaBar",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator1",
+        "label": "Cookie"
+      },
+      "Value": 3.25,
+      "BakeTime": 22.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Carrot",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Grape",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Carrot.ICO_Carrot",
+        "/Game/Blueprints/Interface/Icon/ICO_Grape.ICO_Grape"
+      ]
+    },
+    {
+      "id": "BlueberryCheesecake",
+      "Name": "Blueberry Cheesecake",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_BlueberryCheesecake.ICO_BlueberryCheesecake",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator3",
+        "label": "Cake"
+      },
+      "Value": 3.5,
+      "BakeTime": 28.0,
+      "IsVegan": false,
+      "IsGlutenFree": true,
+      "IngredientsName": [
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Blueberry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Blueberry.ICO_Blueberry"
+      ]
+    },
+    {
+      "id": "GrapePopsicle",
+      "Name": "Grape Popsicle",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_GrapePopsicle.ICO_GrapePopsicle",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator6",
+        "label": "Frozen"
+      },
+      "Value": 1.75,
+      "BakeTime": "+0",
+      "IsVegan": true,
+      "IsGlutenFree": true,
+      "IngredientsName": [
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Grape",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Grape.ICO_Grape"
+      ]
+    },
+    {
+      "id": "AppleStrudel",
+      "Name": "Apple Strudel",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_AppleStrudel.ICO_AppleStrudel",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator2",
+        "label": "Donut"
+      },
+      "Value": 2.75,
+      "BakeTime": 20.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Egg",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Apple",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Egg.ICO_Egg",
+        "/Game/Blueprints/Interface/Icon/ICO_Apple.ICO_Apple"
+      ]
+    },
+    {
+      "id": "MilkChocolate",
+      "Name": "Milk Chocolate",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_MilkChocolate.ICO_MilkChocolate",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator5",
+        "label": "Candy"
+      },
+      "Value": 2.0,
+      "BakeTime": "+0",
+      "IsVegan": false,
+      "IsGlutenFree": true,
+      "IngredientsName": [
+        {
+          "textKey": "Cocoa",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Cocoa.ICO_Cocoa",
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar"
+      ]
+    },
+    {
+      "id": "SoftServe",
+      "Name": "Soft Serve",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_SoftServe.ICO_SoftServe",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator6",
+        "label": "Frozen"
+      },
+      "Value": 2.0,
+      "BakeTime": "+0",
+      "IsVegan": false,
+      "IsGlutenFree": true,
+      "IngredientsName": [
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar"
+      ]
+    },
+    {
+      "id": "HoneyCruller",
+      "Name": "Honey Cruller",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_HoneyCruller.ICO_HoneyCruller",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator2",
+        "label": "Donut"
+      },
+      "Value": 2.25,
+      "BakeTime": 15.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Egg",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Honey",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Egg.ICO_Egg",
+        "/Game/Blueprints/Interface/Icon/ICO_Honey.ICO_Honey"
+      ]
+    },
+    {
+      "id": "CaramelFlan",
+      "Name": "Caramel Flan",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CaramelFlan.ICO_CaramelFlan",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator4",
+        "label": "Pie"
+      },
+      "Value": 2.5,
+      "BakeTime": 18.0,
+      "IsVegan": false,
+      "IsGlutenFree": true,
+      "IngredientsName": [
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Egg",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Egg.ICO_Egg",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar"
+      ]
+    },
+    {
+      "id": "chocolatePancake",
+      "Name": "Chocolate Pancake",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_ChocolatePancake.ICO_ChocolatePancake",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator3",
+        "label": "Cake"
+      },
+      "Value": 2.75,
+      "BakeTime": 10.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Egg",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Cocoa",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Egg.ICO_Egg",
+        "/Game/Blueprints/Interface/Icon/ICO_Cocoa.ICO_Cocoa"
+      ]
+    },
+    {
+      "id": "CarrotPie",
+      "Name": "Carrot Pie",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CarrotPie.ICO_CarrotPie",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator4",
+        "label": "Pie"
+      },
+      "Value": 2.5,
+      "BakeTime": 16.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Egg",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Carrot",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Egg.ICO_Egg",
+        "/Game/Blueprints/Interface/Icon/ICO_Carrot.ICO_Carrot"
+      ]
+    },
+    {
+      "id": "CaramelApple",
+      "Name": "Caramel Apple",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CaramelApple.ICO_CaramelApple",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator5",
+        "label": "Candy"
+      },
+      "Value": 2.25,
+      "BakeTime": "+0",
+      "IsVegan": false,
+      "IsGlutenFree": true,
+      "IngredientsName": [
+        {
+          "textKey": "Apple",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Apple.ICO_Apple",
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar"
+      ]
+    },
+    {
+      "id": "CherryBundtCake",
+      "Name": "Cherry Bundt Cake",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CherryBundtcake.ICO_CherryBundtcake",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator3",
+        "label": "Cake"
+      },
+      "Value": 3.75,
+      "BakeTime": 30.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Egg",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Cherry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Egg.ICO_Egg",
+        "/Game/Blueprints/Interface/Icon/ICO_Cherry.ICO_Cherry"
+      ]
+    },
+    {
+      "id": "IceCreamSandwich",
+      "Name": "Ice Cream Sandwich",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_IceCreamSandwich.ICO_IceCreamSandwich",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator6",
+        "label": "Frozen"
+      },
+      "Value": 2.5,
+      "BakeTime": "+0",
+      "IsVegan": false,
+      "IsGlutenFree": true,
+      "IngredientsName": [
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Cocoa",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Cocoa.ICO_Cocoa"
+      ]
+    },
+    {
+      "id": "RedVelvetCake",
+      "Name": "Red Velvet Cake",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_RedVelvetCake.ICO_RedVelvetCake",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator3",
+        "label": "Cake"
+      },
+      "Value": 3.0,
+      "BakeTime": 25.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk"
+      ]
+    },
+    {
+      "id": "StrawberryIceCream",
+      "Name": "Strawberry Ice Cream",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_StrawberryIceCream.ICO_StrawberryIceCream",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator6",
+        "label": "Frozen"
+      },
+      "Value": 2.5,
+      "BakeTime": "+0",
+      "IsVegan": false,
+      "IsGlutenFree": true,
+      "IngredientsName": [
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Strawberry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Strawberry.ICO_Strawberry"
+      ]
+    },
+    {
+      "id": "CherryBiscotti",
+      "Name": "Cherry Biscotti",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CherryBiscotti.ICO_CherryBiscotti",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator1",
+        "label": "Cookie"
+      },
+      "Value": 2.5,
+      "BakeTime": 18.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Cherry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Cherry.ICO_Cherry"
+      ]
+    },
+    {
+      "id": "HoneyMacaron",
+      "Name": "Honey Macaron",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_HoneyMacaron.ICO_HoneyMacaron",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator1",
+        "label": "Cookie"
+      },
+      "Value": 3.25,
+      "BakeTime": 25.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Honey",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Egg",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Honey.ICO_Honey",
+        "/Game/Blueprints/Interface/Icon/ICO_Egg.ICO_Egg",
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk"
+      ]
+    },
+    {
+      "id": "LemonSorbet",
+      "Name": "Lemon Sorbet",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_LemonSorbet.ICO_LemonSorbet",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator6",
+        "label": "Frozen"
+      },
+      "Value": 2.75,
+      "BakeTime": "+0",
+      "IsVegan": true,
+      "IsGlutenFree": true,
+      "IngredientsName": [
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Lemon",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Lemon.ICO_Lemon"
+      ]
+    },
+    {
+      "id": "CarrotCupcake",
+      "Name": "Carrot Cupcake",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CarrotCupcake.ICO_CarrotCupcake",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator3",
+        "label": "Cake"
+      },
+      "Value": 2.75,
+      "BakeTime": 10.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Carrot",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Carrot.ICO_Carrot"
+      ]
+    },
+    {
+      "id": "LemonWafer",
+      "Name": "Lemon Wafer",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_LemonWafer.ICO_LemonWafer",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator1",
+        "label": "Cookie"
+      },
+      "Value": 3.0,
+      "BakeTime": 18.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Lemon",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Lemon.ICO_Lemon"
+      ]
+    },
+    {
+      "id": "LemonMeringue",
+      "Name": "Lemon Meringue",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_LemonMeringue.ICO_LemonMeringue",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator4",
+        "label": "Pie"
+      },
+      "Value": 3.5,
+      "BakeTime": 30.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Egg",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Lemon",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Egg.ICO_Egg",
+        "/Game/Blueprints/Interface/Icon/ICO_Lemon.ICO_Lemon"
+      ]
+    },
+    {
+      "id": "WaffleSundae",
+      "Name": "Waffle Sundae",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_WaffleSundae.ICO_WaffleSundae",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator6",
+        "label": "Frozen"
+      },
+      "Value": 3.75,
+      "BakeTime": "+0",
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Cherry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Cocoa",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Cherry.ICO_Cherry",
+        "/Game/Blueprints/Interface/Icon/ICO_Cocoa.ICO_Cocoa"
+      ]
+    },
+    {
+      "id": "CherryPie",
+      "Name": "Cherry Pie",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CherryPie.ICO_CherryPie",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator4",
+        "label": "Pie"
+      },
+      "Value": 3.75,
+      "BakeTime": 25.0,
+      "IsVegan": true,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Cherry",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Cherry.ICO_Cherry"
+      ]
+    },
+    {
+      "id": "LemonCake",
+      "Name": "Lemon Cake",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_LemonCake.ICO_LemonCake",
+      "Type": {
+        "id": "ENUM_RecipeType::NewEnumerator3",
+        "label": "Cake"
+      },
+      "Value": 4.0,
+      "BakeTime": 30.0,
+      "IsVegan": false,
+      "IsGlutenFree": false,
+      "IngredientsName": [
+        {
+          "textKey": "Flour",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Sugar",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Milk",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        },
+        {
+          "textKey": "Lemon",
+          "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+        }
+      ],
+      "IngredientsIcon": [
+        "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+        "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+        "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+        "/Game/Blueprints/Interface/Icon/ICO_Lemon.ICO_Lemon"
+      ]
+    }
+  ]
+}

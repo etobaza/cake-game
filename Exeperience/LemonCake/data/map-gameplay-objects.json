@@ -1,0 +1,1980 @@
+[
+  {
+    "name": "BP_Bed_2",
+    "class": "/Game/Blueprints/Bedroom/BP_Bed.BP_Bed_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Bed": "LVL_Game.PersistentLevel.BP_Bed_2.Bed",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Bed_2.DefaultSceneRoot",
+      "Timeline_0": "LVL_Game.PersistentLevel.BP_Bed_2.Timeline_0",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Bed_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Bed_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Bed_2.Bed",
+        "LVL_Game.PersistentLevel.BP_Bed_2.Timeline_0"
+      ]
+    }
+  },
+  {
+    "name": "BP_BedroomTable_2",
+    "class": "/Game/Blueprints/Bedroom/BP_BedroomTable.BP_BedroomTable_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Collision": "LVL_Game.PersistentLevel.BP_BedroomTable_2.Collision",
+      "Chair": "LVL_Game.PersistentLevel.BP_BedroomTable_2.Chair",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_BedroomTable_2.DefaultSceneRoot",
+      "Timeline_1": "LVL_Game.PersistentLevel.BP_BedroomTable_2.Timeline_1",
+      "Timeline_0": "LVL_Game.PersistentLevel.BP_BedroomTable_2.Timeline_0",
+      "bHidden": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_BedroomTable_2.DefaultSceneRoot",
+      "Tags": [
+        "ShopTable&Cake"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_BedroomTable_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_BedroomTable_2.Chair",
+        "LVL_Game.PersistentLevel.BP_BedroomTable_2.Collision",
+        "LVL_Game.PersistentLevel.BP_BedroomTable_2.Timeline_0",
+        "LVL_Game.PersistentLevel.BP_BedroomTable_2.Timeline_1"
+      ]
+    }
+  },
+  {
+    "name": "BP_BugMinigame_2",
+    "class": "/Game/Blueprints/Minigame/BP_BugMinigame.BP_BugMinigame_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "StoredItemLocation": "LVL_Game.PersistentLevel.BP_BugMinigame_2.StoredItemLocation",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_BugMinigame_2.DefaultSceneRoot",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_BugMinigame_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_BugMinigame_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_BugMinigame_2.StoredItemLocation"
+      ]
+    }
+  },
+  {
+    "name": "BP_BugSpawner2",
+    "class": "/Game/Blueprints/Minigame/BP_BugSpawner.BP_BugSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_BugSpawner2.DefaultSceneRoot",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_BugSpawner2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_BugSpawner2.DefaultSceneRoot"
+      ]
+    }
+  },
+  {
+    "name": "BP_BugSpawner3",
+    "class": "/Game/Blueprints/Minigame/BP_BugSpawner.BP_BugSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_BugSpawner3.DefaultSceneRoot",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_BugSpawner3.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_BugSpawner3.DefaultSceneRoot"
+      ]
+    }
+  },
+  {
+    "name": "BP_BugSpawner_2",
+    "class": "/Game/Blueprints/Minigame/BP_BugSpawner.BP_BugSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_BugSpawner_2.DefaultSceneRoot",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_BugSpawner_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_BugSpawner_2.DefaultSceneRoot"
+      ]
+    }
+  },
+  {
+    "name": "BP_CatCafe_2",
+    "class": "/Game/Blueprints/Shop/BP_CatCafe.BP_CatCafe_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "SM_MilkBowl": "LVL_Game.PersistentLevel.BP_CatCafe_2.SM_MilkBowl",
+      "SM_Toy": "LVL_Game.PersistentLevel.BP_CatCafe_2.SM_Toy",
+      "SM_Scratchpost": "LVL_Game.PersistentLevel.BP_CatCafe_2.SM_Scratchpost",
+      "SM_CatBed": "LVL_Game.PersistentLevel.BP_CatCafe_2.SM_CatBed",
+      "SM_CatTree": "LVL_Game.PersistentLevel.BP_CatCafe_2.SM_CatTree",
+      "CatLocation_05": "LVL_Game.PersistentLevel.BP_CatCafe_2.CatLocation_05",
+      "CatLocation_04": "LVL_Game.PersistentLevel.BP_CatCafe_2.CatLocation_04",
+      "CatLocation_03": "LVL_Game.PersistentLevel.BP_CatCafe_2.CatLocation_03",
+      "CatLocation_02": "LVL_Game.PersistentLevel.BP_CatCafe_2.CatLocation_02",
+      "CatLocation_01": "LVL_Game.PersistentLevel.BP_CatCafe_2.CatLocation_01",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_CatCafe_2.DefaultSceneRoot",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_CatCafe_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_CatCafe_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_CatCafe_2.CatLocation_01",
+        "LVL_Game.PersistentLevel.BP_CatCafe_2.CatLocation_02",
+        "LVL_Game.PersistentLevel.BP_CatCafe_2.CatLocation_03",
+        "LVL_Game.PersistentLevel.BP_CatCafe_2.CatLocation_04",
+        "LVL_Game.PersistentLevel.BP_CatCafe_2.CatLocation_05",
+        "LVL_Game.PersistentLevel.BP_CatCafe_2.SM_CatTree",
+        "LVL_Game.PersistentLevel.BP_CatCafe_2.SM_CatBed",
+        "LVL_Game.PersistentLevel.BP_CatCafe_2.SM_Scratchpost",
+        "LVL_Game.PersistentLevel.BP_CatCafe_2.SM_Toy",
+        "LVL_Game.PersistentLevel.BP_CatCafe_2.SM_MilkBowl"
+      ]
+    }
+  },
+  {
+    "name": "BP_Chicken_2",
+    "class": "/Game/Blueprints/Greenhouse/BP_Chicken.BP_Chicken_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Chicken_03": "LVL_Game.PersistentLevel.BP_Chicken_2.Chicken_03",
+      "Chicken_02": "LVL_Game.PersistentLevel.BP_Chicken_2.Chicken_02",
+      "EggLocation": "LVL_Game.PersistentLevel.BP_Chicken_2.EggLocation",
+      "Chick_03": "LVL_Game.PersistentLevel.BP_Chicken_2.Chick_03",
+      "Chick_02": "LVL_Game.PersistentLevel.BP_Chicken_2.Chick_02",
+      "Chick_01": "LVL_Game.PersistentLevel.BP_Chicken_2.Chick_01",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_Chicken_2.ItemLocation",
+      "Shadow": "LVL_Game.PersistentLevel.BP_Chicken_2.Shadow",
+      "Capsule": "LVL_Game.PersistentLevel.BP_Chicken_2.Capsule",
+      "Collision": "LVL_Game.PersistentLevel.BP_Chicken_2.Collision",
+      "PS_Sleep": "LVL_Game.PersistentLevel.BP_Chicken_2.PS_Sleep",
+      "Animal": "LVL_Game.PersistentLevel.BP_Chicken_2.Animal",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Chicken_2.DefaultSceneRoot",
+      "BrushDirt": "LVL_Game.PersistentLevel.BP_Chicken_2.BrushDirt",
+      "ScaleDownItem": "LVL_Game.PersistentLevel.BP_Chicken_2.ScaleDownItem",
+      "DirtMaterial": "LVL_Game.PersistentLevel.BP_Chicken_2.DirtMaterial",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Chicken_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Chicken_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.Animal",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.Capsule",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.Shadow",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.EggLocation",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.PS_Sleep",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.Collision",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.Chick_01",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.Chick_02",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.Chick_03",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.DirtMaterial",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.ScaleDownItem",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.BrushDirt",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.Chicken_02",
+        "LVL_Game.PersistentLevel.BP_Chicken_2.Chicken_03"
+      ]
+    }
+  },
+  {
+    "name": "BP_ClientTable1",
+    "class": "/Game/Blueprints/Shop/BP_ClientChair.BP_ClientChair_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Shadow": "LVL_Game.PersistentLevel.BP_ClientTable1.Shadow",
+      "Chair": "LVL_Game.PersistentLevel.BP_ClientTable1.Chair",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ClientTable1.DefaultSceneRoot",
+      "IsUnlocked": true,
+      "TableNumber": 2,
+      "BP_Dish": "LVL_Game.PersistentLevel.BP_ClientDish2",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ClientTable1.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ClientTable1.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ClientTable1.Chair",
+        "LVL_Game.PersistentLevel.BP_ClientTable1.Shadow"
+      ]
+    }
+  },
+  {
+    "name": "BP_ClientTable2",
+    "class": "/Game/Blueprints/Shop/BP_ClientChair.BP_ClientChair_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Shadow": "LVL_Game.PersistentLevel.BP_ClientTable2.Shadow",
+      "Chair": "LVL_Game.PersistentLevel.BP_ClientTable2.Chair",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ClientTable2.DefaultSceneRoot",
+      "IsUnlocked": true,
+      "IsPositive": -1,
+      "BP_Dish": "LVL_Game.PersistentLevel.BP_ClientDish_2",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ClientTable2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ClientTable2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ClientTable2.Chair",
+        "LVL_Game.PersistentLevel.BP_ClientTable2.Shadow"
+      ]
+    }
+  },
+  {
+    "name": "BP_ClientTable3",
+    "class": "/Game/Blueprints/Shop/BP_ClientChair.BP_ClientChair_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Shadow": "LVL_Game.PersistentLevel.BP_ClientTable3.Shadow",
+      "Chair": "LVL_Game.PersistentLevel.BP_ClientTable3.Chair",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ClientTable3.DefaultSceneRoot",
+      "TableNumber": 4,
+      "BP_Dish": "LVL_Game.PersistentLevel.BP_ClientDish4",
+      "bHidden": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ClientTable3.DefaultSceneRoot",
+      "Tags": [
+        "ShopSecondChairSet"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ClientTable3.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ClientTable3.Chair",
+        "LVL_Game.PersistentLevel.BP_ClientTable3.Shadow"
+      ]
+    }
+  },
+  {
+    "name": "BP_ClientTable4",
+    "class": "/Game/Blueprints/Shop/BP_ClientChair.BP_ClientChair_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Shadow": "LVL_Game.PersistentLevel.BP_ClientTable4.Shadow",
+      "Chair": "LVL_Game.PersistentLevel.BP_ClientTable4.Chair",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ClientTable4.DefaultSceneRoot",
+      "TableNumber": 3,
+      "IsPositive": -1,
+      "BP_Dish": "LVL_Game.PersistentLevel.BP_ClientDish3",
+      "bHidden": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ClientTable4.DefaultSceneRoot",
+      "Tags": [
+        "ShopSecondChairSet"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ClientTable4.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ClientTable4.Chair",
+        "LVL_Game.PersistentLevel.BP_ClientTable4.Shadow"
+      ]
+    }
+  },
+  {
+    "name": "BP_ClientDish2",
+    "class": "/Game/Blueprints/Shop/BP_ClientDish.BP_ClientDish_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "CoffeeLocation": "LVL_Game.PersistentLevel.BP_ClientDish2.CoffeeLocation",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ClientDish2.Shadow",
+      "Menu": "LVL_Game.PersistentLevel.BP_ClientDish2.Menu",
+      "Plate": "LVL_Game.PersistentLevel.BP_ClientDish2.Plate",
+      "Stain": "LVL_Game.PersistentLevel.BP_ClientDish2.Stain",
+      "Collision": "LVL_Game.PersistentLevel.BP_ClientDish2.Collision",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ClientDish2.DefaultSceneRoot",
+      "Timeline_1": "LVL_Game.PersistentLevel.BP_ClientDish2.Timeline_1",
+      "Timeline_0": "LVL_Game.PersistentLevel.BP_ClientDish2.Timeline_0",
+      "BP_Chair": "LVL_Game.PersistentLevel.BP_ClientTable1",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ClientDish2.DefaultSceneRoot",
+      "Tags": [
+        "TutorialCleanTable"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ClientDish2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ClientDish2.Collision",
+        "LVL_Game.PersistentLevel.BP_ClientDish2.Stain",
+        "LVL_Game.PersistentLevel.BP_ClientDish2.Plate",
+        "LVL_Game.PersistentLevel.BP_ClientDish2.Menu",
+        "LVL_Game.PersistentLevel.BP_ClientDish2.Shadow",
+        "LVL_Game.PersistentLevel.BP_ClientDish2.CoffeeLocation",
+        "LVL_Game.PersistentLevel.BP_ClientDish2.Timeline_0",
+        "LVL_Game.PersistentLevel.BP_ClientDish2.Timeline_1"
+      ]
+    }
+  },
+  {
+    "name": "BP_ClientDish3",
+    "class": "/Game/Blueprints/Shop/BP_ClientDish.BP_ClientDish_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "CoffeeLocation": "LVL_Game.PersistentLevel.BP_ClientDish3.CoffeeLocation",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ClientDish3.Shadow",
+      "Menu": "LVL_Game.PersistentLevel.BP_ClientDish3.Menu",
+      "Plate": "LVL_Game.PersistentLevel.BP_ClientDish3.Plate",
+      "Stain": "LVL_Game.PersistentLevel.BP_ClientDish3.Stain",
+      "Collision": "LVL_Game.PersistentLevel.BP_ClientDish3.Collision",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ClientDish3.DefaultSceneRoot",
+      "Timeline_1": "LVL_Game.PersistentLevel.BP_ClientDish3.Timeline_1",
+      "Timeline_0": "LVL_Game.PersistentLevel.BP_ClientDish3.Timeline_0",
+      "BP_Chair": "LVL_Game.PersistentLevel.BP_ClientTable4",
+      "bHidden": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ClientDish3.DefaultSceneRoot",
+      "Tags": [
+        "ShopSecondTable"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ClientDish3.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ClientDish3.Collision",
+        "LVL_Game.PersistentLevel.BP_ClientDish3.Stain",
+        "LVL_Game.PersistentLevel.BP_ClientDish3.Plate",
+        "LVL_Game.PersistentLevel.BP_ClientDish3.Menu",
+        "LVL_Game.PersistentLevel.BP_ClientDish3.Shadow",
+        "LVL_Game.PersistentLevel.BP_ClientDish3.CoffeeLocation",
+        "LVL_Game.PersistentLevel.BP_ClientDish3.Timeline_0",
+        "LVL_Game.PersistentLevel.BP_ClientDish3.Timeline_1"
+      ]
+    }
+  },
+  {
+    "name": "BP_ClientDish4",
+    "class": "/Game/Blueprints/Shop/BP_ClientDish.BP_ClientDish_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "CoffeeLocation": "LVL_Game.PersistentLevel.BP_ClientDish4.CoffeeLocation",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ClientDish4.Shadow",
+      "Menu": "LVL_Game.PersistentLevel.BP_ClientDish4.Menu",
+      "Plate": "LVL_Game.PersistentLevel.BP_ClientDish4.Plate",
+      "Stain": "LVL_Game.PersistentLevel.BP_ClientDish4.Stain",
+      "Collision": "LVL_Game.PersistentLevel.BP_ClientDish4.Collision",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ClientDish4.DefaultSceneRoot",
+      "Timeline_1": "LVL_Game.PersistentLevel.BP_ClientDish4.Timeline_1",
+      "Timeline_0": "LVL_Game.PersistentLevel.BP_ClientDish4.Timeline_0",
+      "BP_Chair": "LVL_Game.PersistentLevel.BP_ClientTable3",
+      "bHidden": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ClientDish4.DefaultSceneRoot",
+      "Tags": [
+        "ShopSecondTable"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ClientDish4.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ClientDish4.Collision",
+        "LVL_Game.PersistentLevel.BP_ClientDish4.Stain",
+        "LVL_Game.PersistentLevel.BP_ClientDish4.Plate",
+        "LVL_Game.PersistentLevel.BP_ClientDish4.Menu",
+        "LVL_Game.PersistentLevel.BP_ClientDish4.Shadow",
+        "LVL_Game.PersistentLevel.BP_ClientDish4.CoffeeLocation",
+        "LVL_Game.PersistentLevel.BP_ClientDish4.Timeline_0",
+        "LVL_Game.PersistentLevel.BP_ClientDish4.Timeline_1"
+      ]
+    }
+  },
+  {
+    "name": "BP_ClientDish_2",
+    "class": "/Game/Blueprints/Shop/BP_ClientDish.BP_ClientDish_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "CoffeeLocation": "LVL_Game.PersistentLevel.BP_ClientDish_2.CoffeeLocation",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ClientDish_2.Shadow",
+      "Menu": "LVL_Game.PersistentLevel.BP_ClientDish_2.Menu",
+      "Plate": "LVL_Game.PersistentLevel.BP_ClientDish_2.Plate",
+      "Stain": "LVL_Game.PersistentLevel.BP_ClientDish_2.Stain",
+      "Collision": "LVL_Game.PersistentLevel.BP_ClientDish_2.Collision",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ClientDish_2.DefaultSceneRoot",
+      "Timeline_1": "LVL_Game.PersistentLevel.BP_ClientDish_2.Timeline_1",
+      "Timeline_0": "LVL_Game.PersistentLevel.BP_ClientDish_2.Timeline_0",
+      "BP_Chair": "LVL_Game.PersistentLevel.BP_ClientTable2",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ClientDish_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ClientDish_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ClientDish_2.Collision",
+        "LVL_Game.PersistentLevel.BP_ClientDish_2.Stain",
+        "LVL_Game.PersistentLevel.BP_ClientDish_2.Plate",
+        "LVL_Game.PersistentLevel.BP_ClientDish_2.Menu",
+        "LVL_Game.PersistentLevel.BP_ClientDish_2.Shadow",
+        "LVL_Game.PersistentLevel.BP_ClientDish_2.CoffeeLocation",
+        "LVL_Game.PersistentLevel.BP_ClientDish_2.Timeline_0",
+        "LVL_Game.PersistentLevel.BP_ClientDish_2.Timeline_1"
+      ]
+    }
+  },
+  {
+    "name": "BP_ClientSpawner_2",
+    "class": "/Game/Blueprints/Shop/BP_ClientSpawner.BP_ClientSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ClientSpawner_2.DefaultSceneRoot",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ClientSpawner_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ClientSpawner_2.DefaultSceneRoot"
+      ]
+    }
+  },
+  {
+    "name": "BP_Counter2_2",
+    "class": "/Game/Blueprints/Items/BP_Counter.BP_Counter_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowCounter": "LVL_Game.PersistentLevel.BP_Counter2_2.ShadowCounter",
+      "Shadow": "LVL_Game.PersistentLevel.BP_Counter2_2.Shadow",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_Counter2_2.ItemLocation",
+      "Collision": "LVL_Game.PersistentLevel.BP_Counter2_2.Collision",
+      "Counter": "LVL_Game.PersistentLevel.BP_Counter2_2.Counter",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Counter2_2.DefaultSceneRoot",
+      "CounterMesh": "/Game/Art/Mesh/Tool/SM_BroomCounter.SM_BroomCounter",
+      "IsUnlocked": false,
+      "IsUniqueItem": true,
+      "StartingItem": "Broom",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Counter2_2.DefaultSceneRoot",
+      "Tags": [
+        "ShopMagicBroom",
+        "BaseCounter"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Counter2_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Counter2_2.Counter",
+        "LVL_Game.PersistentLevel.BP_Counter2_2.Collision",
+        "LVL_Game.PersistentLevel.BP_Counter2_2.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_Counter2_2.Shadow",
+        "LVL_Game.PersistentLevel.BP_Counter2_2.ShadowCounter"
+      ]
+    }
+  },
+  {
+    "name": "BP_Counter7",
+    "class": "/Game/Blueprints/Items/BP_Counter.BP_Counter_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowCounter": "LVL_Game.PersistentLevel.BP_Counter7.ShadowCounter",
+      "Shadow": "LVL_Game.PersistentLevel.BP_Counter7.Shadow",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_Counter7.ItemLocation",
+      "Collision": "LVL_Game.PersistentLevel.BP_Counter7.Collision",
+      "Counter": "LVL_Game.PersistentLevel.BP_Counter7.Counter",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Counter7.DefaultSceneRoot",
+      "CounterMesh": "/Game/Art/Mesh/Furniture/SM_GardenCounter.SM_GardenCounter",
+      "IsUnlocked": false,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Counter7.DefaultSceneRoot",
+      "Tags": [
+        "ShopKitchenCounter0"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Counter7.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Counter7.Counter",
+        "LVL_Game.PersistentLevel.BP_Counter7.Collision",
+        "LVL_Game.PersistentLevel.BP_Counter7.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_Counter7.Shadow",
+        "LVL_Game.PersistentLevel.BP_Counter7.ShadowCounter"
+      ]
+    }
+  },
+  {
+    "name": "BP_Counter9",
+    "class": "/Game/Blueprints/Items/BP_Counter.BP_Counter_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowCounter": "LVL_Game.PersistentLevel.BP_Counter9.ShadowCounter",
+      "Shadow": "LVL_Game.PersistentLevel.BP_Counter9.Shadow",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_Counter9.ItemLocation",
+      "Collision": "LVL_Game.PersistentLevel.BP_Counter9.Collision",
+      "Counter": "LVL_Game.PersistentLevel.BP_Counter9.Counter",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Counter9.DefaultSceneRoot",
+      "CounterMesh": "/Game/Art/Mesh/Furniture/SM_KitchenWindowDouble.SM_KitchenWindowDouble",
+      "IsUnlocked": false,
+      "IsWindowCounter": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Counter9.DefaultSceneRoot",
+      "Tags": [
+        "ShopKitchenWindow4"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Counter9.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Counter9.Counter",
+        "LVL_Game.PersistentLevel.BP_Counter9.Collision",
+        "LVL_Game.PersistentLevel.BP_Counter9.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_Counter9.Shadow",
+        "LVL_Game.PersistentLevel.BP_Counter9.ShadowCounter"
+      ]
+    }
+  },
+  {
+    "name": "BP_Counter_6",
+    "class": "/Game/Blueprints/Items/BP_Counter.BP_Counter_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowCounter": "LVL_Game.PersistentLevel.BP_Counter_6.ShadowCounter",
+      "Shadow": "LVL_Game.PersistentLevel.BP_Counter_6.Shadow",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_Counter_6.ItemLocation",
+      "Collision": "LVL_Game.PersistentLevel.BP_Counter_6.Collision",
+      "Counter": "LVL_Game.PersistentLevel.BP_Counter_6.Counter",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Counter_6.DefaultSceneRoot",
+      "CounterMesh": "/Game/Art/Mesh/Furniture/SM_GardenSink.SM_GardenSink",
+      "IsUniqueItem": true,
+      "ItemStart": true,
+      "StartingItem": "WateringCan",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Counter_6.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Counter_6.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Counter_6.Counter",
+        "LVL_Game.PersistentLevel.BP_Counter_6.Collision",
+        "LVL_Game.PersistentLevel.BP_Counter_6.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_Counter_6.Shadow",
+        "LVL_Game.PersistentLevel.BP_Counter_6.ShadowCounter"
+      ]
+    }
+  },
+  {
+    "name": "BP_Coww_2",
+    "class": "/Game/Blueprints/Greenhouse/BP_Coww.BP_Coww_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "EggLocation": "LVL_Game.PersistentLevel.BP_Coww_2.EggLocation",
+      "Chick_03": "LVL_Game.PersistentLevel.BP_Coww_2.Chick_03",
+      "Chick_02": "LVL_Game.PersistentLevel.BP_Coww_2.Chick_02",
+      "Chick_01": "LVL_Game.PersistentLevel.BP_Coww_2.Chick_01",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_Coww_2.ItemLocation",
+      "Shadow": "LVL_Game.PersistentLevel.BP_Coww_2.Shadow",
+      "Capsule": "LVL_Game.PersistentLevel.BP_Coww_2.Capsule",
+      "Collision": "LVL_Game.PersistentLevel.BP_Coww_2.Collision",
+      "PS_Sleep": "LVL_Game.PersistentLevel.BP_Coww_2.PS_Sleep",
+      "Animal": "LVL_Game.PersistentLevel.BP_Coww_2.Animal",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Coww_2.DefaultSceneRoot",
+      "BrushDirt": "LVL_Game.PersistentLevel.BP_Coww_2.BrushDirt",
+      "ScaleDownItem": "LVL_Game.PersistentLevel.BP_Coww_2.ScaleDownItem",
+      "DirtMaterial": "LVL_Game.PersistentLevel.BP_Coww_2.DirtMaterial",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Coww_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Coww_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Coww_2.Animal",
+        "LVL_Game.PersistentLevel.BP_Coww_2.Capsule",
+        "LVL_Game.PersistentLevel.BP_Coww_2.Shadow",
+        "LVL_Game.PersistentLevel.BP_Coww_2.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_Coww_2.EggLocation",
+        "LVL_Game.PersistentLevel.BP_Coww_2.PS_Sleep",
+        "LVL_Game.PersistentLevel.BP_Coww_2.Collision",
+        "LVL_Game.PersistentLevel.BP_Coww_2.Chick_01",
+        "LVL_Game.PersistentLevel.BP_Coww_2.Chick_02",
+        "LVL_Game.PersistentLevel.BP_Coww_2.Chick_03",
+        "LVL_Game.PersistentLevel.BP_Coww_2.DirtMaterial",
+        "LVL_Game.PersistentLevel.BP_Coww_2.ScaleDownItem",
+        "LVL_Game.PersistentLevel.BP_Coww_2.BrushDirt"
+      ]
+    }
+  },
+  {
+    "name": "BP_DailyCycle_2",
+    "class": "/Game/Blueprints/Daily/BP_DailyCycle.BP_DailyCycle_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_DailyCycle_2.DefaultSceneRoot",
+      "PostProcess": "LVL_Game.PersistentLevel.BP_DailyCycle_2.PostProcess",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_DailyCycle_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_DailyCycle_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_DailyCycle_2.PostProcess"
+      ]
+    }
+  },
+  {
+    "name": "BP_Freezer_2",
+    "class": "/Game/Blueprints/Items/BP_Freezer.BP_Freezer_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "PS_FreezerSnow": "LVL_Game.PersistentLevel.BP_Freezer_2.PS_FreezerSnow",
+      "Shadow": "LVL_Game.PersistentLevel.BP_Freezer_2.Shadow",
+      "Door": "LVL_Game.PersistentLevel.BP_Freezer_2.Door",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_Freezer_2.ItemLocation",
+      "Collision": "LVL_Game.PersistentLevel.BP_Freezer_2.Collision",
+      "Freezer": "LVL_Game.PersistentLevel.BP_Freezer_2.Freezer",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Freezer_2.DefaultSceneRoot",
+      "FreezerDoor": "LVL_Game.PersistentLevel.BP_Freezer_2.FreezerDoor",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Freezer_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Freezer_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Freezer_2.Freezer",
+        "LVL_Game.PersistentLevel.BP_Freezer_2.Door",
+        "LVL_Game.PersistentLevel.BP_Freezer_2.PS_FreezerSnow",
+        "LVL_Game.PersistentLevel.BP_Freezer_2.Collision",
+        "LVL_Game.PersistentLevel.BP_Freezer_2.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_Freezer_2.Shadow",
+        "LVL_Game.PersistentLevel.BP_Freezer_2.FreezerDoor"
+      ]
+    }
+  },
+  {
+    "name": "BP_Garbage_2",
+    "class": "/Game/Blueprints/Items/BP_Garbage.BP_Garbage_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Lid": "LVL_Game.PersistentLevel.BP_Garbage_2.Lid",
+      "Trash": "LVL_Game.PersistentLevel.BP_Garbage_2.Trash",
+      "Collision": "LVL_Game.PersistentLevel.BP_Garbage_2.Collision",
+      "GarbageMesh": "LVL_Game.PersistentLevel.BP_Garbage_2.GarbageMesh",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Garbage_2.DefaultSceneRoot",
+      "TrashcanLid": "LVL_Game.PersistentLevel.BP_Garbage_2.TrashcanLid",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Garbage_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Garbage_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Garbage_2.GarbageMesh",
+        "LVL_Game.PersistentLevel.BP_Garbage_2.Trash",
+        "LVL_Game.PersistentLevel.BP_Garbage_2.Lid",
+        "LVL_Game.PersistentLevel.BP_Garbage_2.Collision",
+        "LVL_Game.PersistentLevel.BP_Garbage_2.TrashcanLid"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemRailSpawner_2",
+    "class": "/Game/Blueprints/Items/BP_ItemRailSpawner.BP_ItemRailSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemRailSpawner_2.Collision",
+      "Counter": "LVL_Game.PersistentLevel.BP_ItemRailSpawner_2.Counter",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemRailSpawner_2.DefaultSceneRoot",
+      "ScaleUp": "LVL_Game.PersistentLevel.BP_ItemRailSpawner_2.ScaleUp",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemRailSpawner_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemRailSpawner_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemRailSpawner_2.Counter",
+        "LVL_Game.PersistentLevel.BP_ItemRailSpawner_2.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemRailSpawner_2.ScaleUp"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner10",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner10.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner10.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner10.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner10.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner10.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner10.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner10.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner10.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner10.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner10.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner10.SizeUp",
+      "ItemToSpawn": "Apple",
+      "IsUnlocked": false,
+      "PlantMesh": "/Game/Art/Mesh/Plant/SM_Tree.SM_Tree",
+      "PlantMaterial": "/Game/Art/Material/Plant/MAT_PlantCocoa.MAT_PlantCocoa",
+      "SpawnTimer": 15.0,
+      "ItemSpawnLocation": {
+        "ItemSpawnLocation": {
+          "X": -50.0,
+          "Y": -25.0,
+          "Z": 120.0
+        }
+      },
+      "PlantLocation": {
+        "PlantLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": "+0"
+        }
+      },
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner10.DefaultSceneRoot",
+      "Tags": [
+        "ShopAppleTree",
+        "ShopFertilizerUpgrade",
+        "SprinklersPlant"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner10.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner10.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner10.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner10.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner10.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner10.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner10.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner10.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner10.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner10.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner10.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner11",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner11.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner11.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner11.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner11.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner11.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner11.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner11.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner11.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner11.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner11.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner11.SizeUp",
+      "ItemToSpawn": "Carrot",
+      "IsUnlocked": false,
+      "PotMesh": "/Game/Art/Mesh/Plant/SM_Pot_02.SM_Pot_02",
+      "PlantMesh": "/Game/Art/Mesh/Plant/SM_PlantCarrot.SM_PlantCarrot",
+      "PlantMaterial": "/Game/Art/Material/Plant/MAT_PlantCarrot.MAT_PlantCarrot",
+      "SpawnTimer": 15.0,
+      "ItemSpawnLocation": {
+        "ItemSpawnLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": 60.0
+        }
+      },
+      "PlantLocation": {
+        "PlantLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": 55.0
+        }
+      },
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner11.DefaultSceneRoot",
+      "Tags": [
+        "ShopCarrotPlant",
+        "ShopFertilizerUpgrade",
+        "SprinklersPlant"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner11.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner11.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner11.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner11.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner11.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner11.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner11.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner11.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner11.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner11.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner11.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner12_2",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.SizeUp",
+      "ItemToSpawn": "Lemon",
+      "IsUnlocked": false,
+      "PlantMesh": "/Game/Art/Mesh/Plant/SM_TreeMedium.SM_TreeMedium",
+      "PlantMaterial": "/Game/Art/Material/Plant/MAT_PlantCocoa.MAT_PlantCocoa",
+      "SpawnTimer": 15.0,
+      "ItemSpawnLocation": {
+        "ItemSpawnLocation": {
+          "X": -50.0,
+          "Y": -25.0,
+          "Z": 110.0
+        }
+      },
+      "PlantLocation": {
+        "PlantLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": "+0"
+        }
+      },
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.DefaultSceneRoot",
+      "Tags": [
+        "ShopLemonTree",
+        "ShopFertilizerUpgrade",
+        "SprinklersPlant"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner12_2.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner13_2",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.SizeUp",
+      "ItemToSpawn": "Egg",
+      "IsUnlocked": false,
+      "IsPlant": false,
+      "PotMesh": "/Game/Art/Mesh/Furniture/SM_GardenCounter_LowSingle.SM_GardenCounter_LowSingle",
+      "PlantMesh": "/Game/Art/Mesh/Furniture/SM_Basket.SM_Basket",
+      "SpawnTimer": 3.0,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.DefaultSceneRoot",
+      "Tags": [
+        "ShopChickens"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner13_2.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner14_5",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.SizeUp",
+      "ItemToSpawn": "Cocoa",
+      "IsUnlocked": false,
+      "PlantMesh": "/Game/Art/Mesh/Plant/SM_Tree.SM_Tree",
+      "PlantMaterial": "/Game/Art/Material/Plant/MAT_PlantCocoa.MAT_PlantCocoa",
+      "SpawnTimer": 15.0,
+      "ItemSpawnLocation": {
+        "ItemSpawnLocation": {
+          "X": -50.0,
+          "Y": -25.0,
+          "Z": 80.0
+        }
+      },
+      "PlantLocation": {
+        "PlantLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": "+0"
+        }
+      },
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.DefaultSceneRoot",
+      "Tags": [
+        "ShopCocoaTree",
+        "ShopFertilizerUpgrade",
+        "SprinklersPlant"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner14_5.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner15",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner15.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner15.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner15.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner15.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner15.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner15.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner15.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner15.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner15.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner15.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner15.SizeUp",
+      "ItemToSpawn": "Cherry",
+      "IsUnlocked": false,
+      "PlantMesh": "/Game/Art/Mesh/Plant/SM_TreeMedium.SM_TreeMedium",
+      "PlantMaterial": "/Game/Art/Material/Plant/MAT_PlantCherry.MAT_PlantCherry",
+      "SpawnTimer": 15.0,
+      "ItemSpawnLocation": {
+        "ItemSpawnLocation": {
+          "X": -60.0,
+          "Y": -25.0,
+          "Z": 105.0
+        }
+      },
+      "PlantLocation": {
+        "PlantLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": "+0"
+        }
+      },
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner15.DefaultSceneRoot",
+      "Tags": [
+        "ShopCherryTree",
+        "ShopFertilizerUpgrade",
+        "SprinklersPlant"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner15.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner15.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner15.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner15.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner15.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner15.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner15.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner15.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner15.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner15.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner15.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner16",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner16.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner16.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner16.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner16.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner16.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner16.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner16.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner16.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner16.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner16.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner16.SizeUp",
+      "ItemToSpawn": "Firewood",
+      "IsUnlocked": false,
+      "IsPlant": false,
+      "PotMesh": "/Game/Art/Mesh/Decoration/SM_CounterLog.SM_CounterLog",
+      "SpawnTimer": 1.0,
+      "ItemSpawnLocation": {
+        "ItemSpawnLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": 135.0
+        }
+      },
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner16.DefaultSceneRoot",
+      "Tags": [
+        "BaseItemSpawner"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner16.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner16.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner16.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner16.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner16.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner16.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner16.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner16.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner16.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner16.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner16.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner17",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner17.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner17.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner17.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner17.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner17.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner17.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner17.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner17.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner17.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner17.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner17.SizeUp",
+      "ItemToSpawn": "Honey",
+      "IsUnlocked": false,
+      "IsPlant": false,
+      "PotMesh": "/Game/Art/Mesh/Furniture/SM_CounterBeehive.SM_CounterBeehive",
+      "PlantMesh": "/Game/Art/Mesh/Furniture/SM_Basket.SM_Basket",
+      "SpawnTimer": 5.0,
+      "ItemSpawnLocation": {
+        "ItemSpawnLocation": {
+          "X": -105.0,
+          "Y": "+0",
+          "Z": 100.0
+        }
+      },
+      "PlantLocation": {
+        "PlantLocation": {
+          "X": -105.0,
+          "Y": "+0",
+          "Z": 85.0
+        }
+      },
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner17.DefaultSceneRoot",
+      "Tags": [
+        "ShopHoney",
+        "ShopFertilizerUpgrade"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner17.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner17.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner17.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner17.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner17.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner17.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner17.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner17.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner17.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner17.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner17.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner3",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner3.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner3.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner3.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner3.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner3.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner3.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner3.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner3.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner3.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner3.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner3.SizeUp",
+      "ItemToSpawn": "Strawberry",
+      "IsUnlocked": false,
+      "PotMesh": "/Game/Art/Mesh/Plant/SM_Pot_01.SM_Pot_01",
+      "PlantMesh": "/Game/Art/Mesh/Plant/SM_PlantStrawberry.SM_PlantStrawberry",
+      "PlantMaterial": "/Game/Art/Material/Plant/MAT_PlantStrawberry.MAT_PlantStrawberry",
+      "SpawnTimer": 15.0,
+      "ItemSpawnLocation": {
+        "ItemSpawnLocation": {
+          "X": -50.0,
+          "Y": -25.0,
+          "Z": 80.0
+        }
+      },
+      "PlantLocation": {
+        "PlantLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": 80.0
+        }
+      },
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner3.DefaultSceneRoot",
+      "Tags": [
+        "ShopStrawberryPlant",
+        "ShopFertilizerUpgrade",
+        "SprinklersPlant"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner3.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner3.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner3.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner3.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner3.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner3.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner3.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner3.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner3.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner3.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner3.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner5",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner5.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner5.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner5.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner5.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner5.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner5.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner5.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner5.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner5.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner5.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner5.SizeUp",
+      "ItemToSpawn": "Flour",
+      "IsUnlocked": false,
+      "IsPlant": false,
+      "PotMesh": "/Game/Art/Mesh/Furniture/SM_GardenCounter_LowSingle.SM_GardenCounter_LowSingle",
+      "PlantMesh": "/Game/Art/Mesh/Furniture/SM_Basket.SM_Basket",
+      "SpawnTimer": 3.0,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner5.DefaultSceneRoot",
+      "Tags": [
+        "Tutorial05",
+        "BaseItemSpawner"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner5.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner5.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner5.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner5.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner5.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner5.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner5.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner5.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner5.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner5.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner5.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner6",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner6.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner6.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner6.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner6.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner6.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner6.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner6.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner6.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner6.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner6.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner6.SizeUp",
+      "ItemToSpawn": "Milk",
+      "IsUnlocked": false,
+      "IsPlant": false,
+      "PotMesh": "/Game/Art/Mesh/Furniture/SM_GardenCounter_LowSingle.SM_GardenCounter_LowSingle",
+      "PlantMesh": "/Game/Art/Mesh/Furniture/SM_Basket.SM_Basket",
+      "SpawnTimer": 3.0,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner6.DefaultSceneRoot",
+      "Tags": [
+        "ShopCow"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner6.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner6.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner6.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner6.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner6.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner6.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner6.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner6.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner6.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner6.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner6.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner7",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner7.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner7.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner7.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner7.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner7.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner7.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner7.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner7.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner7.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner7.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner7.SizeUp",
+      "ItemToSpawn": "Sugar",
+      "IsUnlocked": false,
+      "IsPlant": false,
+      "PotMesh": "/Game/Art/Mesh/Furniture/SM_GardenCounter_LowSingle.SM_GardenCounter_LowSingle",
+      "PlantMesh": "/Game/Art/Mesh/Furniture/SM_Basket.SM_Basket",
+      "SpawnTimer": 3.0,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner7.DefaultSceneRoot",
+      "Tags": [
+        "BaseItemSpawner"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner7.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner7.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner7.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner7.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner7.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner7.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner7.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner7.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner7.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner7.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner7.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner8",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner8.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner8.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner8.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner8.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner8.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner8.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner8.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner8.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner8.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner8.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner8.SizeUp",
+      "ItemToSpawn": "Grape",
+      "IsUnlocked": false,
+      "PotMesh": "/Game/Art/Mesh/Plant/SM_Pot_01.SM_Pot_01",
+      "PlantMesh": "/Game/Art/Mesh/Plant/SM_Grapevine.SM_Grapevine",
+      "PlantMaterial": "/Game/Art/Material/Plant/MAT_PlantGrape.MAT_PlantGrape",
+      "SpawnTimer": 15.0,
+      "ItemSpawnLocation": {
+        "ItemSpawnLocation": {
+          "X": -50.0,
+          "Y": -25.0,
+          "Z": 100.0
+        }
+      },
+      "PlantLocation": {
+        "PlantLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": 80.0
+        }
+      },
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner8.DefaultSceneRoot",
+      "Tags": [
+        "ShopGrapeVine",
+        "ShopFertilizerUpgrade",
+        "SprinklersPlant"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner8.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner8.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner8.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner8.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner8.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner8.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner8.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner8.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner8.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner8.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner8.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner9",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner9.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner9.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner9.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner9.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner9.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner9.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner9.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner9.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner9.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner9.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner9.SizeUp",
+      "ItemToSpawn": "Blueberry",
+      "IsUnlocked": false,
+      "PotMesh": "/Game/Art/Mesh/Plant/SM_Pot_02.SM_Pot_02",
+      "PlantMesh": "/Game/Art/Mesh/Plant/SM_Bush.SM_Bush",
+      "PlantMaterial": "/Game/Art/Material/Plant/MAT_BushFade.MAT_BushFade",
+      "SpawnTimer": 15.0,
+      "ItemSpawnLocation": {
+        "ItemSpawnLocation": {
+          "X": -50.0,
+          "Y": -25.0,
+          "Z": 80.0
+        }
+      },
+      "PlantLocation": {
+        "PlantLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": 80.0
+        }
+      },
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner9.DefaultSceneRoot",
+      "Tags": [
+        "ShopBlueberryPlant",
+        "ShopFertilizerUpgrade",
+        "SprinklersPlant"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner9.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner9.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner9.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner9.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner9.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner9.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner9.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner9.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner9.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner9.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner9.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_ItemSpawner_2",
+    "class": "/Game/Blueprints/Items/BP_ItemSpawner.BP_ItemSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ShadowBase": "LVL_Game.PersistentLevel.BP_ItemSpawner_2.ShadowBase",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_ItemSpawner_2.ItemLocation",
+      "Water": "LVL_Game.PersistentLevel.BP_ItemSpawner_2.Water",
+      "Shadow": "LVL_Game.PersistentLevel.BP_ItemSpawner_2.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_ItemSpawner_2.Collision",
+      "Plant": "LVL_Game.PersistentLevel.BP_ItemSpawner_2.Plant",
+      "Pot": "LVL_Game.PersistentLevel.BP_ItemSpawner_2.Pot",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_ItemSpawner_2.DefaultSceneRoot",
+      "SizeDown": "LVL_Game.PersistentLevel.BP_ItemSpawner_2.SizeDown",
+      "WaterAmount": "LVL_Game.PersistentLevel.BP_ItemSpawner_2.WaterAmount",
+      "SizeUp": "LVL_Game.PersistentLevel.BP_ItemSpawner_2.SizeUp",
+      "ItemToSpawn": "Coffee",
+      "IsUnlocked": false,
+      "IsPlant": false,
+      "PotMesh": "/Game/Art/Mesh/Furniture/SM_CoffeTableShadow.SM_CoffeTableShadow",
+      "SpawnTimer": 2.0,
+      "ItemSpawnLocation": {
+        "ItemSpawnLocation": {
+          "X": "+0",
+          "Y": 15.0,
+          "Z": 110.0
+        }
+      },
+      "PlantLocation": {
+        "PlantLocation": {
+          "X": "+0",
+          "Y": "+0",
+          "Z": "+0"
+        }
+      },
+      "RootComponent": "LVL_Game.PersistentLevel.BP_ItemSpawner_2.DefaultSceneRoot",
+      "Tags": [
+        "ShopCoffeeMachine"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_ItemSpawner_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner_2.Pot",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner_2.Plant",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner_2.Shadow",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner_2.Water",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner_2.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner_2.ShadowBase",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner_2.Collision",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner_2.SizeUp",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner_2.WaterAmount",
+        "LVL_Game.PersistentLevel.BP_ItemSpawner_2.SizeDown"
+      ]
+    }
+  },
+  {
+    "name": "BP_KitchenMixer",
+    "class": "/Game/Blueprints/Items/BP_KitchenMixer.BP_KitchenMixer_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Overlap": "LVL_Game.PersistentLevel.BP_KitchenMixer.Overlap",
+      "Cup": "LVL_Game.PersistentLevel.BP_KitchenMixer.Cup",
+      "Whisk": "LVL_Game.PersistentLevel.BP_KitchenMixer.Whisk",
+      "Spoon": "LVL_Game.PersistentLevel.BP_KitchenMixer.Spoon",
+      "Extra": "LVL_Game.PersistentLevel.BP_KitchenMixer.Extra",
+      "Milk": "LVL_Game.PersistentLevel.BP_KitchenMixer.Milk",
+      "Egg": "LVL_Game.PersistentLevel.BP_KitchenMixer.Egg",
+      "Sugar": "LVL_Game.PersistentLevel.BP_KitchenMixer.Sugar",
+      "Flour": "LVL_Game.PersistentLevel.BP_KitchenMixer.Flour",
+      "Bowl": "LVL_Game.PersistentLevel.BP_KitchenMixer.Bowl",
+      "Collision": "LVL_Game.PersistentLevel.BP_KitchenMixer.Collision",
+      "MixerMesh": "LVL_Game.PersistentLevel.BP_KitchenMixer.MixerMesh",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_KitchenMixer.DefaultSceneRoot",
+      "MoveDecoration": "LVL_Game.PersistentLevel.BP_KitchenMixer.MoveDecoration",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_KitchenMixer.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.MixerMesh",
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.Spoon",
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.Whisk",
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.Cup",
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.Overlap",
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.Collision",
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.Bowl",
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.Flour",
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.Sugar",
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.Egg",
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.Milk",
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.Extra",
+        "LVL_Game.PersistentLevel.BP_KitchenMixer.MoveDecoration"
+      ]
+    }
+  },
+  {
+    "name": "BP_KitchenOven2_2",
+    "class": "/Game/Blueprints/Items/BP_KitchenOven.BP_KitchenOven_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "OvenBroken": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.OvenBroken",
+      "ClockBurn": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.ClockBurn",
+      "Pointer": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.Pointer",
+      "Clock": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.Clock",
+      "Fire": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.Fire",
+      "Firewood": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.Firewood",
+      "DoorLeft": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.DoorLeft",
+      "DoorRight": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.DoorRight",
+      "Collision": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.Collision",
+      "OvenMesh": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.OvenMesh",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.DefaultSceneRoot",
+      "ClockTimeline": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.ClockTimeline",
+      "DoorSwing": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.DoorSwing",
+      "IsUnlocked": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_KitchenOven2_2.DefaultSceneRoot",
+      "Tags": [
+        "OvenCenter"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_KitchenOven2_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_KitchenOven2_2.OvenMesh",
+        "LVL_Game.PersistentLevel.BP_KitchenOven2_2.DoorRight",
+        "LVL_Game.PersistentLevel.BP_KitchenOven2_2.DoorLeft",
+        "LVL_Game.PersistentLevel.BP_KitchenOven2_2.Firewood",
+        "LVL_Game.PersistentLevel.BP_KitchenOven2_2.Fire",
+        "LVL_Game.PersistentLevel.BP_KitchenOven2_2.Collision",
+        "LVL_Game.PersistentLevel.BP_KitchenOven2_2.Clock",
+        "LVL_Game.PersistentLevel.BP_KitchenOven2_2.Pointer",
+        "LVL_Game.PersistentLevel.BP_KitchenOven2_2.ClockBurn",
+        "LVL_Game.PersistentLevel.BP_KitchenOven2_2.OvenBroken",
+        "LVL_Game.PersistentLevel.BP_KitchenOven2_2.DoorSwing",
+        "LVL_Game.PersistentLevel.BP_KitchenOven2_2.ClockTimeline"
+      ]
+    }
+  },
+  {
+    "name": "BP_KitchenOven3",
+    "class": "/Game/Blueprints/Items/BP_KitchenOven.BP_KitchenOven_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "OvenBroken": "LVL_Game.PersistentLevel.BP_KitchenOven3.OvenBroken",
+      "ClockBurn": "LVL_Game.PersistentLevel.BP_KitchenOven3.ClockBurn",
+      "Pointer": "LVL_Game.PersistentLevel.BP_KitchenOven3.Pointer",
+      "Clock": "LVL_Game.PersistentLevel.BP_KitchenOven3.Clock",
+      "Fire": "LVL_Game.PersistentLevel.BP_KitchenOven3.Fire",
+      "Firewood": "LVL_Game.PersistentLevel.BP_KitchenOven3.Firewood",
+      "DoorLeft": "LVL_Game.PersistentLevel.BP_KitchenOven3.DoorLeft",
+      "DoorRight": "LVL_Game.PersistentLevel.BP_KitchenOven3.DoorRight",
+      "Collision": "LVL_Game.PersistentLevel.BP_KitchenOven3.Collision",
+      "OvenMesh": "LVL_Game.PersistentLevel.BP_KitchenOven3.OvenMesh",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_KitchenOven3.DefaultSceneRoot",
+      "ClockTimeline": "LVL_Game.PersistentLevel.BP_KitchenOven3.ClockTimeline",
+      "DoorSwing": "LVL_Game.PersistentLevel.BP_KitchenOven3.DoorSwing",
+      "IsOpposite": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_KitchenOven3.DefaultSceneRoot",
+      "Tags": [
+        "ShopOven0"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_KitchenOven3.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_KitchenOven3.OvenMesh",
+        "LVL_Game.PersistentLevel.BP_KitchenOven3.DoorRight",
+        "LVL_Game.PersistentLevel.BP_KitchenOven3.DoorLeft",
+        "LVL_Game.PersistentLevel.BP_KitchenOven3.Firewood",
+        "LVL_Game.PersistentLevel.BP_KitchenOven3.Fire",
+        "LVL_Game.PersistentLevel.BP_KitchenOven3.Collision",
+        "LVL_Game.PersistentLevel.BP_KitchenOven3.Clock",
+        "LVL_Game.PersistentLevel.BP_KitchenOven3.Pointer",
+        "LVL_Game.PersistentLevel.BP_KitchenOven3.ClockBurn",
+        "LVL_Game.PersistentLevel.BP_KitchenOven3.OvenBroken",
+        "LVL_Game.PersistentLevel.BP_KitchenOven3.DoorSwing",
+        "LVL_Game.PersistentLevel.BP_KitchenOven3.ClockTimeline"
+      ]
+    }
+  },
+  {
+    "name": "BP_KitchenOven_2",
+    "class": "/Game/Blueprints/Items/BP_KitchenOven.BP_KitchenOven_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "OvenBroken": "LVL_Game.PersistentLevel.BP_KitchenOven_2.OvenBroken",
+      "ClockBurn": "LVL_Game.PersistentLevel.BP_KitchenOven_2.ClockBurn",
+      "Pointer": "LVL_Game.PersistentLevel.BP_KitchenOven_2.Pointer",
+      "Clock": "LVL_Game.PersistentLevel.BP_KitchenOven_2.Clock",
+      "Fire": "LVL_Game.PersistentLevel.BP_KitchenOven_2.Fire",
+      "Firewood": "LVL_Game.PersistentLevel.BP_KitchenOven_2.Firewood",
+      "DoorLeft": "LVL_Game.PersistentLevel.BP_KitchenOven_2.DoorLeft",
+      "DoorRight": "LVL_Game.PersistentLevel.BP_KitchenOven_2.DoorRight",
+      "Collision": "LVL_Game.PersistentLevel.BP_KitchenOven_2.Collision",
+      "OvenMesh": "LVL_Game.PersistentLevel.BP_KitchenOven_2.OvenMesh",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_KitchenOven_2.DefaultSceneRoot",
+      "ClockTimeline": "LVL_Game.PersistentLevel.BP_KitchenOven_2.ClockTimeline",
+      "DoorSwing": "LVL_Game.PersistentLevel.BP_KitchenOven_2.DoorSwing",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_KitchenOven_2.DefaultSceneRoot",
+      "Tags": [
+        "ShopOven1"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_KitchenOven_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_KitchenOven_2.OvenMesh",
+        "LVL_Game.PersistentLevel.BP_KitchenOven_2.DoorRight",
+        "LVL_Game.PersistentLevel.BP_KitchenOven_2.DoorLeft",
+        "LVL_Game.PersistentLevel.BP_KitchenOven_2.Firewood",
+        "LVL_Game.PersistentLevel.BP_KitchenOven_2.Fire",
+        "LVL_Game.PersistentLevel.BP_KitchenOven_2.Collision",
+        "LVL_Game.PersistentLevel.BP_KitchenOven_2.Clock",
+        "LVL_Game.PersistentLevel.BP_KitchenOven_2.Pointer",
+        "LVL_Game.PersistentLevel.BP_KitchenOven_2.ClockBurn",
+        "LVL_Game.PersistentLevel.BP_KitchenOven_2.OvenBroken",
+        "LVL_Game.PersistentLevel.BP_KitchenOven_2.DoorSwing",
+        "LVL_Game.PersistentLevel.BP_KitchenOven_2.ClockTimeline"
+      ]
+    }
+  },
+  {
+    "name": "BP_Library_2",
+    "class": "/Game/Blueprints/Bedroom/BP_Library.BP_Library_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Shadow": "LVL_Game.PersistentLevel.BP_Library_2.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_Library_2.Collision",
+      "Library": "LVL_Game.PersistentLevel.BP_Library_2.Library",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Library_2.DefaultSceneRoot",
+      "bHidden": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Library_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Library_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Library_2.Library",
+        "LVL_Game.PersistentLevel.BP_Library_2.Collision",
+        "LVL_Game.PersistentLevel.BP_Library_2.Shadow"
+      ]
+    }
+  },
+  {
+    "name": "BP_Greenhouse_2",
+    "class": "/Game/Blueprints/Location/BP_Location.BP_Location_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "BedroomExitCollision": "LVL_Game.PersistentLevel.BP_Greenhouse_2.BedroomExitCollision",
+      "Bedroom": "LVL_Game.PersistentLevel.BP_Greenhouse_2.Bedroom",
+      "OpenStore": "LVL_Game.PersistentLevel.BP_Greenhouse_2.OpenStore",
+      "PS_Bees": "LVL_Game.PersistentLevel.BP_Greenhouse_2.PS_Bees",
+      "Bell": "LVL_Game.PersistentLevel.BP_Greenhouse_2.Bell",
+      "DoorCollision": "LVL_Game.PersistentLevel.BP_Greenhouse_2.DoorCollision",
+      "DoorLeft": "LVL_Game.PersistentLevel.BP_Greenhouse_2.DoorLeft",
+      "DoorRight": "LVL_Game.PersistentLevel.BP_Greenhouse_2.DoorRight",
+      "SM_KitchenBrick": "LVL_Game.PersistentLevel.BP_Greenhouse_2.SM_KitchenBrick",
+      "SM_KitchenWall": "LVL_Game.PersistentLevel.BP_Greenhouse_2.SM_KitchenWall",
+      "SM_KitchenFloor": "LVL_Game.PersistentLevel.BP_Greenhouse_2.SM_KitchenFloor",
+      "StoreCollision": "LVL_Game.PersistentLevel.BP_Greenhouse_2.StoreCollision",
+      "Camera": "LVL_Game.PersistentLevel.BP_Greenhouse_2.Camera",
+      "CameraBase": "LVL_Game.PersistentLevel.BP_Greenhouse_2.CameraBase",
+      "KitchenCollision": "LVL_Game.PersistentLevel.BP_Greenhouse_2.KitchenCollision",
+      "GreenhouseCollision": "LVL_Game.PersistentLevel.BP_Greenhouse_2.GreenhouseCollision",
+      "Store": "LVL_Game.PersistentLevel.BP_Greenhouse_2.Store",
+      "Kitchen": "LVL_Game.PersistentLevel.BP_Greenhouse_2.Kitchen",
+      "Greenhouse": "LVL_Game.PersistentLevel.BP_Greenhouse_2.Greenhouse",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Greenhouse_2.DefaultSceneRoot",
+      "BellRotation": "LVL_Game.PersistentLevel.BP_Greenhouse_2.BellRotation",
+      "DoorRotation": "LVL_Game.PersistentLevel.BP_Greenhouse_2.DoorRotation",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Greenhouse_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.Greenhouse",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.GreenhouseCollision",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.PS_Bees",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.Kitchen",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.KitchenCollision",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.SM_KitchenFloor",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.SM_KitchenWall",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.SM_KitchenBrick",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.Store",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.StoreCollision",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.DoorRight",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.DoorLeft",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.DoorCollision",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.Bell",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.OpenStore",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.CameraBase",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.Camera",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.Bedroom",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.BedroomExitCollision",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.DoorRotation",
+        "LVL_Game.PersistentLevel.BP_Greenhouse_2.BellRotation"
+      ]
+    }
+  },
+  {
+    "name": "BP_Music_2",
+    "class": "/Game/Blueprints/Music/BP_Music.BP_Music_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Music_2.DefaultSceneRoot",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Music_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Music_2.DefaultSceneRoot"
+      ]
+    }
+  },
+  {
+    "name": "Player",
+    "class": "/Game/Blueprints/Player/BP_Player.BP_Player_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Face": "LVL_Game.PersistentLevel.Player.Face",
+      "Cake": "LVL_Game.PersistentLevel.Player.Cake",
+      "Hat": "LVL_Game.PersistentLevel.Player.Hat",
+      "Apron": "LVL_Game.PersistentLevel.Player.Apron",
+      "Brush": "LVL_Game.PersistentLevel.Player.Brush",
+      "Sponge": "LVL_Game.PersistentLevel.Player.Sponge",
+      "Dust": "LVL_Game.PersistentLevel.Player.Dust",
+      "OutfitShoe": "LVL_Game.PersistentLevel.Player.OutfitShoe",
+      "OutfitSock": "LVL_Game.PersistentLevel.Player.OutfitSock",
+      "OutfitBottom": "LVL_Game.PersistentLevel.Player.OutfitBottom",
+      "Mouth": "LVL_Game.PersistentLevel.Player.Mouth",
+      "Shadow": "LVL_Game.PersistentLevel.Player.Shadow",
+      "ItemPosition": "LVL_Game.PersistentLevel.Player.ItemPosition",
+      "Tray": "LVL_Game.PersistentLevel.Player.Tray",
+      "OutfitTop": "LVL_Game.PersistentLevel.Player.OutfitTop",
+      "Hair": "LVL_Game.PersistentLevel.Player.Hair",
+      "PlayerOverlap": "LVL_Game.PersistentLevel.Player.PlayerOverlap",
+      "SprintSpeed": "LVL_Game.PersistentLevel.Player.SprintSpeed",
+      "Mesh": "LVL_Game.PersistentLevel.Player.CharacterMesh0",
+      "CharacterMovement": "LVL_Game.PersistentLevel.Player.CharMoveComp",
+      "CapsuleComponent": "LVL_Game.PersistentLevel.Player.CollisionCylinder",
+      "AutoPossessPlayer": {
+        "id": "EAutoReceiveInput::Player0",
+        "label": null
+      },
+      "SpawnCollisionHandlingMethod": "ESpawnActorCollisionHandlingMethod::AlwaysSpawn",
+      "RootComponent": "LVL_Game.PersistentLevel.Player.CollisionCylinder",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.Player.PlayerOverlap",
+        "LVL_Game.PersistentLevel.Player.Hair",
+        "LVL_Game.PersistentLevel.Player.OutfitTop",
+        "LVL_Game.PersistentLevel.Player.Tray",
+        "LVL_Game.PersistentLevel.Player.ItemPosition",
+        "LVL_Game.PersistentLevel.Player.Shadow",
+        "LVL_Game.PersistentLevel.Player.Mouth",
+        "LVL_Game.PersistentLevel.Player.OutfitBottom",
+        "LVL_Game.PersistentLevel.Player.OutfitSock",
+        "LVL_Game.PersistentLevel.Player.OutfitShoe",
+        "LVL_Game.PersistentLevel.Player.Dust",
+        "LVL_Game.PersistentLevel.Player.Sponge",
+        "LVL_Game.PersistentLevel.Player.Brush",
+        "LVL_Game.PersistentLevel.Player.Apron",
+        "LVL_Game.PersistentLevel.Player.Hat",
+        "LVL_Game.PersistentLevel.Player.Cake",
+        "LVL_Game.PersistentLevel.Player.Face",
+        "LVL_Game.PersistentLevel.Player.SprintSpeed"
+      ]
+    }
+  },
+  {
+    "name": "BP_RecipeBook_2",
+    "class": "/Game/Blueprints/Items/BP_RecipeBook.BP_RecipeBook_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_RecipeBook_2.DefaultSceneRoot",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_RecipeBook_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_RecipeBook_2.DefaultSceneRoot"
+      ]
+    }
+  },
+  {
+    "name": "BP_Spill2",
+    "class": "/Game/Blueprints/Items/BP_Spill.BP_Spill_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Collision": "LVL_Game.PersistentLevel.BP_Spill2.Collision",
+      "Spill": "LVL_Game.PersistentLevel.BP_Spill2.Spill",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Spill2.DefaultSceneRoot",
+      "Timeline_0": "LVL_Game.PersistentLevel.BP_Spill2.Timeline_0",
+      "SpillScale": "LVL_Game.PersistentLevel.BP_Spill2.SpillScale",
+      "SpillSpeed": "LVL_Game.PersistentLevel.BP_Spill2.SpillSpeed",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Spill2.DefaultSceneRoot",
+      "Tags": [
+        "TutorialSpill"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Spill2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Spill2.Spill",
+        "LVL_Game.PersistentLevel.BP_Spill2.Collision",
+        "LVL_Game.PersistentLevel.BP_Spill2.SpillSpeed",
+        "LVL_Game.PersistentLevel.BP_Spill2.SpillScale",
+        "LVL_Game.PersistentLevel.BP_Spill2.Timeline_0"
+      ]
+    }
+  },
+  {
+    "name": "BP_Spill3",
+    "class": "/Game/Blueprints/Items/BP_Spill.BP_Spill_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Collision": "LVL_Game.PersistentLevel.BP_Spill3.Collision",
+      "Spill": "LVL_Game.PersistentLevel.BP_Spill3.Spill",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Spill3.DefaultSceneRoot",
+      "Timeline_0": "LVL_Game.PersistentLevel.BP_Spill3.Timeline_0",
+      "SpillScale": "LVL_Game.PersistentLevel.BP_Spill3.SpillScale",
+      "SpillSpeed": "LVL_Game.PersistentLevel.BP_Spill3.SpillSpeed",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Spill3.DefaultSceneRoot",
+      "Tags": [
+        "TutorialSpill"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Spill3.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Spill3.Spill",
+        "LVL_Game.PersistentLevel.BP_Spill3.Collision",
+        "LVL_Game.PersistentLevel.BP_Spill3.SpillSpeed",
+        "LVL_Game.PersistentLevel.BP_Spill3.SpillScale",
+        "LVL_Game.PersistentLevel.BP_Spill3.Timeline_0"
+      ]
+    }
+  },
+  {
+    "name": "BP_Spill_2",
+    "class": "/Game/Blueprints/Items/BP_Spill.BP_Spill_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Collision": "LVL_Game.PersistentLevel.BP_Spill_2.Collision",
+      "Spill": "LVL_Game.PersistentLevel.BP_Spill_2.Spill",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Spill_2.DefaultSceneRoot",
+      "Timeline_0": "LVL_Game.PersistentLevel.BP_Spill_2.Timeline_0",
+      "SpillScale": "LVL_Game.PersistentLevel.BP_Spill_2.SpillScale",
+      "SpillSpeed": "LVL_Game.PersistentLevel.BP_Spill_2.SpillSpeed",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Spill_2.DefaultSceneRoot",
+      "Tags": [
+        "TutorialSpill"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Spill_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Spill_2.Spill",
+        "LVL_Game.PersistentLevel.BP_Spill_2.Collision",
+        "LVL_Game.PersistentLevel.BP_Spill_2.SpillSpeed",
+        "LVL_Game.PersistentLevel.BP_Spill_2.SpillScale",
+        "LVL_Game.PersistentLevel.BP_Spill_2.Timeline_0"
+      ]
+    }
+  },
+  {
+    "name": "BP_SpillSpawner_2",
+    "class": "/Game/Blueprints/Items/BP_SpillSpawner.BP_SpillSpawner_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_SpillSpawner_2.DefaultSceneRoot",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_SpillSpawner_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_SpillSpawner_2.DefaultSceneRoot"
+      ]
+    }
+  },
+  {
+    "name": "BP_StoreCounter2",
+    "class": "/Game/Blueprints/Shop/BP_StoreCounter.BP_StoreCounter_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ClientTarget": "LVL_Game.PersistentLevel.BP_StoreCounter2.ClientTarget",
+      "ShadowCounter": "LVL_Game.PersistentLevel.BP_StoreCounter2.ShadowCounter",
+      "Shadow": "LVL_Game.PersistentLevel.BP_StoreCounter2.Shadow",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_StoreCounter2.ItemLocation",
+      "Collision": "LVL_Game.PersistentLevel.BP_StoreCounter2.Collision",
+      "Counter": "LVL_Game.PersistentLevel.BP_StoreCounter2.Counter",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_StoreCounter2.DefaultSceneRoot",
+      "CounterMesh": "/Game/Art/Mesh/Furniture/SM_PastryStand.SM_PastryStand",
+      "IsUnlocked": false,
+      "StartingItem": "None, None, None, None, None",
+      "IsStoreCounter": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_StoreCounter2.DefaultSceneRoot",
+      "Tags": [
+        "ShopDisplayCounter1"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_StoreCounter2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_StoreCounter2.Counter",
+        "LVL_Game.PersistentLevel.BP_StoreCounter2.Collision",
+        "LVL_Game.PersistentLevel.BP_StoreCounter2.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_StoreCounter2.Shadow",
+        "LVL_Game.PersistentLevel.BP_StoreCounter2.ShadowCounter",
+        "LVL_Game.PersistentLevel.BP_StoreCounter2.ClientTarget"
+      ]
+    }
+  },
+  {
+    "name": "BP_StoreCounter3",
+    "class": "/Game/Blueprints/Shop/BP_StoreCounter.BP_StoreCounter_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ClientTarget": "LVL_Game.PersistentLevel.BP_StoreCounter3.ClientTarget",
+      "ShadowCounter": "LVL_Game.PersistentLevel.BP_StoreCounter3.ShadowCounter",
+      "Shadow": "LVL_Game.PersistentLevel.BP_StoreCounter3.Shadow",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_StoreCounter3.ItemLocation",
+      "Collision": "LVL_Game.PersistentLevel.BP_StoreCounter3.Collision",
+      "Counter": "LVL_Game.PersistentLevel.BP_StoreCounter3.Counter",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_StoreCounter3.DefaultSceneRoot",
+      "CounterMesh": "/Game/Art/Mesh/Furniture/SM_PastryStandHigh.SM_PastryStandHigh",
+      "IsUnlocked": false,
+      "StartingItem": "None, None, None, None, None",
+      "IsStoreCounter": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_StoreCounter3.DefaultSceneRoot",
+      "Tags": [
+        "ShopDisplayCounter0"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_StoreCounter3.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_StoreCounter3.Counter",
+        "LVL_Game.PersistentLevel.BP_StoreCounter3.Collision",
+        "LVL_Game.PersistentLevel.BP_StoreCounter3.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_StoreCounter3.Shadow",
+        "LVL_Game.PersistentLevel.BP_StoreCounter3.ShadowCounter",
+        "LVL_Game.PersistentLevel.BP_StoreCounter3.ClientTarget"
+      ]
+    }
+  },
+  {
+    "name": "BP_StoreCounter4",
+    "class": "/Game/Blueprints/Shop/BP_StoreCounter.BP_StoreCounter_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ClientTarget": "LVL_Game.PersistentLevel.BP_StoreCounter4.ClientTarget",
+      "ShadowCounter": "LVL_Game.PersistentLevel.BP_StoreCounter4.ShadowCounter",
+      "Shadow": "LVL_Game.PersistentLevel.BP_StoreCounter4.Shadow",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_StoreCounter4.ItemLocation",
+      "Collision": "LVL_Game.PersistentLevel.BP_StoreCounter4.Collision",
+      "Counter": "LVL_Game.PersistentLevel.BP_StoreCounter4.Counter",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_StoreCounter4.DefaultSceneRoot",
+      "CounterMesh": "/Game/Art/Mesh/Furniture/SM_PastryStand.SM_PastryStand",
+      "IsUnlocked": false,
+      "StartingItem": "None, None, None, None, None",
+      "IsStoreCounter": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_StoreCounter4.DefaultSceneRoot",
+      "Tags": [
+        "ShopDisplayCounter3"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_StoreCounter4.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_StoreCounter4.Counter",
+        "LVL_Game.PersistentLevel.BP_StoreCounter4.Collision",
+        "LVL_Game.PersistentLevel.BP_StoreCounter4.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_StoreCounter4.Shadow",
+        "LVL_Game.PersistentLevel.BP_StoreCounter4.ShadowCounter",
+        "LVL_Game.PersistentLevel.BP_StoreCounter4.ClientTarget"
+      ]
+    }
+  },
+  {
+    "name": "BP_StoreCounter5",
+    "class": "/Game/Blueprints/Shop/BP_StoreCounter.BP_StoreCounter_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ClientTarget": "LVL_Game.PersistentLevel.BP_StoreCounter5.ClientTarget",
+      "ShadowCounter": "LVL_Game.PersistentLevel.BP_StoreCounter5.ShadowCounter",
+      "Shadow": "LVL_Game.PersistentLevel.BP_StoreCounter5.Shadow",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_StoreCounter5.ItemLocation",
+      "Collision": "LVL_Game.PersistentLevel.BP_StoreCounter5.Collision",
+      "Counter": "LVL_Game.PersistentLevel.BP_StoreCounter5.Counter",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_StoreCounter5.DefaultSceneRoot",
+      "CounterMesh": "/Game/Art/Mesh/Furniture/SM_PastryStandHigh.SM_PastryStandHigh",
+      "IsUnlocked": false,
+      "StartingItem": "None, None, None, None, None",
+      "IsStoreCounter": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_StoreCounter5.DefaultSceneRoot",
+      "Tags": [
+        "ShopDisplayCounter5"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_StoreCounter5.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_StoreCounter5.Counter",
+        "LVL_Game.PersistentLevel.BP_StoreCounter5.Collision",
+        "LVL_Game.PersistentLevel.BP_StoreCounter5.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_StoreCounter5.Shadow",
+        "LVL_Game.PersistentLevel.BP_StoreCounter5.ShadowCounter",
+        "LVL_Game.PersistentLevel.BP_StoreCounter5.ClientTarget"
+      ]
+    }
+  },
+  {
+    "name": "BP_StoreCounter6",
+    "class": "/Game/Blueprints/Shop/BP_StoreCounter.BP_StoreCounter_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "ClientTarget": "LVL_Game.PersistentLevel.BP_StoreCounter6.ClientTarget",
+      "ShadowCounter": "LVL_Game.PersistentLevel.BP_StoreCounter6.ShadowCounter",
+      "Shadow": "LVL_Game.PersistentLevel.BP_StoreCounter6.Shadow",
+      "ItemLocation": "LVL_Game.PersistentLevel.BP_StoreCounter6.ItemLocation",
+      "Collision": "LVL_Game.PersistentLevel.BP_StoreCounter6.Collision",
+      "Counter": "LVL_Game.PersistentLevel.BP_StoreCounter6.Counter",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_StoreCounter6.DefaultSceneRoot",
+      "CounterMesh": "/Game/Art/Mesh/Furniture/SM_PastryStandHigh.SM_PastryStandHigh",
+      "IsUnlocked": false,
+      "StartingItem": "None, None, None, None, None",
+      "IsStoreCounter": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_StoreCounter6.DefaultSceneRoot",
+      "Tags": [
+        "ShopDisplayCounter8"
+      ],
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_StoreCounter6.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_StoreCounter6.Counter",
+        "LVL_Game.PersistentLevel.BP_StoreCounter6.Collision",
+        "LVL_Game.PersistentLevel.BP_StoreCounter6.ItemLocation",
+        "LVL_Game.PersistentLevel.BP_StoreCounter6.Shadow",
+        "LVL_Game.PersistentLevel.BP_StoreCounter6.ShadowCounter",
+        "LVL_Game.PersistentLevel.BP_StoreCounter6.ClientTarget"
+      ]
+    }
+  },
+  {
+    "name": "BP_Tutorial_2",
+    "class": "/Game/Blueprints/Player/BP_TutorialArrow.BP_TutorialArrow_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Plane": "LVL_Game.PersistentLevel.BP_Tutorial_2.Plane",
+      "Cube": "LVL_Game.PersistentLevel.BP_Tutorial_2.Cube",
+      "Collision": "LVL_Game.PersistentLevel.BP_Tutorial_2.Collision",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Tutorial_2.DefaultSceneRoot",
+      "ArrowAnimation": "LVL_Game.PersistentLevel.BP_Tutorial_2.ArrowAnimation",
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Tutorial_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Tutorial_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Tutorial_2.Collision",
+        "LVL_Game.PersistentLevel.BP_Tutorial_2.Cube",
+        "LVL_Game.PersistentLevel.BP_Tutorial_2.Plane",
+        "LVL_Game.PersistentLevel.BP_Tutorial_2.ArrowAnimation"
+      ]
+    }
+  },
+  {
+    "name": "BP_Wardrobe_2",
+    "class": "/Game/Blueprints/Bedroom/BP_Wardrobe.BP_Wardrobe_C",
+    "outer": "LVL_Game.PersistentLevel",
+    "values": {
+      "Shadow": "LVL_Game.PersistentLevel.BP_Wardrobe_2.Shadow",
+      "Collision": "LVL_Game.PersistentLevel.BP_Wardrobe_2.Collision",
+      "Wardrobe": "LVL_Game.PersistentLevel.BP_Wardrobe_2.Wardrobe",
+      "DefaultSceneRoot": "LVL_Game.PersistentLevel.BP_Wardrobe_2.DefaultSceneRoot",
+      "bHidden": true,
+      "RootComponent": "LVL_Game.PersistentLevel.BP_Wardrobe_2.DefaultSceneRoot",
+      "BlueprintCreatedComponents": [
+        "LVL_Game.PersistentLevel.BP_Wardrobe_2.DefaultSceneRoot",
+        "LVL_Game.PersistentLevel.BP_Wardrobe_2.Wardrobe",
+        "LVL_Game.PersistentLevel.BP_Wardrobe_2.Shadow",
+        "LVL_Game.PersistentLevel.BP_Wardrobe_2.Collision"
+      ]
+    }
+  }
+]

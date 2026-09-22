@@ -4,6 +4,7 @@ local Cats = {
 	Tag = "CakeCafeCat",
 	UpgradeId = "cafe_catcafe",
 	FolderName = "CafeCats",
+	TemplatesFolder = "Cats",
 	Length = 2.4,
 	InteractDistance = 8,
 	PetSeconds = 1,

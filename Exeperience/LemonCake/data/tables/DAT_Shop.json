@@ -1,0 +1,677 @@
+{
+  "source": "Blueprints/Interface/DAT_Shop.uasset",
+  "rows": [
+    {
+      "id": "NewRow",
+      "Number": 0,
+      "BaseName": "DisplayCounter",
+      "Name": "Display Counter",
+      "Description": "Display a pastry in your store window!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_DisplayCounter.UI_ShopIcon_DisplayCounter",
+      "Cost": 5.25,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator0",
+        "label": "Store"
+      },
+      "IsAvailableInDemo": true
+    },
+    {
+      "id": "NewRow_0",
+      "Number": 1,
+      "BaseName": "DisplayCounter",
+      "Name": "Display Counter",
+      "Description": "Display an additional pastry in your store window!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_DisplayCounter.UI_ShopIcon_DisplayCounter",
+      "Cost": 12.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator0",
+        "label": "Store"
+      },
+      "IsAvailableInDemo": true
+    },
+    {
+      "id": "NewRow_1",
+      "Number": 2,
+      "BaseName": "OutfitUpgrade",
+      "Name": "Outfit Upgrade",
+      "Description": "Add new hats & aprons and change your outfit!",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Player_Shirt_Black.ICO_Player_Shirt_Black",
+      "Cost": 25.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator0",
+        "label": "Store"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_2",
+      "Number": 3,
+      "BaseName": "DisplayCounter",
+      "Name": "Display Counter",
+      "Description": "Display an additional pastry in your store window!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_DisplayCounter.UI_ShopIcon_DisplayCounter",
+      "Cost": 25.0,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator0",
+        "label": "Store"
+      },
+      "IsAvailableInDemo": true
+    },
+    {
+      "id": "NewRow_3",
+      "Number": 4,
+      "BaseName": "KitchenWindow",
+      "Name": "Kitchen Window",
+      "Description": "Move pastries from the kitchen to the store quickly with a window counter!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_KitchenWindow.UI_ShopIcon_KitchenWindow",
+      "Cost": 210.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator0",
+        "label": "Store"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_4",
+      "Number": 5,
+      "BaseName": "DisplayCounter",
+      "Name": "Display Counter",
+      "Description": "Display an additional pastry in your store window!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_DisplayCounter.UI_ShopIcon_DisplayCounter",
+      "Cost": 55.25,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator0",
+        "label": "Store"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_5",
+      "Number": 6,
+      "BaseName": "CatCafe",
+      "Name": "Cat Cafe",
+      "Description": "Add cozy furniture for cats! They'll visit your store every day.",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Cat.UI_ShopIcon_Cat",
+      "Cost": 135.0,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator0",
+        "label": "Store"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_6",
+      "Number": 7,
+      "BaseName": "CoffeeMachine",
+      "Name": "Coffee Machine",
+      "Description": "Serve coffee to seated customers to increase their patience!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_CoffeeMachine.UI_ShopIcon_CoffeeMachine",
+      "Cost": 275.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator0",
+        "label": "Store"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_7",
+      "Number": 8,
+      "BaseName": "DisplayCounter",
+      "Name": "Display Counter",
+      "Description": "Display an additional pastry in your store window!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_DisplayCounter.UI_ShopIcon_DisplayCounter",
+      "Cost": 75.25,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator0",
+        "label": "Store"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_8",
+      "Number": 9,
+      "BaseName": "TwoSeats&Table",
+      "Name": "Two Seats & Table",
+      "Description": "Add two seats and a large table to seat two new customers!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_TwoSeatTable.UI_ShopIcon_TwoSeatTable",
+      "Cost": 235.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator0",
+        "label": "Store"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_9",
+      "Number": 10,
+      "BaseName": "CatCafeUpgrade",
+      "Name": "Cat Cafe Upgrade",
+      "Description": "Upgrade your cat cafe! More cats will visit you every day.",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_CatUpgrade.UI_ShopIcon_CatUpgrade",
+      "Cost": 375.0,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator0",
+        "label": "Store"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_10",
+      "Number": 11,
+      "BaseName": "Assistant",
+      "Name": "Assistant",
+      "Description": "Have an assistant help you serve coffees and clean tables!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Assistant.UI_ShopIcon_Assistant",
+      "Cost": 525.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator0",
+        "label": "Store"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_11",
+      "Number": 0,
+      "BaseName": "KitchenCounter",
+      "Name": "Kitchen Counter",
+      "Description": "Add a new counter to place down items in the kitchen!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_KitchenCounter.UI_ShopIcon_KitchenCounter",
+      "Cost": 9.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator1",
+        "label": "Kitchen"
+      },
+      "IsAvailableInDemo": true
+    },
+    {
+      "id": "NewRow_12",
+      "Number": 1,
+      "BaseName": "FirewoodUpgrade",
+      "Name": "Firewood Upgrade",
+      "Description": "Improve your firewood to keep the oven burning for longer!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_FirewoodUpgrade.UI_ShopIcon_FirewoodUpgrade",
+      "Cost": 17.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator1",
+        "label": "Kitchen"
+      },
+      "IsAvailableInDemo": true
+    },
+    {
+      "id": "NewRow_13",
+      "Number": 2,
+      "BaseName": "Oven",
+      "Name": "Oven",
+      "Description": "Repair an oven and bake an additional pastry!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Oven.UI_ShopIcon_Oven",
+      "Cost": 65.75,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator1",
+        "label": "Kitchen"
+      },
+      "IsAvailableInDemo": true
+    },
+    {
+      "id": "NewRow_14",
+      "Number": 3,
+      "BaseName": "Cow",
+      "Name": "Cow",
+      "Description": "Adopt a cow and collect milk to use in your recipes!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Cow.UI_ShopIcon_Cow",
+      "Cost": 195.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator1",
+        "label": "Kitchen"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_15",
+      "Number": 4,
+      "BaseName": "Chickens",
+      "Name": "Chickens",
+      "Description": "Adopt chickens and collect eggs to use in your recipes!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Chicken.UI_ShopIcon_Chicken",
+      "Cost": 55.25,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator1",
+        "label": "Kitchen"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_16",
+      "Number": 5,
+      "BaseName": "SpeedBoost",
+      "Name": "Speed Boost",
+      "Description": "Increase your speed and run around the bakery faster!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_SpeedBoost.UI_ShopIcon_SpeedBoost",
+      "Cost": 65.25,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator1",
+        "label": "Kitchen"
+      },
+      "IsAvailableInDemo": true
+    },
+    {
+      "id": "NewRow_17",
+      "Number": 6,
+      "BaseName": "Oven",
+      "Name": "Oven",
+      "Description": "Repair an oven and bake an additional pastry!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Oven.UI_ShopIcon_Oven",
+      "Cost": 245.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator1",
+        "label": "Kitchen"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_18",
+      "Number": 7,
+      "BaseName": "Freezer",
+      "Name": "Freezer",
+      "Description": "Install a freezer to prepare frozen desserts!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Freezer.UI_ShopIcon_Freezer",
+      "Cost": 225.75,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator1",
+        "label": "Kitchen"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_19",
+      "Number": 8,
+      "BaseName": "AnimalBrush",
+      "Name": "Animal Brush",
+      "Description": "Use a better brush and keep the animal clean all day!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Brush.UI_ShopIcon_Brush",
+      "Cost": 165.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator1",
+        "label": "Kitchen"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_20",
+      "Number": 9,
+      "BaseName": "QuickSprint",
+      "Name": "Quick Sprint",
+      "Description": "Recharge your sprint quickly to zoom around the bakery more often!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_SprintBoost.UI_ShopIcon_SprintBoost",
+      "Cost": 230.0,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator1",
+        "label": "Kitchen"
+      },
+      "IsAvailableInDemo": true
+    },
+    {
+      "id": "NewRow_21",
+      "Number": 10,
+      "BaseName": "OvenUpgrade",
+      "Name": "Oven Upgrade",
+      "Description": "Improve your ovens to burn pastries more slowly!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_OvenUpgrade.UI_ShopIcon_OvenUpgrade",
+      "Cost": 210.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator1",
+        "label": "Kitchen"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_22",
+      "Number": 11,
+      "BaseName": "MagicBroom",
+      "Name": "Magic Broom",
+      "Description": "Enchant your broom to clean spills around the kitchen automatically!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_MagicBroom.UI_ShopIcon_MagicBroom",
+      "Cost": 365.0,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator1",
+        "label": "Kitchen"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_23",
+      "Number": 0,
+      "BaseName": "CocoaTree",
+      "Name": "Cocoa Tree",
+      "Description": "Grow a cocoa tree and harvest chocolate to use in your recipes!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Cocoa.UI_ShopIcon_Cocoa",
+      "Cost": 7.25,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator2",
+        "label": "Greenhouse"
+      },
+      "IsAvailableInDemo": true
+    },
+    {
+      "id": "NewRow_24",
+      "Number": 1,
+      "BaseName": "CherryTree",
+      "Name": "Cherry Tree",
+      "Description": "Grow a cherry tree and harvest cherries to use in your recipes!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Cherry.UI_ShopIcon_Cherry",
+      "Cost": 25.75,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator2",
+        "label": "Greenhouse"
+      },
+      "IsAvailableInDemo": true
+    },
+    {
+      "id": "NewRow_25",
+      "Number": 2,
+      "BaseName": "StrawberryPlant",
+      "Name": "Strawberry Plant",
+      "Description": "Grow a strawberry plant and harvest strawberries to use in your recipes!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Strawberry.UI_ShopIcon_Strawberry",
+      "Cost": 12.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator2",
+        "label": "Greenhouse"
+      },
+      "IsAvailableInDemo": true
+    },
+    {
+      "id": "NewRow_26",
+      "Number": 3,
+      "BaseName": "BlueberryPlant",
+      "Name": "Blueberry Plant",
+      "Description": "Grow a blueberry plant and harvest blueberries to use in your recipes!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Blueberry.UI_ShopIcon_Blueberry",
+      "Cost": 42.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator2",
+        "label": "Greenhouse"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_27",
+      "Number": 4,
+      "BaseName": "CrystalWater",
+      "Name": "Crystal Water",
+      "Description": "Improve the water and keep your plants watered for longer!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_CrystalWater.UI_ShopIcon_CrystalWater",
+      "Cost": 52.75,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator2",
+        "label": "Greenhouse"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_28",
+      "Number": 5,
+      "BaseName": "GrapeVine",
+      "Name": "Grape Vine",
+      "Description": "Grow a grape vine and harvest grapes to use in your recipes!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Grape.UI_ShopIcon_Grape",
+      "Cost": 90.0,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator2",
+        "label": "Greenhouse"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_33",
+      "Number": 6,
+      "BaseName": "RailCart",
+      "Name": "Rail Cart",
+      "Description": "Build a rail cart to move ingredients to the kitchen quickly!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_RailCart.UI_ShopIcon_RailCart",
+      "Cost": 120.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator2",
+        "label": "Greenhouse"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_30",
+      "Number": 7,
+      "BaseName": "CarrotPlant",
+      "Name": "Carrot Plant",
+      "Description": "Grow a carrot plant and harvest carrots to use in your recipes!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Carrot.UI_ShopIcon_Carrot",
+      "Cost": 180.25,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator2",
+        "label": "Greenhouse"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_31",
+      "Number": 8,
+      "BaseName": "Sprinkler",
+      "Name": "Sprinkler",
+      "Description": "Add sprinklers to automatically water your plants!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Sprinkler.UI_ShopIcon_Sprinkler",
+      "Cost": 345.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator2",
+        "label": "Greenhouse"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_32",
+      "Number": 9,
+      "BaseName": "AppleTree",
+      "Name": "Apple Tree",
+      "Description": "Grow an apple tree and harvest apples to use in your recipes!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Apple.UI_ShopIcon_Apple",
+      "Cost": 210.0,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator2",
+        "label": "Greenhouse"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_29",
+      "Number": 10,
+      "BaseName": "Beehive",
+      "Name": "Beehive",
+      "Description": "Build a beehive to collect honey and grow your crops faster!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Bee.UI_ShopIcon_Bee",
+      "Cost": 225.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator2",
+        "label": "Greenhouse"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_34",
+      "Number": 11,
+      "BaseName": "LemonTree",
+      "Name": "Lemon Tree",
+      "Description": "Grow a lemon tree and harvest lemons to use in your recipes!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_Lemon.UI_ShopIcon_Lemon",
+      "Cost": 415.0,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator2",
+        "label": "Greenhouse"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_35",
+      "Number": 0,
+      "BaseName": "Rugs",
+      "Name": "Rugs",
+      "Description": "Place a few rugs around the bedroom to make it more cozy!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_BedroomRug.UI_ShopIcon_BedroomRug",
+      "Cost": 17.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator3",
+        "label": "Bedroom"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_36",
+      "Number": 1,
+      "BaseName": "Library",
+      "Name": "Library",
+      "Description": "Read books from Miss Bonbon and learn more about her bakery!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_BedroomLibrary.UI_ShopIcon_BedroomLibrary",
+      "Cost": 35.25,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator3",
+        "label": "Bedroom"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_37",
+      "Number": 2,
+      "BaseName": "Wardrobe",
+      "Name": "Wardrobe",
+      "Description": "Change your outfit from your bedroom!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_BedroomWardrobe.UI_ShopIcon_BedroomWardrobe",
+      "Cost": 47.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator3",
+        "label": "Bedroom"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_38",
+      "Number": 3,
+      "BaseName": "FairyLights",
+      "Name": "Fairy Lights",
+      "Description": "Decorate your room with some fairy lights!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_BedroomFairyLight.UI_ShopIcon_BedroomFairyLight",
+      "Cost": 82.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator3",
+        "label": "Bedroom"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_40",
+      "Number": 4,
+      "BaseName": "Paintings",
+      "Name": "Paintings",
+      "Description": "Decorate your room's walls with paintings!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_BedroomPainting.UI_ShopIcon_BedroomPainting",
+      "Cost": 120.75,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator3",
+        "label": "Bedroom"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_39",
+      "Number": 5,
+      "BaseName": "Plants",
+      "Name": "Plants",
+      "Description": "Grow a few plants around your room!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_BedroomPlant.UI_ShopIcon_BedroomPlant",
+      "Cost": 92.25,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator3",
+        "label": "Bedroom"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_41",
+      "Number": 6,
+      "BaseName": "Curtains",
+      "Name": "Curtains",
+      "Description": "Add curtains around the window nook!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_BedroomCurtain.UI_ShopIcon_BedroomCurtain",
+      "Cost": 135.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator3",
+        "label": "Bedroom"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_42",
+      "Number": 7,
+      "BaseName": "Cat",
+      "Name": "Cat",
+      "Description": "Adopt a cute black cat!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_BedroomCat.UI_ShopIcon_BedroomCat",
+      "Cost": 275.25,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator3",
+        "label": "Bedroom"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_43",
+      "Number": 8,
+      "BaseName": "Dog",
+      "Name": "Dog",
+      "Description": "Adopt a cute corgi dog!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_BedroomDog.UI_ShopIcon_BedroomDog",
+      "Cost": 355.75,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator3",
+        "label": "Bedroom"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_44",
+      "Number": 9,
+      "BaseName": "WindowNook",
+      "Name": "Window Nook",
+      "Description": "Add cozy cushions around the window nook!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_BedroomWindowNook.UI_ShopIcon_BedroomWindowNook",
+      "Cost": 180.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator3",
+        "label": "Bedroom"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_45",
+      "Number": 10,
+      "BaseName": "Table&Cake",
+      "Name": "Table & Cake",
+      "Description": "Get a cherry cake to snack on at the table!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_BedroomCake.UI_ShopIcon_BedroomCake",
+      "Cost": 230.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator3",
+        "label": "Bedroom"
+      },
+      "IsAvailableInDemo": false
+    },
+    {
+      "id": "NewRow_46",
+      "Number": 11,
+      "BaseName": "Bunny",
+      "Name": "Bunny",
+      "Description": "Adopt a cute brown bunny!",
+      "Icon": "/Game/Blueprints/Interface/ShopIcon/UI_ShopIcon_BedroomBunny.UI_ShopIcon_BedroomBunny",
+      "Cost": 480.5,
+      "Type": {
+        "id": "ENUM_ShopType::NewEnumerator3",
+        "label": "Bedroom"
+      },
+      "IsAvailableInDemo": false
+    }
+  ]
+}

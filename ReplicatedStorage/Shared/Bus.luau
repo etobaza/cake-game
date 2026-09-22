@@ -2,6 +2,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packet = require(ReplicatedStorage.Shared.Libs.Packet)
 
 return {
+	Admin = {
+		-- Server checks access, target, bounds and a one-use confirmation before mutation.
+		Request = Packet("AdminRequest", Packet.String, Packet.NumberF64, Packet.NumberF64, Packet.String):Response(Packet.Any),
+	},
 	Tutorial = {
 		-- Client -> Server: presentation preferences and skip intent; never step completion.
 		Control = Packet("TutorialControl", Packet.String, Packet.String), -- action, value

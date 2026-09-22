@@ -1,0 +1,51 @@
+[
+  {
+    "source": "Blueprints/Player/CRV_Experience.uasset",
+    "name": "CRV_Experience",
+    "values": {
+      "FloatCurve": {
+        "Keys": [
+          {
+            "Keys": {
+              "InterpMode": "RCIM_Cubic",
+              "TangentMode": "RCTM_User",
+              "TangentWeightMode": "RCTWM_WeightedNone",
+              "Time": "+0",
+              "Value": 50.0,
+              "ArriveTangent": 39.93818664550781,
+              "ArriveTangentWeight": "+0",
+              "LeaveTangent": 39.93818664550781,
+              "LeaveTangentWeight": "+0"
+            }
+          },
+          {
+            "Keys": {
+              "InterpMode": "RCIM_Cubic",
+              "TangentMode": "RCTM_User",
+              "TangentWeightMode": "RCTWM_WeightedNone",
+              "Time": 2.0,
+              "Value": 125.0,
+              "ArriveTangent": 96.32671356201172,
+              "ArriveTangentWeight": "+0",
+              "LeaveTangent": 96.32671356201172,
+              "LeaveTangentWeight": "+0"
+            }
+          },
+          {
+            "Keys": {
+              "InterpMode": "RCIM_Cubic",
+              "TangentMode": "RCTM_User",
+              "TangentWeightMode": "RCTWM_WeightedNone",
+              "Time": 40.0,
+              "Value": 1650.0,
+              "ArriveTangent": 0.28130319714546204,
+              "ArriveTangentWeight": "+0",
+              "LeaveTangent": 0.28130319714546204,
+              "LeaveTangentWeight": "+0"
+            }
+          }
+        ]
+      }
+    }
+  }
+]

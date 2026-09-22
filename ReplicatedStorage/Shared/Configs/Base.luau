@@ -9,8 +9,6 @@ local Base = {
 	WorldFolderName = "World",
 	-- Pre-built bakeries.
 	BakeriesFolderName = "Bakeries",
-	-- Authored 3D templates that systems clone from (cat rigs and the like).
-	WorldAssetsFolderName = "Assets",
 
 	-- The bakery that carries the Anchors folder; the rest map onto it by origin.
 	TemplateName = "BakeryOrange",

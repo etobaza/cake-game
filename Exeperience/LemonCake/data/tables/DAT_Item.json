@@ -1,0 +1,1122 @@
+{
+  "source": "Blueprints/Items/DAT_Item.uasset",
+  "rows": [
+    {
+      "id": "Flour",
+      "Name": {
+        "textKey": "Flour",
+        "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+      },
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Flour.SM_Flour",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Flour.ICO_Flour",
+      "Value": "+0"
+    },
+    {
+      "id": "Sugar",
+      "Name": {
+        "textKey": "Sugar",
+        "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+      },
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Sugar.SM_Sugar",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Sugar.ICO_Sugar",
+      "Value": "+0"
+    },
+    {
+      "id": "Egg",
+      "Name": {
+        "textKey": "Egg",
+        "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+      },
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Egg.SM_Egg",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Egg.ICO_Egg",
+      "Value": "+0"
+    },
+    {
+      "id": "Milk",
+      "Name": {
+        "textKey": "Milk",
+        "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+      },
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Milk.SM_Milk",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Milk.ICO_Milk",
+      "Value": "+0"
+    },
+    {
+      "id": "Blueberry",
+      "Name": {
+        "textKey": "Blueberry",
+        "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+      },
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Blueberry.SM_Blueberry",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Blueberry.ICO_Blueberry",
+      "Value": "+0"
+    },
+    {
+      "id": "Strawberry",
+      "Name": {
+        "textKey": "Strawberry",
+        "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+      },
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Strawberry.SM_Strawberry",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Strawberry.ICO_Strawberry",
+      "Value": "+0"
+    },
+    {
+      "id": "Carrot",
+      "Name": {
+        "textKey": "Carrot",
+        "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+      },
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Carrot.SM_Carrot",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Carrot.ICO_Carrot",
+      "Value": "+0"
+    },
+    {
+      "id": "Grape",
+      "Name": {
+        "textKey": "Grape",
+        "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+      },
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Grape.SM_Grape",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Grape.ICO_Grape",
+      "Value": "+0"
+    },
+    {
+      "id": "Cocoa",
+      "Name": {
+        "textKey": "Cocoa",
+        "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+      },
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Cocoa.SM_Cocoa",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Cocoa.ICO_Cocoa",
+      "Value": "+0"
+    },
+    {
+      "id": "Cherry",
+      "Name": {
+        "textKey": "Cherry",
+        "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+      },
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Cherry.SM_Cherry",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Cherry.ICO_Cherry",
+      "Value": "+0"
+    },
+    {
+      "id": "Apple",
+      "Name": {
+        "textKey": "Apple",
+        "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+      },
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Apple.SM_Apple",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Apple.ICO_Apple",
+      "Value": "+0"
+    },
+    {
+      "id": "Lemon",
+      "Name": {
+        "textKey": "Lemon",
+        "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+      },
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Lemon.SM_Lemon",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Lemon.ICO_Lemon",
+      "Value": "+0"
+    },
+    {
+      "id": "Honey",
+      "Name": {
+        "textKey": "Honey",
+        "table": "/Game/Blueprints/Interface/STR_LocalizationName.STR_LocalizationName"
+      },
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Honey.SM_Honey",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_Honey.ICO_Honey",
+      "Value": "+0"
+    },
+    {
+      "id": "BurnedFood",
+      "Name": "Burned Food",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_BurnedFood.SM_BurnedFood",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "Firewood",
+      "Name": "Firewood",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator0",
+        "label": "Ingredient"
+      },
+      "Mesh": "/Game/Art/Mesh/Decoration/SM_LogHalf.SM_LogHalf",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "WateringCan",
+      "Name": "Watering Can",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator4",
+        "label": "Tool"
+      },
+      "Mesh": "/Game/Art/Mesh/Tool/SM_WateringCan.SM_WateringCan",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "Broom",
+      "Name": "Broom",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator4",
+        "label": "Tool"
+      },
+      "Mesh": "/Game/Art/Mesh/Tool/SM_Broom.SM_Broom",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "FrenchBaguetteMix",
+      "Name": "French Baguette Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "SweetRollMix",
+      "Name": "Sweet Roll Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "ChocolateCroissantMix",
+      "Name": "Chocolate Croissant Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "SweetPretzelMix",
+      "Name": "Sweet Pretzel Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "CheeseBunMix",
+      "Name": "Cheese Bun Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "RaisinBreadMix",
+      "Name": "Raisin Bread Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "FrenchBaguette",
+      "Name": "French Baguette",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_FrenchBaguette.SM_FrenchBaguette",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_FrenchBaguette.ICO_FrenchBaguette",
+      "Value": 1.5
+    },
+    {
+      "id": "SweetRoll",
+      "Name": "Sweet Roll",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_SweetRoll.SM_SweetRoll",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_SweetRoll.ICO_SweetRoll",
+      "Value": 1.75
+    },
+    {
+      "id": "ChocolateCroissant",
+      "Name": "Chocolate Croissant",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_ChocolateCroissant.SM_ChocolateCroissant",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_ChocolateCroissant.ICO_ChocolateCroissant",
+      "Value": 2.25
+    },
+    {
+      "id": "SweetPretzel",
+      "Name": "Sweet Pretzel",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_SweetPretzel.SM_SweetPretzel",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_SweetPretzel.ICO_SweetPretzel",
+      "Value": 1.75
+    },
+    {
+      "id": "RaisinBread",
+      "Name": "Raisin Bread",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_RaisinBread.SM_RaisinBread",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_RaisinBread.ICO_RaisinBread",
+      "Value": 2.5
+    },
+    {
+      "id": "CaramelApple",
+      "Name": "CaramelApple",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_CaramelApple.SM_CaramelApple",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CaramelApple.ICO_CaramelApple",
+      "Value": 2.25
+    },
+    {
+      "id": "AppleStrudel",
+      "Name": "Apple Strudel",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_AppleStrudel.SM_AppleStrudel",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_AppleStrudel.ICO_AppleStrudel",
+      "Value": 2.75
+    },
+    {
+      "id": "AppleStrudelMix",
+      "Name": "Apple Strudel Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "AppleTart",
+      "Name": "Apple Tart",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_AppleTart.SM_AppleTart",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_AppleTart.ICO_AppleTart",
+      "Value": 3.0
+    },
+    {
+      "id": "AppleTartMix",
+      "Name": "Apple Tart Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "MarshmallowTwist",
+      "Name": "Marshmallow Twist",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_MarshmallowTwist.SM_MarshmallowTwist",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_MarshmallowTwist.ICO_MarshmallowTwist",
+      "Value": 0.75
+    },
+    {
+      "id": "ChocolateStrawberry",
+      "Name": "Chocolate Strawberry",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_ChocolateStrawberry.SM_ChocolateStrawberry",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_ChocolateStrawberry.ICO_ChocolateStrawberry",
+      "Value": 2.0
+    },
+    {
+      "id": "EggBenedict",
+      "Name": "Egg Benedict",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_CheeseBun.SM_CheeseBun",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_EggBenedict.ICO_EggBenedict",
+      "Value": 2.0
+    },
+    {
+      "id": "EggBenedictMix",
+      "Name": "Egg Benedict Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "StrawberryDonut",
+      "Name": "Strawberry Donut",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_StrawberryDonut.SM_StrawberryDonut",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_StrawberryDonut.ICO_StrawberryDonut",
+      "Value": 2.5
+    },
+    {
+      "id": "StrawberryDonutMix",
+      "Name": "Strawberry Donut Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "CherryJelly",
+      "Name": "Cherry Jelly",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_CherryJelly.SM_CherryJelly",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CherryJelly.ICO_CherryJelly",
+      "Value": 2.25
+    },
+    {
+      "id": "CherryJellyMix",
+      "Name": "Cherry Jelly Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "ChocolateEclair",
+      "Name": "Chocolate Eclair",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_ChocolateEclair.SM_ChocolateEclair",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_ChocolateEclair.ICO_ChocolateEclair",
+      "Value": 3.0
+    },
+    {
+      "id": "ChocolateEclairMix",
+      "Name": "Choclate Eclair Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "Coffee",
+      "Name": "Coffee",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_Coffee.SM_Coffee",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "BlueberryBagel",
+      "Name": "Blueberry Bagel",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_BlueberryBagel.SM_BlueberryBagel",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_BlueberryBagel.ICO_BlueberryBagel",
+      "Value": 2.5
+    },
+    {
+      "id": "BlueberryBagelMix",
+      "Name": "Blueberry Bagel Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "ChocolatePancake",
+      "Name": "Chocolate Pancake",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_ChocolatePancake.SM_ChocolatePancake",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_ChocolatePancake.ICO_ChocolatePancake",
+      "Value": 2.75
+    },
+    {
+      "id": "ChocolatePancakeMix",
+      "Name": "Chocolate Pancake Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "CarrotCupcake",
+      "Name": "Carrot Cupcake",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_CarrotCupcake.SM_CarrotCupcake",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CarrotCupcake.ICO_CarrotCupcake",
+      "Value": 2.75
+    },
+    {
+      "id": "CarrotCupcakeMix",
+      "Name": "Carrot Cupcake Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "BlueberryCheesecake",
+      "Name": "Blueberry Cheesecake",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_BlueberryCheesecake.SM_BlueberryCheesecake",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_BlueberryCheesecake.ICO_BlueberryCheesecake",
+      "Value": 3.5
+    },
+    {
+      "id": "BlueberryCheesecakeMix",
+      "Name": "Blueberry Cheesecake Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "LeftoverPastry",
+      "Name": "Leftover Pastry",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_Giftbox.SM_Giftbox",
+      "Icon": null,
+      "Value": 1.0
+    },
+    {
+      "id": "CherryBundtCake",
+      "Name": "Cherry Bundt Cake",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_CherryBundtCake.SM_CherryBundtCake",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CherryBundtcake.ICO_CherryBundtcake",
+      "Value": 3.75
+    },
+    {
+      "id": "CherryBundtCakeMix",
+      "Name": "Cherry Bundt Cake Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "RedVelvetCake",
+      "Name": "Red Velvet Cake",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_RedVelvetCake.SM_RedVelvetCake",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_RedVelvetCake.ICO_RedVelvetCake",
+      "Value": 3.0
+    },
+    {
+      "id": "RedVelvetCakeMix",
+      "Name": "Red Velvet Cake Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "IceCreamSandwich",
+      "Name": "Ice Cream Sandwich",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_IceCreamSandwich.SM_IceCreamSandwich",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_IceCreamSandwich.ICO_IceCreamSandwich",
+      "Value": 2.5
+    },
+    {
+      "id": "IceCreamSandwichMix",
+      "Name": "Ice Cream Sandwich Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_DoughFrozen.SM_DoughFrozen",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "LemonSorbet",
+      "Name": "Lemon Sorbet",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_LemonSorbet.SM_LemonSorbet",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_LemonSorbet.ICO_LemonSorbet",
+      "Value": 2.75
+    },
+    {
+      "id": "LemonSorbetMix",
+      "Name": "Lemon Sorbet Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_DoughFrozen.SM_DoughFrozen",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "StrawberryIceCream",
+      "Name": "Strawberry Ice Cream",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_StrawberryIceCream.SM_StrawberryIceCream",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_StrawberryIceCream.ICO_StrawberryIceCream",
+      "Value": 2.5
+    },
+    {
+      "id": "StrawberryIceCreamMix",
+      "Name": "Strawberry Ice Cream Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_DoughFrozen.SM_DoughFrozen",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "WaffleSundae",
+      "Name": "Waffle Sundae",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_WaffleSundae.SM_WaffleSundae",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_WaffleSundae.ICO_WaffleSundae",
+      "Value": 3.75
+    },
+    {
+      "id": "WaffleSundaeMix",
+      "Name": "Waffle Sundae Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_DoughFrozen.SM_DoughFrozen",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "GrapePopsicle",
+      "Name": "Grape Popsicle",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_GrapePopsicle.SM_GrapePopsicle",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_GrapePopsicle.ICO_GrapePopsicle",
+      "Value": 1.75
+    },
+    {
+      "id": "GrapePopsicleMix",
+      "Name": "Grape Popsicle Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_DoughFrozen.SM_DoughFrozen",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "SoftServe",
+      "Name": "Soft Serve",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_SoftServe.SM_SoftServe",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_SoftServe.ICO_SoftServe",
+      "Value": 2.0
+    },
+    {
+      "id": "SoftServeMix",
+      "Name": "Soft Serve Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_DoughFrozen.SM_DoughFrozen",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "HoneyCruller",
+      "Name": "Honey Cruller",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_HoneyCruller.SM_HoneyCruller",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_HoneyCruller.ICO_HoneyCruller",
+      "Value": 2.25
+    },
+    {
+      "id": "HoneyCrullerMix",
+      "Name": "Honey Cruller Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "ChocolateCookie",
+      "Name": "Chocolate Cookie",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_ChocolateCookie.SM_ChocolateCookie",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_ChocolateCookie.ICO_ChocolateCookie",
+      "Value": 2.0
+    },
+    {
+      "id": "ChocolateCookieMix",
+      "Name": "Chocolate Cookie Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "RainbowLollipop",
+      "Name": "Rainbow Lollipop",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_RainbowLollipop.SM_RainbowLollipop",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_RainbowLollipop.ICO_RainbowLollipop",
+      "Value": 2.75
+    },
+    {
+      "id": "CherryBiscotti",
+      "Name": "Cherry Biscotti",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_CherryBiscotti.SM_CherryBiscotti",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CherryBiscotti.ICO_CherryBiscotti",
+      "Value": 2.5
+    },
+    {
+      "id": "CherryBiscottiMix",
+      "Name": "Cherry Biscotti Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "HoneyMacaron",
+      "Name": "Honey Macaron",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_HoneyMacaron.SM_HoneyMacaron",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_HoneyMacaron.ICO_HoneyMacaron",
+      "Value": 3.25
+    },
+    {
+      "id": "HoneyMacaronMix",
+      "Name": "Honey Macaron Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "StrawberryScone",
+      "Name": "Strawberry Scone",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_StrawberryScone.SM_StrawberryScone",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_StrawberryScone.ICO_StrawberryScone",
+      "Value": 2.5
+    },
+    {
+      "id": "StrawberrySconeMix",
+      "Name": "Strawberry Scone Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "LemonWafer",
+      "Name": "Lemon Wafer",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_LemonWafer.SM_LemonWafer",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_LemonWafer.ICO_LemonWafer",
+      "Value": 3.0
+    },
+    {
+      "id": "LemonWaferMix",
+      "Name": "Lemon Wafer Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "CaramelFlan",
+      "Name": "Caramel Flan",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_CaramelFlan.SM_CaramelFlan",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CaramelFlan.ICO_CaramelFlan",
+      "Value": 2.5
+    },
+    {
+      "id": "CaramelFlanMix",
+      "Name": "Caramel Flan Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "LemonMeringue",
+      "Name": "Lemon Meringue",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_LemonMeringue.SM_LemonMeringue",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_LemonMeringue.ICO_LemonMeringue",
+      "Value": 3.5
+    },
+    {
+      "id": "LemonMeringueMix",
+      "Name": "Lemon Meringue Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "BerryCrumble",
+      "Name": "Berry Crumble",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_BerryCrumble.SM_BerryCrumble",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_BerryCrumble.ICO_BerryCrumble",
+      "Value": 3.0
+    },
+    {
+      "id": "BerryCrumbleMix",
+      "Name": "Berry Crumble Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "CarrotPie",
+      "Name": "Carrot Pie",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_CarrotPie.SM_CarrotPie",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CarrotPie.ICO_CarrotPie",
+      "Value": 2.5
+    },
+    {
+      "id": "CarrotPieMix",
+      "Name": "Carrot Pie Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "HoneyTaffy",
+      "Name": "Honey Taffy",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_HoneyTaffy.SM_HoneyTaffy",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_HoneyTaffy.ICO_HoneyTaffy",
+      "Value": 1.75
+    },
+    {
+      "id": "MilkChocolate",
+      "Name": "Milk Chocolate",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_MilkChocolate.SM_MilkChocolate",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_MilkChocolate.ICO_MilkChocolate",
+      "Value": 2.0
+    },
+    {
+      "id": "CherryPie",
+      "Name": "Cherry Pie",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_CherryPie.SM_CherryPie",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CherryPie.ICO_CherryPie",
+      "Value": 3.75
+    },
+    {
+      "id": "CherryPieMix",
+      "Name": "Cherry Pie Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "CarrotGranolaBar",
+      "Name": "Carrot Granola Bar",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_CarrotGranolaBar.SM_CarrotGranolaBar",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_CarrotGranolaBar.ICO_CarrotGranolaBar",
+      "Value": 3.25
+    },
+    {
+      "id": "CarrotGranolaBarMix",
+      "Name": "Carrot Granola Bar Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    },
+    {
+      "id": "LemonCake",
+      "Name": "Lemon Cake",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator3",
+        "label": "Food"
+      },
+      "Mesh": "/Game/Art/Mesh/Food/SM_LemonCake.SM_LemonCake",
+      "Icon": "/Game/Blueprints/Interface/Icon/ICO_LemonCake.ICO_LemonCake",
+      "Value": 4.0
+    },
+    {
+      "id": "LemonCakeMix",
+      "Name": "Lemon Cake Mix",
+      "Type": {
+        "id": "ENUM_ItemType::NewEnumerator1",
+        "label": "Mixed"
+      },
+      "Mesh": "/Game/Art/Mesh/Ingredient/SM_Dough.SM_Dough",
+      "Icon": null,
+      "Value": "+0"
+    }
+  ]
+}

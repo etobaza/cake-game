@@ -1,5 +1,6 @@
 std = "roblox"
 exclude = [
+    ".zed/.cache/**",
     "ReplicatedStorage/Packages/**",
     "ServerStorage/ServerPackages/**",
     "ReplicatedStorage/Shared/Libs/Packet/**",

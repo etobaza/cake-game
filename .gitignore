@@ -30,3 +30,4 @@ ServerStorage/ServerPackages/
 .zed/.cache/
 .zed/
 .vscode/
+ServerStorage/wally.lock

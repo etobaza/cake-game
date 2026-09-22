@@ -31,6 +31,10 @@ function Resolve-Definitions {
     }
 
     $fileName = "globalTypes.PluginSecurity.d.luau"
+    $zedDefinitions = Join-Path $projectRoot ".zed\.cache\$fileName"
+    if (Test-Path -LiteralPath $zedDefinitions -PathType Leaf) {
+        return $zedDefinitions
+    }
     foreach ($editor in @("Cursor", "Code")) {
         $candidate = Join-Path $env:APPDATA "$editor\User\globalStorage\johnnymorganz.luau-lsp\$fileName"
         if (Test-Path -LiteralPath $candidate -PathType Leaf) {
@@ -38,7 +42,7 @@ function Resolve-Definitions {
         }
     }
 
-    throw "No Roblox definitions file found. Open a Luau file once so the luau-lsp extension downloads it, or pass -Definitions <path>."
+    throw "No Roblox definitions file found. Run scripts/setup-zed.ps1, open a Luau file in VS Code/Cursor, or pass -Definitions <path>."
 }
 
 function Invoke-Step {

@@ -3,7 +3,7 @@
 
 return {
 	Name = "resetprogress",
-	Description = "Reset gameplay progress on rejoin and start with money for every upgrade. Disconnects the player.",
+	Description = "Reset gameplay progress to new-player defaults on rejoin. Disconnects the player; paid ownership survives.",
 	Group = "Admin",
 	Args = {
 		{

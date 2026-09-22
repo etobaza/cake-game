@@ -1,0 +1,1160 @@
+{
+  "source": "Blueprints/Player/DAT_PlayerStyle.uasset",
+  "rows": [
+    {
+      "id": "NewRow",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator0",
+        "label": "Skin Tone"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Skin/MAT_BodySkin_01.MAT_BodySkin_01",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_0",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator0",
+        "label": "Skin Tone"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Skin/MAT_BodySkin_02.MAT_BodySkin_02",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_1",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator0",
+        "label": "Skin Tone"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Skin/MAT_BodySkin_03.MAT_BodySkin_03",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_2",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator0",
+        "label": "Skin Tone"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Skin/MAT_BodySkin_04.MAT_BodySkin_04",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_3",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator0",
+        "label": "Skin Tone"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Skin/MAT_BodySkin_05.MAT_BodySkin_05",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_4",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator1",
+        "label": "Eye Color"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Eye/MAT_EyeColor_Blue.MAT_EyeColor_Blue",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_5",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator1",
+        "label": "Eye Color"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Eye/MAT_EyeColor_Brown.MAT_EyeColor_Brown",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_6",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator1",
+        "label": "Eye Color"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Eye/MAT_EyeColor_Gray.MAT_EyeColor_Gray",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_7",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator1",
+        "label": "Eye Color"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Eye/MAT_EyeColor_Green.MAT_EyeColor_Green",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_8",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator1",
+        "label": "Eye Color"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Eye/MAT_EyeColor_Yellow.MAT_EyeColor_Yellow",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_9",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator2",
+        "label": "Eyelashes"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Eye/MAT_EyeF_01.MAT_EyeF_01",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_10",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator2",
+        "label": "Eyelashes"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Eye/MAT_EyeM_01.MAT_EyeM_01",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_11",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator3",
+        "label": "Hairstyle"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Hair/SM_HairF_01.SM_HairF_01",
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Hair/MAT_HairF_01.MAT_HairF_01",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_12",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator3",
+        "label": "Hairstyle"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Hair/SM_HairF_02.SM_HairF_02",
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Hair/MAT_HairF_02.MAT_HairF_02",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_13",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator3",
+        "label": "Hairstyle"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Hair/SM_HairM_01.SM_HairM_01",
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Hair/MAT_HairM_01.MAT_HairM_01",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_14",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator3",
+        "label": "Hairstyle"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Hair/SM_HairM_02.SM_HairM_02",
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Hair/MAT_HairM_02.MAT_HairM_02",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_59",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator3",
+        "label": "Hairstyle"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Hair/SM_HairF_03.SM_HairF_03",
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Hair/MAT_HairF_03.MAT_HairF_03",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_60",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator3",
+        "label": "Hairstyle"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Hair/SM_HairF_04.SM_HairF_04",
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Hair/MAT_HairF_04.MAT_HairF_04",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_61",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator3",
+        "label": "Hairstyle"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Hair/SM_HairM_03.SM_HairM_03",
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Hair/MAT_HairM_03.MAT_HairM_03",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_70",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator3",
+        "label": "Hairstyle"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Hair/SM_HairM_04.SM_HairM_04",
+      "SkeletalMesh": null,
+      "Material": "/Game/Art/Material/Player/Hair/MAT_HairM_04.MAT_HairM_04",
+      "Texture": null
+    },
+    {
+      "id": "NewRow_33",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator4",
+        "label": "Hair Color"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": null
+    },
+    {
+      "id": "NewRow_34",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator4",
+        "label": "Hair Color"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": null
+    },
+    {
+      "id": "NewRow_35",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator4",
+        "label": "Hair Color"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": null
+    },
+    {
+      "id": "NewRow_36",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator4",
+        "label": "Hair Color"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": null
+    },
+    {
+      "id": "NewRow_15",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator4",
+        "label": "Hair Color"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": null
+    },
+    {
+      "id": "NewRow_16",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator4",
+        "label": "Hair Color"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": null
+    },
+    {
+      "id": "NewRow_17",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator4",
+        "label": "Hair Color"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": null
+    },
+    {
+      "id": "NewRow_18",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator4",
+        "label": "Hair Color"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": null
+    },
+    {
+      "id": "NewRow_19",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_CroptopShirt.SK_Outfit_CroptopShirt",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_CroptopShirt_01.TEX_CroptopShirt_01"
+    },
+    {
+      "id": "NewRow_20",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_CroptopShirt.SK_Outfit_CroptopShirt",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_CroptopShirt_02.TEX_CroptopShirt_02"
+    },
+    {
+      "id": "NewRow_21",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_CroptopShirt.SK_Outfit_CroptopShirt",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_CroptopShirt_03.TEX_CroptopShirt_03"
+    },
+    {
+      "id": "NewRow_22",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_CroptopShirt.SK_Outfit_CroptopShirt",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_CroptopShirt_04.TEX_CroptopShirt_04"
+    },
+    {
+      "id": "NewRow_23",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_Turtleneck.SK_Outfit_Turtleneck",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_Turtleneck_01.TEX_Turtleneck_01"
+    },
+    {
+      "id": "NewRow_24",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_Turtleneck.SK_Outfit_Turtleneck",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_Turtleneck_02.TEX_Turtleneck_02"
+    },
+    {
+      "id": "NewRow_37",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_Turtleneck.SK_Outfit_Turtleneck",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_Turtleneck_03.TEX_Turtleneck_03"
+    },
+    {
+      "id": "NewRow_38",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_Turtleneck.SK_Outfit_Turtleneck",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_Turtleneck_04.TEX_Turtleneck_04"
+    },
+    {
+      "id": "NewRow_39",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_DressshirtShort.SK_Outfit_DressshirtShort",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_DressshirtShort_01.TEX_DressshirtShort_01"
+    },
+    {
+      "id": "NewRow_40",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_DressshirtShort.SK_Outfit_DressshirtShort",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_DressshirtShort_04.TEX_DressshirtShort_04"
+    },
+    {
+      "id": "NewRow_41",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_DressshirtShort.SK_Outfit_DressshirtShort",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_DressshirtShort_02.TEX_DressshirtShort_02"
+    },
+    {
+      "id": "NewRow_42",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_DressshirtShort.SK_Outfit_DressshirtShort",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_DressshirtShort_03.TEX_DressshirtShort_03"
+    },
+    {
+      "id": "NewRow_62",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_TShirt.SK_Outfit_TShirt",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_TShirt_Nom.TEX_TShirt_Nom"
+    },
+    {
+      "id": "NewRow_63",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_TShirt.SK_Outfit_TShirt",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_Tshirt_Bunny.TEX_Tshirt_Bunny"
+    },
+    {
+      "id": "NewRow_64",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_TShirt.SK_Outfit_TShirt",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_Tshirt_Rainbow.TEX_Tshirt_Rainbow"
+    },
+    {
+      "id": "NewRow_65",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_TShirt.SK_Outfit_TShirt",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_Tshirt_Cat.TEX_Tshirt_Cat"
+    },
+    {
+      "id": "NewRow_66",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_DressShirtLong.SK_Outfit_DressShirtLong",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_LongDressShirt_Blue.TEX_LongDressShirt_Blue"
+    },
+    {
+      "id": "NewRow_67",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_DressShirtLong.SK_Outfit_DressShirtLong",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_LongDressShirt_Red.TEX_LongDressShirt_Red"
+    },
+    {
+      "id": "NewRow_68",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_DressShirtLong.SK_Outfit_DressShirtLong",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_LongDressShirt_Gray.TEX_LongDressShirt_Gray"
+    },
+    {
+      "id": "NewRow_69",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator5",
+        "label": "Top Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_DressShirtLong.SK_Outfit_DressShirtLong",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_LongDressShirt_White.TEX_LongDressShirt_White"
+    },
+    {
+      "id": "NewRow_25",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_RomperShort.SK_Outfit_RomperShort",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_RomperShort_01.TEX_RomperShort_01"
+    },
+    {
+      "id": "NewRow_26",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_RomperShort.SK_Outfit_RomperShort",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_RomperShort_02.TEX_RomperShort_02"
+    },
+    {
+      "id": "NewRow_27",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_RomperShort.SK_Outfit_RomperShort",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_RomperShort_03.TEX_RomperShort_03"
+    },
+    {
+      "id": "NewRow_28",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_RomperShort.SK_Outfit_RomperShort",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_ShortRomper_04.TEX_ShortRomper_04"
+    },
+    {
+      "id": "NewRow_29",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_PantsQuarter.SK_Outfit_PantsQuarter",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_PantsLong_01.TEX_PantsLong_01"
+    },
+    {
+      "id": "NewRow_30",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_PantsQuarter.SK_Outfit_PantsQuarter",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_PantsLong_02.TEX_PantsLong_02"
+    },
+    {
+      "id": "NewRow_43",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_PantsQuarter.SK_Outfit_PantsQuarter",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_PantsLong_03.TEX_PantsLong_03"
+    },
+    {
+      "id": "NewRow_44",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_PantsQuarter.SK_Outfit_PantsQuarter",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_PantsLong_04.TEX_PantsLong_04"
+    },
+    {
+      "id": "NewRow_45",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_Shorts.SK_Outfit_Shorts",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_Shorts_01.TEX_Shorts_01"
+    },
+    {
+      "id": "NewRow_46",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_Shorts.SK_Outfit_Shorts",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_Shorts_02.TEX_Shorts_02"
+    },
+    {
+      "id": "NewRow_48",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_Shorts.SK_Outfit_Shorts",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_Shorts_03.TEX_Shorts_03"
+    },
+    {
+      "id": "NewRow_47",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_Shorts.SK_Outfit_Shorts",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_Shorts_04.TEX_Shorts_04"
+    },
+    {
+      "id": "NewRow_71",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_PantsLong.SK_Outfit_PantsLong",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_PantsLong_01.TEX_PantsLong_01"
+    },
+    {
+      "id": "NewRow_72",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_PantsLong.SK_Outfit_PantsLong",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_PantsLong_02.TEX_PantsLong_02"
+    },
+    {
+      "id": "NewRow_73",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_PantsLong.SK_Outfit_PantsLong",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_PantsLong_03.TEX_PantsLong_03"
+    },
+    {
+      "id": "NewRow_74",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_PantsLong.SK_Outfit_PantsLong",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_PantsLong_04.TEX_PantsLong_04"
+    },
+    {
+      "id": "NewRow_89",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_Skirt.SK_Outfit_Skirt",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Skirt_Blue.TEX_SM_Skirt_Blue"
+    },
+    {
+      "id": "NewRow_90",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_Skirt.SK_Outfit_Skirt",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Skirt_Yellow.TEX_SM_Skirt_Yellow"
+    },
+    {
+      "id": "NewRow_91",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_Skirt.SK_Outfit_Skirt",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Skirt_Pink.TEX_SM_Skirt_Pink"
+    },
+    {
+      "id": "NewRow_92",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator6",
+        "label": "Bottom Outfit"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_Skirt.SK_Outfit_Skirt",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Skirt_Black.TEX_SM_Skirt_Black"
+    },
+    {
+      "id": "NewRow_31",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator7",
+        "label": "Socks"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_SocksShort.SK_Outfit_SocksShort",
+      "Material": null,
+      "Texture": null
+    },
+    {
+      "id": "NewRow_32",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator7",
+        "label": "Socks"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_SocksLong.SK_Outfit_SocksLong",
+      "Material": null,
+      "Texture": null
+    },
+    {
+      "id": "NewRow_53",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator8",
+        "label": "Apron"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": null
+    },
+    {
+      "id": "NewRow_49",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator8",
+        "label": "Apron"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_ApronSquare.SK_Outfit_ApronSquare",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_ApronSquare_White.TEX_ApronSquare_White"
+    },
+    {
+      "id": "NewRow_50",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator8",
+        "label": "Apron"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_ApronSquare.SK_Outfit_ApronSquare",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_ApronSquare_Black.TEX_ApronSquare_Black"
+    },
+    {
+      "id": "NewRow_51",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator8",
+        "label": "Apron"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_ApronSquare.SK_Outfit_ApronSquare",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_ApronSquare_Green.TEX_ApronSquare_Green"
+    },
+    {
+      "id": "NewRow_52",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator8",
+        "label": "Apron"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_ApronSquare.SK_Outfit_ApronSquare",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_ApronSquare_Red.TEX_ApronSquare_Red"
+    },
+    {
+      "id": "NewRow_76",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator8",
+        "label": "Apron"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_ApronRound.SK_Outfit_ApronRound",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_ApronRound_White.TEX_ApronRound_White"
+    },
+    {
+      "id": "NewRow_96",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator8",
+        "label": "Apron"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_ApronRound.SK_Outfit_ApronRound",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_ApronRound_Pink.TEX_ApronRound_Pink"
+    },
+    {
+      "id": "NewRow_97",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator8",
+        "label": "Apron"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_ApronRound.SK_Outfit_ApronRound",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_ApronRound_Yellow.TEX_ApronRound_Yellow"
+    },
+    {
+      "id": "NewRow_98",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator8",
+        "label": "Apron"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": "/Game/Art/Mesh/Player/Outfit/SK_Outfit_ApronRound.SK_Outfit_ApronRound",
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_ApronRound_Blue.TEX_ApronRound_Blue"
+    },
+    {
+      "id": "NewRow_54",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": null,
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": null
+    },
+    {
+      "id": "NewRow_55",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_Chefhat.SM_Chefhat",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Chefhat_White.TEX_SM_Chefhat_White"
+    },
+    {
+      "id": "NewRow_56",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_Chefhat.SM_Chefhat",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Chefhat_Red.TEX_SM_Chefhat_Red"
+    },
+    {
+      "id": "NewRow_57",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_Chefhat.SM_Chefhat",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Chefhat_Green.TEX_SM_Chefhat_Green"
+    },
+    {
+      "id": "NewRow_58",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_Chefhat.SM_Chefhat",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Chefhat_Black.TEX_SM_Chefhat_Black"
+    },
+    {
+      "id": "NewRow_82",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_Beret.SM_Beret",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Beret_Red.TEX_SM_Beret_Red"
+    },
+    {
+      "id": "NewRow_85",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_Beret.SM_Beret",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Beret_Pink.TEX_SM_Beret_Pink"
+    },
+    {
+      "id": "NewRow_84",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_Beret.SM_Beret",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Beret_Blue.TEX_SM_Beret_Blue"
+    },
+    {
+      "id": "NewRow_83",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_Beret.SM_Beret",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Beret_Black.TEX_SM_Beret_Black"
+    },
+    {
+      "id": "NewRow_78",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_CatEar.SM_CatEar",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_CatEar_Black.TEX_SM_CatEar_Black"
+    },
+    {
+      "id": "NewRow_79",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_CatEar.SM_CatEar",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_CatEar_White.TEX_SM_CatEar_White"
+    },
+    {
+      "id": "NewRow_100",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_BunnyEar.SM_BunnyEar",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_BunnyHamster_Black.TEX_BunnyHamster_Black"
+    },
+    {
+      "id": "NewRow_101",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_BunnyEar.SM_BunnyEar",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_BunnyHamster_White.TEX_BunnyHamster_White"
+    },
+    {
+      "id": "NewRow_102",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_HamsterEar.SM_HamsterEar",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_BunnyHamster_Black.TEX_BunnyHamster_Black"
+    },
+    {
+      "id": "NewRow_103",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_HamsterEar.SM_HamsterEar",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_BunnyHamster_White.TEX_BunnyHamster_White"
+    },
+    {
+      "id": "NewRow_77",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_PaperHat.SM_PaperHat",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_PaperHat_Blue.TEX_SM_PaperHat_Blue"
+    },
+    {
+      "id": "NewRow_86",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_PaperHat.SM_PaperHat",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_PaperHat_White.TEX_SM_PaperHat_White"
+    },
+    {
+      "id": "NewRow_87",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_WitchHat.SM_WitchHat",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_WitchHat_Purple.TEX_SM_WitchHat_Purple"
+    },
+    {
+      "id": "NewRow_88",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_WitchHat.SM_WitchHat",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_WitchHat_Brown.TEX_SM_WitchHat_Brown"
+    },
+    {
+      "id": "NewRow_75",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_PancakeHat.SM_PancakeHat",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Food/TEX_ChocolatePancake_COL.TEX_ChocolatePancake_COL"
+    },
+    {
+      "id": "NewRow_80",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_PieHat.SM_PieHat",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Food/TEX_SM_CherryPie_COL.TEX_SM_CherryPie_COL"
+    },
+    {
+      "id": "NewRow_81",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_IceCreamHat.SM_IceCreamHat",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Food/TEX_SM_StrawberryIceCream_COL.TEX_SM_StrawberryIceCream_COL"
+    },
+    {
+      "id": "NewRow_93",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_GlassesRound.SM_GlassesRound",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Glasses_COL.TEX_SM_Glasses_COL"
+    },
+    {
+      "id": "NewRow_94",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_GlassesHalf.SM_GlassesHalf",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Glasses_COL.TEX_SM_Glasses_COL"
+    },
+    {
+      "id": "NewRow_95",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_GlassesSquare.SM_GlassesSquare",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_Glasses_COL.TEX_SM_Glasses_COL"
+    },
+    {
+      "id": "NewRow_99",
+      "Type": {
+        "id": "ENUM_PlayerStyle::NewEnumerator9",
+        "label": "Hat"
+      },
+      "StaticMesh": "/Game/Art/Mesh/Player/Outfit/SM_SproutHat.SM_SproutHat",
+      "SkeletalMesh": null,
+      "Material": null,
+      "Texture": "/Game/Art/Material/Player/Outfit/TEX_SM_SproutHat_COL.TEX_SM_SproutHat_COL"
+    }
+  ]
+}
