@@ -6,6 +6,8 @@
 
 Generated sourcemaps, installed Wally packages, logs, temporary files, editor backups, and operating-system metadata are excluded through `.gitignore`. Keep dependency manifests and lock files under version control.
 
+Reference research lives in [Exeperience/LemonCake](Exeperience/LemonCake/README.md), with a short retrieval guide in [mem/lemon-cake.md](mem/lemon-cake.md). The Lemon Cake snapshot records Steam build identity, extracted data, Blueprint indexes, reproduction tools, and verification limits. Original extracted assets and full dumps stay in its ignored `.local` cache. These folders are documentation/research tooling, not Roblox runtime source roots; the reference does not override this project's architecture or adapted balance.
+
 ## Runtime layout
 
 The repository mirrors Roblox DataModel services on disk. Studio's Script Sync keeps the place and this folder in step (scripts only; it maps directories literally, so a directory holding `init.luau` is that script with its siblings as children, and `.client` / `.server` / `.legacy` suffixes pick the script class). `.vscode/generate-sourcemap.ps1` applies the same rules to produce `sourcemap.json` for the Luau Language Server, so the gate works with Studio closed. Script Sync also writes its own `sourcemap.json` (absolute paths) whenever it syncs; the two are interchangeable for luau-lsp, and neither is edited by hand or committed.

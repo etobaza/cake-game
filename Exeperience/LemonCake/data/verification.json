@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "build": "6596857",
+  "verifiedExtractedFiles": 11123,
+  "verifiedUnchangedInstalledFiles": 22,
+  "parsedPackages": 4511,
+  "bytecodeFunctionsWithMatchingSizes": 914,
+  "localMarkdownLinks": 52,
+  "runtimeTested": false,
+  "note": "Parsing and size checks do not establish semantic or visual equivalence."
+}

@@ -18,6 +18,7 @@
 - [Steam: Lemon Cake](https://store.steampowered.com/app/1338330/Lemon_Cake/?l=english): название, разработчик/издатель Cozy Bee Games, выпуск 18 февраля 2021 года, одиночная игра, Steam Cloud, 17 достижений; общий цикл пекарни. Магазин — описание продукта, не источник точных формул установленной сборки.
 - [repak](https://github.com/trumank/repak), [release v0.2.3](https://github.com/trumank/repak/releases/tag/v0.2.3): использован portable Windows CLI; SHA256 ZIP проверен по опубликованному checksum и закреплён в restore-скрипте.
 - [UAssetAPI](https://github.com/atenfyr/UAssetAPI), [Basic Usage](https://atenfyr.github.io/UAssetAPI/guide/basic.html): использован NuGet `1.1.0`, сериализатор сообщает commit `7353081`; движок явно `VER_UE4_24`. Зависимости закреплены в [packages.lock.json](tools/AssetDump/packages.lock.json).
+- [Epic: FName, UE 4.27](https://dev.epicgames.com/documentation/en-us/unreal-engine/fname?application_version=4.27): имена FName сравниваются без учёта регистра. Это объясняет, почему `chocolatePancake` в DAT_Recipe и `ChocolatePancake` в DAT_Item нужно сопоставлять регистронезависимо, сохраняя исходное написание выгрузки.
 
 Страница Steam и сторонние описания не использовались для подстановки отсутствующих чисел в таблицы. Точные игровые значения извлечены локально.
 

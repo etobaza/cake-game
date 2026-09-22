@@ -62,7 +62,10 @@ def main():
             if re.match(r"https?://|#", link):
                 continue
             target = link.split("#")[0].strip("<>")
-            assert (path.parent / target).exists(), f"Broken link in {path}: {target}"
+            resolved = (path.parent / target).resolve()
+            # This report is written only after every check has passed, including first restoration.
+            if resolved != (ROOT / "data/verification.json").resolve():
+                assert resolved.exists(), f"Broken link in {path}: {target}"
             links += 1
     result = {"status": "passed", "build": build["steamBuildId"], "verifiedExtractedFiles": len(files),
               "verifiedUnchangedInstalledFiles": len(build["installedFiles"]), "parsedPackages": len(report),

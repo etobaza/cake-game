@@ -25,7 +25,7 @@ def main():
              "| --- | --- | --- | ---: | ---: | --- | --- | --- |"]
     for i, row in enumerate(recipes):
         ingredients = ", ".join(label(v) for v in row["IngredientsName"])
-        lines.append(f"| {i} | `{row['id']}` | {label(row['Type'])} | {row['Value']:g} | {row['BakeTime']:g} | {ingredients} | {row['IsVegan']} | {row['IsGlutenFree']} |")
+        lines.append(f"| {i} | `{row['id']}` | {label(row['Type'])} | {float(row['Value']):g} | {float(row['BakeTime']):g} | {ingredients} | {row['IsVegan']} | {row['IsGlutenFree']} |")
     (ROOT / "RECIPES.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     shop = table("DAT_Shop")
     lines = ["# Каталог улучшений", "", "Источник: `Blueprints/Interface/DAT_Shop.uasset`, build `6596857`. 48 строк, по 12 в каждой категории. `Number` имеет смысл внутри категории; `BaseName` может повторяться. Для точной записи используйте исходный row ID.", "",

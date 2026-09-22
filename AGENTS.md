@@ -8,6 +8,7 @@ Shared operating rules for coding agents working in this repository. Keep projec
 2. Load the installed `roblox` skill for Roblox/Luau work. If unavailable through the skill catalog, this workstation's fallback is `C:/Users/z1vas/.codex/skills/roblox/SKILL.md`. On another machine, use the repository docs and report a missing skill without pretending it loaded.
 3. Inspect `git status --short`; preserve existing user changes. Read the relevant handler and a nearby implementation. Discover available Studio tools when runtime inspection is needed; do not assume a connection, place, or tool name.
 4. Follow these rules throughout the session. After compaction, reload any required instructions no longer in context. For multi-file changes, briefly describe the affected owners before editing.
+5. For Lemon Cake reference questions or parity work, read [mem/lemon-cake.md](mem/lemon-cake.md), then follow its links into [Exeperience/LemonCake](Exeperience/LemonCake/README.md). Keep installed-build evidence separate from cake-game adaptations and untested runtime claims.
 
 Keep user-facing replies brief. Use the installed `caveman` skill at `ultra` intensity when available, unless the user says `stop caveman` or `normal mode`. Keep code, durable documentation, commits, PRs, and safety-critical steps in clear normal prose.
 

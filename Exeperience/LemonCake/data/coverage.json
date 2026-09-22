@@ -6,6 +6,8 @@
   "functionsWithUnparsedBytecode": [],
   "defaultObjects": 78,
   "bytecodeSizeMismatches": [],
+  "exportsWithOpaqueExtras": 7677,
+  "opaqueExtrasBytes": 243925387,
   "tables": 15,
   "tableRows": 623,
   "mapObjects": 1946,

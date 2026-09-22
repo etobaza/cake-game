@@ -20,7 +20,7 @@
     "outer": "SV_SaveGame_C.SV_ControlKeys",
     "property": {
       "op": "UStructProperty",
-      "Struct": -27,
+      "Struct": "/Script/InputCore.Key",
       "ArrayDim": "TArray",
       "ElementSize": 0,
       "PropertyFlags": "CPF_None",

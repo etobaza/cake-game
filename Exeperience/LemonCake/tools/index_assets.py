@@ -126,6 +126,8 @@ def main():
     assets, functions, defaults, tables, map_actors, schemas = [], [], [], [], [], []
     bytecode_failures, size_mismatches, curves = [], [], []
     export_types = Counter()
+    opaque_exports = 0
+    opaque_bytes = 0
     for path in sorted(source.rglob("*.json")):
         if path.name == "parse-report.json":
             continue
@@ -140,6 +142,10 @@ def main():
         for export in exports:
             name = export["ObjectName"]
             t = kind(export)
+            extras = export.get("Extras")
+            if extras:
+                opaque_exports += 1
+                opaque_bytes += len(extras) * 3 // 4 - (len(extras) - len(extras.rstrip("=")))
             if relative.startswith("Blueprints/") and "/CRV_" in relative:
                 curves.append({"source": relative, "name": name,
                                "values": {p["Name"]: prop(p, asset, enums) for p in export.get("Data", [])}})
@@ -197,6 +203,7 @@ def main():
     summary = {"fileCount": len(inventory), "extractedBytes": sum(r["bytes"] for r in inventory), "assets": len(assets),
                "functions": len(functions), "functionsWithUnparsedBytecode": bytecode_failures, "defaultObjects": len(defaults),
                "bytecodeSizeMismatches": size_mismatches,
+               "exportsWithOpaqueExtras": opaque_exports, "opaqueExtrasBytes": opaque_bytes,
                "tables": len(tables), "tableRows": sum(t["rows"] for t in tables), "mapObjects": len(map_actors),
                "enumLabels": len(enums), "exportTypes": dict(export_types),
                "rawExportAssets": [{"path": r["path"], "rawExports": r["rawExports"]} for r in assets if r["rawExports"]]}
