@@ -1,5 +1,7 @@
 # Architecture
 
+Generated sourcemaps, installed Wally packages, logs, temporary files, editor backups, and operating-system metadata are excluded through `.gitignore`. Keep dependency manifests and lock files under version control.
+
 ## Runtime layout
 
 The repository mirrors Roblox DataModel services on disk. Studio's Script Sync keeps the place and this folder in step (scripts only; it maps directories literally, so a directory holding `init.luau` is that script with its siblings as children, and `.client` / `.server` / `.legacy` suffixes pick the script class). `.vscode/generate-sourcemap.ps1` applies the same rules to produce `sourcemap.json` for the Luau Language Server, so the gate works with Studio closed. Script Sync also writes its own `sourcemap.json` (absolute paths) whenever it syncs; the two are interchangeable for luau-lsp, and neither is edited by hand or committed.

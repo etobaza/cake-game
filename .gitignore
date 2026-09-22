@@ -1,8 +1,21 @@
 # Generated tool output
 sourcemap.json
-debug.log
+*.log
 
-# Wally-managed dependencies (restore with `wally install` in ReplicatedStorage and ServerStorage)
+# Temporary files and editor backups
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Wally-managed dependencies (restore with scripts/install-packages.ps1)
 ReplicatedStorage/Packages/
 ServerStorage/ServerPackages/
 
@@ -14,3 +27,6 @@ ServerStorage/ServerPackages/
 
 # Local editor state
 .cursor/
+.zed/.cache/
+.zed/
+.vscode/
