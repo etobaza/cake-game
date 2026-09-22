@@ -41,7 +41,7 @@ Pages.Planned = {} :: { [string]: Page }
 --[[ Private Variables ]]--
 local current = Flux(Pages.Names.None)
 local previous = Flux(Pages.Names.None)
--- The evening modal allows its report/menu/upgrades tabs while preventing dismissal.
+-- The evening modal allows its report/menu tabs while preventing dismissal.
 local locked = Flux(false)
 local allowedWhileLocked: { [Page]: boolean } = {}
 

@@ -12,8 +12,8 @@ local Pages = require(script.Parent.Stores.Pages)
 local UseData = require(script.Parent.Hooks.UseData)
 
 --[[ Constants ]]--
-local TABS: { [string]: Pages.Page } =
-	{ Report = Pages.Names.Report, Menu = Pages.Names.Inventory, Upgrades = Pages.Names.Upgrades }
+local TABS: { [string]: Pages.Page } = { Report = Pages.Names.Report, Menu = Pages.Names.Inventory }
+local HEADER_BUTTONS = { "Report", "Menu", "NextDay" }
 local SELECTED = Color3.fromRGB(247, 233, 205)
 local IDLE = Color3.fromRGB(205, 191, 161)
 local DISABLED = Color3.fromRGB(150, 143, 127)
@@ -32,6 +32,9 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	local header = panel:FindFirstChild("Header") :: Frame
 	local buttons = header:FindFirstChild("Buttons") :: Frame
 	local phase = UseData.Path(data, { "Day", "Phase" }, "Session", "Prep")
+	local isSummary = Flux(function(): boolean
+		return phase() == "Summary"
+	end)
 	local janitor = Janitor.new()
 	Flux.cleanup(function(): ()
 		janitor:Destroy()
@@ -50,10 +53,46 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 			return BakeryMenu.Contains(Pages.Current())
 		end,
 	})
+	-- Standalone HUD pages borrow the authored white text without the evening tab artwork.
+	local upgrades = buttons:FindFirstChild("Upgrades") :: TextButton
+	local title = (upgrades:FindFirstChild("Txt") :: Frame):Clone()
+	title.Name = "Title"
+	title.AnchorPoint = buttons.AnchorPoint
+	title.Position = buttons.Position
+	title.Size = buttons.Size
+	title.Parent = header
+	janitor:Add(title, "Destroy")
+	Flux.edit(title)({
+		Visible = function(): boolean
+			return not isSummary()
+		end,
+	})
+	for _, label in title:GetChildren() do
+		if not label:IsA("TextLabel") then
+			continue
+		end
+		Flux.edit(label)({
+			Text = function(): string
+				local page = Pages.Current()
+				return if page == Pages.Names.Inventory then "Menu" else page
+			end,
+		})
+	end
+	-- Evening navigation has no close button, so use matching insets on both sides.
+	Flux.edit(buttons)({
+		Visible = isSummary,
+		Size = UDim2.new(1, -2 * buttons.Position.X.Offset, buttons.Size.Y.Scale, buttons.Size.Y.Offset),
+	})
+	Flux.edit(upgrades)({ Visible = false, Interactable = false, Selectable = false })
+	for index, name in HEADER_BUTTONS do
+		local button = buttons:FindFirstChild(name) :: TextButton
+		button.Position = UDim2.fromScale((index - 0.5) / #HEADER_BUTTONS, 0.5)
+		button.Size = UDim2.new(1 / #HEADER_BUTTONS, -8, 1, 0)
+	end
 	for name, page in TABS do
 		local button = buttons:FindFirstChild(name) :: TextButton
 		local available = Flux(function(): boolean
-			return (page ~= Pages.Names.Report or phase() == "Summary") and Pages.CanOpen(page)
+			return isSummary() and Pages.CanOpen(page)
 		end)
 		bindPress(button)
 		Flux.edit(button)({
@@ -74,9 +113,7 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	local nextDay = buttons:FindFirstChild("NextDay") :: TextButton
 	bindPress(nextDay)
 	Flux.edit(nextDay)({
-		Visible = function(): boolean
-			return phase() == "Summary"
-		end,
+		Visible = isSummary,
 	})
 	local close = header:FindFirstChild("Exit", true) :: GuiButton
 	bindPress(close)

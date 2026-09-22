@@ -30,6 +30,7 @@ local DayCycleConfig = require(_Configs.DayCycle)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Press = require(_Shared.UI.Press)
 local Recipes = require(_Configs.Registries.Recipes)
+local Responsive = require(_Shared.UI.Responsive)
 local UIHandler = require(_Handlers.UIHandler)
 
 --[[ Constants ]]--
@@ -53,6 +54,9 @@ local CELL_STROKE_IDLE = Color3.fromRGB(238, 165, 75)
 local CELL_STROKE_PICKED = Color3.fromRGB(34, 169, 0)
 local FILTER_ON = Color3.fromRGB(247, 233, 205)
 local FILTER_OFF = Color3.fromRGB(205, 191, 161)
+local BONUS_ROW_HEIGHT = 24
+local BONUS_ROW_GAP = 4
+local BONUS_FOOTER_SHIFT = 28
 
 --[[ Tables ]]--
 local MenuHandler = {
@@ -62,6 +66,64 @@ local MenuHandler = {
 --[[ Private Functions ]]--
 local resolve = Authored.Resolve
 local SetPair = Authored.SetPair
+
+local function prepareEmptyStatus(status: Instance?): ()
+	if not status then
+		return
+	end
+
+	SetPair(status, "Empty")
+	for _, label in status:GetChildren() do
+		if not label:IsA("TextLabel") then
+			continue
+		end
+		label.TextXAlignment = Enum.TextXAlignment.Center
+	end
+end
+
+-- Reserve readable footer rows without overlapping the selected recipe strip.
+local function prepareBonusLayout(screen: ScreenGui, holder: GuiObject): ()
+	local picked = resolve(screen, { "MainFrame", "SelectedRecipes" })
+	local grid = resolve(screen, { "MainFrame", "Container" })
+	for _, mode in { "Wide", "Compact", "Short" } do
+		local size = holder:GetAttribute(`{mode}Size`)
+		local position = holder:GetAttribute(`{mode}Position`)
+		if typeof(size) == "UDim2" and typeof(position) == "UDim2" then
+			holder:SetAttribute(
+				`{mode}Size`,
+				UDim2.new(size.X.Scale, size.X.Offset, 0, 2 * BONUS_ROW_HEIGHT + BONUS_ROW_GAP)
+			)
+			holder:SetAttribute(`{mode}Position`, position - UDim2.fromOffset(0, BONUS_FOOTER_SHIFT))
+		end
+		if not picked or not grid then
+			continue
+		end
+
+		local pickedProperty = if mode == "Short" then "Size" else "Position"
+		local pickedLayout = picked:GetAttribute(`{mode}{pickedProperty}`)
+		local gridSize = grid:GetAttribute(`{mode}Size`)
+		if typeof(pickedLayout) == "UDim2" then
+			picked:SetAttribute(`{mode}{pickedProperty}`, pickedLayout - UDim2.fromOffset(0, BONUS_FOOTER_SHIFT))
+		end
+		if mode ~= "Short" and typeof(gridSize) == "UDim2" then
+			grid:SetAttribute(`{mode}Size`, gridSize - UDim2.fromOffset(0, BONUS_FOOTER_SHIFT))
+		end
+	end
+end
+
+local function prepareBonusLine(line: GuiObject, key: string): ()
+	line.AnchorPoint = Vector2.zero
+	line.Position = UDim2.fromOffset(0, if key == "GlutenFree" then 0 else BONUS_ROW_HEIGHT + BONUS_ROW_GAP)
+	line.Size = UDim2.new(1, 0, 0, BONUS_ROW_HEIGHT)
+	for _, label in line:GetChildren() do
+		if not label:IsA("TextLabel") then
+			continue
+		end
+		label.TextScaled = true
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.TextYAlignment = Enum.TextYAlignment.Center
+	end
+end
 
 -- Whether the player owns such a station. Counted from replicated stations, not from upgrades:
 -- the server builds Stations from the same stats, so it is the same answer without the extra math.
@@ -223,6 +285,7 @@ function MenuHandler.BuildPickedSlots(self: MenuHandler): ()
 	-- Detached copies first: the drawn plates themselves are cleared away right after.
 	local filledTemplate = filled:Clone()
 	local emptyTemplate = empty:Clone()
+	prepareEmptyStatus(emptyTemplate:FindFirstChild("Status"))
 
 	for _, slot in self.PickedStrip:GetChildren() do
 		if slot:IsA("Frame") then
@@ -292,9 +355,11 @@ end
 --- the text, because every one of them is named Bonus.
 function MenuHandler.CollectBonuses(self: MenuHandler): ()
 	local holder = resolve(self.Screen, BONUSES_PATH)
-	if not holder then
+	if not holder or not holder:IsA("GuiObject") then
 		return
 	end
+
+	prepareBonusLayout(self.Screen, holder)
 
 	local lines: { [string]: BonusPair } = { Vegan = {}, GlutenFree = {} }
 	self.Bonuses = lines
@@ -314,6 +379,8 @@ function MenuHandler.CollectBonuses(self: MenuHandler): ()
 			continue
 		end
 
+		prepareBonusLine(line, key)
+
 		local pair = lines[key]
 		if string.sub(text, 1, 2) == "no" then
 			pair.Off = line
@@ -321,6 +388,7 @@ function MenuHandler.CollectBonuses(self: MenuHandler): ()
 			pair.On = line
 		end
 	end
+	Responsive.Apply(self.Screen)
 end
 
 --- Fills the grid from the current filter, then refreshes everything that reads the picks.
