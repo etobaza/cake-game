@@ -5,6 +5,13 @@
 --
 local GuiService = game:GetService("GuiService")
 
+-- Pixel/projection tolerances, not gameplay or visual tuning.
+local MIN_VISIBLE_SPAN = 2
+local HIDDEN_GROUP_TRANSPARENCY = 0.99
+local MIN_NEAR_PLANE = 0.05
+local DIRECTION_EPSILON = 0.01
+local DIVISION_EPSILON = 0.001
+
 --[[ Tables ]]
 --
 local Geometry = {}
@@ -30,10 +37,7 @@ local Edges = {
 	{ 5, 6 },
 	{ 5, 7 },
 	{ 6, 8 },
-	{
-		7,
-		8,
-	},
+	{ 7, 8 },
 }
 
 export type Rect = { min: Vector2, max: Vector2 }
@@ -46,6 +50,7 @@ local function billboardOrigin(billboard: BillboardGui): Vector2?
 	if not camera or not adornee then
 		return nil
 	end
+
 	local point: Vector3
 	if adornee:IsA("Attachment") then
 		point = adornee.WorldPosition
@@ -54,6 +59,7 @@ local function billboardOrigin(billboard: BillboardGui): Vector2?
 	else
 		return nil
 	end
+
 	if billboard.MaxDistance > 0 and (point - camera.CFrame.Position).Magnitude > billboard.MaxDistance then
 		return nil
 	end
@@ -62,6 +68,7 @@ local function billboardOrigin(billboard: BillboardGui): Vector2?
 	if projected.Z <= 0 then
 		return nil
 	end
+
 	local offset = Vector2.new(billboard.SizeOffset.X, -billboard.SizeOffset.Y)
 	return Vector2.new(projected.X, projected.Y) + (offset - Vector2.one / 2) * billboard.AbsoluteSize
 end
@@ -76,16 +83,31 @@ local function clipAncestor(
 	if current == element then
 		return rect
 	end
+
 	if current:IsA("GuiObject") and current.ClipsDescendants then
 		return Geometry.Intersect(
 			rect,
 			{ min = current.AbsolutePosition + inset, max = current.AbsolutePosition + inset + current.AbsoluteSize }
 		)
 	end
+
 	if billboard and current == billboard and billboard.ClipsDescendants then
 		return Geometry.Intersect(rect, { min = inset, max = inset + billboard.AbsoluteSize })
 	end
+
 	return rect
+end
+
+local function isHidden(instance: Instance): boolean
+	if instance:IsA("GuiObject") and not instance.Visible then
+		return true
+	end
+
+	if instance:IsA("CanvasGroup") and instance.GroupTransparency >= HIDDEN_GROUP_TRANSPARENCY then
+		return true
+	end
+
+	return instance:IsA("LayerCollector") and not instance.Enabled
 end
 
 --[[ Handling ]]
@@ -101,7 +123,9 @@ end
 function Geometry.Intersect(a: Rect, b: Rect): Rect?
 	local low = Vector2.new(math.max(a.min.X, b.min.X), math.max(a.min.Y, b.min.Y))
 	local high = Vector2.new(math.min(a.max.X, b.max.X), math.min(a.max.Y, b.max.Y))
-	return if high.X - low.X > 2 and high.Y - low.Y > 2 then { min = low, max = high } else nil
+	return if high.X - low.X > MIN_VISIBLE_SPAN and high.Y - low.Y > MIN_VISIBLE_SPAN
+		then { min = low, max = high }
+		else nil
 end
 
 function Geometry.Gui(element: GuiObject, viewport: Vector2): Rect?
@@ -115,6 +139,7 @@ function Geometry.Gui(element: GuiObject, viewport: Vector2): Rect?
 	if not inset then
 		return nil
 	end
+
 	local rotation = math.rad(element.AbsoluteRotation)
 	local originalSize = element.AbsoluteSize
 	local center = element.AbsolutePosition + inset + originalSize / 2
@@ -124,27 +149,16 @@ function Geometry.Gui(element: GuiObject, viewport: Vector2): Rect?
 	)
 	local rect: Rect? = { min = center - size / 2, max = center + size / 2 }
 	local current: Instance? = element
+
 	while current do
-		if current:IsA("GuiObject") then
-			if not current.Visible then
-				return nil
-			end
-			if current:IsA("CanvasGroup") and current.GroupTransparency >= 0.99 then
-				return nil
-			end
-		elseif current:IsA("LayerCollector") then
-			if not current.Enabled then
-				return nil
-			end
-		end
-		if rect then
-			rect = clipAncestor(rect, current, element, billboard, inset)
-		end
-		if not rect then
+		if not rect or isHidden(current) then
 			return nil
 		end
+
+		rect = clipAncestor(rect, current, element, billboard, inset)
 		current = current.Parent
 	end
+
 	return if rect then Geometry.Intersect(rect, { min = Vector2.zero, max = viewport }) else nil
 end
 
@@ -152,9 +166,11 @@ function Geometry.Union(a: Rect?, b: Rect?): Rect?
 	if not a then
 		return b
 	end
+
 	if not b then
 		return a
 	end
+
 	return {
 		min = Vector2.new(math.min(a.min.X, b.min.X), math.min(a.min.Y, b.min.Y)),
 		max = Vector2.new(math.max(a.max.X, b.max.X), math.max(a.max.Y, b.max.Y)),
@@ -164,7 +180,7 @@ end
 function Geometry.Box(camera: Camera, frame: CFrame, size: Vector3): Rect?
 	local points: { Vector3 } = {}
 	local projected: { Vector3 } = {}
-	local near = math.max(0.05, -camera.NearPlaneZ)
+	local near = math.max(MIN_NEAR_PLANE, -camera.NearPlaneZ)
 	for index, sign in Signs do
 		local world = frame:PointToWorldSpace(sign * size / 2)
 		points[index] = camera.CFrame:PointToObjectSpace(world)
@@ -172,20 +188,24 @@ function Geometry.Box(camera: Camera, frame: CFrame, size: Vector3): Rect?
 			projected[#projected + 1] = world
 		end
 	end
+
 	for _, edge in Edges do
 		local a, b = points[edge[1]], points[edge[2]]
 		if (-a.Z >= near) == (-b.Z >= near) then
 			continue
 		end
+
 		local alpha = (-near - a.Z) / (b.Z - a.Z)
 		projected[#projected + 1] = camera.CFrame:PointToWorldSpace(a:Lerp(b, alpha))
 	end
+
 	local low, high = Vector2.new(math.huge, math.huge), Vector2.new(-math.huge, -math.huge)
 	for _, world in projected do
 		local point = camera:WorldToViewportPoint(world)
 		low = Vector2.new(math.min(low.X, point.X), math.min(low.Y, point.Y))
 		high = Vector2.new(math.max(high.X, point.X), math.max(high.Y, point.Y))
 	end
+
 	return if #projected > 0 then { min = low, max = high } else nil
 end
 
@@ -202,6 +222,17 @@ end
 
 function Geometry.Clamp(point: Vector2, rect: Rect): Vector2
 	return Vector2.new(math.clamp(point.X, rect.min.X, rect.max.X), math.clamp(point.Y, rect.min.Y, rect.max.Y))
+end
+
+-- Shrink a safe region without inverting it on a very small viewport.
+function Geometry.Inset(rect: Rect, padding: number, minimumSpan: number): Rect
+	local minimum = rect.min + Vector2.one * padding
+	local maximum = rect.max - Vector2.one * padding
+
+	return {
+		min = minimum,
+		max = Vector2.new(math.max(minimum.X + minimumSpan, maximum.X), math.max(minimum.Y + minimumSpan, maximum.Y)),
+	}
 end
 
 function Geometry.Rotate(vector: Vector2, degrees: number): Vector2
@@ -231,16 +262,22 @@ function Geometry.Project(camera: Camera, point: Vector3, safe: Rect): (Vector2,
 		and xy.Y >= safe.min.Y
 		and xy.Y <= safe.max.Y
 	local relative = camera.CFrame:PointToObjectSpace(point)
-	local direction = if relative.Z < -0.01 then xy - center else Vector2.new(relative.X, math.max(1, relative.Z * 0.5))
-	if direction.Magnitude < 0.01 then
+	local direction = if relative.Z < -DIRECTION_EPSILON
+		then xy - center
+		else Vector2.new(relative.X, math.max(1, relative.Z / 2))
+	if direction.Magnitude < DIRECTION_EPSILON then
 		direction = Vector2.new(0, -1)
 	end
+
 	if onScreen then
 		return xy, true, direction
 	end
+
 	local extent = (safe.max - safe.min) / 2
-	local distance =
-		math.min(extent.X / math.max(0.001, math.abs(direction.X)), extent.Y / math.max(0.001, math.abs(direction.Y)))
+	local distance = math.min(
+		extent.X / math.max(DIVISION_EPSILON, math.abs(direction.X)),
+		extent.Y / math.max(DIVISION_EPSILON, math.abs(direction.Y))
+	)
 	return center + direction * distance, false, direction
 end
 

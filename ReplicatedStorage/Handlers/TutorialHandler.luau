@@ -7,7 +7,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 --[[ Modules ]]--
-local Bus = require(ReplicatedStorage.Shared.Bus)
 local Config = require(ReplicatedStorage.Shared.Configs.Tutorial)
 local DataClient = require(script.Parent.DataHandlerClient)
 local Flux = require(ReplicatedStorage.Packages.flux)
@@ -60,13 +59,13 @@ function TutorialHandler.OnStart(self: TutorialHandler): ()
 		warn("[TutorialHandler] StarterGui.Tutorial must be authored and saved")
 		return
 	end
-	local template = UIHandler.Hud:FindFirstChild("FoodPreviewTemplate") :: ViewportFrame
-	self.View = Presenter.new(screen, UIHandler.HudRoot, template, function(action: string, value: string): ()
-		Bus.Tutorial.Control:Fire(action, value)
-		if action == "Collapse" then
-			self.View.Collapsed = value == "true"
-			self.View:Draw(0, self.Page)
+	self.View = Presenter.new(screen, function(text: string): boolean
+		if UIHandler.StatusVisible:peek() then
+			return false
 		end
+
+		UIHandler:Toast(text)
+		return true
 	end)
 	self.Janitor:Add(self.View, "Destroy")
 	self.Janitor:Add(
@@ -120,29 +119,22 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 	local props = Interact:GetOwnedIds()
 	local now = workspace:GetServerTimeNow()
 	local goal = Scenario.Resolve(cloud, session, props, self.Page, now)
-	local held = session.Hands[1]
-	if goal and held and not goal.itemId and goal.target and goal.target.kind == "World" then
-		if held.Kind == "Ingredient" or held.Kind == "Tool" or held.Kind == "Fuel" then
-			goal.itemId, goal.itemKind = held.Id, held.Kind
-		elseif goal.recovery and held.Kind == "Dish" then
-			goal.recipeId = held.Id
-		end
-	end
+
 	local completedAt = session.Tutorial.CompletedAt
 	if completedAt > 0 and now - completedAt < Config.SuccessSeconds then
 		goal = {
 			id = "completed",
 			title = "Your bakery is ready!",
-			hint = "You cooked, served and cleaned your first table. Enjoy your shift — bakery tips and the handbook are here whenever you need them.",
+			hint = "You cooked, served and cleaned your first table. Enjoy your shift!",
 			waiting = true,
 		}
 	end
-	self.View:Set(goal, cloud.Tutorial, session.Tutorial)
+	self.View:Set(goal, cloud.Tutorial)
 	if goal and not self.Janitor:Get("Frame") then
 		self.Janitor:Add(
 			RunService.RenderStepped:Connect(function(deltaTime: number): ()
 				self.Elapsed += deltaTime
-				if self.Elapsed >= 0.15 then
+					if self.Elapsed >= Config.RefreshInterval then
 					self.Elapsed = 0
 					self:Refresh()
 				end

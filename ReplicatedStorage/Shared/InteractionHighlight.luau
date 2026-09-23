@@ -45,20 +45,30 @@ local function descendantsOf(instance: Instance?): { Instance }
 	return if instance then instance:GetDescendants() else {}
 end
 
+local function appendMatchingChildren(parent: Instance, name: string, matches: { Instance }): ()
+	for _, child in parent:GetChildren() do
+		if child.Name ~= name then
+			continue
+		end
+
+		table.insert(matches, child)
+	end
+end
+
 -- Both entrance leaves are named Door; a highlight path can select several authored siblings.
 local function resolveTargets(root: Instance, path: { string }): { Instance }
 	local matches: { Instance } = { root }
+
 	for _, name in path do
 		local nextMatches: { Instance } = {}
+
 		for _, parent in matches do
-			for _, child in parent:GetChildren() do
-				if child.Name == name then
-					table.insert(nextMatches, child)
-				end
-			end
+			appendMatchingChildren(parent, name, nextMatches)
 		end
+
 		matches = nextMatches
 	end
+
 	return matches
 end
 

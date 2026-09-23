@@ -17,9 +17,11 @@ Luau style for new and changed application code. Read [AGENTS.md](AGENTS.md) and
 
 - Keep one responsibility per module. Use plain functions for stateless helpers, Crystal handlers for runtime systems, and factory/class objects for entities with independent state and teardown. Prefer composition; do not add framework layers for small tasks.
 - Prefer early returns and `continue` to deeply nested branches. Aim for at most three indentation levels in function bodies; extract a meaningful helper when nesting hides intent. Keep multiline guards consistent with neighboring code and StyLua.
+- Separate guards, loops, calculations, and side effects with blank lines when they form distinct steps. A formatter does not establish readable control flow: inspect nesting and function responsibilities explicitly during review.
 - Prefer direct table iteration and Luau conditional expressions. Use explicit nil comparisons when `false` or absence matters. Avoid `condition and value or fallback` when `value` can be false/nil.
 - Use `task.spawn`, `task.delay`, and `task.wait`, not legacy `spawn`, `delay`, or `wait`. Own/cancel background work; startup callbacks must return.
 - Write explanatory comments for invariants, sync behavior, and non-obvious decisions. Prefer named constants/configs over unexplained tuning numbers.
+- Keep visual and gameplay tuning in the owning config. Name numerical tolerances beside the geometry/algorithm that uses them; ordinary arithmetic identities do not need config entries. Use a small table-driven state machine or dispatch table when it clarifies real states or alternatives, without introducing a framework solely to satisfy a pattern name.
 
 ## Crystal handler shape
 

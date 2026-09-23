@@ -21,10 +21,10 @@ local Animate = require(_Shared.UI.Animate)
 local BakeryMenu = require(_Shared.UI.BakeryMenu)
 local Flux = require(_Packages.flux)
 local HudComponent = require(_Shared.UI.Components.Hud)
-local Janitor = require(_Packages.janitor)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Responsive = require(_Shared.UI.Responsive)
 local Scope = require(_Shared.UI.Scope)
+local StatusLayout = require(_Shared.UI.StatusLayout)
 
 --[[ Constants ]]--
 local edit = Flux.edit
@@ -61,69 +61,6 @@ export type Mounted = {
 }
 
 --[[ Private Functions ]]--
-local function bindStatusLayout(screen: ScreenGui, frame: GuiObject): any
-	local janitor = Janitor.new()
-	local lines = {}
-	for _, child in frame:GetChildren() do
-		if child.Name == "Lines" and child:IsA("ImageLabel") then
-			lines[#lines + 1] = child
-		end
-	end
-	table.sort(lines, function(a: ImageLabel, b: ImageLabel): boolean
-		return a.Position.Y.Scale < b.Position.Y.Scale
-	end)
-	local function update(): ()
-		local available = screen.AbsoluteSize
-		if available.X <= 0 or available.Y <= 0 then
-			return
-		end
-		local compact = available.X < 700 or available.Y < 500
-		frame.AnchorPoint = Vector2.new(0.5, 0)
-		frame.Size = UDim2.fromOffset(
-			math.min(if compact then 320 else 480, math.max(1, available.X - 24)),
-			if compact then 80 else 90
-		)
-		Animate.Place(frame, UDim2.new(0.5, 0, 0, 80))
-		local background = frame:FindFirstChild("Background")
-		if background and background:IsA("ImageLabel") then
-			background.AnchorPoint = Vector2.new(0.5, 0.5)
-			background.Position = UDim2.fromScale(0.5, 0.5)
-			background.Size = UDim2.fromScale(1, 1)
-			background.ScaleType = Enum.ScaleType.Stretch
-		end
-		for index, line in lines do
-			line.AnchorPoint = Vector2.new(0.5, 0.5)
-			line.Position = if index == 1 then UDim2.new(0.5, 0, 0, 12) else UDim2.new(0.5, 0, 1, -12)
-			line.Size = UDim2.new(1, -28, 0, 6)
-			line.ScaleType = Enum.ScaleType.Stretch
-		end
-		local tag = frame:FindFirstChild("Tag")
-		if tag and tag:IsA("GuiObject") then
-			tag.AnchorPoint = Vector2.one
-			tag.Position = UDim2.new(1, -10, 1, -6)
-			tag.Size = UDim2.fromOffset(36, 18)
-		end
-		local message = frame:FindFirstChild(STATUS_LABEL)
-		if message and message:IsA("TextLabel") then
-			message.AnchorPoint = Vector2.new(0.5, 0.5)
-			message.Position = UDim2.fromScale(0.5, 0.5)
-			message.Size = UDim2.new(1, -48, 1, -48)
-			message.TextXAlignment = Enum.TextXAlignment.Center
-			message.TextYAlignment = Enum.TextYAlignment.Center
-			message.TextWrapped = true
-			local constraint = message:FindFirstChildOfClass("UITextSizeConstraint")
-			if constraint then
-				constraint.MinTextSize = 10
-				constraint.MaxTextSize = if compact then 16 else 18
-			end
-		end
-	end
-	janitor:Add(screen:GetPropertyChangedSignal("AbsoluteSize"):Connect(update), "Disconnect")
-	janitor:LinkToInstance(frame)
-	update()
-	return janitor
-end
-
 local function findClose(screen: Instance): GuiButton?
 	for _, name in CLOSE_NAMES do
 		local found = screen:FindFirstChild(name, true)
@@ -263,7 +200,10 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 
 		-- The status strip: text and visibility follow the toast nodes, and it rides in on each show.
 		if statusScreen and statusScreen:IsA("ScreenGui") and statusFrame and statusFrame:IsA("GuiObject") then
-			Flux.cleanup(bindStatusLayout(statusScreen, statusFrame))
+			local statusLayout = StatusLayout.Bind(statusScreen, statusFrame)
+			Flux.cleanup(function(): ()
+				statusLayout:Destroy()
+			end)
 			edit(statusScreen)({ Enabled = true })
 			edit(statusFrame)({ Visible = deps.StatusVisible })
 

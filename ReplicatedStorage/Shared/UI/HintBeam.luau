@@ -1,7 +1,9 @@
 --!strict
 -- One hint owns a local copy of the authored arrow beam and both of its endpoints.
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local Config = require(ReplicatedStorage.Shared.Configs.Hint)
 
 local HintBeam = {}
@@ -24,7 +26,7 @@ local function prepare(self: View): boolean
 		return true
 	end
 	-- Late asset replication must not stall the render callback.
-	if os.clock() - self.LastLookup < 1 then
+	if os.clock() - self.LastLookup < Config.Beam.RetryInterval then
 		return false
 	end
 	self.LastLookup = os.clock()
@@ -38,6 +40,7 @@ local function prepare(self: View): boolean
 		end
 		return false
 	end
+
 	local part = template:Clone()
 	local beam = part:FindFirstChildWhichIsA("Beam")
 	local first = beam and beam.Attachment0
@@ -58,8 +61,11 @@ local function prepare(self: View): boolean
 		return false
 	end
 	self.Warned = false
-	self.TextureStuds =
-		math.max(0.1, (first.WorldPosition - last.WorldPosition).Magnitude / math.max(0.1, beam.TextureLength))
+	self.TextureStuds = math.max(
+		Config.Beam.MinTextureSpacing,
+		(first.WorldPosition - last.WorldPosition).Magnitude
+			/ math.max(Config.Beam.MinTextureLength, beam.TextureLength)
+	)
 	part.Name = "HintArrowBeam"
 	part.Anchored, part.CanCollide, part.CanTouch, part.CanQuery = true, false, false, false
 	part.Transparency = 1
@@ -89,15 +95,18 @@ function HintBeam.Show(self: View, point: Vector3): ()
 		self:Hide()
 		return
 	end
+
 	local origin = root.Position + Config.Beam.PlayerOffset
 	local distance = (point - origin).Magnitude
 	if distance < Config.Beam.MinDistance then
 		self:Hide()
 		return
 	end
+
 	if not prepare(self) then
 		return
 	end
+
 	local part, beam, first, last = self.Part, self.Beam, self.Start, self.Finish
 	if not part or not beam or not first or not last then
 		return
@@ -107,7 +116,7 @@ function HintBeam.Show(self: View, point: Vector3): ()
 	last.WorldPosition = point
 	-- Stretch counts repetitions; keep authored spacing as player-to-goal distance changes.
 	if beam.TextureMode == Enum.TextureMode.Stretch then
-		beam.TextureLength = math.max(0.1, distance / self.TextureStuds)
+		beam.TextureLength = math.max(Config.Beam.MinTextureLength, distance / self.TextureStuds)
 	end
 	beam.Enabled = true
 end

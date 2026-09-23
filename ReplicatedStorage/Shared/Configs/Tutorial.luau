@@ -10,6 +10,7 @@ return {
 	FirstBakeGrace = 60,
 	OrderPreviewSeconds = 2.5,
 	SuccessSeconds = 4,
+	RefreshInterval = 0.15,
 	Stages = { Cook = 1, Serve = 2, Clean = 3, Completed = 3, Skipped = 3 },
 	Topics = {
 		{
