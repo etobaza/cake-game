@@ -17,6 +17,7 @@ local Config = require(_Shared.Configs.Garden)
 local Care = require(script.Parent.Parent.GardenCare)
 local Data = require(_Handlers.DataHandler)
 local Inventory = require(_Handlers.InventoryHandler)
+local Pantry = require(_Handlers.PantryHandler)
 local Economy = require(_Handlers.EconomyHandler)
 local PickupOrigin = require(script.Parent.Parent.PickupOrigin)
 local Upgrades = require(_Handlers.UpgradeHandler)
@@ -74,13 +75,24 @@ local function advanceGrowth(building: any, strategy: any, day: number, deltaTim
 	local seconds = building.GardenAccumulator
 	building.GardenAccumulator = 0
 	local supplied = strategy.Step(state, seconds, day, Upgrades, building.Player)
-	if state.Stock >= Config.Capacity or supplied <= 0 then
+	local source = Config.Sources[building.Id]
+	-- Lemon Cake removes an uncollected animal product when DirtMaterial finishes.
+	if source.Care == "Animal" and state.CareRemaining <= 0 and state.CleanDay ~= day then
+		state.Stock = 0
+		state.GrowRemaining = source.ProduceSeconds or Config.ProduceSeconds
+		return
+	end
+	local held = Inventory:Peek(building.Player)
+	if source.Capacity == 1 and held and held.SourceId == building.Id then
+		return
+	end
+	if state.Stock >= (source.Capacity or Config.Capacity) or supplied <= 0 then
 		return
 	end
 	local remaining = state.GrowRemaining - supplied * strategy.Speed(Upgrades, building.Player)
 	if remaining <= 0 then
 		state.Stock += 1
-		remaining = Config.ProduceSeconds
+		remaining = source.ProduceSeconds or Config.ProduceSeconds
 	end
 	state.GrowRemaining = remaining
 end
@@ -96,7 +108,7 @@ function GardenNode.EnsureState(building: any): any?
 	if not group[building.Id] then
 		group[building.Id] = {
 			Stock = 0,
-			GrowRemaining = Config.ProduceSeconds,
+			GrowRemaining = source.ProduceSeconds or Config.ProduceSeconds,
 			CareRemaining = 0,
 			CleanDay = 0,
 			Day = data.Cloud.Day,
@@ -104,6 +116,14 @@ function GardenNode.EnsureState(building: any): any?
 			State = "Paused",
 		}
 	end
+	local state = group[building.Id]
+	local capacity = source.Capacity or Config.Capacity
+	if state.Stock > capacity then
+		-- Preserve existing saves when switching animal baskets from four portions to one.
+		Pantry:Add(building.Player, source.Produce, state.Stock - capacity)
+		state.Stock = capacity
+	end
+	state.GrowRemaining = math.min(state.GrowRemaining, source.ProduceSeconds or Config.ProduceSeconds)
 	group[building.Id].CareUntil = 0
 	building.GardenAccumulator = 0
 	return group[building.Id]
@@ -169,7 +189,7 @@ function GardenNode.Update(building: any, deltaTime: number, now: number): ()
 	advanceGrowth(building, strategy, data.Cloud.Day, deltaTime)
 	local nextState = if state.CareUntil > 0
 		then "Caring"
-		elseif state.Stock >= Config.Capacity then "Full"
+		elseif state.Stock >= (source.Capacity or Config.Capacity) then "Full"
 		elseif source.Care == "Hive" or state.CareRemaining > 0 or state.CleanDay == data.Cloud.Day then "Growing"
 		else "Dry"
 	if building:GetState() ~= nextState then
@@ -211,16 +231,31 @@ function GardenNode.Harvest(building: any): boolean
 	if not active(building) or building.State.CareUntil > 0 then
 		return false
 	end
+	local source = Config.Sources[building.Id]
+	local held = Inventory:Peek(building.Player)
+	if
+		source.Capacity == 1
+		and held
+		and held.Kind == "Ingredient"
+		and held.Id == source.Produce
+		and held.SourceId == building.Id
+		and building.State.Stock == 0
+	then
+		Inventory:Pop(building.Player)
+		building.State.Stock = 1
+		return true
+	end
 	if building.State.Stock <= 0 then
 		Bus.Progress.ActionFailed:FireClient(building.Player, "nothing_to_harvest")
 		return false
 	end
-	local source = Config.Sources[building.Id]
+	local output = building.Part:FindFirstChild("AnimalProduce")
+	local origin = if output and output:IsA("BasePart") then output.Position else PickupOrigin.ForBuilding(building)
 	if
 		not Inventory:Push(
 			building.Player,
-			{ Kind = "Ingredient", Id = source.Produce },
-			PickupOrigin.ForBuilding(building)
+			{ Kind = "Ingredient", Id = source.Produce, SourceId = if source.Capacity == 1 then building.Id else nil },
+			origin
 		)
 	then
 		Bus.Progress.ActionFailed:FireClient(building.Player, "hands_full")

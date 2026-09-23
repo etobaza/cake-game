@@ -28,7 +28,7 @@ function GardenNode.Describe(context: Types.Context): Types.PromptState
 	end
 	local ingredient = Ingredients:Get(source.Produce)
 	local name = if ingredient then ingredient.name else source.Produce
-	local label = `{name} {node.Stock}/{Config.Capacity}`
+	local label = name
 	if source.Care == "Animal" and context.AnimalAction == "Brush" then
 		label = if source.Produce == "milk" then "Cow" else "Chickens"
 	end
@@ -40,6 +40,23 @@ function GardenNode.Describe(context: Types.Context): Types.PromptState
 		return { Label = label, Action = `Caring {context.Seconds(node.CareUntil)}s` }
 	end
 	local held = context.Held()
+	if
+		source.Capacity == 1
+		and context.AnimalAction ~= "Brush"
+		and held
+		and held.Kind == "Ingredient"
+		and held.Id == source.Produce
+		and held.SourceId == context.PropId
+		and node.Stock == 0
+	then
+		return {
+			Label = name,
+			Action = "Put back",
+			Fire = function(): ()
+				Bus.Garden.Harvest:Fire(context.PropId)
+			end,
+		}
+	end
 	if source.Care == "Animal" and context.AnimalAction == "Brush" then
 		if held then
 			return { Label = label, Action = "Hands full" }

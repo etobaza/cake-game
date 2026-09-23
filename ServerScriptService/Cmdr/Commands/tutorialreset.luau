@@ -3,7 +3,7 @@
 
 return {
 	Name = "tutorialreset",
-	Aliases = { "tutreset" },
+	Aliases = { "tutreset", "tutorialtest" },
 	Description = "Reset tutorial progress and optional lessons, retaining the current kitchen. Restarts guests and pauses the clock during Shift.",
 	Group = "TutorialDebug",
 	Args = {

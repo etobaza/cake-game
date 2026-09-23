@@ -1,6 +1,11 @@
 --!strict
 -- Keeps unclaimed bakeries at the unupgraded appearance without losing authored variants.
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Buildings = require(ReplicatedStorage.Shared.Configs.Buildings)
+local Garden = require(ReplicatedStorage.Shared.Configs.Garden)
+
 local VacantView = {}
 
 type PartState = {
@@ -60,13 +65,23 @@ function VacantView.Capture(bakery: Folder): Snapshot
 			continue
 		end
 		for _, folder in upgrades:GetChildren() do
-			-- Firewood is a starter supply even though the artist placed it under Upgrades.
-			if zone.Name == "Kitchen" and folder.Name == "FireWood" then
+			-- These starter fixtures were authored under Upgrades but remain visible in every plot.
+			if
+				(zone.Name == "Kitchen" and folder.Name == "FireWood")
+				or (zone.Name == "Garden" and folder.Name == "CrystalWater")
+			then
 				continue
 			end
 			for _, variant in folder:GetChildren() do
 				captureVariant(saved, variant)
 			end
+		end
+	end
+	-- Animal output moved outside Upgrades; it still belongs to the occupied plot.
+	for _, source in Garden.Sources do
+		local output = source.OutputPath and Buildings.ResolvePath(bakery, source.OutputPath)
+		if output then
+			captureVariant(saved, output)
 		end
 	end
 	return saved

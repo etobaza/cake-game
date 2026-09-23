@@ -43,7 +43,10 @@ end
 
 local function ui(path: string): GuiObject?
 	local names = string.split(path, ".")
-	local screen = if names[1] == "UI" then UIHandler.Hud else UIHandler:GetPanel(names[1])
+	local screen = if names[1] == "UI"
+		then UIHandler.Hud
+		elseif names[1] == "BakeryMenu" then UIHandler.BakeryMenu
+		else UIHandler:GetPanel(names[1])
 	local current: Instance? = screen
 	for index = 2, #names do
 		current = current and current:FindFirstChild(names[index])
@@ -147,7 +150,8 @@ local function world(id: string, seatIndex: number?): Target?
 				continue
 			end
 			model = child
-			frame, size = nil, nil
+			-- The generic pointer uses the seat frame even when a dish occupies it.
+			-- Keep the dish model for callers that need its authored geometry.
 			break
 		end
 		return { part = part, model = model, frame = frame, size = size } :: Target
@@ -161,7 +165,15 @@ function Targets.Resolve(spec: Types.TutorialTarget?, viewport: Vector2): Target
 		return nil
 	end
 	if spec.kind == "World" then
-		return world(spec.id, spec.seat)
+		local target = world(spec.id, spec.seat)
+		-- Animal products live in the kitchen; care still points at the animal.
+		if target and target.part and spec.control == "Harvest" then
+			local output = target.part:FindFirstChild("AnimalProduce")
+			if output and output:IsA("BasePart") then
+				return { part = output, model = output } :: Target
+			end
+		end
+		return target
 	end
 	if spec.kind == "Gui" then
 		local element = ui(spec.id)

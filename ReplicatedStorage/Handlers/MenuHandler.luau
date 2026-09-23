@@ -470,7 +470,11 @@ function MenuHandler.PaintCell(self: MenuHandler, cell: Frame, recipe: Recipes.R
 			stroke:SetAttribute("UnselectedThickness", stroke.Thickness)
 		end
 		stroke.Color = if picked then CELL_STROKE_PICKED else CELL_STROKE_IDLE
-		stroke.Thickness = if picked then 4 else stroke:GetAttribute("UnselectedThickness") :: number
+		local authoredThickness = stroke:GetAttribute("UnselectedThickness") :: number
+		local selectedThickness = if stroke.StrokeSizingMode == Enum.StrokeSizingMode.ScaledSize
+			then authoredThickness * 2
+			else 4
+		stroke.Thickness = if picked then selectedThickness else authoredThickness
 	end
 
 	-- A punch the moment it lands on the menu, so the pick is felt and not only seen.

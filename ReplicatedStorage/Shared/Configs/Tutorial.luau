@@ -2,31 +2,14 @@
 -- Tutorial tuning and copy. Progress and target selection live outside this data module.
 
 return {
-	-- Temporary rollout switch; disabling does not complete or reset saved progress.
-	Enabled = false,
+	-- Disabling presentation and protection never resets saved progress.
+	Enabled = true,
 	Version = 1,
 	RecommendedRecipe = "bread",
 	FirstGuestType = "regular",
 	FirstBakeGrace = 60,
-	HintDelay = 12,
 	OrderPreviewSeconds = 2.5,
 	SuccessSeconds = 4,
-	Focus = {
-		Thickness = 999999,
-		GuiTransparency = 0.45,
-		WorldTransparency = 0.65,
-		Padding = 12,
-		Corner = 14,
-		DisplayOrder = 50,
-		Cursor = {
-			MinSize = 48,
-			MaxSize = 80,
-			ViewportScale = 0.11,
-			-- Fingertip in the authored hand image, relative to its square canvas.
-			Tip = Vector2.new(0.30, 0.08),
-			TargetInset = 6,
-		},
-	},
 	Stages = { Cook = 1, Serve = 2, Clean = 3, Completed = 3, Skipped = 3 },
 	Topics = {
 		{

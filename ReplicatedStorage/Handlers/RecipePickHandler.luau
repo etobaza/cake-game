@@ -400,7 +400,11 @@ function RecipePickHandler.PaintRow(
 			stroke.Color = if inWork
 				then Color3.fromRGB(34, 169, 0)
 				else stroke:GetAttribute("UnselectedColor") :: Color3
-			stroke.Thickness = if inWork then 4 else stroke:GetAttribute("UnselectedThickness") :: number
+			local authoredThickness = stroke:GetAttribute("UnselectedThickness") :: number
+			local selectedThickness = if stroke.StrokeSizingMode == Enum.StrokeSizingMode.ScaledSize
+				then authoredThickness * 2
+				else 4
+			stroke.Thickness = if inWork then selectedThickness else authoredThickness
 		end
 	end
 

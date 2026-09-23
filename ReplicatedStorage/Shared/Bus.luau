@@ -12,6 +12,10 @@ return {
 		-- Client -> Server: presentation preferences and skip intent; never step completion.
 		Control = Packet("TutorialControl", Packet.String, Packet.String), -- action, value
 	},
+	Hints = {
+		-- Server-authorized Cmdr preview; no profile writes or client-to-server listener.
+		Debug = Packet("HintDebug", Packet.String, Packet.String, Packet.NumberF64, Packet.String),
+	},
 	VFX = {
 		-- Server -> Client: an accepted world action; clients never request particle playback.
 		Burst = Packet(

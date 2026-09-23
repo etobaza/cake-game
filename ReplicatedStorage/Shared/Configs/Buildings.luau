@@ -368,8 +368,8 @@ local Buildings = {
 			Facing = Vector3.new(0, 0, 1),
 			Prefix = "ingredient",
 			-- The pantry is the two trays the artist drew on the kitchen counter, and nothing else:
-			-- every other ingredient is meant to come out of the garden, so it has no shelf to stand
-			-- on. Both trays are authored models -- no block of ours is built for them.
+			-- milk and eggs use the animal-owned kitchen baskets in Configs/Garden instead.
+			-- Both staple trays are authored models -- no block of ours is built for them.
 			-- Artist names, not ours: the sugar cubes were modelled as `Cheese` (four of them, all in the
 			-- left tray, so any one of them is that tray) and the flour sack in the right tray as `Bag`.
 			Singles = {

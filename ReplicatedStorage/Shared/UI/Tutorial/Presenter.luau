@@ -25,6 +25,7 @@ type AuthoredScreen = ScreenGui & {
 	Card: CanvasGroup & { Icon: ImageLabel, Skip: GuiButton, Help: GuiButton },
 	Help: GuiObject & { Skip: TextButton },
 	HelpButton: GuiButton,
+	Compact: TextButton,
 }
 
 --[[ Constants ]]--
@@ -56,6 +57,9 @@ local function matchesPage(goal: Types.TutorialGoal?, page: string): boolean
 	end
 	if target.kind == "Recipe" then
 		return page == "RecipeToCook"
+	end
+	if target.kind == "Gui" and target.id:match("^BakeryMenu%.") then
+		return page == "Inventory" or page == "Report" or page == "Upgrades"
 	end
 	return target.kind == "Gui" and target.id:match("^[^.]+") == page
 end
@@ -206,18 +210,13 @@ function Presenter.new(
 	control: (string, string) -> ()
 ): Presenter
 	local screen = authored :: AuthoredScreen
-	-- Retire the authored banner even in places saved before its removal.
-	local compact = screen:FindFirstChild("Compact")
-	if compact then
-		compact:Destroy()
-	end
+	screen.DisplayOrder = 60
 	local self: any = setmetatable({
 		Screen = screen,
 		Hud = hud,
 		Janitor = Janitor.new(),
 		Key = "",
 		Goal = nil,
-		Idle = 0,
 		Collapsed = false,
 		Active = false,
 		Control = control,
@@ -245,6 +244,9 @@ function Presenter.new(
 	end)
 	bind(self, screen.Card.Skip, function(): ()
 		dismiss(self)
+	end)
+	bind(self, screen.Compact, function(): ()
+		control("Collapse", "false")
 	end)
 	bind(self, screen.HelpButton, function(): ()
 		screen:SetAttribute("HelpOpen", not screen.Help.Visible)
@@ -294,7 +296,6 @@ function Presenter.Set(self: Presenter, goal: Types.TutorialGoal?, saved: any, c
 	end
 	if self.Key ~= goal.id then
 		self.Key = goal.id
-		self.Idle = 0
 		self.Screen.Card.Hint.CanvasPosition = Vector2.zero
 		self.Fade:setPosition(0.9)
 		self.Fade:spring(0, { frequency = 7, dampingRatio = 1 })
@@ -308,7 +309,7 @@ function Presenter.Set(self: Presenter, goal: Types.TutorialGoal?, saved: any, c
 	card.Title.Text = goal.title
 	card.Stage.Text = if goal.topic then "Bakery tip" else StageNames[context.Stage] or "Bakery tip"
 	card.Progress.Text = if self.Active then tostring(Config.Stages[context.Stage] or 1) .. " / 3" else ""
-	card.Skip.Text = if goal.topic then "Got it" else "I'll figure it out"
+	card.Skip.Text = if goal.topic then "Got it" else "Skip introduction"
 	card.Skip.Visible = self.Active or goal.topic ~= nil
 	self.Preview:Show(goal)
 end
@@ -328,9 +329,8 @@ function Presenter.Draw(self: Presenter, deltaTime: number, page: string): ()
 	local goal = self.Goal
 	local character = Players.LocalPlayer.Character
 	local small = viewport.Y < 420 or viewport.X < 600
-	-- Small touch HUDs retain handbook access without the retired reminder.
-	local mobile = small and UserInputService.TouchEnabled
-	local collapsed = self.Collapsed or (mobile and page == "None")
+	-- A small viewport changes layout, never silently disables guidance.
+	local collapsed = self.Collapsed
 	local characterMissing = not character or not character.Parent or not character.PrimaryPart
 	local paused = characterMissing or not matchesPage(goal, page)
 	local shown = goal ~= nil and not paused and not screen.Help.Visible and not GuiService.MenuIsOpen
@@ -340,22 +340,27 @@ function Presenter.Draw(self: Presenter, deltaTime: number, page: string): ()
 	-- Pages already have their own close control in the top-right corner on phones.
 	-- Expanded tips own an inline help button; the floating one is for the ordinary HUD.
 	screen.HelpButton.Visible = page == "None" and not screen.Card.Visible and not screen.Help.Visible
-	self.Focus:Hide()
+	local compact = screen.Compact
+	compact.Visible = shown and (collapsed or page ~= "None")
 	if not goal or not shown then
+		self.Focus:Hide()
 		return
 	end
+	compact.Text = if collapsed then "Resume · " .. goal.title else goal.title
+	compact.TextSize = if small then 14 else 16
+	local compactWidth = math.min(360, safe.max.X - safe.min.X)
+	compact.Size = UDim2.fromOffset(compactWidth, 48)
+	compact.AnchorPoint = Vector2.zero
 	local rect, message = nil, nil
 	if not collapsed and not paused then
 		rect, message = self.Focus:Update()
+	else
+		self.Focus:Hide()
 	end
-	if not goal.waiting and not paused and not collapsed then
-		self.Idle += deltaTime
-	end
-	local extended = self.Idle >= Config.HintDelay or goal.waiting or goal.recovery or goal.topic ~= nil
 	local card = screen.Card
 	card.Input.Text = inputHint(goal, message)
 	local width = math.min(if small then 280 else 360, safe.max.X - safe.min.X)
-	local reservedHeight = if small then 120 else 250
+	local reservedHeight = if small then 154 else 230
 	card.Stage.TextSize = if small then 14 else 16
 	card.Stage.Size = UDim2.new(1, -130, 0, 26)
 	card.Ribbon.Size = UDim2.new(1, -106, 0, 32)
@@ -369,16 +374,16 @@ function Presenter.Draw(self: Presenter, deltaTime: number, page: string): ()
 	card.Input.Size = UDim2.new(1, -32, 0, if small then 26 else 30)
 	card.Input.TextSize = if small then 12 else 14
 	card.Hint.Content.TextSize = if small then 12 else 14
-	card.Hint.Content.Text = if small then `{goal.hint} {card.Input.Text}` else goal.hint
+	card.Hint.Content.Text = goal.hint
 	measureHint(self, width - 36, card.Hint.Content.TextSize)
-	local hintTop = if small then 84 else 142
+	local hintTop = if small then 112 else 142
 	local footer = if small then 8 else 46
-	local height = if small then 120 else 184
-	if extended and not small then
+	local height = if small then 154 else 184
+	if not small then
 		height = math.clamp(hintTop + self.HintHeight + footer, height, reservedHeight)
 	end
-	card.Hint.Visible = extended
-	card.Input.Visible = not (small and extended)
+	card.Hint.Visible = true
+	card.Input.Visible = true
 	card.Skip.Visible = not small and (self.Active or goal.topic ~= nil)
 	card.Footer.Visible, card.Progress.Visible = not small, not small
 	card.Skip.TextSize = 14
@@ -395,11 +400,16 @@ function Presenter.Draw(self: Presenter, deltaTime: number, page: string): ()
 		screen.Card.Visible = false
 	end
 	card.Position = Geometry.ToScreen(screen, self.Position)
+	if compact.Visible then
+		local compactPosition = Layout.Place(viewport, Vector2.new(compactWidth, 48), self.Obstacles, protected, nil)
+		compact.Position = Geometry.ToScreen(screen, compactPosition)
+	end
 end
 
 function Presenter.Destroy(self: Presenter): ()
 	self.Screen.Card.Visible = false
 	self.Screen.Help.Visible = false
+	self.Screen.Compact.Visible = false
 	self.Janitor:Destroy()
 end
 
@@ -416,7 +426,6 @@ export type Presenter = typeof(setmetatable(
 		Fade: any,
 		Key: string,
 		Goal: Types.TutorialGoal?,
-		Idle: number,
 		Collapsed: boolean,
 		Active: boolean,
 		Control: (string, string) -> (),

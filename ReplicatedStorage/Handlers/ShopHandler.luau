@@ -86,10 +86,6 @@ local ICON_TRANSPARENCY: { [string]: number } = {
 	Locked = 0.6,
 	Empty = 1,
 }
--- The authored stroke is hairline, so the selected node is called out by its fill instead.
-local SELECTED_BOX = Color3.fromRGB(255, 255, 255)
-local SELECTED_STROKE_SCALE = 3
-
 local TAB_ON = Color3.fromRGB(255, 255, 255)
 local TAB_OFF = Color3.fromRGB(168, 163, 156)
 
@@ -401,12 +397,12 @@ function ShopHandler.PaintNode(_self: ShopHandler, node: Node, state: string, is
 
 	node.Selected = isSelected
 	node.State = state
-	node.Box.BackgroundColor3 = if isSelected then SELECTED_BOX else BOX_COLOR[state]
+	node.Box.BackgroundColor3 = BOX_COLOR[state]
 
 	local stroke = node.Stroke
 	if stroke then
 		stroke.Color = STROKE_COLOR[state]
-		stroke.Thickness = if isSelected then node.Thickness * SELECTED_STROKE_SCALE else node.Thickness
+		stroke.Thickness = node.Thickness
 	end
 
 	local label = node.Slot:FindFirstChild("UpgradeName")

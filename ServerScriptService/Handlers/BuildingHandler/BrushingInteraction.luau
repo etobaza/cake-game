@@ -6,11 +6,42 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Base = require(ServerScriptService.Handlers.BaseHandler)
 local Player = require(ServerScriptService.Handlers.PlayerHandler)
 local Config = require(ReplicatedStorage.Shared.Configs.Garden)
+local Motion = require(ReplicatedStorage.Shared.Configs.AmbientMotion)
 local VFX = require(ReplicatedStorage.Shared.Configs.VFX)
 local Bus = require(ReplicatedStorage.Shared.Bus)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 
 local BrushingInteraction = {}
+
+-- A flock shares one production node, but care must reach the bird beside the player.
+local function nearestBodyPoint(variant: Instance?, position: Vector3): Vector3?
+	if not variant then
+		return nil
+	end
+	local nearest: Vector3? = nil
+	local distance = math.huge
+	for _, body in variant:GetDescendants() do
+		if not body:IsA("MeshPart") then
+			continue
+		end
+		local kind = Motion.MeshKinds[body.MeshId:match("%d+") or ""]
+		if kind ~= "Chicken" and kind ~= "Cow" then
+			continue
+		end
+		local localPoint = body.CFrame:PointToObjectSpace(position + Vector3.yAxis)
+		local half = body.Size / 2
+		local point = body.CFrame:PointToWorldSpace(Vector3.new(
+			math.clamp(localPoint.X, -half.X, half.X),
+			math.clamp(localPoint.Y, -half.Y * 0.5, half.Y * 0.5),
+			math.clamp(localPoint.Z, -half.Z, half.Z)
+		))
+		local gap = ((point - position) * Vector3.new(1, 0, 1)).Magnitude
+		if gap < distance then
+			nearest, distance = point, gap
+		end
+	end
+	return nearest
+end
 
 function BrushingInteraction.Begin(building: any): boolean
 	local player = building.Player
@@ -35,23 +66,14 @@ function BrushingInteraction.Begin(building: any): boolean
 	local garden = floor and floor:FindFirstChild("Garden")
 	local upgrades = garden and garden:FindFirstChild("Upgrades")
 	local folder = upgrades and upgrades:FindFirstChild(Config.Sources[building.Id].Folder)
-	local variant = folder and folder:FindFirstChild("Upgrade1")
-	local body = variant and variant:FindFirstChildWhichIsA("MeshPart", true)
-	if not body then
+	local variant = folder and folder:FindFirstChild(Config.Sources[building.Id].DryVariant or "Upgrade1")
+	local point = nearestBodyPoint(variant, root.Position)
+	if not point then
 		return false
 	end
-	local point = body.CFrame:PointToObjectSpace(root.Position + Vector3.yAxis)
-	local half = body.Size / 2
-	point = body.CFrame:PointToWorldSpace(
-		Vector3.new(
-			math.clamp(point.X, -half.X, half.X),
-			math.clamp(point.Y, -half.Y * 0.5, half.Y * 0.5),
-			math.clamp(point.Z, -half.Z, half.Z)
-		)
-	)
 	local facing = (point - root.Position) * Vector3.new(1, 0, 1)
 	if facing.Magnitude < 0.001 then
-		return false
+		facing = root.CFrame.LookVector * Vector3.new(1, 0, 1)
 	end
 	if facing.Magnitude > Config.BrushReach then
 		Bus.Progress.ActionFailed:FireClient(player, "too_far")
@@ -92,7 +114,8 @@ function BrushingInteraction.CanContinue(building: any): boolean
 		and root:IsA("BasePart")
 		and typeof(target) == "CFrame"
 		and character:GetAttribute(Config.BrushStationAttribute) == building.Id
-		and (root.Position + Vector3.yAxis - target.Position).Magnitude <= Config.BrushReach + 0.5
+		-- Use the same horizontal reach as Begin; short birds must not cancel a valid action.
+		and ((root.Position - target.Position) * Vector3.new(1, 0, 1)).Magnitude <= Config.BrushReach + 0.5
 end
 
 function BrushingInteraction.End(building: any): ()

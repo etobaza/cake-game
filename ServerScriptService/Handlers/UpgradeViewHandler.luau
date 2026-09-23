@@ -83,7 +83,7 @@ local VIEWS: { ViewSpec } = {
 		Mode = "Reveal",
 		HiddenChildren = { "Cart", "DeliveryCart1", "DeliveryCart2", "DeliveryCart3", "DeliveryCart4" },
 	},
-	{ Zone = "Garden", Folder = "CrystalWater", UpgradeId = "garden_water", Mode = "Reveal" },
+	-- SinkWater owns the permanent sink water; garden_water only changes plant moisture duration.
 	{ Zone = "Garden", Folder = "Sprinkler", UpgradeId = "garden_sprinkler", Mode = "Reveal" },
 }
 

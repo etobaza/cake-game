@@ -98,13 +98,17 @@ function Cooking.Garden(cloud: any, session: any, props: any, id: string, source
 			props,
 			"Harvesting needs an empty hand. Return your tool or put down the item first."
 		)
-		return free
+		local goal = free
 			or State.Goal(
 				"harvest_" .. id,
 				"Collect one " .. source.Produce,
 				"Each harvest puts one ingredient in your hand. Cared-for sources keep producing.",
 				id
 			)
+		if not free and goal.target then
+			goal.target.control = "Harvest"
+		end
+		return goal
 	end
 	local cared = source.Care == "Hive" or (node and (node.CareRemaining > 0 or node.CleanDay == cloud.Day))
 	if cared then

@@ -69,9 +69,7 @@ end
 --[[ Handling ]]--
 function Lessons.Summary(session: any, page: string): Types.TutorialGoal
 	if page ~= "Inventory" then
-		local target = if page == "Upgrades"
-			then "Upgrades.MainFrame.Header.DayReport"
-			else "Report.MainFrame.Header.Buttons.Menu"
+		local target = "BakeryMenu.MainFrame.Header.Buttons.Menu"
 		local goal = State.Gui(
 			"open_next_menu",
 			"Plan tomorrow's menu",
@@ -87,7 +85,7 @@ function Lessons.Summary(session: any, page: string): Types.TutorialGoal
 		"next_menu",
 		if ready then "Your next menu is ready" else "Choose 3–5 recipes for tomorrow",
 		"Select recipes you want to sell. Next Day saves the menu and starts a new preparation period with no timer.",
-		if ready then "Inventory.MainFrame.Header.TopSection.NextDay" else "Inventory.MainFrame.Container.Content"
+		if ready then "BakeryMenu.MainFrame.Header.Buttons.NextDay" else "Inventory.MainFrame.Container.Content"
 	)
 	goal.topic = "NextDay"
 	return goal

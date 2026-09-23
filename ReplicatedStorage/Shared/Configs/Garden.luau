@@ -1,5 +1,5 @@
 --!strict
--- Lemon Cake production loop; durations and cart speed are Cake Game tuning.
+-- Lemon Cake animal output timing; plant durations and cart speed retain Cake Game tuning.
 export type Source = {
 	Kind: string,
 	Group: string,
@@ -8,6 +8,10 @@ export type Source = {
 	Folder: string,
 	Care: "Plant" | "Animal" | "Hive",
 	DryVariant: string?,
+	ProduceSeconds: number?,
+	Capacity: number?,
+	-- Authored basket, relative to the bakery root; care stays in the greenhouse.
+	OutputPath: { string }?,
 }
 
 local Garden = {
@@ -29,6 +33,20 @@ local Garden = {
 	StrawberryStemColor = Color3.fromRGB(24, 83, 30),
 	StrawberryStemSegments = 5,
 	WaterSeconds = 60,
+	-- The sink is a starter fixture; Crystal Water only improves plant moisture duration.
+	SinkWater = {
+		Path = { "1ndFloor", "Garden", "Upgrades", "CrystalWater", "Upgrade", "Part" },
+		Color = Color3.fromRGB(83, 193, 218),
+		Transparency = 0.35,
+		Reflectance = 0.12,
+		-- Reuse the authored water droplet texture with Lemon Cake's ambient trickle timing.
+		Texture = "rbxassetid://16866015361",
+		TrickleOffset = Vector3.new(0, 3.9, 0),
+		TrickleRate = 2,
+		TrickleLifetime = 0.75,
+		TrickleSpeed = 5,
+		TrickleSize = 0.35,
+	},
 	CleanSeconds = 120,
 	CareSeconds = 2,
 	-- BP_Animal: one-second BrushDirt; DirtMaterial stays clean for 60, then fades for 60.
@@ -37,6 +55,8 @@ local Garden = {
 	BrushPromptDistance = 6,
 	AnimalActionAttribute = "GardenAnimalAction",
 	BrushCleanHoldSeconds = 60,
+	-- Authored animal skins are complete opaque meshes, not a separate dirt overlay.
+	DirtyAppearanceThreshold = 0.5,
 	BrushExperience = 7,
 	BrushExperienceThreshold = 0.95,
 	BrushUntilAttribute = "GardenBrushUntil",
@@ -141,6 +161,9 @@ local Garden = {
 			Folder = "Cow",
 			Care = "Animal",
 			DryVariant = "Upgrade1",
+			ProduceSeconds = 3,
+			Capacity = 1,
+			OutputPath = { "1ndFloor", "Kitchen", "Decoration", "MilkBasket" },
 		},
 		animal_2 = {
 			Kind = "Animal",
@@ -150,6 +173,9 @@ local Garden = {
 			Folder = "Chiken",
 			Care = "Animal",
 			DryVariant = "Upgrade1",
+			ProduceSeconds = 3,
+			Capacity = 1,
+			OutputPath = { "1ndFloor", "Kitchen", "Decoration", "EggBasket" },
 		},
 		animal_3 = {
 			Kind = "Animal",
@@ -158,6 +184,8 @@ local Garden = {
 			Upgrade = "garden_beehive",
 			Folder = "Beehive",
 			Care = "Hive",
+			ProduceSeconds = 5,
+			Capacity = 1,
 		},
 	} :: { [string]: Source },
 }

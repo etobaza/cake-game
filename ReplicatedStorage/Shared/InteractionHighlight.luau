@@ -45,6 +45,23 @@ local function descendantsOf(instance: Instance?): { Instance }
 	return if instance then instance:GetDescendants() else {}
 end
 
+-- Both entrance leaves are named Door; a highlight path can select several authored siblings.
+local function resolveTargets(root: Instance, path: { string }): { Instance }
+	local matches: { Instance } = { root }
+	for _, name in path do
+		local nextMatches: { Instance } = {}
+		for _, parent in matches do
+			for _, child in parent:GetChildren() do
+				if child.Name == name then
+					table.insert(nextMatches, child)
+				end
+			end
+		end
+		matches = nextMatches
+	end
+	return matches
+end
+
 local function nearest(part: BasePart, candidates: { Instance }): Instance?
 	local best: Instance? = nil
 	local distance = math.huge
@@ -90,8 +107,7 @@ local function targets(part: BasePart): { Instance }
 	local kind = if typeof(kindName) == "string" then Buildings.Kinds[kindName] else nil
 	local path: { string }? = Config.Paths[id] or (if kind then kind.PromptTarget else nil)
 	if path then
-		local target = Buildings.ResolvePath(bakery, path)
-		return if target then { target } else {}
+		return resolveTargets(bakery, path)
 	end
 	local source = Garden.Sources[id]
 	if source then

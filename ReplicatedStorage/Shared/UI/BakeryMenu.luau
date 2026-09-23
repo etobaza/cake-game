@@ -14,6 +14,11 @@ local UseData = require(script.Parent.Hooks.UseData)
 --[[ Constants ]]--
 local TABS: { [string]: Pages.Page } = { Report = Pages.Names.Report, Menu = Pages.Names.Inventory }
 local HEADER_BUTTONS = { "Report", "Menu", "NextDay" }
+local HEADER_LEFT_INSET = 6
+local HEADER_RIGHT_INSET = 6
+local HEADER_GAP = 8
+local HEADER_Y = -22
+local RIBBON_OVERHANG = 64
 local SELECTED = Color3.fromRGB(247, 233, 205)
 local IDLE = Color3.fromRGB(205, 191, 161)
 local DISABLED = Color3.fromRGB(150, 143, 127)
@@ -31,6 +36,16 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	local panel = screen:FindFirstChild("MainFrame") :: Frame
 	local header = panel:FindFirstChild("Header") :: Frame
 	local buttons = header:FindFirstChild("Buttons") :: Frame
+	-- The page background starts at y = 42. Keep the 56px ribbon eight pixels above it.
+	local headerPosition = UDim2.fromOffset(0, HEADER_Y)
+	header.Position = headerPosition
+	header:SetAttribute("WidePosition", headerPosition)
+	header:SetAttribute("CompactPosition", headerPosition)
+	local background = header:FindFirstChild("Bg") :: ImageLabel
+	-- Extend the existing tail outside the page without shifting the tab row.
+	background.AnchorPoint = Vector2.new(1, 0.5)
+	background.Position = UDim2.fromScale(1, 0.5)
+	background.Size = UDim2.new(1, RIBBON_OVERHANG, 1, 0)
 	local phase = UseData.Path(data, { "Day", "Phase" }, "Session", "Prep")
 	local isSummary = Flux(function(): boolean
 		return phase() == "Summary"
@@ -53,15 +68,9 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 			return BakeryMenu.Contains(Pages.Current())
 		end,
 	})
-	-- Standalone HUD pages borrow the authored white text without the evening tab artwork.
+	-- Standalone pages use the full-size authored ribbon title, not a small tab caption.
 	local upgrades = buttons:FindFirstChild("Upgrades") :: TextButton
-	local title = (upgrades:FindFirstChild("Txt") :: Frame):Clone()
-	title.Name = "Title"
-	title.AnchorPoint = buttons.AnchorPoint
-	title.Position = buttons.Position
-	title.Size = buttons.Size
-	title.Parent = header
-	janitor:Add(title, "Destroy")
+	local title = header:FindFirstChild("Title") :: Frame
 	Flux.edit(title)({
 		Visible = function(): boolean
 			return not isSummary()
@@ -78,16 +87,28 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 			end,
 		})
 	end
-	-- Evening navigation has no close button, so use matching insets on both sides.
+	-- Align the outer tab edges with the page background's six-pixel side insets.
+	local rowPosition = UDim2.new(1, -HEADER_RIGHT_INSET + HEADER_GAP / 2, 0.5, 0)
+	local rowSize = UDim2.new(1, -HEADER_LEFT_INSET - HEADER_RIGHT_INSET + HEADER_GAP, 0, 44)
+	buttons.AnchorPoint = Vector2.new(1, 0.5)
+	buttons:SetAttribute("WidePosition", rowPosition)
+	buttons:SetAttribute("CompactPosition", rowPosition)
+	buttons:SetAttribute("WideSize", rowSize)
+	buttons:SetAttribute("CompactSize", rowSize)
 	Flux.edit(buttons)({
 		Visible = isSummary,
-		Size = UDim2.new(1, -2 * buttons.Position.X.Offset, buttons.Size.Y.Scale, buttons.Size.Y.Offset),
+		Position = rowPosition,
+		Size = rowSize,
 	})
 	Flux.edit(upgrades)({ Visible = false, Interactable = false, Selectable = false })
 	for index, name in HEADER_BUTTONS do
 		local button = buttons:FindFirstChild(name) :: TextButton
+		button.AnchorPoint = Vector2.new(0.5, 0.5)
 		button.Position = UDim2.fromScale((index - 0.5) / #HEADER_BUTTONS, 0.5)
-		button.Size = UDim2.new(1 / #HEADER_BUTTONS, -8, 1, 0)
+		button.Size = UDim2.new(1 / #HEADER_BUTTONS, -HEADER_GAP, 1, 0)
+		local lines = button:FindFirstChild("Lines") :: ImageLabel
+		lines.AnchorPoint = Vector2.new(0.5, 0.5)
+		lines.Position = UDim2.fromScale(0.5, 0.5)
 	end
 	for name, page in TABS do
 		local button = buttons:FindFirstChild(name) :: TextButton

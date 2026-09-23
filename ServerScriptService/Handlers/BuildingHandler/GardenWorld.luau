@@ -10,6 +10,7 @@ local _Shared = ReplicatedStorage.Shared
 
 --[[ Modules ]]--
 local Config = require(_Shared.Configs.Garden)
+local Buildings = require(_Shared.Configs.Buildings)
 local AnimalCare = require(_Shared.AnimalCare)
 local Motion = require(_Shared.Configs.AmbientMotion)
 local CarryModel = require(_Shared.CarryModel)
@@ -276,6 +277,10 @@ local function paint(record: any, owned: boolean, state: any, day: number): ()
 		end
 		show(entry, visible)
 	end
+	for _, entry in record.OutputEntries do
+		-- Keep the artist's ingredient as an Edit-mode preview; runtime stock owns the live item.
+		show(entry, owned and entry.Variant ~= "Preview")
+	end
 	record.StockJanitor:Cleanup()
 	if owned then
 		for index = 1, stock do
@@ -302,19 +307,15 @@ local function animateCare(record: any, owned: boolean, state: any, day: number,
 		return
 	end
 	local clean = AnimalCare.Brushing(state, day, now)
+	local dirtyVisible = clean < Config.DirtyAppearanceThreshold
 	for _, entry in record.Entries do
 		local kind = entry.Part:GetAttribute(Motion.KindAttribute)
 		if kind ~= "Cow" and kind ~= "Chicken" then
 			continue
 		end
 		local dirty = entry.Variant == record.Source.DryVariant
-		show(entry, true)
-		-- The opaque clean skin remains underneath the fading authored dirt skin.
-		entry.Part.Transparency = if dirty
-			then entry.Transparency + (1 - entry.Transparency) * clean
-			else entry.Transparency
-		entry.Part.CanCollide = not dirty and entry.CanCollide
-		entry.Part.CanQuery = not dirty and entry.CanQuery
+		-- Each skin includes the whole animal. Fading one over the other duplicates the silhouette.
+		show(entry, dirty == dirtyVisible)
 	end
 end
 
@@ -338,7 +339,7 @@ function GardenWorld.new(
 			continue
 		end
 		local frames = {}
-		for index = 1, Config.Capacity do
+		for index = 1, source.Capacity or Config.Capacity do
 			local point = anchor:FindFirstChild(`GardenProduce{index}`)
 			frames[index] = transform
 				* (
@@ -353,6 +354,8 @@ function GardenWorld.new(
 		self.Janitor:Add(stockJanitor, "Destroy")
 		self.Janitor:Add(careJanitor, "Destroy")
 		local entries = collect(folder, self.Janitor, source)
+		local output = source.OutputPath and Buildings.ResolvePath(root, source.OutputPath)
+		local outputEntries = if output then collect(output, self.Janitor, source) else {}
 		local stockPlant: BasePart? = nil
 		if source.Produce == "strawberry" then
 			for _, entry in entries do
@@ -375,6 +378,7 @@ function GardenWorld.new(
 			StockPlant = stockPlant,
 			Parent = parent,
 			Entries = entries,
+			OutputEntries = outputEntries,
 			StockJanitor = stockJanitor,
 			CareJanitor = careJanitor,
 		}

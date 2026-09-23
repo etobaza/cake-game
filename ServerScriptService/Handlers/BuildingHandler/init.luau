@@ -587,12 +587,21 @@ function BuildingHandler.ValidateRemoteBuilding(
 	self: BuildingHandler,
 	player: Player,
 	buildingId: string,
-	expectedKind: string?
+	expectedKind: string?,
+	action: string?
 ): Building.Building?
 	if DayCycleHandler:GetPhase(player) == "Summary" then
 		return nil
 	end
 	local building = self:GetBuilding(player, buildingId)
+	-- Harvest is authorized at the basket, while Tend remains authorized at the animal.
+	local target = building and building.Part
+	if target and action == "Harvest" then
+		local output = target:FindFirstChild("AnimalProduce")
+		if output and output:IsA("BasePart") then
+			target = output
+		end
+	end
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
@@ -601,7 +610,8 @@ function BuildingHandler.ValidateRemoteBuilding(
 		or not root
 		or not humanoid
 		or humanoid.Health <= 0
-		or (root.Position - building.Part.Position).Magnitude > REMOTE_DISTANCE
+		or not target
+		or (root.Position - target.Position).Magnitude > REMOTE_DISTANCE
 	then
 		Bus.Progress.ActionFailed:FireClient(player, "too_far")
 		return nil
@@ -718,7 +728,7 @@ function BuildingHandler.DispatchRemote(
 	action: string,
 	...: any
 ): any
-	if not self:ValidateRemoteBuilding(player, buildingId) then
+	if not self:ValidateRemoteBuilding(player, buildingId, nil, action) then
 		return
 	end
 

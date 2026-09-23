@@ -11,6 +11,7 @@ local _Libs = _Shared.Libs
 --[[ Modules ]]--
 local LoggerUtil = require(_Libs.Logger)
 local VacantView = require(script.Parent.BuildingHandler.VacantView)
+local SinkWater = require(script.Parent.BuildingHandler.SinkWater)
 local World = require(_Shared.World)
 
 --[[ Private Variables ]]--
@@ -32,6 +33,7 @@ function PlotHandler.OnInit(self: PlotHandler): ()
 		if not bakery:IsA("Folder") then
 			continue
 		end
+		SinkWater.Prepare(bakery)
 		local saved = VacantView.Capture(bakery)
 		self.Views[bakery] = saved
 		VacantView.Apply(saved, false)
