@@ -119,7 +119,7 @@ function TrayHandler.Refresh(self: TrayHandler, player: Player): ()
 	end
 	local tray = FoodModel.new("Tray", self.Root, Config.TraySize)
 	if not tray then
-		warn("[TrayHandler] Cake.Tray is missing")
+		print("[TrayHandler] Cake.Tray is missing")
 		return
 	end
 	-- Reveal only after the hand and root have streamed in and the pose has been resolved.

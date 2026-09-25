@@ -119,7 +119,7 @@ function Tool.Refresh(self: Tool): ()
 	local source = asset and Buildings.FindAsset(asset)
 	local original = source and source:FindFirstChildWhichIsA("BasePart", true)
 	if not kind or not original then
-		warn(`[ToolViewHandler] Missing authored tool {id}`)
+		print(`[ToolViewHandler] Missing authored tool {id}`)
 		return
 	end
 	local mesh = original:Clone()

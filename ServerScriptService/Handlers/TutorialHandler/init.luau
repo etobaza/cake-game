@@ -9,6 +9,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 --[[ Modules ]]--
 local Bus = require(ReplicatedStorage.Shared.Bus)
 local Config = require(ReplicatedStorage.Shared.Configs.Tutorial)
+local CleaningHandler = require(script.Parent.CleaningHandler)
 local CustomerHandler = require(script.Parent.CustomerHandler)
 local DataHandler = require(script.Parent.DataHandler)
 local DayCycleHandler = require(script.Parent.DayCycleHandler)
@@ -22,7 +23,7 @@ local TickHandler = require(script.Parent.TickHandler)
 --[[ Tables ]]--
 local TutorialHandler = {
 	-- Reconcile accepted actions only after the profile, day and guest owners are ready.
-	dependencies = { "DataHandler", "DayCycleHandler", "CustomerHandler", "TickHandler" },
+	dependencies = { "DataHandler", "DayCycleHandler", "CustomerHandler", "CleaningHandler", "TickHandler" },
 }
 
 --[[ Private Functions ]]--
@@ -103,7 +104,9 @@ function TutorialHandler.Bind(self: TutorialHandler, player: Player, data: any):
 	if self.Runs[player] then
 		return
 	end
-	local run = Run.new(player, data, release)
+	local run = Run.new(player, data, release, function(): boolean?
+		return CleaningHandler:PrepareTutorial(player)
+	end)
 	self.Runs[player] = run
 	self.Janitor:Add(run, "Destroy", player)
 end

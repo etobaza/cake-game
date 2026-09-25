@@ -42,14 +42,14 @@ function Profiler.End(name: string)
 	local stack = _threadStacks[thread]
 
 	if not stack or #stack == 0 then
-		warn(`Profiler.End("{name}") called without matching ProfileBegin`)
+		print(`Profiler.End("{name}") called without matching ProfileBegin`)
 		return
 	end
 
 	local entry = stack[#stack]
 
 	if entry.name ~= name then
-		warn(`Profiler.End("{name}") mismatch. Expected "{entry.name}"`)
+		print(`Profiler.End("{name}") mismatch. Expected "{entry.name}"`)
 		return
 	end
 

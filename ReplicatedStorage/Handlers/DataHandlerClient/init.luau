@@ -228,7 +228,7 @@ function DataHandlerClient.WaitForData(self: DataHandlerClient, timeout: number?
 		task.wait()
 	end
 	if not self._initialDataReceived then
-		warn("[DataClient] Timeout waiting for initial data")
+		print("[DataClient] Timeout waiting for initial data")
 	end
 	return self.Data
 end
@@ -243,7 +243,7 @@ function DataHandlerClient.GetData(self: DataHandlerClient, path: DataPath, data
 	end
 
 	if not self._initialDataReceived then
-		warn("[DataClient] Data not yet received from server")
+		print("[DataClient] Data not yet received from server")
 		return
 	end
 
@@ -257,7 +257,7 @@ end
 --- Full snapshot `{ Cloud, Session }` (not the signal fields on the server). Nil if not :IsReady().
 function DataHandlerClient.GetDataAll(self: DataHandlerClient): PlayerData?
 	if not self._initialDataReceived then
-		warn("[DataClient] Data not yet received from server")
+		print("[DataClient] Data not yet received from server")
 		return
 	end
 

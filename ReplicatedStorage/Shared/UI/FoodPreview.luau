@@ -36,7 +36,7 @@ local function show(
 	local world = viewport:FindFirstChild("FoodWorld")
 	if not world or not world:IsA("WorldModel") then
 		viewport:Destroy()
-		warn("[FoodPreview] Template needs FoodWorld")
+		print("[FoodPreview] Template needs FoodWorld")
 		return
 	end
 	-- Cameras do not replicate with StarterGui. The client owns this rendering resource;

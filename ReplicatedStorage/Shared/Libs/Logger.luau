@@ -164,7 +164,7 @@ function Logger:Log(level: LogLevel, message: string, tags: { string }?, data: {
 	for _, appender in self._appenders do
 		local success, err = pcall(appender, logEntry)
 		if not success then
-			warn("Logger appender error:", err)
+			print("Logger appender error:", err)
 		end
 	end
 end

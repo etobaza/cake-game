@@ -3,8 +3,8 @@
 --
 -- The puddles are the artist's own models, standing in the kitchen's `Spills` folder. Nothing is
 -- spawned and nothing is destroyed: a spill is one of those models made visible and given a prompt,
--- and mopping it hides it again. Every spill is caused by kitchen work; the first batch guarantees
--- the tutorial spill and later batches roll the configured chance.
+-- and mopping it hides it again. The introduction prepares one spill; later kitchen work
+-- rolls the configured chance.
 
 --[[ Services ]]--
 local CollectionService = game:GetService("CollectionService")
@@ -235,7 +235,7 @@ function CleaningHandler.OnStart(self: CleaningHandler): ()
 		end
 	end)
 
-	-- A claimed bakery starts clean. The first kitchen action supplies the broom lesson.
+	-- Prepare the authored pool before TutorialHandler requests an introductory spill.
 	BaseHandler.BaseReady:Connect(function(player: Player)
 		self:StartFloor(player)
 	end)
@@ -264,7 +264,7 @@ function CleaningHandler.OnStart(self: CleaningHandler): ()
 	end
 end
 
--- Hides every puddle. Runs once per claimed bakery; cooking is the only thing that dirties it.
+-- Hides every puddle once per claimed bakery. TutorialHandler prepares the introductory spill.
 function CleaningHandler.StartFloor(self: CleaningHandler, player: Player): ()
 	local runtime = self.Runtime[player]
 	if not runtime then
@@ -409,6 +409,22 @@ function CleaningHandler.DropSpill(self: CleaningHandler, player: Player): boole
 	end
 
 	return false
+end
+
+-- nil means the bakery is still loading; false means it has no authored spill to teach with.
+-- This is idempotent across refreshes and never replaces a spill after accepted mopping.
+function CleaningHandler.PrepareTutorial(self: CleaningHandler, player: Player): boolean?
+	local data = DataHandler:GetData(player)
+	if not data or not self.Runtime[player] then
+		return nil
+	end
+	if not TutorialPolicy.NeedsFloor(data.Cloud) or data.Cloud.Tutorial.Actions.Mopped then
+		return true
+	end
+	if CountSpills(data.Session.Spills) > 0 then
+		return true
+	end
+	return self:DropSpill(player)
 end
 
 -- Cooking is what makes the mess: a station starting a batch may drop dough on the floor.

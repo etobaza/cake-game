@@ -35,7 +35,7 @@ local function prepare(self: View): boolean
 	local template = vfx and vfx:FindFirstChild(Config.Beam.Template)
 	if not template or not template:IsA("BasePart") then
 		if not self.Warned then
-			warn("[HintBeam] ReplicatedStorage.Assets.VFX.ArrowBeam is missing")
+			print("[HintBeam] ReplicatedStorage.Assets.VFX.ArrowBeam is missing")
 			self.Warned = true
 		end
 		return false
@@ -55,7 +55,7 @@ local function prepare(self: View): boolean
 	then
 		part:Destroy()
 		if not self.Warned then
-			warn("[HintBeam] ArrowBeam needs two distinct internal attachments")
+			print("[HintBeam] ArrowBeam needs two distinct internal attachments")
 			self.Warned = true
 		end
 		return false

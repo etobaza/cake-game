@@ -194,7 +194,7 @@ end
 local function fill(root: Instance, path: string, alpha: UITypes.Reactive<number>): ()
 	local instance = resolve(root, path)
 	if not instance or not instance:IsA("GuiObject") then
-		warn(`[HydrateHud] no fill at '{path}'`)
+		print(`[HydrateHud] no fill at '{path}'`)
 		return
 	end
 

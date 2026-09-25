@@ -161,14 +161,14 @@ function ShopHandler.OnStart(self: ShopHandler): ()
 	local screen = UIHandler:GetPanel(SCREEN_NAME)
 	local main = screen and resolve(screen, MAIN_PATH)
 	if not screen or not main then
-		warn(`[ShopHandler] '{SCREEN_NAME}' is missing; the upgrade tree is disabled`)
+		print(`[ShopHandler] '{SCREEN_NAME}' is missing; the upgrade tree is disabled`)
 		return
 	end
 
 	local content = resolve(main, { "Tree", "Content" })
 	local bottom = main:FindFirstChild("Bottom")
 	if not content or not bottom then
-		warn(`[ShopHandler] '{SCREEN_NAME}' has no tree to drive; the upgrade tree is disabled`)
+		print(`[ShopHandler] '{SCREEN_NAME}' has no tree to drive; the upgrade tree is disabled`)
 		return
 	end
 
@@ -227,7 +227,7 @@ function ShopHandler.CollectSlots(self: ShopHandler): ()
 		local slot = resolve(self.Content, path)
 		local box = slot and BoxOf(slot)
 		if not slot or not slot:IsA("GuiObject") or not box then
-			warn(`[ShopHandler] no slot at '{SlotKey(path)}'`)
+			print(`[ShopHandler] no slot at '{SlotKey(path)}'`)
 			continue
 		end
 
@@ -269,14 +269,14 @@ end
 function ShopHandler.BindTabs(self: ShopHandler, main: Instance): ()
 	local top = main:FindFirstChild("Top")
 	if not top then
-		warn("[ShopHandler] the category tabs are missing")
+		print("[ShopHandler] the category tabs are missing")
 		return
 	end
 
 	for _, tab in TABS do
 		local button = top:FindFirstChild(tab.Name)
 		if not button or not button:IsA("GuiButton") then
-			warn(`[ShopHandler] no category tab named '{tab.Name}'`)
+			print(`[ShopHandler] no category tab named '{tab.Name}'`)
 			continue
 		end
 
@@ -292,7 +292,7 @@ end
 function ShopHandler.BindPurchase(self: ShopHandler): ()
 	local buy = resolve(self.Bottom, { "Status", "Prchased" })
 	if not buy or not buy:IsA("GuiObject") then
-		warn("[ShopHandler] the footer has no purchase plate")
+		print("[ShopHandler] the footer has no purchase plate")
 		return
 	end
 
@@ -330,7 +330,7 @@ function ShopHandler.ShowCategory(self: ShopHandler, category: GameTypes.Upgrade
 		local node = path and self.Slots[SlotKey(path)]
 
 		if not node then
-			warn(`[ShopHandler] No authored slot for {purchase.Id} level {purchase.Level}`)
+			print(`[ShopHandler] No authored slot for {purchase.Id} level {purchase.Level}`)
 			continue
 		end
 

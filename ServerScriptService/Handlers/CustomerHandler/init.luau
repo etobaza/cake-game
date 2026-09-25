@@ -732,7 +732,8 @@ function CustomerHandler.UpdatePlayerCustomers(self: CustomerHandler, player: Pl
 	local data = DataHandler:GetData(player)
 	if data and TutorialPolicy.IsActive(data.Cloud) then
 		-- After the guest leaves, their place must be cleaned before another arrival.
-		if CountCustomers(customers) > 0 or data.Session.Tutorial.Stage == "Clean" then
+		local stage = data.Session.Tutorial.Stage
+		if CountCustomers(customers) > 0 or stage == "Clean" or stage == "Sweep" then
 			return
 		end
 		if data.Session.Tutorial.GuestId ~= "" then

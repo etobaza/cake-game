@@ -36,7 +36,7 @@ function CarriedAppearance.Decode(value: any): Item?
 		return HttpService:JSONDecode(value)
 	end)
 	if not ok then
-		warn("[CarriedAppearance] Invalid carried-food appearance")
+		print("[CarriedAppearance] Invalid carried-food appearance")
 		return nil
 	end
 	if typeof(item) ~= "table" or typeof(item.Kind) ~= "string" or typeof(item.Id) ~= "string" then

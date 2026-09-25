@@ -13,7 +13,7 @@ function SinkWater.Prepare(bakery: Folder): ()
 		current = if current then current:FindFirstChild(name) else nil
 	end
 	if not current or not current:IsA("BasePart") then
-		warn(`[SinkWater] Missing authored sink surface in {bakery.Name}`)
+		print(`[SinkWater] Missing authored sink surface in {bakery.Name}`)
 		return
 	end
 

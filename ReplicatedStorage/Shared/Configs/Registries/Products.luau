@@ -184,7 +184,7 @@ local methods: ProductsMethods = {
 	GetRobuxPrice = function(self: ProductsRegistry, entryId: string): number?
 		local entry = self:Get(entryId)
 		if not entry then
-			warn(`[Products] Attempted to get price for unknown product: {entryId}`)
+			print(`[Products] Attempted to get price for unknown product: {entryId}`)
 			return nil
 		end
 
@@ -193,7 +193,7 @@ local methods: ProductsMethods = {
 		end)
 
 		if not success then
-			warn(`[Products] Failed to fetch product info for {entryId}: {info}`)
+			print(`[Products] Failed to fetch product info for {entryId}: {info}`)
 			return nil
 		end
 

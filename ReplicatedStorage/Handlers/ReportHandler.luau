@@ -110,7 +110,7 @@ function ReportHandler.OnStart(self: ReportHandler): ()
 	local panel = screen and screen:FindFirstChild("MainFrame")
 	local content = panel and Authored.Resolve(panel, { "Middle", "Container", "Content" })
 	if not screen or not panel or not content or not content:IsA("ScrollingFrame") then
-		warn("[ReportHandler] StarterGui.Report.MainFrame.Middle.Container.Content is missing")
+		print("[ReportHandler] StarterGui.Report.MainFrame.Middle.Container.Content is missing")
 		return
 	end
 	self.Janitor = Janitor.new()

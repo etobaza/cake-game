@@ -5,7 +5,7 @@
 local GameTypes = {}
 
 export type DayPhase = "Prep" | "Shift" | "Closing" | "Summary"
-export type TutorialStage = "Cook" | "Serve" | "Clean" | "Completed" | "Skipped"
+export type TutorialStage = "Sweep" | "Cook" | "Serve" | "Clean" | "Completed" | "Skipped"
 export type TutorialStatus = "Active" | "Completed" | "Skipped"
 export type TutorialTarget = {
 	kind: "World" | "Gui" | "Recipe" | "Order" | "Ingredient",

@@ -19,7 +19,7 @@ function Clip.Read(sequence: KeyframeSequence): Clip?
 				continue
 			end
 			if pose.EasingStyle ~= Enum.PoseEasingStyle.Linear then
-				warn(`[AmbientMotionHandler] {sequence.Name} needs baked linear poses`)
+				print(`[AmbientMotionHandler] {sequence.Name} needs baked linear poses`)
 				return nil
 			end
 			local track = clip.Tracks[pose.Name] or {}

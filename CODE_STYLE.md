@@ -65,7 +65,7 @@ Follow a nearby handler's explicit `self` typing when it has mutable state. Decl
 - Bind authored `MainGui` screens with existing Flux nodes, `Shared/UI/App`, and UI helpers. Screen drivers use `UIHandler`; client data comes through `DataClient` readiness/read/subscribe APIs.
 - Use the existing motion abstraction for the surface: `Shared/UI/Motion` for Flux springs, `Shared/UI/Animate` for existing Ripple-driven effects. Do not replace one globally because another is installed.
 - A transient object/scope owns its connections, tasks, instances, and subscriptions. Reuse Janitor, Flux cleanup, or the surrounding explicit teardown contract. Make teardown safe for repeated cleanup and player/character removal.
-- Use `Shared/Libs/Logger` with a module name when the subsystem uses it. Direct warnings should include `[ModuleName]`. Use backtick interpolation for readable messages; `string.format` remains appropriate for numeric formatting.
+- Use `Shared/Libs/Logger` with a module name when the subsystem uses it. For direct diagnostics, use ordinary `print` instead of `warn` and include `[ModuleName]`. Preserve message content and existing error handling. Generated packages and vendored libraries remain unchanged. Use backtick interpolation for readable messages; `string.format` remains appropriate for numeric formatting.
 - Handle failures from `pcall`/promises according to the operation: propagate, log an actionable failure, or explicitly document the expected fallback. Do not hide required startup failures or leave noisy temporary prints.
 
 ## Verification

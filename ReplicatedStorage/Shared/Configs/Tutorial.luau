@@ -4,6 +4,7 @@
 return {
 	-- Disabling presentation and protection never resets saved progress.
 	Enabled = true,
+	IntroCleanup = true,
 	Version = 1,
 	RecommendedRecipe = "bread",
 	FirstGuestType = "regular",
@@ -11,7 +12,9 @@ return {
 	OrderPreviewSeconds = 2.5,
 	SuccessSeconds = 4,
 	RefreshInterval = 0.15,
-	Stages = { Cook = 1, Serve = 2, Clean = 3, Completed = 3, Skipped = 3 },
+	GoalSettleSeconds = 0.25,
+	ReminderSeconds = 18,
+	Stages = { Sweep = 1, Cook = 2, Serve = 3, Clean = 4, Completed = 4, Skipped = 4 },
 	Topics = {
 		{
 			id = "Cooking",

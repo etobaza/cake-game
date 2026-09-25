@@ -38,6 +38,7 @@ local SCREEN_NAME = "RecipeToCook"
 local ROWS_PATH = { "MainFrame", "Container", "Content" }
 local CARD_NAME = "Cooking"
 local CHIPS_NAME = "Items"
+local LIST_EDGE_PADDING = 8
 -- The page is opened from the mixer, so only recipes that start there are offered, and the cancel
 -- goes to that station. There is one mixer per bakery.
 local STATION_KIND = "Mixer"
@@ -51,6 +52,47 @@ local RecipePickHandler = {
 --[[ Private Functions ]]--
 local resolve = Authored.Resolve
 local SetPair = Authored.SetPair
+
+local function PrepareList(content: ScrollingFrame, janitor: any): ()
+	local layout = content:FindFirstChildOfClass("UIListLayout")
+	if not layout then
+		return
+	end
+
+	content.AnchorPoint = Vector2.zero
+	content.Position = UDim2.fromOffset(0, 0)
+	content.Size = UDim2.fromScale(1, 1)
+	content.AutomaticCanvasSize = Enum.AutomaticSize.None
+	content.ScrollingDirection = Enum.ScrollingDirection.Y
+	content.VerticalScrollBarInset = Enum.ScrollBarInset.Always
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	layout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+	-- Rows already reserve horizontal space in their authored width. Keep their
+	-- outer strokes inside the scrolling clip at both ends of the list as well.
+	local existingPadding = content:FindFirstChildOfClass("UIPadding")
+	local padding = existingPadding or Instance.new("UIPadding")
+	if not existingPadding then
+		padding.Parent = content
+		janitor:Add(padding, "Destroy")
+	end
+	padding.PaddingTop = UDim.new(0, LIST_EDGE_PADDING)
+	padding.PaddingBottom = UDim.new(0, LIST_EDGE_PADDING)
+	padding.PaddingLeft = UDim.new(0, 0)
+	padding.PaddingRight = UDim.new(0, 0)
+
+	local function refreshCanvas(): ()
+		local height = content.AbsoluteSize.Y
+		if height <= 0 then
+			return
+		end
+		local scale = Authored.UnscaledSize(content).Y / height
+		content.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y * scale + LIST_EDGE_PADDING * 2)
+	end
+	janitor:Add(layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(refreshCanvas), "Disconnect")
+	janitor:Add(content:GetPropertyChangedSignal("AbsoluteSize"):Connect(refreshCanvas), "Disconnect")
+	refreshCanvas()
+end
 
 local function IngredientName(ingredientId: string): string
 	local ingredient = Ingredients:Get(ingredientId)
@@ -151,8 +193,8 @@ end
 function RecipePickHandler.OnStart(self: RecipePickHandler): ()
 	local screen = UIHandler:GetPanel(SCREEN_NAME)
 	local content = screen and resolve(screen, ROWS_PATH)
-	if not screen or not content then
-		warn(`[RecipePickHandler] '{SCREEN_NAME}' is missing; the station pick is disabled`)
+	if not screen or not content or not content:IsA("ScrollingFrame") then
+		print(`[RecipePickHandler] '{SCREEN_NAME}' is missing; the station pick is disabled`)
 		return
 	end
 
@@ -163,6 +205,7 @@ function RecipePickHandler.OnStart(self: RecipePickHandler): ()
 	self.Chips = {}
 	self.NeededChips = {}
 
+	PrepareList(content, self.Janitor)
 	self:BuildCard()
 	self:BuildRows()
 	self.Janitor:Add(
@@ -205,7 +248,7 @@ function RecipePickHandler.BuildRows(self: RecipePickHandler): ()
 	end
 
 	if #rows == 0 then
-		warn("[RecipePickHandler] the recipe list has no rows to fill")
+		print("[RecipePickHandler] the recipe list has no rows to fill")
 		return
 	end
 
@@ -275,7 +318,7 @@ function RecipePickHandler.BuildCard(self: RecipePickHandler): ()
 	local content = card and card:FindFirstChild("Content")
 	local holder = content and content:FindFirstChild(CHIPS_NAME)
 	if not card or not card:IsA("ScrollingFrame") or not content or not content:IsA("Frame") or not holder then
-		warn("[RecipePickHandler] the cooking card is missing; only the list is shown")
+		print("[RecipePickHandler] the cooking card is missing; only the list is shown")
 		return
 	end
 
@@ -290,7 +333,7 @@ function RecipePickHandler.BuildCard(self: RecipePickHandler): ()
 		or not chipIcon
 		or not chipIcon:IsA("ImageLabel")
 	then
-		warn("[RecipePickHandler] the cooking card has no chips to reuse")
+		print("[RecipePickHandler] the cooking card has no chips to reuse")
 		return
 	end
 

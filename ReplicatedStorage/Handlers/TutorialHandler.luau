@@ -56,7 +56,7 @@ function TutorialHandler.OnStart(self: TutorialHandler): ()
 	DataClient:WaitForData()
 	local screen = UIHandler:GetPanel("Tutorial")
 	if not screen then
-		warn("[TutorialHandler] StarterGui.Tutorial must be authored and saved")
+		print("[TutorialHandler] StarterGui.Tutorial must be authored and saved")
 		return
 	end
 	self.View = Presenter.new(screen, function(text: string): boolean

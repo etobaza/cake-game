@@ -15,6 +15,17 @@ function TutorialPolicy.IsActive(cloud: any): boolean
 	return Config.Enabled and cloud.Tutorial ~= nil and cloud.Tutorial.Status == "Active"
 end
 
+function TutorialPolicy.NeedsFloor(cloud: any): boolean
+	if not TutorialPolicy.IsActive(cloud) or not Config.IntroCleanup then
+		return false
+	end
+	local actions = cloud.Tutorial.Actions
+	-- Existing introductions keep their learned cooking progress after this addition.
+	return not (
+		actions.PreparedFloor or actions.RecipeSelected or actions.Mixed or actions.CollectedDish or actions.Served
+	)
+end
+
 function TutorialPolicy.Migrate(data: any): ()
 	local saved = data.Cloud.Tutorial
 	if saved.Version >= Config.Version then

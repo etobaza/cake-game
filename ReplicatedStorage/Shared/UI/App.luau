@@ -125,7 +125,7 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 			if screen and screen:IsA("ScreenGui") then
 				screens[pageName] = screen
 			else
-				warn(`[UI.App] '{pageName}' never arrived in {root:GetFullName()}`)
+				print(`[UI.App] '{pageName}' never arrived in {root:GetFullName()}`)
 			end
 		end
 	end
@@ -218,7 +218,7 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 				end
 			end, true)
 		else
-			warn(`[UI.App] '{STATUS_SCREEN}.{STATUS_FRAME}' is missing; toasts are disabled`)
+			print(`[UI.App] '{STATUS_SCREEN}.{STATUS_FRAME}' is missing; toasts are disabled`)
 		end
 
 		-- Focus feedback: any open page dims the world and leans the camera in; closing undoes both.
@@ -235,7 +235,7 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 				fade:spring(if nothingOpen() then 1 else BACKDROP_ALPHA)
 			end, true)
 		else
-			warn(`[UI.App] '{BACKDROP_SCREEN}.{BACKDROP_FRAME}' is missing; pages will not dim the world`)
+			print(`[UI.App] '{BACKDROP_SCREEN}.{BACKDROP_FRAME}' is missing; pages will not dim the world`)
 		end
 
 		-- The spring writes through CurrentCamera on every step, so a camera swapped on respawn
@@ -265,7 +265,7 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 
 		for _, screen in needClose do
 			if not donor then
-				warn(`[UI.App] '{screen.Name}' has no close button and there is none to lend it`)
+				print(`[UI.App] '{screen.Name}' has no close button and there is none to lend it`)
 				continue
 			end
 

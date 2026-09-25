@@ -49,7 +49,7 @@ local function loadTrack(self: Character, animator: Animator, name: string, clip
 		return animator:LoadAnimation(animation)
 	end)
 	if not ok then
-		warn(`[CharacterAnimationHandler] Cannot load {name}: {track}`)
+		print(`[CharacterAnimationHandler] Cannot load {name}: {track}`)
 		return
 	end
 	if self.Destroyed then
@@ -172,7 +172,7 @@ function Character.TryBind(self: Character): ()
 		"Disconnect"
 	)
 	if humanoid.RigType ~= Config.RigType then
-		warn("[CharacterAnimationHandler] Supplied animations require R15; keeping default animations")
+		print("[CharacterAnimationHandler] Supplied animations require R15; keeping default animations")
 		return
 	end
 	for name, clip in Config.Clips do

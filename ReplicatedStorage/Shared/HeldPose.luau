@@ -45,7 +45,7 @@ function HeldPose.ReadClips(): { [string]: JointPose.Clip }
 		end
 		local sequence = animations and animations:WaitForChild(sequenceName, Config.PoseAssetTimeout)
 		if not sequence or not sequence:IsA("KeyframeSequence") then
-			warn(`[HeldPose] Missing authored {sequenceName}`)
+			print(`[HeldPose] Missing authored {sequenceName}`)
 			continue
 		end
 		local clip = JointPose.Read(sequence, joints)

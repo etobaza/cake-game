@@ -29,7 +29,7 @@ function AmbientMotionHandler.OnStart(self: AmbientMotionHandler): ()
 			end
 		end
 	else
-		warn("[AmbientMotionHandler] Assets.Animations.Ambient is missing")
+		print("[AmbientMotionHandler] Assets.Animations.Ambient is missing")
 	end
 	local root = Instance.new("Folder")
 	root.Name = "AmbientVisuals"

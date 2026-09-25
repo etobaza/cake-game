@@ -231,7 +231,7 @@ function RailCartHandler.OnStart(self: RailCartHandler): ()
 	local garden = ReplicatedStorage.Assets.Models:WaitForChild("GardenCare", 10)
 	local source = garden and garden:WaitForChild("Cart", 10)
 	if not source then
-		warn("[RailCartHandler] Assets.Models.GardenCare.Cart is missing")
+		print("[RailCartHandler] Assets.Models.GardenCare.Cart is missing")
 		return
 	end
 	self.Source = source

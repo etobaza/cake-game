@@ -140,7 +140,7 @@ function RewardHandler.BindCodes(self: RewardHandler): ()
 	local box = screen and Authored.Resolve(screen, CODE_BOX)
 	local button = screen and Authored.Resolve(screen, CODE_BUTTON)
 	if not box or not box:IsA("TextBox") or not button or not button:IsA("GuiObject") then
-		warn(`[RewardHandler] '{CODES_SCREEN}' has no code box; codes are disabled`)
+		print(`[RewardHandler] '{CODES_SCREEN}' has no code box; codes are disabled`)
 		return
 	end
 
@@ -173,7 +173,7 @@ function RewardHandler.BindDaily(self: RewardHandler): ()
 	local screen = UIHandler:GetPanel(DAILY_SCREEN)
 	local grid = screen and Authored.Resolve(screen, DAILY_GRID)
 	if not screen or not grid then
-		warn(`[RewardHandler] '{DAILY_SCREEN}' has no tiles; the daily streak is disabled`)
+		print(`[RewardHandler] '{DAILY_SCREEN}' has no tiles; the daily streak is disabled`)
 		return
 	end
 
@@ -197,7 +197,7 @@ function RewardHandler.BindPlaytime(self: RewardHandler): ()
 	local screen = UIHandler:GetPanel(PLAYTIME_SCREEN)
 	local grid = screen and Authored.Resolve(screen, PLAYTIME_GRID)
 	if not screen or not grid then
-		warn(`[RewardHandler] '{PLAYTIME_SCREEN}' has no tiles; playtime rewards are disabled`)
+		print(`[RewardHandler] '{PLAYTIME_SCREEN}' has no tiles; playtime rewards are disabled`)
 		return
 	end
 

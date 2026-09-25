@@ -36,7 +36,7 @@ export type JointPose = typeof(setmetatable(
 --[[ Private Functions ]]--
 local function appendSample(clip: Clip, pose: Pose, time: number): boolean
 	if pose.EasingStyle ~= Enum.PoseEasingStyle.Linear then
-		warn("[JointPose] Carry sequence must be baked to linear samples")
+		print("[JointPose] Carry sequence must be baked to linear samples")
 		return false
 	end
 	local samples = clip.Samples[pose.Name]
@@ -81,7 +81,7 @@ function JointPose.Read(sequence: KeyframeSequence, mask: { [string]: string }):
 		return first.Time < second.Time
 	end)
 	if #frames < 2 or frames[#frames].Time <= 0 then
-		warn("[JointPose] Carry sequence needs at least two timed keyframes")
+		print("[JointPose] Carry sequence needs at least two timed keyframes")
 		return nil
 	end
 	local clip: Clip = { Duration = frames[#frames].Time, Samples = {} }
@@ -100,7 +100,7 @@ function JointPose.Read(sequence: KeyframeSequence, mask: { [string]: string }):
 	end
 	for partName, samples in clip.Samples do
 		if #samples ~= #frames then
-			warn(`[JointPose] Incomplete carry samples for {partName}`)
+			print(`[JointPose] Incomplete carry samples for {partName}`)
 			return nil
 		end
 	end

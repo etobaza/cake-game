@@ -169,7 +169,7 @@ function PromptHandler.OnStart(self: PromptHandler): ()
 	local template = assets and assets:WaitForChild("Prompt", TEMPLATE_TIMEOUT)
 
 	if not template or not template:IsA("BillboardGui") then
-		warn("[PromptHandler] Assets.Prompt is missing; falling back to the stock prompt UI")
+		print("[PromptHandler] Assets.Prompt is missing; falling back to the stock prompt UI")
 		-- Server prompts are born Custom and would be invisible without the art, so each one that
 		-- shows is flipped back to the stock look locally.
 		self.Lifetime:Add(

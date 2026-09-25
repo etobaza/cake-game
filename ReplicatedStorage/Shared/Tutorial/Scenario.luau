@@ -3,6 +3,7 @@
 
 --[[ Modules ]]--
 local Config = require(script.Parent.Parent.Configs.Tutorial)
+local Buildings = require(script.Parent.Parent.Configs.Buildings)
 local Cooking = require(script.Parent.Cooking)
 local Lessons = require(script.Parent.Lessons)
 local Policy = require(script.Parent.Parent.TutorialPolicy)
@@ -14,6 +15,49 @@ local Types = require(script.Parent.Parent.GameTypes)
 local Scenario = {}
 
 --[[ Private Functions ]]--
+local function sweep(session: any, props: any): Types.TutorialGoal
+	local held = session.Hands[1]
+	local broom = Buildings.Kinds.Broom.ToolId
+	local spills = {}
+	for id in session.Spills do
+		spills[#spills + 1] = id
+	end
+	table.sort(spills)
+	if not spills[1] then
+		if held and held.Kind == "Tool" and held.Id == broom then
+			return State.Goal(
+				"intro_return_broom",
+				"Return the broom",
+				"Put it back before we start baking.",
+				broom
+			)
+		end
+		local goal = State.Goal(
+			"intro_preparing",
+			"Getting your bakery ready…",
+			"Your first task will appear in a moment.",
+			nil
+		)
+		goal.waiting = true
+		return goal
+	end
+	if held and held.Kind == "Tool" and held.Id == broom then
+		return State.Goal(
+			"intro_sweep_" .. spills[1],
+			"Sweep this spill",
+			"Use Clean beside the spill. Clear the floor before baking.",
+			spills[1]
+		)
+	end
+	return State.FreeHands(session, props, "Free your hand to take the broom.")
+		or State.Goal(
+			"intro_broom",
+			"First, pick up the broom",
+			"Follow the arrows. Let's tidy the kitchen before your first bake.",
+			broom
+		)
+end
+
 local function clean(session: any, now: number): Types.TutorialGoal
 	local context = session.Tutorial
 	local customer = session.Customers[context.GuestId]
@@ -126,6 +170,9 @@ function Scenario.Resolve(cloud: any, session: any, props: any, page: string, no
 		return Lessons.Resolve(cloud, session, props, page)
 	end
 	local context = session.Tutorial
+	if context.Stage == "Sweep" then
+		return sweep(session, props)
+	end
 	if context.Stage == "Clean" then
 		return clean(session, now)
 	end

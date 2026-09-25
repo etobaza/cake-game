@@ -107,7 +107,7 @@ local function readTarget(self: View): Target?
 	end
 
 	if not self.ResolverFailed then
-		warn(`[Hint] Target resolver failed: {value}`)
+		print(`[Hint] Target resolver failed: {value}`)
 	end
 
 	self.ResolverFailed = true

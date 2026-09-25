@@ -165,7 +165,7 @@ function VFXHandler.OnStart(self: VFXHandler): ()
 	local assets = ReplicatedStorage:WaitForChild("Assets", Config.AssetTimeout)
 	local folder = assets and assets:WaitForChild("VFX", Config.AssetTimeout)
 	if not folder then
-		warn("[VFXHandler] Assets.VFX is missing")
+		print("[VFXHandler] Assets.VFX is missing")
 		return
 	end
 	for name in Config.Effects do
@@ -173,7 +173,7 @@ function VFXHandler.OnStart(self: VFXHandler): ()
 		if template and template:IsA("BasePart") then
 			self.Templates[name] = template
 		else
-			warn(`[VFXHandler] Missing template {name}`)
+			print(`[VFXHandler] Missing template {name}`)
 		end
 	end
 	self.Janitor:Add(

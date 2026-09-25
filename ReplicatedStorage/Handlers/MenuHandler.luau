@@ -161,7 +161,7 @@ function MenuHandler.OnStart(self: MenuHandler): ()
 	local grid = screen and resolve(screen, GRID_PATH)
 	local picked = screen and resolve(screen, PICKED_PATH)
 	if not screen or not grid or not picked then
-		warn(`[MenuHandler] '{SCREEN_NAME}' is missing; the day menu is disabled`)
+		print(`[MenuHandler] '{SCREEN_NAME}' is missing; the day menu is disabled`)
 		return
 	end
 
@@ -234,7 +234,7 @@ end
 function MenuHandler.BuildCells(self: MenuHandler): ()
 	local template = self.Grid:FindFirstChildWhichIsA("Frame")
 	if not template then
-		warn("[MenuHandler] recipe card template is missing")
+		print("[MenuHandler] recipe card template is missing")
 		return
 	end
 	local count = #Recipes:Values()
@@ -278,7 +278,7 @@ function MenuHandler.BuildPickedSlots(self: MenuHandler): ()
 	end
 
 	if not filled or not empty then
-		warn("[MenuHandler] the picked strip has no plates to reuse")
+		print("[MenuHandler] the picked strip has no plates to reuse")
 		return
 	end
 
@@ -313,14 +313,14 @@ end
 function MenuHandler.BindFilters(self: MenuHandler): ()
 	local strip = resolve(self.Screen, FILTERS_PATH)
 	if not strip then
-		warn("[MenuHandler] the filter strip is missing")
+		print("[MenuHandler] the filter strip is missing")
 		return
 	end
 
 	for _, filter in FILTERS do
 		local tab = strip:FindFirstChild(filter.Name)
 		if not tab or not tab:IsA("GuiObject") then
-			warn(`[MenuHandler] no filter tab named '{filter.Name}'`)
+			print(`[MenuHandler] no filter tab named '{filter.Name}'`)
 			continue
 		end
 
@@ -340,7 +340,7 @@ end
 function MenuHandler.BindHeader(self: MenuHandler): ()
 	local nextDay = resolve(UIHandler.BakeryMenu, HEADER_PATH)
 	if not nextDay or not nextDay:IsA("GuiButton") then
-		warn("[MenuHandler] BakeryMenu's Next Day button is missing")
+		print("[MenuHandler] BakeryMenu's Next Day button is missing")
 		return
 	end
 	self.Janitor:Add(
@@ -405,7 +405,7 @@ function MenuHandler.Rebuild(self: MenuHandler): ()
 		slot += 1
 		local cell = self.Cells[slot]
 		if not cell then
-			warn(`[MenuHandler] the grid ran out of cells at '{recipe.id}'`)
+			print(`[MenuHandler] the grid ran out of cells at '{recipe.id}'`)
 			break
 		end
 

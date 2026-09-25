@@ -3,6 +3,9 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Configs.Hint)
 local Hint = require(script.Parent.Parent.Hint)
+local Interact = require(ReplicatedStorage.Handlers.InteractHandler)
+local PromptHandler = require(ReplicatedStorage.Handlers.PromptHandler)
+local Geometry = require(script.Parent.Geometry)
 local Targets = require(script.Parent.Targets)
 local Types = require(ReplicatedStorage.Shared.GameTypes)
 
@@ -52,6 +55,24 @@ function Focus.Update(self: Focus): ()
 
 	if target.gui then
 		self.Hint:Gui(target.gui, { Key = key })
+		return
+	end
+
+	-- Once the exact target is actionable nearby, point at its tappable plate.
+	-- Another station's prompt must never steal this lesson's finger.
+	local prompt, billboard, root = PromptHandler:GetActiveView()
+	if
+		target.part
+		and prompt
+		and prompt.Parent == target.part
+		and prompt.Enabled
+		and billboard
+		and billboard.Enabled
+		and root
+		and Interact:Describe(target.part).Fire ~= nil
+		and Geometry.Gui(root, camera.ViewportSize)
+	then
+		self.Hint:Gui(root, { Key = key .. ":prompt", Dim = false })
 		return
 	end
 

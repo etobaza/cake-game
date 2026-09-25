@@ -30,7 +30,7 @@ function CarryModel.new(item: Appearance.Item, parent: Instance): FoodModel.Food
 	if not entry or not source then
 		local key = `{item.Kind}/{item.Id}`
 		if not Warned[key] then
-			warn(`[CarryModel] No authored carry model for {key}`)
+			print(`[CarryModel] No authored carry model for {key}`)
 			Warned[key] = true
 		end
 		return nil

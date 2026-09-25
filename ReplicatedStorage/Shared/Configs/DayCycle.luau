@@ -33,8 +33,8 @@ local DayCycle = {
 	-- so this is the real cost of the last table being busy.
 	EatSeconds = 6,
 
-	-- Each new mixing/baking action rolls once. The first batch is guaranteed to make the tutorial
-	-- spill; later batches use this chance until the authored pool is full.
+	-- After the introduction, each mixing/baking action rolls once until the authored pool is full.
+	-- Players who have never mopped still receive one guaranteed spill on their first kitchen action.
 	SpillChance = 0.34,
 	SpillPlacementAttempts = 24,
 	SpillSeparation = 5,

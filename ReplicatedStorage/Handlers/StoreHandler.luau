@@ -74,7 +74,7 @@ end
 function StoreHandler.OnStart(self: StoreHandler): ()
 	local screen = UIHandler:GetPanel(SCREEN_NAME)
 	if not screen then
-		warn(`[StoreHandler] '{SCREEN_NAME}' is missing; the store is disabled`)
+		print(`[StoreHandler] '{SCREEN_NAME}' is missing; the store is disabled`)
 		return
 	end
 
@@ -107,7 +107,7 @@ end
 --- Fills one drawn section with as many products as it was given, and hides the tiles left over.
 function StoreHandler.BindSection(self: StoreHandler, parent: Instance?, prefix: string, entryIds: { string }): ()
 	if not parent then
-		warn(`[StoreHandler] '{SCREEN_NAME}' is missing a section`)
+		print(`[StoreHandler] '{SCREEN_NAME}' is missing a section`)
 		return
 	end
 

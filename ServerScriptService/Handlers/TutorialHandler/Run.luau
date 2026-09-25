@@ -65,14 +65,28 @@ local function serve(self: any, customerId: string): ()
 end
 
 --[[ Handling ]]--
-function Run.new(player: Player, data: any, release: (Player) -> ()): Run
-	local self: any =
-		setmetatable({ Player = player, Data = data, Release = release, Janitor = Janitor.new(), Machine = nil }, Run)
+function Run.new(player: Player, data: any, release: (Player) -> (), prepareFloor: () -> boolean?): Run
+	local self: any = setmetatable({
+		Player = player,
+		Data = data,
+		Release = release,
+		PrepareFloor = prepareFloor,
+		Janitor = Janitor.new(),
+		Machine = nil,
+	}, Run)
 	local active = Policy.IsActive(data.Cloud)
 	data.Session.Tutorial.Protected = active
 	self.Machine = StateMachine.new({
-		initialState = if active then "Cook" else data.Cloud.Tutorial.Status,
+		initialState = if Policy.NeedsFloor(data.Cloud)
+			then "Sweep"
+			elseif active then "Cook"
+			else data.Cloud.Tutorial.Status,
 		states = {
+			Sweep = {
+				onEnter = function(): ()
+					enter(self, "Sweep")
+				end,
+			},
 			Cook = {
 				onEnter = function(): ()
 					enter(self, "Cook")
@@ -114,6 +128,31 @@ function Run.Refresh(self: Run): ()
 	end
 	local session = self.Data.Session
 	local context = session.Tutorial
+	if context.Stage == "Sweep" and session.Day.Phase ~= "Summary" then
+		-- Restarting the tutorial must not send an existing batch or dish to the trash.
+		local cooking = session.Cooking.SelectedRecipeId ~= nil
+		for _, station in session.Stations do
+			cooking = cooking or station.State ~= "Idle"
+		end
+		for _, item in session.Hands do
+			cooking = cooking or item.Kind == "Dish" or item.Kind == "Dough"
+		end
+		local available = if cooking then false else self.PrepareFloor()
+		local held = session.Hands[1]
+		local holdingBroom = held and held.Kind == "Tool" and held.Id == Buildings.Kinds.Broom.ToolId
+		local hasSpills = false
+		for _ in session.Spills do
+			hasSpills = true
+			break
+		end
+		local cleaned = self.Data.Cloud.Tutorial.Actions.Mopped and not hasSpills and not holdingBroom
+		if available == false or cleaned then
+			mark(self, "PreparedFloor")
+			self.Machine:SetState("Cook")
+		else
+			return
+		end
+	end
 	local customer = session.Customers[context.GuestId]
 	if customer then
 		if customer.State == "Waiting" or customer.State == "Eating" then
@@ -236,7 +275,7 @@ function Run.Destroy(self: Run): ()
 end
 
 export type Run = typeof(setmetatable(
-	{} :: { Player: Player, Data: any, Release: (Player) -> (), Janitor: any, Machine: any },
+	{} :: { Player: Player, Data: any, Release: (Player) -> (), PrepareFloor: () -> boolean?, Janitor: any, Machine: any },
 	Run
 ))
 

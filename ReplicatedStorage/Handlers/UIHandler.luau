@@ -134,7 +134,7 @@ end
 function UIHandler.GetPanel(self: UIHandler, panelName: string): ScreenGui?
 	local screen = self.Screens[panelName]
 	if not screen then
-		warn(`[UIHandler] no screen named '{panelName}'`)
+		print(`[UIHandler] no screen named '{panelName}'`)
 	end
 
 	return screen

@@ -134,7 +134,7 @@ end
 function MixHandler.BuildBillboard(self: MixHandler): ()
 	local template = UIHandler:GetHud(BILLBOARD_PATH)
 	if not template:IsA("BillboardGui") then
-		warn("[MixHandler] the authored mixer Billboard is missing")
+		print("[MixHandler] the authored mixer Billboard is missing")
 		return
 	end
 
@@ -160,7 +160,7 @@ function MixHandler.BuildBillboard(self: MixHandler): ()
 		or not chipIcon:IsA("ImageLabel")
 	then
 		billboard:Destroy()
-		warn("[MixHandler] the authored mixer Billboard has no reusable ingredient chips")
+		print("[MixHandler] the authored mixer Billboard has no reusable ingredient chips")
 		return
 	end
 
