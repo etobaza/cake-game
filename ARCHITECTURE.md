@@ -85,6 +85,12 @@ Milk and eggs have one available portion and a three-second production interval;
 
 `VacantView` also captures the configured animal output folders outside `Upgrades`. It hides their stands and preview ingredients on unclaimed plots and after release; claiming restores authored properties before `GardenWorld` takes ownership.
 
+## Guest movement
+
+`CustomerViewHandler/Guest` moves every street pedestrian and cafe guest on the shared 10 Hz tick. Humanoid `AutoRotate` stays off: an owned `AlignOrientation` turns the body toward a heading that rotates at most `Configs/Guests.TurnRate` degrees per second, so physics rounds each tick's heading step instead of snapping. The heading aims `LookAhead` studs further along the route and legs hand over at each corner's bisector, so corners become short arcs; `Humanoid:Move` walks along the heading. Pace eases with `Acceleration` and `Deceleration`, drops while the body faces away from its path (turn first, then stride), and on routes with a look-at target slows over the final `SlowdownDistance` studs before the guest stops and turns to face it. Routes without a look-at keep their pace, so a route started from the arrival callback continues without a stop. `Street` spaces the crowd through the guest's `SpeedLimit` rather than writing `WalkSpeed`.
+
+Walk playback follows the guest's pace against `Avatar.WalkReferenceSpeed`; 9 studs per second keeps planted feet still on a default R15 rig. Idle, walk, and sit crossfade over `Avatar.AnimationFadeTime`. A seating guest first turns to the chair's facing at the normal turn rate, so the seat tween lowers the body instead of spinning it. The seated state is enabled in the same frame as the explicit sit, so Roblox's touch-to-sit cannot apply its default weld pose first. The facing constraint is disabled while the weld owns the pose; standing up hands orientation back from the body's current facing.
+
 ## Reusable hints and tutorial
 
 `Shared/Tutorial/Navigation` redirects an unrelated open page to its close/back button while retaining server-owned tutorial progress. Required recipe pages and the evening Report/Menu flow keep their intended targets. During the active introduction, opening Upgrades no longer replaces the current task with the optional upgrade lesson. Close targets resolve the visible, interactable `Exit` or `CloseButton` through `UIHandler`; Inventory, Report, and Upgrades prefer the shared `BakeryMenu` header. Page locks and hidden controls are respected. Closing the page immediately resolves the current gameplay step again.

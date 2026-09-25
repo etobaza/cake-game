@@ -212,23 +212,22 @@ function Street.Update(): ()
 			continue
 		end
 		local route = guest.Route
-		local point = route and route.Points[route.Index]
-		local heading = point and (point - guest.Root.Position) * Vector3.new(1, 0, 1)
+		local heading = guest.Heading
 		local speed = WalkSpeed
-		if heading and heading.Magnitude > 0.01 then
+		if route then
 			for _, other in Actors do
 				if other == entry or other.Owner or other.Guest.Destroyed then
 					continue
 				end
 				local delta = (other.Guest.Root.Position - guest.Root.Position) * Vector3.new(1, 0, 1)
-				local ahead = delta:Dot(heading.Unit)
-				local across = (delta - heading.Unit * ahead).Magnitude
+				local ahead = delta:Dot(heading)
+				local across = (delta - heading * ahead).Magnitude
 				if ahead > 0 and across < 2.5 then
 					speed = math.min(speed, math.max(0, (ahead - Config.PersonalSpace) * 2))
 				end
 			end
 		end
-		guest.Humanoid.WalkSpeed = speed
+		guest.SpeedLimit = speed
 		if route and speed < WalkSpeed / 2 then
 			route.Deadline = os.clock() + GuestsConfig.WalkTimeout
 		end
@@ -325,7 +324,7 @@ function Street.Take(player: Player, customerId: string): boolean
 	base.Reserved[customerId] = selected
 	Appearance.Visit(player, selected.Identity)
 	local guest = selected.Guest
-	guest.Humanoid.WalkSpeed = WalkSpeed
+	guest.SpeedLimit = WalkSpeed
 	guest.Route = nil
 	guest.Model:SetAttribute("VisitorState", "Entering")
 	guest.Model:SetAttribute("CustomerId", customerId)

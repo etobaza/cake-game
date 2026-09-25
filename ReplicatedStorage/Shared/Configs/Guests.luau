@@ -52,16 +52,30 @@ local Guests = {
 		IdleAnimation = "rbxassetid://507766666",
 		WalkAnimation = "rbxassetid://507777826",
 		SitAnimation = "rbxassetid://2506281703",
+		-- Studs per second at which the walk clip's stride matches the ground at normal playback.
+		WalkReferenceSpeed = 9,
+		-- Below this pace a guest reads as standing: idle instead of a crawling walk cycle.
+		MovingThreshold = 0.5,
+		AnimationFadeTime = 0.2,
 	},
 
 	--[[ Movement ]]--
 	-- Studs per second. Slower than the player on purpose: a guest crossing the room should read
 	-- as a guest arriving, not as something teleporting into a chair.
 	WalkSpeed = 6,
-	TurnSeconds = 0.35,
+	-- Studs per second squared: guests ease into a stride and out of it instead of starting or
+	-- stopping dead.
+	Acceleration = 8,
+	Deceleration = 12,
+	-- Degrees per second the heading may turn. The body follows it through an AlignOrientation,
+	-- which rounds each 10 Hz heading step instead of snapping like Humanoid.AutoRotate.
+	TurnRate = 270,
+	TurnResponsiveness = 15,
+	-- The heading aims this many studs ahead along the route, so corners become short arcs.
+	LookAhead = 3,
+	-- A guest walking to a standing spot slows down over this many final studs.
+	SlowdownDistance = 3,
 	SeatTransitionSeconds = 0.45,
-	-- Advance collinear intermediate points before Humanoid decelerates to a full stop.
-	WaypointReachDistance = 2.5,
 	-- Follow the blue authored runner, while still allowing shorter steps off it to a destination.
 	CarpetRoute = {
 		Path = { "1ndFloor", "Cafe", "Decoration", "carpet" },
