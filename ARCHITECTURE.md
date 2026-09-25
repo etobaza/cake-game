@@ -49,6 +49,8 @@ The place-authored category connector frames use two-pixel strokes with integer-
 
 The authored `StarterGui.MainGui.BakeryMenu.MainFrame.Header.Buttons.NextDay` uses the same idle background and white caption styling as Menu. Its background has no `UIStroke` or `UICorner`; the shared red ribbon supplies the outer frame. Text outlines and the dashed inset remain. This appearance is a place-only edit and must be saved with the place separately from source changes.
 
+`Shared/UI/ButtonRow` gives the shared bakery header, recipe filters, and upgrade categories coordinated hover and selection feedback. Transparent authored controls keep their layout and hitboxes; their artwork lives in runtime `Wrap` frames centered at `AnchorPoint = (0.5, 0.5)`. The focused control stays at its authored size while its siblings shrink, and presses compress the focused artwork. `Configs/ButtonRow` owns the Ripple spring and scale tuning. Each row owns its wrappers, motions, and input connections; hidden or disabled controls and focus loss clear feedback, and cleanup restores the authored children. No place-only edits are required.
+
 ## Dependencies
 
 Wally owns every registry package. `ReplicatedStorage/wally.toml` lists the shared-realm packages (`cmdr`, `flux`, `janitor`, `topbar-plus`, `typed-promise`) and installs into `ReplicatedStorage/Packages`; `ServerStorage/wally.toml` lists the server-realm packages (`profilestore`) and installs into `ServerStorage/ServerPackages`. Both install directories are gitignored; the manifests and lock files are committed.

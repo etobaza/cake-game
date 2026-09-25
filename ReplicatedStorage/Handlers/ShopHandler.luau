@@ -18,6 +18,7 @@ local _Handlers = ReplicatedStorage.Handlers
 
 --[[ Modules ]]--
 local Animate = require(_Shared.UI.Animate)
+local ButtonRow = require(_Shared.UI.ButtonRow)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Authored = require(_Shared.UI.Authored)
 local Bus = require(_Shared.Bus)
@@ -273,6 +274,7 @@ function ShopHandler.BindTabs(self: ShopHandler, main: Instance): ()
 		return
 	end
 
+	local rowButtons: { GuiObject } = {}
 	for _, tab in TABS do
 		local button = top:FindFirstChild(tab.Name)
 		if not button or not button:IsA("GuiButton") then
@@ -281,11 +283,12 @@ function ShopHandler.BindTabs(self: ShopHandler, main: Instance): ()
 		end
 
 		self.Tabs[tab.Category] = button
-		Animate.Press(button)
+		table.insert(rowButtons, button)
 		button.Activated:Connect(function()
 			self:ShowCategory(tab.Category)
 		end)
 	end
+	ButtonRow.Bind(top :: GuiObject, rowButtons)
 end
 
 --- The footer's Purchase plate is a frame, so the press is read off it directly.
@@ -339,7 +342,7 @@ function ShopHandler.ShowCategory(self: ShopHandler, category: GameTypes.Upgrade
 	end
 
 	for name, tab in self.Tabs do
-		local background = tab:FindFirstChild("Bg")
+		local background = tab:FindFirstChild("Bg", true)
 		if background and background:IsA("ImageLabel") then
 			background.ImageColor3 = if name == category then TAB_ON else TAB_OFF
 		end

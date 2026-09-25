@@ -22,6 +22,7 @@ local CardGrid = require(_Shared.UI.CardGrid)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local FoodPreview = require(_Shared.UI.FoodPreview)
 local Animate = require(_Shared.UI.Animate)
+local ButtonRow = require(_Shared.UI.ButtonRow)
 local Authored = require(_Shared.UI.Authored)
 local BuildingsConfig = require(_Configs.Buildings)
 local Bus = require(_Shared.Bus)
@@ -317,6 +318,7 @@ function MenuHandler.BindFilters(self: MenuHandler): ()
 		return
 	end
 
+	local rowButtons: { GuiObject } = {}
 	for _, filter in FILTERS do
 		local tab = strip:FindFirstChild(filter.Name)
 		if not tab or not tab:IsA("GuiObject") then
@@ -326,15 +328,19 @@ function MenuHandler.BindFilters(self: MenuHandler): ()
 
 		self.Filters[filter.Name] = tab
 
-		Animate.Press(tab)
-		Press.Bind(tab, function()
-			self.Filter = filter.Station
-			if self.Grid:IsA("ScrollingFrame") then
-				self.Grid.CanvasPosition = Vector2.zero
-			end
-			self:Rebuild()
-		end)
+		table.insert(rowButtons, tab)
+		self.Janitor:Add(
+			Press.Bind(tab, function()
+				self.Filter = filter.Station
+				if self.Grid:IsA("ScrollingFrame") then
+					self.Grid.CanvasPosition = Vector2.zero
+				end
+				self:Rebuild()
+			end),
+			"Destroy"
+		)
 	end
+	self.Janitor:Add(ButtonRow.Bind(strip :: GuiObject, rowButtons), "Destroy")
 end
 
 function MenuHandler.BindHeader(self: MenuHandler): ()
@@ -488,7 +494,7 @@ end
 function MenuHandler.RefreshFilters(self: MenuHandler): ()
 	for _, filter in FILTERS do
 		local tab = self.Filters[filter.Name]
-		local background = tab and tab:FindFirstChild("Bg")
+		local background = tab and tab:FindFirstChild("Bg", true)
 		if background and background:IsA("Frame") then
 			background.BackgroundColor3 = if filter.Station == self.Filter then FILTER_ON else FILTER_OFF
 		end

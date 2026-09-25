@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --[[ Modules ]]--
 local Animate = require(script.Parent.Animate)
+local ButtonRow = require(script.Parent.ButtonRow)
 local Flux = require(ReplicatedStorage.Packages.flux)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Pages = require(script.Parent.Stores.Pages)
@@ -57,8 +58,7 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	janitor:LinkToInstance(screen)
 	local function bindPress(button: GuiButton): ()
 		local reset = Animate.Press(button, nil, janitor)
-		-- Next Day hides both itself and the screen while the pointer is still over it.
-		-- MouseLeave is not guaranteed on hidden UI, so each visibility cycle starts at rest.
+		-- Closing can hide the screen without MouseLeave; each visibility cycle starts at rest.
 		janitor:Add(screen:GetPropertyChangedSignal("Enabled"):Connect(reset), "Disconnect")
 		janitor:Add(button:GetPropertyChangedSignal("Visible"):Connect(reset), "Disconnect")
 		janitor:Add(button:GetPropertyChangedSignal("Interactable"):Connect(reset), "Disconnect")
@@ -101,6 +101,7 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 		Size = rowSize,
 	})
 	Flux.edit(upgrades)({ Visible = false, Interactable = false, Selectable = false })
+	local rowButtons: { GuiObject } = {}
 	for index, name in HEADER_BUTTONS do
 		local button = buttons:FindFirstChild(name) :: TextButton
 		button.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -109,13 +110,14 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 		local lines = button:FindFirstChild("Lines") :: ImageLabel
 		lines.AnchorPoint = Vector2.new(0.5, 0.5)
 		lines.Position = UDim2.fromScale(0.5, 0.5)
+		table.insert(rowButtons, button)
 	end
+	janitor:Add(ButtonRow.Bind(buttons, rowButtons), "Destroy")
 	for name, page in TABS do
 		local button = buttons:FindFirstChild(name) :: TextButton
 		local available = Flux(function(): boolean
 			return isSummary() and Pages.CanOpen(page)
 		end)
-		bindPress(button)
 		Flux.edit(button)({
 			Interactable = available,
 			Selectable = available,
@@ -125,14 +127,13 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 				end
 			end,
 		})
-		Flux.edit(button:FindFirstChild("Bg") :: Frame)({
+		Flux.edit(button:FindFirstChild("Bg", true) :: Frame)({
 			BackgroundColor3 = function(): Color3
 				return if not available() then DISABLED else if Pages.Current() == page then SELECTED else IDLE
 			end,
 		})
 	end
 	local nextDay = buttons:FindFirstChild("NextDay") :: TextButton
-	bindPress(nextDay)
 	Flux.edit(nextDay)({
 		Visible = isSummary,
 	})
