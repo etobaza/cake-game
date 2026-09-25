@@ -335,7 +335,7 @@ return function(hud: Instance, props: Props): ()
 				if inside then
 					inside.Text = text
 				end
-			end, 2)
+			end)
 
 			if seen then
 				Animate.Pop(plate, POP_FROM_GAIN)

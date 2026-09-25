@@ -14,6 +14,12 @@ return {
 	RefreshInterval = 0.15,
 	GoalSettleSeconds = 0.25,
 	ReminderSeconds = 18,
+	GuestHighlight = {
+		Color = Color3.fromRGB(255, 221, 128),
+		FillTransparency = 0.8,
+		OutlineTransparency = 0,
+		DepthMode = Enum.HighlightDepthMode.AlwaysOnTop,
+	},
 	Stages = { Sweep = 1, Cook = 2, Serve = 3, Clean = 4, Completed = 4, Skipped = 4 },
 	Topics = {
 		{

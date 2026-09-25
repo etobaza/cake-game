@@ -429,7 +429,7 @@ function ShopHandler.RefreshFooter(
 	if funds then
 		Animate.Count(funds, cash, function(value: number)
 			Authored.SetPair(funds, UIHandler:FormatNumber(value))
-		end, 2)
+		end)
 	end
 
 	local key = self.Selected[self.Category]

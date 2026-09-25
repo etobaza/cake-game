@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --[[ Modules ]]--
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local OrderLayout = require(script.Parent.OrderLayout)
 
 --[[ Constants ]]--
 -- Desktop artwork was sized for a 720p canvas. Keep that density on larger
@@ -76,12 +77,6 @@ function HudLayout.Apply(hud: GuiObject): ()
 			if portrait then UDim2.new(0, 8, 0.5, 0) else UDim2.fromOffset(8, 84 + columnHeight / 2),
 			Vector2.new(buttonSide + 4, columnHeight)
 		)
-		-- Keep orders at the bottom; portrait needs room for the centered hotbar.
-		placeGroup(
-			"Order",
-			UDim2.new(1, -8, 1, if portrait then -88 else -8),
-			Vector2.new(if portrait then math.min(size.X - 16, 336) else 284, 98)
-		)
 		placeGroup(
 			"Quests",
 			if portrait then UDim2.new(1, -8, 0.5, 30) else UDim2.new(1, -8, 0, 100),
@@ -90,9 +85,9 @@ function HudLayout.Apply(hud: GuiObject): ()
 	else
 		placeGroup("Currency", UDim2.new(0, 16, 1, -16), Vector2.new(250, 112))
 		placeGroup("SideBtns", UDim2.new(0, 16, 0.5, 0), Vector2.new(108, 348))
-		placeGroup("Order", UDim2.new(1, -16, 1, -16), Vector2.new(460, 130) * 1.25)
 		placeGroup("Quests", UDim2.new(1, -16, 0.5, 0), Vector2.new(300, 190))
 	end
+	OrderLayout.Apply(hud, compact, scale)
 	local quests = hud:FindFirstChild("Quests")
 	if quests and quests:IsA("GuiObject") then
 		local arrow = quests:FindFirstChild("Btn")
@@ -145,6 +140,12 @@ end
 
 function HudLayout.Bind(hud: GuiObject): any
 	local janitor = Janitor.new()
+	local orders = hud:FindFirstChild("Order")
+	if orders then
+		janitor:Add(orders:GetAttributeChangedSignal("OrderCount"):Connect(function(): ()
+			HudLayout.Apply(hud)
+		end), "Disconnect")
+	end
 	janitor:Add(
 		hud:GetPropertyChangedSignal("AbsoluteSize"):Connect(function(): ()
 			HudLayout.Apply(hud)

@@ -156,7 +156,7 @@ function ReportHandler.Refresh(self: ReportHandler): ()
 	Authored.SetPair(Authored.Resolve(self.Panel, { "Top", "DailyReport", "Num" }), `# {day.Number}`)
 	Authored.SetPair(
 		Authored.Resolve(self.Panel, { "DailyProfit", "Value", "Num" }),
-		string.format("%.2f", day.Summary.Coins)
+		UIHandler:FormatNumber(day.Summary.Coins)
 	)
 end
 

@@ -10,12 +10,14 @@ local RunService = game:GetService("RunService")
 local Config = require(ReplicatedStorage.Shared.Configs.Tutorial)
 local DataClient = require(script.Parent.DataHandlerClient)
 local Flux = require(ReplicatedStorage.Packages.flux)
+local GuestHighlight = require(ReplicatedStorage.Shared.UI.Tutorial.GuestHighlight)
 local Interact = require(script.Parent.InteractHandler)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Pages = require(ReplicatedStorage.Shared.UI.Stores.Pages)
 local Presenter = require(ReplicatedStorage.Shared.UI.Tutorial.Presenter)
 local Scenario = require(ReplicatedStorage.Shared.Tutorial.Scenario)
 local Scope = require(ReplicatedStorage.Shared.UI.Scope)
+local TutorialPolicy = require(ReplicatedStorage.Shared.TutorialPolicy)
 local UIHandler = require(script.Parent.UIHandler)
 
 --[[ Tables ]]--
@@ -26,6 +28,20 @@ local TutorialHandler = {
 }
 
 --[[ Private Functions ]]--
+local function incomingGuest(cloud: any, session: any): string?
+	if not TutorialPolicy.IsActive(cloud) or cloud.Tutorial.Collapsed or not session.Tutorial.Protected then
+		return nil
+	end
+
+	local guestId = session.Tutorial.GuestId
+	local customer = session.Customers[guestId]
+	if not customer or not customer.TutorialProtected then
+		return nil
+	end
+
+	return if customer.State == "Arriving" or customer.State == "Queued" then guestId else nil
+end
+
 local function bindViewport(self: any): ()
 	self.Janitor:Remove("Viewport")
 	local camera = workspace.CurrentCamera
@@ -68,6 +84,8 @@ function TutorialHandler.OnStart(self: TutorialHandler): ()
 		return true
 	end)
 	self.Janitor:Add(self.View, "Destroy")
+	self.GuestHighlight = GuestHighlight.new(Players.LocalPlayer.UserId)
+	self.Janitor:Add(self.GuestHighlight, "Destroy")
 	self.Janitor:Add(
 		DataClient:SubscribeToAll(function(): ()
 			self:Refresh()
@@ -114,8 +132,11 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 	local cloud = DataClient:GetData({}, "Cloud")
 	local session = DataClient:GetData({}, "Session")
 	if not cloud or not session or not cloud.Tutorial or not session.Tutorial then
+		self.GuestHighlight:Clear()
 		return
 	end
+	local guestId = incomingGuest(cloud, session)
+	self.GuestHighlight:Update(guestId)
 	local props = Interact:GetOwnedIds()
 	local now = workspace:GetServerTimeNow()
 	local goal = Scenario.Resolve(cloud, session, props, self.Page, now, Pages.CanOpen(Pages.Names.None))
@@ -130,11 +151,12 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 		}
 	end
 	self.View:Set(goal, cloud.Tutorial)
-	if goal and not self.Janitor:Get("Frame") then
+	local needsFrame = goal ~= nil or guestId ~= nil
+	if needsFrame and not self.Janitor:Get("Frame") then
 		self.Janitor:Add(
 			RunService.RenderStepped:Connect(function(deltaTime: number): ()
 				self.Elapsed += deltaTime
-					if self.Elapsed >= Config.RefreshInterval then
+				if self.Elapsed >= Config.RefreshInterval then
 					self.Elapsed = 0
 					self:Refresh()
 				end
@@ -143,7 +165,7 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 			"Disconnect",
 			"Frame"
 		)
-	elseif not goal then
+	elseif not needsFrame then
 		self.Janitor:Remove("Frame")
 		self.View:Draw(0, self.Page)
 	end
@@ -157,6 +179,7 @@ end
 export type TutorialHandler = typeof(TutorialHandler) & {
 	Janitor: any,
 	View: any,
+	GuestHighlight: GuestHighlight.GuestHighlight,
 	Page: string,
 	Elapsed: number,
 }

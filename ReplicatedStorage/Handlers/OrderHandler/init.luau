@@ -103,9 +103,10 @@ function OrderHandler.OnStart(self: OrderHandler): ()
 	self.Layout = container:FindFirstChildOfClass("UIListLayout") :: UIListLayout
 	self.Layout.Parent = scroll
 	self.Layout.SortOrder = Enum.SortOrder.LayoutOrder
+	self.Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, 5)
-	padding.PaddingRight = UDim.new(0, 5)
+	padding.PaddingLeft = UDim.new(0, Config.Layout.ContentPadding)
+	padding.PaddingRight = UDim.new(0, Config.Layout.ContentPadding)
 	padding.Parent = scroll
 	for index = 1, Config.Slots do
 		local root = container:FindFirstChild(tostring(index)) :: Frame
@@ -151,6 +152,7 @@ end
 
 function OrderHandler.Refresh(self: OrderHandler): ()
 	local orders = collectOrders()
+	self.Root:SetAttribute("OrderCount", #orders)
 	self.Root.Visible = #orders > 0
 	while #self.Cards < #orders do
 		local root = self.Template:Clone()
@@ -163,10 +165,12 @@ function OrderHandler.Refresh(self: OrderHandler): ()
 		self.Janitor:Add(card, "Destroy")
 	end
 	local width = Authored.UnscaledSize(self.Scroll).X
-	local gap = width * 0.014
-	local cardWidth = math.max((width - 10 - gap * (Config.Slots - 1)) / Config.Slots, 1)
+	local slots = math.clamp((self.Root:GetAttribute("VisibleOrderSlots") :: number?) or Config.Slots, 1, Config.Slots)
+	local gap = Config.Layout.CardGap
+	local padding = Config.Layout.ContentPadding * 2
+	local cardWidth = math.max((width - padding - gap * (slots - 1)) / slots, 1)
 	self.Layout.Padding = UDim.new(0, gap)
-	self.Scroll.CanvasSize = UDim2.fromOffset(10 + #orders * (cardWidth + gap) - gap, 0)
+	self.Scroll.CanvasSize = UDim2.fromOffset(math.max(0, padding + #orders * (cardWidth + gap) - gap), 0)
 	local now = workspace:GetServerTimeNow()
 	for index, card in self.Cards do
 		card.Root.Size = UDim2.new(0, cardWidth, 1, -10)

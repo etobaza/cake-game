@@ -15,6 +15,7 @@ local Flux = require(ReplicatedStorage.Packages.flux)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Pages = require(ReplicatedStorage.Shared.UI.Stores.Pages)
 local Press = require(ReplicatedStorage.Shared.UI.Press)
+local RunControl = require(ReplicatedStorage.Shared.UI.RunControl)
 local Scope = require(ReplicatedStorage.Shared.UI.Scope)
 local UIHandler = require(ReplicatedStorage.Handlers.UIHandler)
 
@@ -37,6 +38,10 @@ end
 
 function RunHandler.OnStart(self: RunHandler): ()
 	self.Button = UIHandler:GetHud("Controls.Run") :: TextButton
+	self.Janitor:Add(RunControl.Bind(self.Button, Players.LocalPlayer:WaitForChild("PlayerGui") :: PlayerGui), "Destroy")
+	self.Janitor:Add(self.Button:GetAttributeChangedSignal("TouchLayoutReady"):Connect(function(): ()
+		self:Refresh()
+	end), "Disconnect")
 	self.Janitor:Add(
 		Press.BindTap(self.Button, function(): ()
 			self.Toggle = not self.Toggle
@@ -113,8 +118,10 @@ function RunHandler.Refresh(self: RunHandler): ()
 		table.clear(self.HeldKeys)
 	end
 	self:SetRunning(available and (self.Toggle or next(self.HeldKeys) ~= nil))
-	self.Button.Visible = available and UserInputService.PreferredInput == Enum.PreferredInput.Touch
-	self.Button.Text = if self.Running then "Walk" else "Run"
+	self.Button.Visible = available
+		and UserInputService.PreferredInput == Enum.PreferredInput.Touch
+		and self.Button:GetAttribute("TouchLayoutReady") == true
+	RunControl.SetRunning(self.Button, self.Running)
 end
 
 function RunHandler.Reset(self: RunHandler): ()

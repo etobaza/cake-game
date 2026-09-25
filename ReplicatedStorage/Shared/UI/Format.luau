@@ -7,20 +7,14 @@ local Format = {}
 
 --[[ Handling ]]--
 --- 1234567 -> "1 234 567". Thin spaces, not commas -- that is how the HUD was authored.
---- Design-sheet prices carry cents (5.25), so a fractional value keeps two decimals.
+--- Round displayed amounts to whole numbers; stored values retain their precision.
 function Format.Number(value: number): string
-	local totalCents = math.round(math.abs(value) * 100)
-	local whole = math.floor(totalCents / 100)
+	local whole = math.round(math.abs(value))
 	local text = tostring(whole)
 	local grouped = text:reverse():gsub("(%d%d%d)", "%1 "):reverse()
 	local formatted = (grouped:gsub("^%s+", ""))
 
-	local cents = totalCents - whole * 100
-	if cents > 0 then
-		formatted ..= string.format(".%02d", cents)
-	end
-
-	return if value < 0 and totalCents > 0 then `-{formatted}` else formatted
+	return if value < 0 and whole > 0 then `-{formatted}` else formatted
 end
 
 --- Seconds -> "M:SS".
