@@ -6,6 +6,7 @@ local Config = require(script.Parent.Parent.Configs.Tutorial)
 local Buildings = require(script.Parent.Parent.Configs.Buildings)
 local Cooking = require(script.Parent.Cooking)
 local Lessons = require(script.Parent.Lessons)
+local Navigation = require(script.Parent.Navigation)
 local Policy = require(script.Parent.Parent.TutorialPolicy)
 local Recipes = require(script.Parent.Parent.Configs.Registries.Recipes)
 local State = require(script.Parent.State)
@@ -136,7 +137,7 @@ local function serve(session: any, now: number): Types.TutorialGoal
 end
 
 --[[ Handling ]]--
-function Scenario.Resolve(cloud: any, session: any, props: any, page: string, now: number): Types.TutorialGoal?
+local function resolve(cloud: any, session: any, props: any, page: string, now: number): Types.TutorialGoal?
 	local active = Policy.IsActive(cloud)
 	if session.Day.Phase == "Summary" then
 		return if not cloud.Tutorial.Lessons.NextDay and not cloud.Tutorial.Lessons["Dismissed:NextDay"]
@@ -152,11 +153,11 @@ function Scenario.Resolve(cloud: any, session: any, props: any, page: string, no
 			urgent.topic = "Cooking"
 		end
 		if page ~= "None" then
-			local goal = State.Gui(
+			local goal = State.Close(
 				"close_for_oven",
 				"Your baked dish is ready",
 				"Close this page and collect the dish before it burns.",
-				page .. ".MainFrame.Header.Exit"
+				page
 			)
 			goal.urgent = true
 			return goal
@@ -164,9 +165,6 @@ function Scenario.Resolve(cloud: any, session: any, props: any, page: string, no
 		return urgent
 	end
 	if not active then
-		return Lessons.Resolve(cloud, session, props, page)
-	end
-	if page == "Upgrades" then
 		return Lessons.Resolve(cloud, session, props, page)
 	end
 	local context = session.Tutorial
@@ -205,6 +203,17 @@ function Scenario.Resolve(cloud: any, session: any, props: any, page: string, no
 		return serving
 	end
 	return nil
+end
+
+function Scenario.Resolve(
+	cloud: any,
+	session: any,
+	props: any,
+	page: string,
+	now: number,
+	canClose: boolean?
+): Types.TutorialGoal?
+	return Navigation.Resolve(resolve(cloud, session, props, page, now), page, canClose ~= false)
 end
 
 return Scenario

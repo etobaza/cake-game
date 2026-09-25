@@ -318,11 +318,11 @@ function Cooking.Resolve(cloud: any, session: any, props: any, recipe: any, page
 		return goal
 	end
 	if page == "RecipeToCook" then
-		return State.Gui(
+		return State.Close(
 			"close_recipes",
 			"Return to your mixer",
 			"Your recipe is selected. Its ingredients are now shown above the bowl.",
-			"RecipeToCook.MainFrame.Header.Exit"
+			"RecipeToCook"
 		)
 	end
 	local missing = {}

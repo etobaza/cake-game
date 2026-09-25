@@ -11,6 +11,7 @@ local Buildings = require(ReplicatedStorage.Shared.Configs.Buildings)
 local Garden = require(ReplicatedStorage.Shared.Configs.Garden)
 local Geometry = require(script.Parent.Geometry)
 local Interact = require(ReplicatedStorage.Handlers.InteractHandler)
+local Pages = require(script.Parent.Parent.Stores.Pages)
 local Types = require(ReplicatedStorage.Shared.GameTypes)
 local UIHandler = require(ReplicatedStorage.Handlers.UIHandler)
 local World = require(ReplicatedStorage.Shared.World)
@@ -55,6 +56,47 @@ local function ui(path: string): GuiObject?
 		current = screen:FindFirstChild("Exit", true) or screen:FindFirstChild("CloseButton", true)
 	end
 	return if current and current:IsA("GuiObject") then current else nil
+end
+
+local function findCloseButton(screen: Instance, viewport: Vector2): GuiButton?
+	for _, child in screen:GetDescendants() do
+		if not child:IsA("GuiButton") or (child.Name ~= "Exit" and child.Name ~= "CloseButton") then
+			continue
+		end
+		if not child.Interactable or not Geometry.Gui(child, viewport) then
+			continue
+		end
+
+		return child
+	end
+
+	return nil
+end
+
+local function closeButton(page: string, viewport: Vector2): GuiButton?
+	if Pages.Current:peek() ~= page or not Pages.CanOpen(Pages.Names.None) then
+		return nil
+	end
+
+	local shared = page == "Inventory" or page == "Report" or page == "Upgrades"
+	local screens = {}
+	if shared and UIHandler.BakeryMenu then
+		screens[#screens + 1] = UIHandler.BakeryMenu
+	end
+
+	local panel = UIHandler:GetPanel(page)
+	if panel then
+		screens[#screens + 1] = panel
+	end
+
+	for _, screen in screens do
+		local button = findCloseButton(screen, viewport)
+		if button then
+			return button
+		end
+	end
+
+	return nil
 end
 
 local function seat(part: BasePart, index: number): (CFrame?, Vector3?)
@@ -176,6 +218,14 @@ function Targets.Resolve(spec: Types.TutorialTarget?, viewport: Vector2): Target
 		return target
 	end
 	if spec.kind == "Gui" then
+		if spec.control == "Close" then
+			local button = closeButton(spec.id:match("^[^.]+") or "", viewport)
+			if not button then
+				return nil
+			end
+			local target: Target = { gui = button }
+			return target
+		end
 		local element = ui(spec.id)
 		return if element and Geometry.Gui(element, viewport) then { gui = element } else nil
 	end

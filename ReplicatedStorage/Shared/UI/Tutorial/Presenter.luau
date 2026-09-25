@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 --
 local Focus = require(script.Parent.Focus)
 local Config = require(ReplicatedStorage.Shared.Configs.Tutorial)
+local Navigation = require(ReplicatedStorage.Shared.Tutorial.Navigation)
 local Types = require(ReplicatedStorage.Shared.GameTypes)
 
 --[[ Tables ]]
@@ -32,29 +33,6 @@ export type Presenter = typeof(setmetatable(
 	},
 	Presenter
 ))
-
---[[ Private Functions ]]
---
-local function matchesPage(goal: Types.TutorialGoal, page: string): boolean
-	if page == "None" then
-		return true
-	end
-
-	local target = goal.target
-	if not target then
-		return false
-	end
-
-	if target.kind == "Recipe" then
-		return page == "RecipeToCook"
-	end
-
-	if target.kind == "Gui" and target.id:match("^BakeryMenu%.") then
-		return page == "Inventory" or page == "Report" or page == "Upgrades"
-	end
-
-	return target.kind == "Gui" and target.id:match("^[^.]+") == page
-end
 
 --[[ Handling ]]
 --
@@ -99,7 +77,7 @@ function Presenter.Draw(self: Presenter, _deltaTime: number, page: string): ()
 		return
 	end
 
-	if GuiService.MenuIsOpen or not matchesPage(goal, page) then
+	if GuiService.MenuIsOpen or not Navigation.Matches(goal, page) then
 		self.Focus:Hide()
 		self.EligibleSince = os.clock()
 		return

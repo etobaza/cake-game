@@ -27,6 +27,12 @@ function State.Gui(id: string, title: string, hint: string, path: string): Types
 	return goal
 end
 
+function State.Close(id: string, title: string, hint: string, page: string): Types.TutorialGoal
+	local goal = State.Goal(id, title, hint, nil)
+	goal.target = { kind = "Gui", id = page .. ".Exit", control = "Close" }
+	return goal
+end
+
 function State.Station(session: any, kind: string, desired: string?): (string?, any?)
 	local ids = {}
 	for id, station in session.Stations do

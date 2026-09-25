@@ -118,7 +118,7 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 	end
 	local props = Interact:GetOwnedIds()
 	local now = workspace:GetServerTimeNow()
-	local goal = Scenario.Resolve(cloud, session, props, self.Page, now)
+	local goal = Scenario.Resolve(cloud, session, props, self.Page, now, Pages.CanOpen(Pages.Names.None))
 
 	local completedAt = session.Tutorial.CompletedAt
 	if completedAt > 0 and now - completedAt < Config.SuccessSeconds then

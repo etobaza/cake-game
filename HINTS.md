@@ -70,7 +70,9 @@ The tutorial card, handbook, help menu, and Resume banner are removed from prese
 
 At a world target, the Beam and finger lead toward its interaction point. Once that exact prop's actionable prompt is visible, the finger moves to the clickable/tappable prompt and the Beam hides. This prompt focus does not dim the bakery. Waiting for mixing, baking, arrivals, or eating hides the pressing finger; the short order-card lesson remains highlighted. Pointer changes never activate a prompt or advance server progress themselves.
 
-Unrelated modal pages, the Roblox menu, respawn, and the saved collapsed preference suppress tutorial pointing. GUI focus dims the surrounding interface; world guidance leaves the bakery visible. Existing debug commands can still show, hide, skip, or reset tutorial progress; no save migration is introduced.
+An unrelated modal page redirects an active tutorial goal to that page's close/back arrow. The visible, interactable `Exit` or `CloseButton` is resolved through `UIHandler`, with the shared `BakeryMenu` header preferred for Inventory, Report, and Upgrades. This also applies while the gameplay goal is waiting; closing the window is actionable. Required recipe pages and the locked evening Report/Menu flow retain their intended guidance. The current task resumes after closing, without resetting progress. Optional upgrade guidance remains available after the introduction.
+
+The Roblox menu, respawn, and the saved collapsed preference suppress tutorial pointing. Hidden, disabled, stale-page, or locked close controls are never targeted. GUI focus dims the surrounding interface; world guidance leaves the bakery visible. Existing debug commands can still show, hide, skip, or reset tutorial progress; no save migration is introduced.
 
 Animal harvest hints resolve the kitchen `AnimalProduce` target while brushing still resolves the animal. Evening lessons resolve the shared `BakeryMenu` header's Menu/Next Day controls.
 
@@ -93,6 +95,8 @@ Arguments: `hinttest [gui|world|demo|hide] [target|-] [seconds] [auto|degrees]`.
 `tutorialtest` is an alias for `tutorialreset`. It resets **saved tutorial progress and optional lesson flags**, retaining the current kitchen and existing reset behavior. It is not a profile-safe preview. Use an isolated mock session for repeatable new-player testing. Existing `tutorialstatus`, `tutorialshow`, `tutorialhide`, `tutorialskip` and `tutorialcomplete` remain available.
 
 ## Verification
+
+The unrelated-page recovery change passed the full Luau gate and 68 synthetic Edit-mode assertions. These covered all eight routed pages, restoration of the original goal, waiting/urgent recovery, required recipe selection, optional upgrades, the locked evening flow, shared-header ownership, hidden/disabled buttons, stale pages, alternate close names, and panel fallback. Tests evaluated fresh synced module source to avoid Studio's Edit-mode `require` cache, using unparented UI fixtures and a geometry stub for target selection. No Play session or visual click-through was performed for this change.
 
 The full `scripts/check.ps1` gate passed with the pinned `luau-lsp 1.70.0`: regenerated sourcemap, Selene with zero warnings/errors, strict-header validation and whole-project analysis. Source synchronization and the authored tutorial hierarchy were inspected in Cake Funset Dev.
 
