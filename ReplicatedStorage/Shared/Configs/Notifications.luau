@@ -5,6 +5,7 @@ return {
 	CompactWidth = 700,
 	CompactHeight = 500,
 	EdgePadding = 12,
+	ClockGap = 16,
 	Wide = {
 		Width = 360,
 		Height = 48,

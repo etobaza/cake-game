@@ -233,7 +233,8 @@ end
 
 function CatHandler.Spawn(self: CatHandler, player: Player, base: Base, slot: any, saved: SavedCat?): ()
 	local support = habitat(base.Root, slot.Habitat)
-	if not support then
+	local tree = habitat(base.Root, "CatHabitatOne")
+	if not support or not tree then
 		return
 	end
 	local variant = if saved then saved.Variant else self.Random:NextInteger(1, #self.Sources)
@@ -257,7 +258,8 @@ function CatHandler.Spawn(self: CatHandler, player: Player, base: Base, slot: an
 	end
 	local part = model:FindFirstChildWhichIsA("MeshPart", true) :: MeshPart
 	model.PrimaryPart = part
-	model:ScaleTo(model:GetScale() * Config.Length / part.Size.X)
+	local length = tree.Size.Y * Config.LengthToTreeHeight
+	model:ScaleTo(model:GetScale() * length / part.Size.X)
 	-- Imported mesh faces -X and is already upright; discard the import model's rotated pivot.
 	local bottom = support.CFrame * CFrame.new(0, -support.Size.Y / 2, 0)
 	local position = bottom:PointToWorldSpace(slot.Offset)
@@ -296,7 +298,6 @@ function CatHandler.Spawn(self: CatHandler, player: Player, base: Base, slot: an
 	model:SetAttribute("CatReserved", false)
 	model:SetAttribute("CatPetUntil", 0)
 	model.Parent = base.Folder
-	local tree = habitat(base.Root, "CatHabitatOne") :: BasePart
 	local ground = tree.Position.Y - tree.Size.Y / 2
 	local approach = position + tree.CFrame:VectorToWorldSpace(Vector3.new(-4, 0, 0))
 	base.Cats[id] = {

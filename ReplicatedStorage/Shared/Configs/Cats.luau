@@ -1,11 +1,13 @@
 --!strict
--- Lemon Cake build 6596857: BP_CatCafe, BP_Cat and BP_Client. See LEMON_CAKE_CATS.md.
+-- Lemon Cake build 6596857: BP_CatCafe, BP_Cat and BP_Client. See ARCHITECTURE.md.
 local Cats = {
 	Tag = "CakeCafeCat",
 	UpgradeId = "cafe_catcafe",
 	FolderName = "CafeCats",
 	TemplatesFolder = "Cats",
-	Length = 2.4,
+	-- SK_Cat length * BP_Cat scale / SM_CatTree height * BP_CatCafe tree scale.
+	-- SpawnCats explicitly uses unit actor scale, ignoring the location marker's 0.5 X scale.
+	LengthToTreeHeight = (171.24664306640625 * 0.85) / (173.48988342285156 * 1.075),
 	InteractDistance = 8,
 	PetSeconds = 1,
 	PetCooldown = 1.5,

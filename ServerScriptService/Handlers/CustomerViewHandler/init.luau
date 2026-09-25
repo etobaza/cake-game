@@ -25,6 +25,10 @@ local CustomerTypes = require(_Configs.Registries.CustomerTypes)
 local DataHandler = require(_Handlers.DataHandler)
 local DayCycleHandler = require(_Handlers.DayCycleHandler)
 local Guest = require(script.Guest)
+local DiningConfig = require(_Configs.GuestDining)
+local FoodModel = require(_Shared.FoodModel)
+local Recipes = require(_Configs.Registries.Recipes)
+local DayCycleConfig = require(_Configs.DayCycle)
 local GuestsConfig = require(_Configs.Guests)
 local Spots = require(script.Spots)
 local Street = require(script.Street)
@@ -285,13 +289,37 @@ function CustomerViewHandler.Eat(
 	self: CustomerViewHandler,
 	player: Player,
 	customerId: string,
-	_recipeId: string,
+	recipeId: string,
 	reaction: string
 ): ()
 	local guest = self:GetGuest(player, customerId)
 	if not guest then
 		return
 	end
+
+	local customer = GetCustomer(player, customerId)
+	if not customer or customer.State ~= "Eating" then
+		return
+	end
+	local model = guest.Model
+	local recipe = Recipes:Get(recipeId)
+	local hand = model:FindFirstChild("RightHand")
+	local canHold = DiningConfig.Handheld[recipeId]
+		and hand ~= nil
+		and hand:IsA("BasePart")
+		and recipe ~= nil
+		and recipe.asset ~= nil
+		and FoodModel.FindAsset(recipe.asset) ~= nil
+	model:SetAttribute(DiningConfig.HeldAttribute, if canHold then recipeId else nil)
+	model:SetAttribute(DiningConfig.StartedAttribute, customer.EatEndsAt - DayCycleConfig.EatSeconds)
+	model:SetAttribute(DiningConfig.EndsAttribute, customer.EatEndsAt)
+	model:AddTag(DiningConfig.Tag)
+	guest.Janitor:Add(function(): ()
+		model:RemoveTag(DiningConfig.Tag)
+		model:SetAttribute(DiningConfig.HeldAttribute, nil)
+		model:SetAttribute(DiningConfig.StartedAttribute, nil)
+		model:SetAttribute(DiningConfig.EndsAttribute, nil)
+	end, true, "Dining")
 
 	local head = guest.Model:FindFirstChild("Head")
 	if head and head:IsA("BasePart") then
@@ -311,6 +339,7 @@ function CustomerViewHandler.Leave(self: CustomerViewHandler, player: Player, cu
 	end
 
 	bodies[customerId] = nil
+	guest.Janitor:Remove("Dining")
 	local head = guest.Model:FindFirstChild("Head")
 	if head then
 		head:SetAttribute(VFX.ChoosingAttribute, false)

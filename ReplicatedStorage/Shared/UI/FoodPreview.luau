@@ -1,23 +1,29 @@
 --!strict
--- Clones the authored viewport into a dish or ingredient icon. UIHandler supplies the screen template.
+-- Clones the authored viewport into an item icon. UIHandler supplies the screen template.
 
---[[ Services ]]--
+--[[ Services ]]
+--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
---[[ Modules ]]--
+--[[ Modules ]]
+--
 local Config = require(ReplicatedStorage.Shared.Configs.FoodPresentation)
+local Buildings = require(ReplicatedStorage.Shared.Configs.Buildings)
 local CarryModel = require(ReplicatedStorage.Shared.CarryModel)
 local FoodModel = require(ReplicatedStorage.Shared.FoodModel)
+local GameTypes = require(ReplicatedStorage.Shared.GameTypes)
 local Ingredients = require(ReplicatedStorage.Shared.Configs.Registries.Ingredients)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Recipes = require(ReplicatedStorage.Shared.Configs.Registries.Recipes)
 
---[[ Tables ]]--
+--[[ Tables ]]
+--
 local FoodPreview = {}
 local template: ViewportFrame? = nil
 local previews: { [ImageLabel]: { Key: string, Janitor: any } } = {}
 
---[[ Private Functions ]]--
+--[[ Private Functions ]]
+--
 local function show(
 	icon: ImageLabel,
 	key: string,
@@ -72,7 +78,8 @@ local function show(
 	viewport.Parent = icon
 end
 
---[[ Handling ]]--
+--[[ Handling ]]
+--
 function FoodPreview.SetTemplate(source: Instance?): ()
 	assert(source and source:IsA("ViewportFrame"), "[FoodPreview] Authored FoodPreviewTemplate is missing")
 	template = source
@@ -104,6 +111,41 @@ function FoodPreview.ShowIngredient(icon: ImageLabel, ingredientId: string): ()
 			return CarryModel.new({ Kind = "Ingredient", Id = ingredientId }, world)
 		end
 	)
+end
+
+function FoodPreview.ShowTool(icon: ImageLabel, toolId: string): ()
+	local kind = Buildings.KindForTool(toolId)
+	show(icon, `{toolId}:Tool`, if kind then kind.Icon or "" else "", function(world: WorldModel): FoodModel.FoodModel?
+		local asset = kind and (kind.HeldAsset or (kind.Furniture and kind.Furniture.Asset))
+		local source = asset and Buildings.FindAsset(asset)
+		return if source then FoodModel.FromSource(source, world, Vector3.new(3, 3, 3)) else nil
+	end)
+end
+
+-- All carried item kinds share one dispatch, including fuel and leftovers without a recipe.
+function FoodPreview.ShowItem(icon: ImageLabel, item: GameTypes.ItemStack?): ()
+	if not item then
+		FoodPreview.Clear(icon)
+		icon.Image = ""
+	elseif item.Kind == "Tool" then
+		FoodPreview.ShowTool(icon, item.Id)
+	elseif item.Kind == "Ingredient" then
+		FoodPreview.ShowIngredient(icon, item.Id)
+	elseif item.Kind == "Fuel" then
+		show(icon, `{item.Id}:Fuel`, "", function(world: WorldModel): FoodModel.FoodModel?
+			return CarryModel.new({ Kind = "Fuel", Id = item.Id }, world)
+		end)
+	else
+		local recipe = Recipes:Get(item.Id)
+		show(
+			icon,
+			`{item.Id}:{item.Kind}`,
+			if recipe then Recipes:GetIcon(recipe) else "",
+			function(world: WorldModel): FoodModel.FoodModel?
+				return FoodModel.ForItem(item.Id, item.Kind, world, Vector3.new(3, 3, 3))
+			end
+		)
+	end
 end
 
 return FoodPreview

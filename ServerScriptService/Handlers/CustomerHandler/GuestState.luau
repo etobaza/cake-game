@@ -15,7 +15,7 @@ local GuestState = {}
 GuestState.__index = GuestState
 
 --[[ Handling ]]--
-function GuestState.new(customer: any, onReady: () -> (), onFinish: (boolean) -> ()): GuestState
+function GuestState.new(customer: any, onReady: () -> (), onFinish: (boolean) -> (), chooseSeconds: number?): GuestState
 	local self =
 		setmetatable({ Janitor = Janitor.new(), Now = workspace:GetServerTimeNow(), Machine = nil :: any }, GuestState)
 	local function enter(name: string): ()
@@ -68,7 +68,8 @@ function GuestState.new(customer: any, onReady: () -> (), onFinish: (boolean) ->
 			},
 			Choosing = {
 				onEnter = function(): ()
-					customer.ChoosingEndsAt = self.Now + math.random(Orders.ChooseMinSeconds, Orders.ChooseMaxSeconds)
+					customer.ChoosingEndsAt = self.Now
+						+ (chooseSeconds or math.random(Orders.ChooseMinSeconds, Orders.ChooseMaxSeconds))
 					customer.PatienceEndsAt = 0
 					enter("Choosing")
 				end,

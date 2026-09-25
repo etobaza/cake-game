@@ -13,11 +13,15 @@ local _Shared = ReplicatedStorage.Shared
 local BaseHandler = require(ServerScriptService.Handlers.BaseHandler)
 local Config = require(_Shared.Configs.FoodPresentation)
 local DataHandler = require(ServerScriptService.Handlers.DataHandler)
+local DiningConfig = require(_Shared.Configs.GuestDining)
+local GuestsConfig = require(_Shared.Configs.Guests)
 local FoodModel = require(_Shared.FoodModel)
+local FoodBurn = require(_Shared.FoodBurn)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local MixerIngredients = require(script.Parent.MixerIngredients)
 local Recipes = require(_Shared.Configs.Registries.Recipes)
 local TableConfig = require(_Shared.Configs.TableMenus)
+local VFX = require(_Shared.Configs.VFX)
 
 --[[ Tables ]]--
 local FoodSurfaceView = {}
@@ -33,21 +37,38 @@ export type FoodSurfaceView = typeof(setmetatable(
 		Contents: any,
 		Key: string,
 		IngredientSlots: { [string]: number },
+		OvenFood: FoodModel.FoodModel?,
 	},
 	FoodSurfaceView
 ))
 
 --[[ Private Functions ]]--
-local function tableItems(state: any): { { Id: string, Kind: string, SeatIndex: number? } }
+local function tableItems(building: any): { { Id: string, Kind: string, SeatIndex: number? } }
 	local items = {}
-	for index, seat in state.Seats do
-		local id = seat.Served[#seat.Served]
+	local root = BaseHandler:GetBase(building.Player)
+	local guests = root and root:FindFirstChild(GuestsConfig.FolderName)
+
+	for index, seat in building.State.Seats do
 		if seat.Dirty then
 			items[#items + 1] = { Id = TableConfig.DirtyPlateAsset, Kind = "DirtyPlate", SeatIndex = index }
-		elseif id then
-			items[#items + 1] = { Id = id, Kind = "Dish", SeatIndex = index }
+			continue
 		end
+
+		local id = seat.Served[#seat.Served]
+		if not id then
+			continue
+		end
+
+		local guest = guests and seat.CustomerId and guests:FindFirstChild(seat.CustomerId)
+		local held = guest and guest:GetAttribute(DiningConfig.HeldAttribute) == id
+
+		items[#items + 1] = {
+			Id = if held then TableConfig.CleanPlateAsset else id,
+			Kind = if held then "EmptyPlate" else "Dish",
+			SeatIndex = index,
+		}
 	end
+
 	return items
 end
 
@@ -63,7 +84,7 @@ local function itemsFor(building: any): { { Id: string, Kind: string, SeatIndex:
 		return if id then { { Id = id, Kind = if leftover then "Leftover" else "Dish" } } else {}
 	end
 	if building.Kind == "Table" then
-		return tableItems(state)
+		return tableItems(building)
 	end
 	if building.Kind == "Mixer" and (state.State == "Idle" or state.State == "Mixing") then
 		return MixerIngredients.GetItems(state)
@@ -126,11 +147,22 @@ function FoodSurfaceView.SetFrame(self: FoodSurfaceView, frame: CFrame): ()
 	self.Key = "Reposition"
 end
 
-function FoodSurfaceView.Update(self: FoodSurfaceView, _deltaTime: number, _now: number): ()
+function FoodSurfaceView.Update(self: FoodSurfaceView, _deltaTime: number, now: number): ()
+	if self.OvenFood then
+		self.OvenFood:SetBurn(FoodBurn.Fade(self.Building.State, now))
+		if self.Building.State.State == "Burnt" then
+			self.OvenFood.Model:SetAttribute("FoodKind", "Burnt")
+			for _, entry in self.OvenFood.Parts do
+				entry.Part:RemoveTag(VFX.Tag)
+			end
+		end
+	end
 	local items = itemsFor(self.Building)
 	local keys = {}
 	for _, item in items do
-		keys[#keys + 1] = `{item.SeatIndex or 0}:{item.Kind}:{item.Id}`
+		-- Keep the same texture copy at the burn deadline; rebuilding would flash a fresh dish.
+		local kind = if self.Building.Kind == "Oven" and item.Kind == "Burnt" then "Dish" else item.Kind
+		keys[#keys + 1] = `{item.SeatIndex or 0}:{kind}:{item.Id}`
 	end
 	local key = table.concat(keys, "|")
 	if key == self.Key then
@@ -140,6 +172,7 @@ function FoodSurfaceView.Update(self: FoodSurfaceView, _deltaTime: number, _now:
 	local nextSlots, slots = MixerIngredients.GetSlots(items, self.IngredientSlots)
 	self.IngredientSlots = nextSlots
 	self.Contents:Cleanup()
+	self.OvenFood = nil
 	for index, item in items do
 		if item.Kind == "Ingredient" then
 			local visual = MixerIngredients.Create(item.Id, slots[index], self.Root, self.Frame)
@@ -153,11 +186,16 @@ function FoodSurfaceView.Update(self: FoodSurfaceView, _deltaTime: number, _now:
 		local size = if isTable then Config.TableFoodSize elseif isOven then Config.FoodSize else Config.SurfaceFoodSize
 		local visual = if item.Kind == "DirtyPlate"
 			then FoodModel.new(item.Id, self.Root, TableConfig.DirtyPlateSize)
+			elseif item.Kind == "EmptyPlate" then FoodModel.new(item.Id, self.Root, TableConfig.CleanPlateSize)
 			else FoodModel.ForItem(item.Id, item.Kind, self.Root, size)
 		if not visual then
 			continue
 		end
 		self.Contents:Add(visual, "Destroy")
+		if isOven and (item.Kind == "Dish" or item.Kind == "Burnt") then
+			self.OvenFood = visual
+			visual:SetBurn(FoodBurn.Fade(self.Building.State, now))
+		end
 		if item.SeatIndex then
 			visual.Model:SetAttribute("SeatIndex", item.SeatIndex)
 		end

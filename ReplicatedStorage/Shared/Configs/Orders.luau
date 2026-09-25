@@ -4,6 +4,7 @@
 return {
 	ChooseMinSeconds = 10,
 	ChooseMaxSeconds = 20,
+	FirstGuestChooseSeconds = 1,
 	Slots = 4,
 	ProgressSteps = 100,
 	RefreshInterval = 0.25,

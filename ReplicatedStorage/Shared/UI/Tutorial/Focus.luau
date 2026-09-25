@@ -54,7 +54,11 @@ function Focus.Update(self: Focus): ()
 	self.Hint:SetEnabled(true)
 
 	if target.gui then
-		self.Hint:Gui(target.gui, { Key = key })
+		self.Hint:Gui(target.gui, {
+			Key = key,
+			-- The sign, ribbon and time label extend outside their transparent clock container.
+			IncludeDescendants = spec.kind == "Gui" and spec.id == "UI.HUD.Time",
+		})
 		return
 	end
 

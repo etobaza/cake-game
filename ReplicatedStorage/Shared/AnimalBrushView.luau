@@ -8,6 +8,11 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local AnimalBrushView = {}
 AnimalBrushView.__index = AnimalBrushView
 
+local function smooth(value: number): number
+	local alpha = math.clamp(value, 0, 1)
+	return alpha * alpha * (3 - 2 * alpha)
+end
+
 function AnimalBrushView.new(character: Model, parent: Instance): AnimalBrushView
 	return setmetatable({
 		Character = character,
@@ -18,6 +23,8 @@ function AnimalBrushView.new(character: Model, parent: Instance): AnimalBrushVie
 		Target = nil,
 		Hand = nil,
 		Root = nil,
+		StartedAt = 0,
+		Deadline = 0,
 	}, AnimalBrushView) :: any
 end
 
@@ -27,12 +34,14 @@ function AnimalBrushView.Clear(self: AnimalBrushView): ()
 	end
 	self.Janitor:Cleanup()
 	self.Brush, self.IK, self.Target, self.Hand, self.Root = nil, nil, nil, nil, nil
+	self.StartedAt, self.Deadline = 0, 0
 end
 
-function AnimalBrushView.Bind(self: AnimalBrushView): boolean
+function AnimalBrushView.Bind(self: AnimalBrushView, now: number): boolean
 	local character = self.Character
 	local hand = character:FindFirstChild("RightHand")
 	local arm = character:FindFirstChild("RightUpperArm")
+	local torso = character:FindFirstChild("UpperTorso")
 	local root = character:FindFirstChild("HumanoidRootPart")
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	local assets = ReplicatedStorage.Assets.Models:FindFirstChild("GardenCare")
@@ -41,6 +50,9 @@ function AnimalBrushView.Bind(self: AnimalBrushView): boolean
 		not hand
 		or not hand:IsA("BasePart")
 		or not arm
+		or not arm:IsA("BasePart")
+		or not torso
+		or not torso:IsA("BasePart")
 		or not root
 		or not root:IsA("BasePart")
 		or not humanoid
@@ -60,17 +72,24 @@ function AnimalBrushView.Bind(self: AnimalBrushView): boolean
 	target.Name = "AnimalBrushTarget"
 	target.Parent = root
 	self.Janitor:Add(target, "Destroy")
+	local pole = Instance.new("Attachment")
+	pole.Name = "AnimalBrushElbow"
+	pole.Position = Config.BrushElbowOffset
+	pole.Parent = torso
+	self.Janitor:Add(pole, "Destroy")
 	local ik = Instance.new("IKControl")
 	ik.Name = "AnimalBrushing"
 	ik.Type = Enum.IKControlType.Position
 	ik.ChainRoot = arm
 	ik.EndEffector = hand
 	ik.Target = target
-	ik.SmoothTime = 0.04
+	ik.Pole = pole
+	ik.SmoothTime = Config.BrushIKSmoothTime
 	ik.Weight = 0
 	ik.Parent = humanoid
 	self.Janitor:Add(ik, "Destroy")
 	self.Brush, self.IK, self.Target, self.Hand, self.Root = brush, ik, target, hand, root
+	self.StartedAt = now
 	return true
 end
 
@@ -91,14 +110,21 @@ function AnimalBrushView.Step(self: AnimalBrushView, now: number): ()
 		end
 		return
 	end
-	if not self.Brush and not self:Bind() then
+	if self.Deadline ~= untilTime then
+		self.StartedAt, self.Deadline = now, untilTime
+	end
+	if not self.Brush and not self:Bind(now) then
 		return
 	end
-	local elapsed = math.clamp(Config.BrushSeconds - (untilTime - now), 0, Config.BrushSeconds)
-	local weight = math.clamp(math.min(elapsed, untilTime - now) / Config.BrushBlendSeconds, 0, 1)
-	local stroke = math.sin(elapsed / Config.BrushSeconds * math.pi * 2 * Config.BrushCycles) * Config.BrushStroke
+	-- Late replication starts with a relaxed arm instead of jumping into the middle of a stroke.
+	local elapsed = math.max(0, now - self.StartedAt)
+	local weight = smooth(math.min(elapsed, untilTime - now) / Config.BrushBlendSeconds)
+	local phase = math.clamp(elapsed / Config.BrushSeconds, 0, 1)
+	-- Zero velocity at the stroke endpoints avoids a sudden reversal while the arm blends.
+	local envelope = math.sin(phase * math.pi) ^ 2
+	local stroke = math.sin(phase * math.pi * 2 * Config.BrushCycles) * Config.BrushStroke * envelope
 	local target = self.Target :: Attachment
-	target.WorldCFrame = frame * CFrame.new(stroke, 0, -0.3)
+	target.WorldCFrame = frame * Config.BrushTargetOffset * CFrame.new(stroke, 0, 0)
 	local ik = self.IK :: IKControl
 	ik.Weight = weight
 end
@@ -127,6 +153,8 @@ export type AnimalBrushView = typeof(setmetatable(
 		Target: Attachment?,
 		Hand: BasePart?,
 		Root: BasePart?,
+		StartedAt: number,
+		Deadline: number,
 	},
 	AnimalBrushView
 ))

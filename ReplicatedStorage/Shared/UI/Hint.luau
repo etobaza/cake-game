@@ -30,6 +30,7 @@ export type Options = {
 	Scale: number?,
 	FingerPeriod: number?,
 	Padding: number?,
+	IncludeDescendants: boolean?,
 	Dim: boolean?,
 	Beam: boolean?,
 	TargetPoint: Vector2?,
@@ -114,12 +115,19 @@ local function readTarget(self: View): Target?
 	return nil
 end
 
-local function resolveGui(target: Target, viewport: Vector2): Resolved?
+local function resolveGui(target: Target, viewport: Vector2, options: Options): Resolved?
 	if typeof(target) ~= "Instance" or not target:IsA("GuiObject") then
 		return nil
 	end
 
 	local rect = Geometry.Gui(target, viewport)
+	if rect and options.IncludeDescendants then
+		for _, child in target:GetDescendants() do
+			if child:IsA("GuiObject") then
+				rect = Geometry.Union(rect, Geometry.Gui(child, viewport))
+			end
+		end
+	end
 	return if rect then { kind = "Gui", rect = rect } else nil
 end
 
@@ -157,7 +165,7 @@ local function resolve(self: View): Resolved?
 	end
 
 	if self.Mode == "Gui" then
-		return resolveGui(target, camera.ViewportSize)
+		return resolveGui(target, camera.ViewportSize, self.Options)
 	end
 
 	return resolveWorld(target)
@@ -225,7 +233,12 @@ local function drawGui(self: View, rect: Geometry.Rect, frame: Frame): (Vector2,
 	end
 
 	local padding = Vector2.one * math.max(0, options.Padding or Config.Padding)
-	self.Bounds = Geometry.Intersect({ min = rect.min - padding, max = rect.max + padding }, frame.safe)
+	-- HUD artwork may extend above the finger's safe region. Clip the hole only at the
+	-- viewport edge; otherwise a top-aligned clock gets a visibly lowered spotlight.
+	self.Bounds = Geometry.Intersect(
+		{ min = rect.min - padding, max = rect.max + padding },
+		{ min = Vector2.zero, max = frame.viewport }
+	)
 
 	local bounds = self.Bounds or rect
 	local minimum = frame.safe.min:Lerp(bounds.min, frame.progress)

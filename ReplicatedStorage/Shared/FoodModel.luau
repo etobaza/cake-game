@@ -13,9 +13,8 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Recipes = require(_Shared.Configs.Registries.Recipes)
 local DisplayCustomers = require(_Shared.Configs.DisplayCustomers)
 local VFX = require(_Shared.Configs.VFX)
-
---[[ Constants ]]--
-local BURNT_COLOR = Color3.fromRGB(48, 29, 20)
+local BurnConfig = require(_Shared.Configs.FoodBurn)
+local FoodBurn = require(_Shared.FoodBurn)
 
 --[[ Tables ]]--
 local FoodModel = {}
@@ -25,7 +24,8 @@ export type FoodModel = typeof(setmetatable(
 	{} :: {
 		Model: Model,
 		Size: Vector3,
-		Parts: { { Part: BasePart, Offset: CFrame } },
+		Parts: { { Part: BasePart, Offset: CFrame, Color: Color3 } },
+		BurnFade: number?,
 		Janitor: any,
 	},
 	FoodModel
@@ -35,18 +35,6 @@ export type FoodModel = typeof(setmetatable(
 local function partReach(part: BasePart): Vector3
 	local frame, size = part.CFrame, part.Size
 	return (frame.RightVector:Abs() * size.X + frame.UpVector:Abs() * size.Y + frame.LookVector:Abs() * size.Z) / 2
-end
-
-local function darken(part: BasePart): ()
-	for _, child in part:GetDescendants() do
-		if child:IsA("SurfaceAppearance") or child:IsA("Decal") or child:IsA("Texture") then
-			child:Destroy()
-		end
-	end
-	if part:IsA("MeshPart") then
-		part.TextureID = ""
-	end
-	part.Color = BURNT_COLOR
 end
 
 --[[ Handling ]]--
@@ -122,13 +110,13 @@ function FoodModel.FromSource(
 		part.CanQuery = false
 		part.CanTouch = false
 		part.Massless = true
-		if burnt then
-			darken(part)
-		end
-		self.Parts[#self.Parts + 1] = { Part = part, Offset = offset }
+		self.Parts[#self.Parts + 1] = { Part = part, Offset = offset, Color = part.Color }
 	end
 	clone.WorldPivot = CFrame.identity
 	clone.Parent = parent
+	if burnt then
+		self:SetBurn(1)
+	end
 	return self
 end
 
@@ -170,6 +158,23 @@ end
 function FoodModel.SetCFrame(self: FoodModel, frame: CFrame): ()
 	for _, entry in self.Parts do
 		entry.Part.CFrame = frame * entry.Offset
+	end
+end
+
+function FoodModel.SetBurn(self: FoodModel, fade: number): ()
+	fade = math.round(math.clamp(fade, 0, 1) * BurnConfig.FadeSteps) / BurnConfig.FadeSteps
+	if self.BurnFade == fade then
+		return
+	end
+	self.BurnFade = fade
+	for _, entry in self.Parts do
+		local part = entry.Part
+		if part:FindFirstChildWhichIsA("SurfaceAppearance") then
+			part:SetAttribute(BurnConfig.FadeAttribute, fade)
+			part:AddTag(BurnConfig.Tag)
+		else
+			part.Color = FoodBurn.Color(entry.Color, fade)
+		end
 	end
 end
 

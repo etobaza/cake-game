@@ -24,7 +24,7 @@ local DayCycle = {
 	-- CustomerHandler applies the display-flow multiplier (0.5-2), independent of seat count.
 	SpawnInterval = 10,
 	-- Keep the opening responsive; subsequent arrivals use the reference game's interval.
-	FirstSpawnDelay = 4,
+	FirstSpawnDelay = 0.5,
 
 	-- Guests allowed on top of the capacity: a short queue is pressure, a long one is only lost patience.
 	QueueSlack = 2,
@@ -42,6 +42,14 @@ local DayCycle = {
 	MaxSpills = 3,
 	-- How much slower the player moves while standing in a spill.
 	SpillSlowFactor = 0.55,
+	Sweep = {
+		PromptDistance = 6,
+		-- Move only a nearby character to the player-facing edge of the authored puddle.
+		MaxAdjustment = 3.5,
+		EdgeClearance = 0.65,
+		FloorTolerance = 0.75,
+		FloorProbeExtra = 1.5,
+	},
 }
 
 --[[ Handling ]]--

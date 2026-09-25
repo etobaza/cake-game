@@ -19,6 +19,8 @@ hint:Destroy() -- Release the overlay and registration; safe to call again.
 
 `Gui` accepts a `GuiObject` or a non-yielding function returning a `GuiObject?`. `World` accepts a `BasePart`, `Model`, `Attachment`, `Vector3`, or a non-yielding function returning one of those or nil. A resolver returning nil temporarily hides its hint and allows another eligible hint to show. This supports streamed/recreated targets without keeping dead instances alive. Resolver errors warn once until a successful resolution.
 
+Use `IncludeDescendants = true` for a composite GUI target whose visible artwork extends outside its container. Its focus rectangle includes visible, ancestor-clipped descendants and follows their rotation/scale. The tutorial clock uses this for its sign, ribbon and time label. Focus padding is clipped at the viewport edge, independently of the safe margin used for finger/world placement, so top-aligned HUD targets are not cut off by that margin.
+
 ```lua
 local Interact = require(ReplicatedStorage.Handlers.InteractHandler)
 local hint = Hint.new({ Priority = 30, Duration = 12 })

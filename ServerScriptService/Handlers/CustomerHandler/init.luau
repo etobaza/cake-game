@@ -27,6 +27,7 @@ local EconomyHandler = require(ServerScriptService.Handlers.EconomyHandler)
 local GuestState = require(script.GuestState)
 local InventoryHandler = require(ServerScriptService.Handlers.InventoryHandler)
 local LoggerUtil = require(_Libs.Logger)
+local OrdersConfig = require(_Configs.Orders)
 local Recipes = require(_Configs.Registries.Recipes)
 local Sanitize = require(_Shared.Sanitize)
 local Signal = require(_Libs.Signal)
@@ -211,6 +212,7 @@ function CustomerHandler.StartShift(self: CustomerHandler, player: Player): ()
 	self.Runtime[player] = {
 		DisplayFlow = if previous then previous.DisplayFlow else 1,
 		NextSpawnAt = workspace:GetServerTimeNow() + DayCycleConfig.FirstSpawnDelay,
+		FirstGuest = true,
 		-- Ids never restart: a guest walking out still owns their body while the next shift spawns.
 		NextId = if previous then previous.NextId else 1,
 		ScriptedGuest = data ~= nil and TutorialPolicy.IsActive(data.Cloud),
@@ -260,7 +262,11 @@ function CustomerHandler.SpawnCustomer(self: CustomerHandler, player: Player): b
 	end
 
 	local hasDisplay = DisplayHandler:GetGuestCapacity(player) > 0
-	local kind = if hasDisplay and math.random() > DisplayCustomers.SeatedChance then "Display" else "Seated"
+	local kind = if not runtime.FirstGuest
+			and hasDisplay
+			and math.random() > DisplayCustomers.SeatedChance
+		then "Display"
+		else "Seated"
 	local entry = scriptedEntry or PickType(player, kind)
 	if not entry then
 		return false
@@ -297,9 +303,11 @@ function CustomerHandler.SpawnCustomer(self: CustomerHandler, player: Player): b
 	if entry.kind == "Display" and not displayPosition then
 		return false
 	end
-	if not Street.Take(player, customerId) then
+	local opening = runtime.FirstGuest
+	if not Street.Take(player, customerId, opening) then
 		return false
 	end
+	runtime.FirstGuest = false
 	runtime.NextId += 1
 	if scriptedEntry then
 		runtime.ScriptedGuest = false
@@ -346,7 +354,7 @@ function CustomerHandler.SpawnCustomer(self: CustomerHandler, player: Player): b
 		end
 	end, function(served: boolean): ()
 		self:FinishCustomer(player, customerId, customer, served)
-	end)
+	end, if opening then OrdersConfig.FirstGuestChooseSeconds else nil)
 	self.CustomerSpawned:Fire(player, customerId)
 	return true
 end
@@ -744,7 +752,7 @@ function CustomerHandler.UpdatePlayerCustomers(self: CustomerHandler, player: Pl
 	local capacity = self:GetCapacity(player)
 	local hasCapacity = CountCustomers(customers) < DayCycleConfig.GetMaxActive(capacity)
 	if hasCapacity and now >= runtime.NextSpawnAt - GuestsConfig.Street.AdmissionLeadSeconds then
-		Street.Prepare(player)
+		Street.Prepare(player, runtime.FirstGuest)
 	end
 	if now < runtime.NextSpawnAt then
 		return
@@ -834,7 +842,15 @@ end
 
 export type CustomerHandler = typeof(CustomerHandler) & {
 	Guests: { [Player]: { [string]: GuestState.GuestState } },
-	Runtime: { [Player]: { NextSpawnAt: number, NextId: number, ScriptedGuest: boolean, DisplayFlow: number } },
+	Runtime: {
+		[Player]: {
+			NextSpawnAt: number,
+			NextId: number,
+			FirstGuest: boolean,
+			ScriptedGuest: boolean,
+			DisplayFlow: number,
+		},
+	},
 }
 
 return CustomerHandler :: CustomerHandler

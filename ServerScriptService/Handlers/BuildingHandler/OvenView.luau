@@ -19,10 +19,9 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local LoggerUtil = require(_Shared.Libs.Logger)
 local Motion = require(_Configs.OvenMotion)
 local OvenFuel = require(_Configs.OvenFuel)
+local OvenDial = require(script.Parent.OvenDial)
 
 --[[ Constants ]]--
--- A ready dish burns when the second pass reaches the bottom of the dial.
-local BURN_DIAL_FRACTION = 0.5
 local FULL_TURN = math.pi * 2
 
 local LEFT_DOOR_NAME = "OvenDoorLeft"
@@ -57,6 +56,7 @@ export type OvenView = typeof(setmetatable(
 		RightClosed: CFrame,
 		ClockStart: CFrame,
 		ClockAxis: Vector3,
+		Dial: SurfaceGui,
 		DoorClosed: boolean,
 		FuelModel: Model?,
 		FuelLogs: { Model },
@@ -81,9 +81,12 @@ local function rotatePivot(pivot: CFrame, axis: Vector3, angle: number): CFrame
 end
 
 local function closedDoorPivot(openPivot: CFrame, part: BasePart, centre: Vector3): CFrame
-	local radial = part.Position - openPivot.Position
+	-- Imported leaves are thin on local X, tall on Y, and span the opening on Z.
+	-- The hinge is offset through their thickness: aiming the bounding-box centre at the
+	-- seam adds about 6.7 degrees and folds both leaves inward. Align only their width.
+	local width = part.CFrame:VectorToWorldSpace(Vector3.new(0, 0, -part.PivotOffset.Position.Z))
 	local target = centre - openPivot.Position
-	local currentDirection = Vector3.new(radial.X, 0, radial.Z).Unit
+	local currentDirection = Vector3.new(width.X, 0, width.Z).Unit
 	local targetDirection = Vector3.new(target.X, 0, target.Z).Unit
 	local angle =
 		math.atan2(currentDirection:Cross(targetDirection):Dot(Vector3.yAxis), currentDirection:Dot(targetDirection))
@@ -144,6 +147,9 @@ function OvenView.new(root: Instance, building: any): OvenView?
 	-- The imported mesh's thin local X axis is the clock-face normal; the oven body's LookVector
 	-- follows its Blender axes and does not point out of the visible front.
 	self.ClockAxis = clockHand.CFrame.RightVector
+	local dialPart, dial = OvenDial.new(clockHand, body)
+	self.Dial = dial
+	self.Janitor:Add(dialPart, "Destroy")
 
 	local hingeCentre = (self.LeftOpen.Position + self.RightOpen.Position) / 2
 	self.LeftClosed = closedDoorPivot(self.LeftOpen, leftDoor, hingeCentre)
@@ -279,13 +285,12 @@ end
 function OvenView.ApplyClock(self: OvenView, now: number): ()
 	local state = self.Building.State
 	local fraction = 0
-	if state.State == "Cooking" then
+	if state.State == "Cooking" or state.State == "Ready" then
 		fraction = phaseProgress(state, now)
-	elseif state.State == "Ready" then
-		fraction = phaseProgress(state, now) * BURN_DIAL_FRACTION
 	elseif state.State == "Burnt" then
-		fraction = BURN_DIAL_FRACTION
+		fraction = 1
 	end
+	self.Dial.Enabled = state.State == "Ready" or state.State == "Burnt"
 
 	-- Positive around the imported face normal is clockwise from the kitchen side.
 	self.ClockHand:PivotTo(rotatePivot(self.ClockStart, self.ClockAxis, FULL_TURN * fraction))

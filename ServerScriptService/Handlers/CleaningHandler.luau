@@ -25,6 +25,7 @@ local BaseHandler = require(_Handlers.BaseHandler)
 local BuildingHandler = require(_Handlers.BuildingHandler)
 local BuildingsConfig = require(_Configs.Buildings)
 local Bus = require(_Shared.Bus)
+local CleaningAction = require(ServerScriptService.CleaningAction)
 local DataHandler = require(_Handlers.DataHandler)
 local DayCycleConfig = require(_Configs.DayCycle)
 local GameTypes = require(_Shared.GameTypes)
@@ -38,7 +39,6 @@ local View = require(_Handlers.BuildingHandler.View)
 --[[ Constants ]]--
 local FOLDER_NAME = "Spills"
 local KIND_NAME = "Spill"
-local CLEAN_DISTANCE = 12
 local TOOL: GameTypes.ItemKind = "Tool"
 
 --[[ Tables ]]--
@@ -317,7 +317,7 @@ function CleaningHandler.Clean(self: CleaningHandler, player: Player, spillId: s
 	local spill = runtime and runtime.Parts[spillId]
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-	if not spill or not root or (root.Position - spill.Position).Magnitude > CLEAN_DISTANCE then
+	if not spill or not root or (root.Position - spill.Position).Magnitude > DayCycleConfig.Sweep.PromptDistance then
 		return false
 	end
 
@@ -330,6 +330,9 @@ function CleaningHandler.Clean(self: CleaningHandler, player: Player, spillId: s
 
 	local spills = GetSpills(player)
 	if not spills or not spills[spillId] then
+		return false
+	end
+	if not CleaningAction.Begin(player, spill, "Sweep", runtime.Janitor) then
 		return false
 	end
 
@@ -363,6 +366,10 @@ function CleaningHandler.PrepareSpills(self: CleaningHandler, player: Player): (
 		end
 
 		View.Dress(part, `{BaseConfig.SpillAnchorPrefix}_{index}`, KIND_NAME, kind, player.UserId)
+		local prompt = part:FindFirstChildOfClass("ProximityPrompt")
+		if prompt then
+			prompt.MaxActivationDistance = DayCycleConfig.Sweep.PromptDistance
+		end
 		part.CanCollide = false
 		SetSpillShown(part, false)
 	end

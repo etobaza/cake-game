@@ -1,15 +1,18 @@
 --!strict
 -- The one-slot hotbar. ToolViewHandler owns tools; TrayHandler owns food and ingredient/fuel visuals.
 
---[[ Services ]]--
+--[[ Services ]]
+--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
---[[ References ]]--
+--[[ References ]]
+--
 local _Shared = ReplicatedStorage.Shared
 local _Configs = _Shared.Configs
 local _Handlers = ReplicatedStorage.Handlers
 
---[[ Modules ]]--
+--[[ Modules ]]
+--
 local FoodPreview = require(_Shared.UI.FoodPreview)
 local Animate = require(_Shared.UI.Animate)
 local BaseStats = require(_Configs.BaseStats)
@@ -20,7 +23,8 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Recipes = require(_Configs.Registries.Recipes)
 local UIHandler = require(_Handlers.UIHandler)
 
---[[ Constants ]]--
+--[[ Constants ]]
+--
 local HOTBAR_NAME = "Hotbar"
 -- Nothing upgrades HandsLimit, so the authored slots past it would stay dead forever.
 local SLOT_COUNT = BaseStats.HandsLimit
@@ -37,12 +41,14 @@ local ICON_LABEL = "ImageLabel"
 local TOOL_KIND = "Tool"
 local FUEL_KIND = "Fuel"
 
---[[ Tables ]]--
+--[[ Tables ]]
+--
 local HandsHandler = {
 	dependencies = { "DataClient", "UIHandler" },
 }
 
---[[ Types ]]--
+--[[ Types ]]
+--
 type Slot = {
 	Frame: Frame,
 	Background: ImageLabel,
@@ -52,7 +58,8 @@ type Slot = {
 	Filled: boolean,
 }
 
---[[ Private Functions ]]--
+--[[ Private Functions ]]
+--
 local function DescribeItem(item: any): string
 	if item.Kind == "Leftover" then
 		return "Leftover Pastry"
@@ -82,23 +89,6 @@ local function DescribeItem(item: any): string
 	end
 
 	return name
-end
-
--- Registry art for the carried thing. Icons are optional everywhere: while one is missing the slot
--- carries the name alone.
-local function ItemIcon(item: any): string
-	if item.Kind == "Ingredient" then
-		local ingredient = Ingredients:Get(item.Id)
-		return if ingredient then ingredient.icon or "" else ""
-	end
-
-	if item.Kind == TOOL_KIND then
-		local kind = Buildings.KindForTool(item.Id)
-		return if kind then kind.Icon or "" else ""
-	end
-
-	local recipe = Recipes:Get(item.Id)
-	return if recipe then recipe.icon or "" else ""
 end
 
 -- Outlined labels come as a pair, the inner one repeating the text on top of the stroke.
@@ -160,7 +150,8 @@ local function BuildName(slot: Frame): TextLabel
 	return label
 end
 
---[[ Handling ]]--
+--[[ Handling ]]
+--
 function HandsHandler.OnStart(self: HandsHandler): ()
 	self.Janitor = Janitor.new()
 	self.Slots = self:ResolveSlots()
@@ -210,24 +201,14 @@ function HandsHandler.ResolveSlots(self: HandsHandler): { Slot }
 	return slots
 end
 
--- Dishes and ingredients use their world models; other items retain registry art.
+-- Every carried item kind uses the shared preview dispatch, including tools and firewood.
 function HandsHandler.RefreshHotbar(self: HandsHandler, hands: { any }): ()
 	for index, slot in self.Slots do
 		local item = hands[index]
 		local filled = item ~= nil
 
 		slot.Background.ImageTransparency = if filled then 0 else EMPTY_TRANSPARENCY
-		local recipe = item and Recipes:Get(item.Id)
-		if
-			recipe and (item.Kind == "Dish" or item.Kind == "Leftover" or item.Kind == "Dough" or item.Kind == "Burnt")
-		then
-			FoodPreview.Show(slot.Icon, recipe, item.Kind)
-		elseif item and item.Kind == "Ingredient" then
-			FoodPreview.ShowIngredient(slot.Icon, item.Id)
-		else
-			FoodPreview.Clear(slot.Icon)
-			slot.Icon.Image = if item then ItemIcon(item) else ""
-		end
+		FoodPreview.ShowItem(slot.Icon, item)
 		slot.Name.Visible = filled
 
 		if item then

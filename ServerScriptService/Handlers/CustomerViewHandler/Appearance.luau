@@ -94,10 +94,10 @@ function Appearance.CanVisit(player: Player, identity: Identity): boolean
 	return not visits or not visits[player.UserId]
 end
 
-function Appearance.Take(player: Player): Identity?
+function Appearance.Take(player: Player, allowGenerated: boolean?): Identity?
 	local state = Friends[player]
 	if not state or not state.Ready then
-		return nil
+		return if allowGenerated then Generated() else nil
 	end
 	local available: { Identity } = {}
 	for _, identity in state.Items do

@@ -34,9 +34,45 @@ local function prepareArtwork(frame: GuiObject): ()
 	end
 end
 
+local function topBelowClock(screen: ScreenGui, clock: GuiObject?, minimum: number): number
+	if not clock then
+		return minimum
+	end
+
+	local bottom = clock.AbsolutePosition.Y + clock.AbsoluteSize.Y
+	local home = clock:GetAttribute("HomePosition")
+	local parent = clock.Parent
+	if typeof(home) == "UDim2" and parent and parent:IsA("GuiObject") then
+		-- Follow the resting clock rectangle, so its entrance/press springs do not move the toast.
+		local height = parent.AbsoluteSize.Y * clock.Size.Y.Scale + clock.Size.Y.Offset
+		local anchorY = parent.AbsolutePosition.Y + parent.AbsoluteSize.Y * home.Y.Scale + home.Y.Offset
+		bottom = anchorY + height * (1 - clock.AnchorPoint.Y)
+	end
+
+	return math.max(minimum, math.ceil(bottom - screen.AbsolutePosition.Y + Config.ClockGap))
+end
+
+local function observeClock(janitor: Janitor.Janitor, clock: GuiObject?, update: () -> ()): ()
+	if not clock then
+		return
+	end
+
+	janitor:Add(clock:GetAttributeChangedSignal("HomePosition"):Connect(update), "Disconnect")
+	janitor:Add(clock:GetPropertyChangedSignal("Size"):Connect(update), "Disconnect")
+	janitor:Add(clock:GetPropertyChangedSignal("AnchorPoint"):Connect(update), "Disconnect")
+
+	local parent = clock.Parent
+	if not parent or not parent:IsA("GuiObject") then
+		return
+	end
+
+	janitor:Add(parent:GetPropertyChangedSignal("AbsoluteSize"):Connect(update), "Disconnect")
+	janitor:Add(parent:GetPropertyChangedSignal("AbsolutePosition"):Connect(update), "Disconnect")
+end
+
 --[[ Handling ]]
 --
-function StatusLayout.Bind(screen: ScreenGui, frame: GuiObject): Janitor.Janitor
+function StatusLayout.Bind(screen: ScreenGui, frame: GuiObject, clock: GuiObject?): Janitor.Janitor
 	local janitor = Janitor.new()
 	local message = frame:FindFirstChild("Msg")
 	prepareArtwork(frame)
@@ -52,7 +88,7 @@ function StatusLayout.Bind(screen: ScreenGui, frame: GuiObject): Janitor.Janitor
 		local width = math.min(layout.Width, math.max(1, available.X - Config.EdgePadding * 2))
 		frame.AnchorPoint = Vector2.new(0.5, 0)
 		frame.Size = UDim2.fromOffset(width, layout.Height)
-		Animate.Place(frame, UDim2.new(0.5, 0, 0, layout.Top))
+		Animate.Place(frame, UDim2.new(0.5, 0, 0, topBelowClock(screen, clock, layout.Top)))
 
 		if not message or not message:IsA("TextLabel") then
 			return
@@ -74,6 +110,8 @@ function StatusLayout.Bind(screen: ScreenGui, frame: GuiObject): Janitor.Janitor
 	end
 
 	janitor:Add(screen:GetPropertyChangedSignal("AbsoluteSize"):Connect(update), "Disconnect")
+	janitor:Add(screen:GetPropertyChangedSignal("AbsolutePosition"):Connect(update), "Disconnect")
+	observeClock(janitor, clock, update)
 	janitor:LinkToInstance(frame)
 	update()
 

@@ -200,7 +200,9 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 
 		-- The status strip: text and visibility follow the toast nodes, and it rides in on each show.
 		if statusScreen and statusScreen:IsA("ScreenGui") and statusFrame and statusFrame:IsA("GuiObject") then
-			local statusLayout = StatusLayout.Bind(statusScreen, statusFrame)
+			local clock = hudRoot:FindFirstChild("Time")
+			local clockFrame = if clock and clock:IsA("GuiObject") then clock else nil
+			local statusLayout = StatusLayout.Bind(statusScreen, statusFrame, clockFrame)
 			Flux.cleanup(function(): ()
 				statusLayout:Destroy()
 			end)

@@ -1,6 +1,6 @@
 --!strict
 -- One guest body: an avatar rig that walks to a spot, sits down and walks back out.
--- Orders and patience are presented by the owner's HUD, without overhead UI.
+-- Orders and patience use the owner's HUD; GuestDiningHandler presents meal progress overhead.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

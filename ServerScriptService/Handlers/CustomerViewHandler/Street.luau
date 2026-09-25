@@ -22,6 +22,7 @@ type Base = {
 	Route: StreetRoute.Route,
 	Reserved: { [string]: Pedestrian },
 	DemandUntil: number,
+	OpeningDemand: boolean,
 }
 local Street = {}
 local Bases: { [Player]: Base } = {}
@@ -105,14 +106,15 @@ function Street.Open(player: Player, folder: Folder, door: BasePart, porch: Vect
 		created.Parent = workspace
 		Folder = created
 	end
-	Bases[player] = { Folder = folder, Route = route, Reserved = {}, DemandUntil = 0 }
+	Bases[player] = { Folder = folder, Route = route, Reserved = {}, DemandUntil = 0, OpeningDemand = false }
 end
 
 -- CustomerHandler refreshes demand shortly before a due arrival, only while admission is open.
-function Street.Prepare(player: Player): ()
+function Street.Prepare(player: Player, opening: boolean?): ()
 	local base = Bases[player]
 	if base then
 		base.DemandUntil = os.clock() + Config.DemandSeconds
+		base.OpeningDemand = opening == true
 	end
 end
 
@@ -136,7 +138,8 @@ local function NeedsSupply(player: Player, base: Base): boolean
 end
 
 local function Spawn(player: Player, base: Base, approaching: boolean): ()
-	local identity = Appearance.Take(player)
+	-- Opening must not wait for the asynchronous friend-list request to finish.
+	local identity = Appearance.Take(player, base.OpeningDemand and os.clock() < base.DemandUntil)
 	if not identity then
 		return
 	end
@@ -287,7 +290,7 @@ function Street.Update(): ()
 	end)
 end
 
-function Street.Take(player: Player, customerId: string): boolean
+function Street.Take(player: Player, customerId: string, opening: boolean?): boolean
 	local base = Bases[player]
 	if not base or base.Reserved[customerId] then
 		return false
@@ -296,7 +299,7 @@ function Street.Take(player: Player, customerId: string): boolean
 	local distance = math.huge
 	local selectedRank = 2
 	for _, entry in Actors do
-		if entry.Owner or entry.Retiring or entry.Guest.Destroyed or os.clock() < entry.ReadyAt then
+		if entry.Owner or entry.Retiring or entry.Guest.Destroyed or (not opening and os.clock() < entry.ReadyAt) then
 			continue
 		end
 		if not entry.Guest.Model.Parent then
@@ -306,7 +309,7 @@ function Street.Take(player: Player, customerId: string): boolean
 			continue
 		end
 		local position = entry.Guest.Root.Position
-		if not StreetRoute.IsNearby(base.Route, position) then
+		if not opening and not StreetRoute.IsNearby(base.Route, position) then
 			continue
 		end
 		local gap = (position - base.Route.Center).Magnitude
@@ -326,6 +329,22 @@ function Street.Take(player: Player, customerId: string): boolean
 	local guest = selected.Guest
 	guest.SpeedLimit = WalkSpeed
 	guest.Route = nil
+	if opening then
+		-- Reuse a ready rig at the porch; only the first admission skips the street approach.
+		local position = base.Route.Porch + Vector3.new(0, guest.Humanoid.HipHeight + guest.Root.Size.Y / 2, 0)
+		local direction = (base.Route.Porch - base.Route.Center) * Vector3.new(1, 0, 1)
+		local heading = if direction.Magnitude > 0.001 then direction.Unit else guest.Heading
+		local frame = CFrame.lookAt(position, position + heading)
+		guest.Model:PivotTo(frame * guest.Root.CFrame:Inverse() * guest.Model:GetPivot())
+		guest.Root.AssemblyLinearVelocity = Vector3.zero
+		guest.Root.AssemblyAngularVelocity = Vector3.zero
+		guest.Heading = heading
+		guest.Facing.CFrame = frame.Rotation
+		guest.Speed = 0
+		guest.Humanoid:Move(Vector3.zero)
+		guest.Model:SetAttribute("OpeningArrival", true)
+		base.OpeningDemand = false
+	end
 	guest.Model:SetAttribute("VisitorState", "Entering")
 	guest.Model:SetAttribute("CustomerId", customerId)
 	guest.Model:SetAttribute("CafeOwnerUserId", player.UserId)
@@ -358,6 +377,12 @@ function Street.Enter(player: Player, guest: Guest.Guest, onArrive: () -> ()): (
 	local base = Bases[player]
 	if not base then
 		guest:Destroy()
+		return
+	end
+	if guest.Model:GetAttribute("OpeningArrival") then
+		guest.Model:SetAttribute("OpeningArrival", nil)
+		guest.Model:SetAttribute("VisitorState", "Customer")
+		onArrive()
 		return
 	end
 	guest:WalkRoute(StreetRoute.Enter(base.Route, guest.Root.Position), nil, function()

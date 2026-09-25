@@ -16,7 +16,7 @@ export type Clip = {
 	TransitionHold: string?,
 }
 
-export type Action = { ToolId: string?, CancelOnMove: boolean }
+export type Action = { ToolId: string?, CancelOnMove: boolean, LockSeconds: number? }
 
 local CharacterAnimations = {
 	RigType = Enum.HumanoidRigType.R15,
@@ -29,8 +29,8 @@ local CharacterAnimations = {
 	CarryEnabled = true,
 	PoseAssetTimeout = 10,
 	Actions = {
-		Sweep = { ToolId = "broom", CancelOnMove = true },
-		Cleaning = { CancelOnMove = true },
+		Sweep = { ToolId = "broom", CancelOnMove = false, LockSeconds = 1 },
+		Cleaning = { CancelOnMove = false, LockSeconds = 1 },
 		PetCat = { CancelOnMove = true },
 	} :: { [string]: Action },
 	GroundStates = {

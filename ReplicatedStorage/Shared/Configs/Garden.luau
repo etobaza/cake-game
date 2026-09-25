@@ -64,9 +64,13 @@ local Garden = {
 	BrushStationAttribute = "GardenBrushStation",
 	BrushSize = Vector3.new(0.8, 0.4, 1.05),
 	BrushGrip = CFrame.new(0, -0.3, -0.1) * CFrame.Angles(math.rad(90), 0, 0),
-	BrushStroke = 0.28,
-	BrushCycles = 2,
-	BrushBlendSeconds = 0.12,
+	BrushStroke = 0.12,
+	BrushCycles = 1,
+	BrushBlendSeconds = 0.3,
+	BrushIKSmoothTime = 0.16,
+	BrushElbowOffset = Vector3.new(1.8, -0.3, -0.15),
+	-- Keep the palm on the player's side of the animal's surface.
+	BrushTargetOffset = CFrame.new(0, 0, 0.3),
 	WaterTurnSpeed = 12,
 	-- Water lands at the roots without moving the player from their approach position.
 	WaterTargetOffsets = {

@@ -8,7 +8,7 @@ return {
 	Version = 1,
 	RecommendedRecipe = "bread",
 	FirstGuestType = "regular",
-	FirstBakeGrace = 60,
+	FirstBakeGrace = 30,
 	OrderPreviewSeconds = 2.5,
 	SuccessSeconds = 4,
 	RefreshInterval = 0.15,

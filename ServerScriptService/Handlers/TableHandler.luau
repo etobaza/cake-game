@@ -14,6 +14,7 @@ local _Libs = _Shared.Libs
 --[[ Modules ]]--
 local BuildingHandler = require(ServerScriptService.Handlers.BuildingHandler)
 local Bus = require(_Shared.Bus)
+local CleaningAction = require(ServerScriptService.CleaningAction)
 local DataHandler = require(ServerScriptService.Handlers.DataHandler)
 local Sanitize = require(_Shared.Sanitize)
 local Signal = require(_Libs.Signal)
@@ -24,7 +25,7 @@ local TABLE_KIND = "Table"
 
 --[[ Tables ]]--
 local TableHandler = {
-	dependencies = { "BuildingHandler", "DataHandler" },
+	dependencies = { "BuildingHandler", "DataHandler", "PlayerHandler" },
 	priority = 50,
 }
 
@@ -110,7 +111,21 @@ function TableHandler.Clean(self: TableHandler, player: Player, tableId: string,
 	if not manual and context and context.Protected and context.TableId == tableId then
 		return false
 	end
+	local finish: (() -> ())? = nil
+	if manual then
+		local building = BuildingHandler:GetBuilding(player, tableId)
+		if not building or not building.State.Dirty then
+			return false
+		end
+		finish = CleaningAction.Begin(player, building.Part, "Cleaning", building.Janitor)
+		if not finish then
+			return false
+		end
+	end
 	if BuildingHandler:Dispatch(player, tableId, "Clean") ~= true then
+		if finish then
+			finish()
+		end
 		return false
 	end
 	if manual then
