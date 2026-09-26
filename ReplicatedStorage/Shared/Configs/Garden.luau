@@ -10,6 +10,7 @@ export type Source = {
 	DryVariant: string?,
 	ProduceSeconds: number?,
 	Capacity: number?,
+	BrushAnimation: { Id: string, Duration: number }?,
 	-- Authored basket, relative to the bakery root; care stays in the greenhouse.
 	OutputPath: { string }?,
 }
@@ -64,13 +65,7 @@ local Garden = {
 	BrushStationAttribute = "GardenBrushStation",
 	BrushSize = Vector3.new(0.8, 0.4, 1.05),
 	BrushGrip = CFrame.new(0, -0.3, -0.1) * CFrame.Angles(math.rad(90), 0, 0),
-	BrushStroke = 0.12,
-	BrushCycles = 1,
 	BrushBlendSeconds = 0.3,
-	BrushIKSmoothTime = 0.16,
-	BrushElbowOffset = Vector3.new(1.8, -0.3, -0.15),
-	-- Keep the palm on the player's side of the animal's surface.
-	BrushTargetOffset = CFrame.new(0, 0, 0.3),
 	WaterTurnSpeed = 12,
 	-- Water lands at the roots without moving the player from their approach position.
 	WaterTargetOffsets = {
@@ -163,6 +158,7 @@ local Garden = {
 			Produce = "milk",
 			Upgrade = "kitchen_cow",
 			Folder = "Cow",
+			BrushAnimation = { Id = "rbxassetid://104529059029316", Duration = 3 },
 			Care = "Animal",
 			DryVariant = "Upgrade1",
 			ProduceSeconds = 3,
@@ -175,6 +171,7 @@ local Garden = {
 			Produce = "egg",
 			Upgrade = "kitchen_chickens",
 			Folder = "Chiken",
+			BrushAnimation = { Id = "rbxassetid://113386418100557", Duration = 4 },
 			Care = "Animal",
 			DryVariant = "Upgrade1",
 			ProduceSeconds = 3,

@@ -6,6 +6,8 @@ local FoodModel = require(ReplicatedStorage.Shared.FoodModel)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Theme = require(ReplicatedStorage.Shared.UI.Theme)
 local Clearance = require(script.Parent.Clearance)
+local JointPose = require(ReplicatedStorage.Shared.JointPose)
+local PlateMotion = require(script.Parent.PlateMotion)
 
 local Visual = {}
 Visual.__index = Visual
@@ -21,8 +23,9 @@ export type Visual = typeof(setmetatable(
 		Label: TextLabel,
 		Food: FoodModel.FoodModel?,
 		Hand: BasePart?,
-		IK: IKControl?,
-		Target: Attachment?,
+		Pose: JointPose.JointPose?,
+		HandClip: JointPose.Clip?,
+		Plate: PlateMotion.PlateMotion?,
 		HeadParts: { BasePart },
 		NextHeadScanAt: number,
 		PoseStartedAt: number,
@@ -35,7 +38,7 @@ local function smooth(value: number): number
 	return alpha * alpha * (3 - 2 * alpha)
 end
 
-function Visual.new(model: Model, template: CanvasGroup): Visual?
+function Visual.new(model: Model, template: CanvasGroup, handClip: JointPose.Clip?): Visual?
 	local head = model:FindFirstChild("Head")
 	if not head or not head:IsA("BasePart") then
 		return nil
@@ -92,6 +95,7 @@ function Visual.new(model: Model, template: CanvasGroup): Visual?
 	clip.Size = UDim2.fromScale(0, 1)
 	local self: Visual = setmetatable({
 		Model = model,
+		HandClip = handClip,
 		Head = head,
 		Janitor = Janitor.new(),
 		Panel = panel,
@@ -113,18 +117,7 @@ function Visual.BindFood(self: Visual, now: number): ()
 	end
 
 	local hand = self.Model:FindFirstChild("RightHand")
-	local arm = self.Model:FindFirstChild("RightUpperArm")
-	local torso = self.Model:FindFirstChild("UpperTorso")
-	local humanoid = self.Model:FindFirstChildOfClass("Humanoid")
-	if
-		not hand
-		or not hand:IsA("BasePart")
-		or not arm
-		or not arm:IsA("BasePart")
-		or not torso
-		or not torso:IsA("BasePart")
-		or not humanoid
-	then
+	if not hand or not hand:IsA("BasePart") then
 		return
 	end
 
@@ -137,44 +130,12 @@ function Visual.BindFood(self: Visual, now: number): ()
 	food.Model.Parent = nil
 	self.Janitor:Add(food, "Destroy")
 
-	-- FoodModel's origin is its bottom. Solve for its center, so wrist rotation cannot
-	-- swing the upper half of the food through the face while the hand stays on target.
-	local grip = Instance.new("Attachment")
-	grip.Name = "EatingFoodCenter"
-	grip.CFrame = Config.Grip * CFrame.new(0, food.Size.Y / 2, 0)
-	grip.Parent = hand
-	self.Janitor:Add(grip, "Destroy")
+	if self.HandClip then
+		self.Pose = JointPose.new(self.Model, self.HandClip, Config.HandJoints, Config.PoseFadeSeconds)
+		self.Janitor:Add(self.Pose, "Destroy")
+	end
 
-	local foodCenter = Clearance.Target(self.Head, self.HeadParts, food.Size, Config.MouthOffset, Config.FaceClearance)
-
-	local target = Instance.new("Attachment")
-	target.Name = "EatingTarget"
-	-- Keep the target stable in torso space rather than chasing the animated head each frame.
-	target.Position = torso.CFrame:PointToObjectSpace(foodCenter)
-	target.Parent = torso
-	self.Janitor:Add(target, "Destroy")
-
-	local pole = Instance.new("Attachment")
-	pole.Name = "EatingElbow"
-	pole.Position = Config.ElbowOffset
-	pole.Parent = torso
-	self.Janitor:Add(pole, "Destroy")
-
-	local ik = Instance.new("IKControl")
-	ik.Name = "EatingHand"
-	-- Position-only keeps the wrist free instead of forcing a competing hand orientation.
-	ik.Type = Enum.IKControlType.Position
-	ik.ChainRoot = arm
-	ik.EndEffector = grip
-	ik.Target = target
-	ik.Pole = pole
-	ik.SmoothTime = Config.IKSmoothTime
-	ik.Weight = 0
-	ik.Parent = humanoid
-	self.Janitor:Add(ik, "Destroy")
-
-	self.Food, self.Hand, self.IK = food, hand, ik
-	self.Target = target
+	self.Food, self.Hand = food, hand
 	self.PoseStartedAt = now
 end
 
@@ -195,47 +156,58 @@ function Visual.Step(self: Visual, now: number): ()
 	if now >= self.NextHeadScanAt then
 		self.HeadParts = Clearance.Collect(self.Model, self.Head)
 		self.NextHeadScanAt = now + Config.HeadBoundsRefreshSeconds
-		self:RefreshTarget()
 	end
 
 	if not self.Food then
 		self:BindFood(now)
 	end
-	local ik = self.IK
-	if not ik then
-		return
+	if not self.Food and not self.Plate and self.Model:GetAttribute(Config.HeldAttribute) == nil then
+		self.Plate = PlateMotion.new(self.Model)
+
+		if self.Plate then
+			self.Janitor:Add(self.Plate, "Destroy")
+		end
 	end
-	-- Blend from this client's first visible frame, including late-streamed guests. Hold one
-	-- relaxed pose throughout the meal, then release it before the server starts departure.
-	local poseElapsed = math.max(0, now - self.PoseStartedAt)
-	ik.Weight = smooth(math.min(poseElapsed, math.max(0, ends - now)) / Config.PoseFadeSeconds)
-	ik.Enabled = now < ends
+
+	if self.Plate then
+		self.Plate:Step(now, started, ends)
+	end
 end
 
-function Visual.RefreshTarget(self: Visual): ()
-	local food, target = self.Food, self.Target
-	local torso = target and target.Parent
-	if not food or not target or not torso or not torso:IsA("BasePart") then
-		return
+function Visual.Restore(self: Visual): ()
+	if self.Plate then
+		self.Plate:Restore()
 	end
 
-	local center = Clearance.Target(self.Head, self.HeadParts, food.Size, Config.MouthOffset, Config.FaceClearance)
-	local position = torso.CFrame:PointToObjectSpace(center)
-	if (position - target.Position).Magnitude < Config.TargetUpdateDistance then
-		return
+	if self.Pose then
+		self.Pose:Restore()
+	end
+end
+
+function Visual.Animate(self: Visual, deltaTime: number, now: number): ()
+	if self.Plate then
+		self.Plate:Animate(deltaTime)
 	end
 
-	-- Retry late accessories, but ignore tiny head animation changes; IK smooths larger corrections.
-	target.Position = position
+	local ends = self.Model:GetAttribute(Config.EndsAttribute)
+	local started = self.Model:GetAttribute(Config.StartedAttribute)
+
+	if self.Pose and typeof(ends) == "number" and typeof(started) == "number" then
+		self.Pose:Step(deltaTime, now < ends - Config.PoseFadeSeconds, math.max(0, now - started), nil, nil, nil)
+	end
 end
 
 function Visual.Align(self: Visual): ()
+	if self.Plate then
+		self.Plate:Align()
+	end
+
 	local food, hand = self.Food, self.Hand
 	if not food or not hand or not hand.Parent then
 		return
 	end
 
-	-- IK can lag, blend, or hit its reach limit. Enforce clearance on the rendered food too.
+	-- Preserve the authored hand motion while keeping large food outside avatar accessories.
 	local frame =
 		Clearance.KeepOutside(self.Head, self.HeadParts, hand.CFrame * Config.Grip, food.Size, Config.FaceClearance)
 	food:SetCFrame(frame)
@@ -243,9 +215,6 @@ function Visual.Align(self: Visual): ()
 end
 
 function Visual.Destroy(self: Visual): ()
-	if self.IK then
-		self.IK.Enabled = false
-	end
 	self.Janitor:Destroy()
 end
 

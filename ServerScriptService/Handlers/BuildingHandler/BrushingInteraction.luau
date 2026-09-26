@@ -1,5 +1,5 @@
 --!strict
--- The server owns the one-second action and its movement lock; clients pose the brush hand.
+-- The server owns the work track and movement lock; clients attach the brush to its animated hand.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -80,9 +80,31 @@ function BrushingInteraction.Begin(building: any): boolean
 		return false
 	end
 	local target = CFrame.lookAt(point, point + facing.Unit)
+	local definition = Config.Sources[building.Id].BrushAnimation
+	local animator = humanoid:FindFirstChildOfClass("Animator")
+	if not definition or not animator then
+		return false
+	end
+
+	local animation = Instance.new("Animation")
+	animation.AnimationId = definition.Id
+	local ok, track = pcall(function(): AnimationTrack
+		return animator:LoadAnimation(animation)
+	end)
+	animation:Destroy()
+
+	if not ok then
+		print(`[BrushingInteraction] Cannot load {building.Id}: {track}`)
+		return false
+	end
+
 	local key = `Brush:{building.Id}`
 	local janitor = Janitor.new()
 	building.Janitor:Add(janitor, "Destroy", "Brushing")
+	janitor:Add(function(): ()
+		track:Stop(0)
+		track:Destroy()
+	end, true)
 	janitor:Add(function(): ()
 		character:SetAttribute(Config.BrushUntilAttribute, nil)
 		character:SetAttribute(Config.BrushTargetAttribute, nil)
@@ -99,9 +121,13 @@ function BrushingInteraction.Begin(building: any): boolean
 		"Disconnect"
 	)
 	Player:SetMovementLocked(player, key, true)
+	track.Priority = Enum.AnimationPriority.Action2
+	track.Looped = false
+	track:Play(Config.BrushBlendSeconds)
+
 	character:SetAttribute(Config.BrushStationAttribute, building.Id)
 	character:SetAttribute(Config.BrushTargetAttribute, target)
-	character:SetAttribute(Config.BrushUntilAttribute, workspace:GetServerTimeNow() + Config.BrushSeconds)
+	character:SetAttribute(Config.BrushUntilAttribute, workspace:GetServerTimeNow() + definition.Duration)
 	Bus.VFX.Burst:Fire("Cleaning", building.Part, target, player.UserId, workspace:GetServerTimeNow())
 	return true
 end

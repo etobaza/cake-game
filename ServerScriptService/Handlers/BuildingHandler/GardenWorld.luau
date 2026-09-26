@@ -306,7 +306,8 @@ local function animateCare(record: any, owned: boolean, state: any, day: number,
 	if not owned or not state or record.Source.Care ~= "Animal" then
 		return
 	end
-	local clean = AnimalCare.Brushing(state, day, now)
+	local animation = record.Source.BrushAnimation
+	local clean = AnimalCare.Brushing(state, day, now, if animation then animation.Duration else Config.BrushSeconds)
 	local dirtyVisible = clean < Config.DirtyAppearanceThreshold
 	for _, entry in record.Entries do
 		local kind = entry.Part:GetAttribute(Motion.KindAttribute)

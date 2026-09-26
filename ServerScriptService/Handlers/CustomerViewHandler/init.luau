@@ -17,6 +17,7 @@ local _Handlers = ServerScriptService.Handlers
 --[[ Modules ]]--
 local Appearance = require(script.Appearance)
 local BaseHandler = require(_Handlers.BaseHandler)
+local BuildingHandler = require(_Handlers.BuildingHandler)
 local Bus = require(_Shared.Bus)
 local CatHandler = require(_Handlers.CatHandler)
 local CarpetRoute = require(script.CarpetRoute)
@@ -311,12 +312,17 @@ function CustomerViewHandler.Eat(
 		and recipe.asset ~= nil
 		and FoodModel.FindAsset(recipe.asset) ~= nil
 	model:SetAttribute(DiningConfig.HeldAttribute, if canHold then recipeId else nil)
+	local building = customer.TableId and BuildingHandler:GetBuilding(player, customer.TableId)
+	local foodView = building and building.FoodVisual
+	local plateFrame = foodView and foodView.Frames[customer.SeatIndex or 1]
+	model:SetAttribute(DiningConfig.PlateAttribute, if plateFrame then plateFrame.Position else nil)
 	model:SetAttribute(DiningConfig.StartedAttribute, customer.EatEndsAt - DayCycleConfig.EatSeconds)
 	model:SetAttribute(DiningConfig.EndsAttribute, customer.EatEndsAt)
 	model:AddTag(DiningConfig.Tag)
 	guest.Janitor:Add(function(): ()
 		model:RemoveTag(DiningConfig.Tag)
 		model:SetAttribute(DiningConfig.HeldAttribute, nil)
+		model:SetAttribute(DiningConfig.PlateAttribute, nil)
 		model:SetAttribute(DiningConfig.StartedAttribute, nil)
 		model:SetAttribute(DiningConfig.EndsAttribute, nil)
 	end, true, "Dining")

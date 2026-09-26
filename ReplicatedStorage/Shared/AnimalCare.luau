@@ -13,10 +13,10 @@ function AnimalCare.Cleanliness(state: any, day: number?): number
 	return math.clamp(state.CareRemaining / (Config.CleanSeconds - Config.BrushCleanHoldSeconds), 0, 1)
 end
 
-function AnimalCare.Brushing(state: any, day: number, now: number): number
+function AnimalCare.Brushing(state: any, day: number, now: number, duration: number): number
 	local clean = AnimalCare.Cleanliness(state, day)
 	if state.CareUntil > 0 then
-		clean = math.max(clean, math.clamp(1 - (state.CareUntil - now) / Config.BrushSeconds, 0, 1))
+		clean = math.max(clean, math.clamp(1 - (state.CareUntil - now) / duration, 0, 1))
 	end
 	return clean
 end

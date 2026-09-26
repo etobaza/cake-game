@@ -215,7 +215,7 @@ function GardenNode.Tend(building: any): boolean
 	if source.Care == "Animal" and not BrushingInteraction.Begin(building) then
 		return false
 	end
-	local duration = if source.Care == "Animal" then Config.BrushSeconds else Config.CareSeconds
+	local duration = if source.BrushAnimation then source.BrushAnimation.Duration else Config.CareSeconds
 	building.State.CareUntil = workspace:GetServerTimeNow() + duration
 	building.Part:SetAttribute("GardenCareUntil", building.State.CareUntil)
 	building.Part:SetAttribute("GardenCareAction", if source.Care == "Plant" then "Water" else "Brush")

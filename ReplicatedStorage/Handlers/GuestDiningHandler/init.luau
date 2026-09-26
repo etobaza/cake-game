@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Config = require(ReplicatedStorage.Shared.Configs.GuestDining)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local JointPose = require(ReplicatedStorage.Shared.JointPose)
 local UIHandler = require(ReplicatedStorage.Handlers.UIHandler)
 local Visual = require(script.Visual)
 
@@ -41,7 +42,7 @@ function GuestDiningHandler.Update(self: GuestDiningHandler): ()
 		end
 
 		-- Retry incomplete streamed bodies without yielding or creating duplicate views.
-		local view: Visual.Visual? = self.Views[model] or Visual.new(model, self.Template)
+		local view: Visual.Visual? = self.Views[model] or Visual.new(model, self.Template, self.HandClip)
 		if not view then
 			continue
 		end
@@ -52,6 +53,15 @@ function GuestDiningHandler.Update(self: GuestDiningHandler): ()
 end
 
 function GuestDiningHandler.OnStart(self: GuestDiningHandler): ()
+	local animations = ReplicatedStorage.Assets:WaitForChild("Animations", 10)
+	local sequence = animations and animations:WaitForChild(Config.HandSequence, 10)
+
+	if sequence and sequence:IsA("KeyframeSequence") then
+		self.HandClip = JointPose.Read(sequence, Config.HandJoints)
+	else
+		print(`[GuestDiningHandler] Missing authored {Config.HandSequence}`)
+	end
+
 	local order = UIHandler:GetHud("Order")
 	local bar = order:FindFirstChild("Bar", true) :: CanvasGroup
 	self.Template = bar:Clone()
@@ -77,7 +87,22 @@ function GuestDiningHandler.OnStart(self: GuestDiningHandler): ()
 
 	self.Janitor:Add(
 		RunService.PreAnimation:Connect(function(): ()
+			for _, view in self.Views do
+				view:Restore()
+			end
+
 			self:Update()
+		end),
+		"Disconnect"
+	)
+
+	self.Janitor:Add(
+		RunService.PreSimulation:Connect(function(deltaTime: number): ()
+			local now = workspace:GetServerTimeNow()
+
+			for _, view in self.Views do
+				view:Animate(deltaTime, now)
+			end
 		end),
 		"Disconnect"
 	)
@@ -104,6 +129,7 @@ end
 export type GuestDiningHandler = typeof(GuestDiningHandler) & {
 	Janitor: any,
 	Template: CanvasGroup,
+	HandClip: JointPose.Clip?,
 	Guests: { [Model]: boolean },
 	Views: { [Model]: Visual.Visual },
 }
