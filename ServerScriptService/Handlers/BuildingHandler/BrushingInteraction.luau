@@ -10,6 +10,7 @@ local Motion = require(ReplicatedStorage.Shared.Configs.AmbientMotion)
 local VFX = require(ReplicatedStorage.Shared.Configs.VFX)
 local Bus = require(ReplicatedStorage.Shared.Bus)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local SoundPlayer = require(ReplicatedStorage.Shared.SoundPlayer)
 
 local BrushingInteraction = {}
 
@@ -124,6 +125,8 @@ function BrushingInteraction.Begin(building: any): boolean
 	track.Priority = Enum.AnimationPriority.Action2
 	track.Looped = false
 	track:Play(Config.BrushBlendSeconds)
+	-- Cancelling the brushing stops its sound with the track.
+	janitor:Add(SoundPlayer.Play("AnimalWash", building.Part), "Destroy")
 
 	character:SetAttribute(Config.BrushStationAttribute, building.Id)
 	character:SetAttribute(Config.BrushTargetAttribute, target)

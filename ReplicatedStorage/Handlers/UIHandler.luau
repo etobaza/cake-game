@@ -191,8 +191,8 @@ function UIHandler.GetOrCreateRow(
 	return row
 end
 
---- Short message in the HUD status strip.
-function UIHandler.Toast(self: UIHandler, text: string): ()
+--- Short message in the HUD status strip. Returns a token for `ClearToast`.
+function UIHandler.Toast(self: UIHandler, text: string): number
 	self.ToastToken += 1
 	local token = self.ToastToken
 
@@ -207,6 +207,15 @@ function UIHandler.Toast(self: UIHandler, text: string): ()
 
 		self.StatusVisible:set(false)
 	end)
+
+	return token
+end
+
+--- Hides the toast early, but only while it is still the one identified by `token`.
+function UIHandler.ClearToast(self: UIHandler, token: number): ()
+	if self.ToastToken == token then
+		self.StatusVisible:set(false)
+	end
 end
 
 --- XP notification: slides the XP plate in from the right with `text`, and back out after

@@ -76,6 +76,8 @@ local GuestDining = {
 	-- Horizontal/vertical offsets from the head center; depth includes the food's full radius.
 	MouthOffset = Vector2.new(0.3, -0.4),
 	FaceClearance = 0.18,
+	-- Furthest held food may slide off its grip to clear the face, so it stays in the hand.
+	MaxFacePush = 0.2,
 	HeadBoundsRefreshSeconds = 0.25,
 	TargetUpdateDistance = 0.12,
 	ElbowOffset = Vector3.new(1.8, -0.3, -0.15),

@@ -130,9 +130,15 @@ function StoreHandler.Grant(self: StoreHandler, player: Player, productId: numbe
 		return
 	end
 
-	-- A pass changes nothing by itself; it changes what the sums read. Re-reading ownership is the
-	-- whole grant.
+	-- A pass changes nothing by itself; it changes what the sums read. Recording ownership is the
+	-- whole grant. The purchase event is trusted directly: UserOwnsGamePassAsync caches its answer
+	-- per server and can still say "not owned" right after the prompt closes.
 	if meta.grant == "CashMultiplier" or meta.grant == "Stat" then
+		local data = DataHandler:GetData(player)
+		if data and entry.productType == "gamepass" and not DataList.Contains(data.Cloud.Passes, entry.id) then
+			DataList.Append(data.Cloud.Passes, entry.id)
+		end
+
 		task.spawn(function()
 			self:SyncPasses(player)
 		end)

@@ -53,11 +53,6 @@ return {
 			text = "Load harvested produce into the garden cart. It travels to the kitchen and returns by itself. Collect deliveries at the kitchen rail output, one at a time.",
 		},
 		{
-			id = "Upgrades",
-			title = "Upgrades",
-			text = "Select an upgrade to see what changes and its price. Buy only when you want that improvement; the tutorial never requires a purchase.",
-		},
-		{
 			id = "NextDay",
 			title = "Tomorrow's menu",
 			text = "After closing, choose 3–5 available recipes. Next Day saves this menu and starts a new preparation period with no timer.",

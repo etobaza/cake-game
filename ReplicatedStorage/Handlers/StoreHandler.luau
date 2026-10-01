@@ -38,8 +38,14 @@ local OWNED_PATH = { "MainFrame", "Container", "Content", "Gamepasses", "Header"
 local DAILY_SKIP = { screen = "DailyRewards", path = { "MainFrame", "Buttons" }, names = { "Skip1", "SkipAll" } }
 local PLAYTIME_SKIP = { screen = "Playtime", path = { "MainFrame", "Bottom" }, names = { "Skip" } }
 
--- What the price plate says once the pass is owned.
+-- What the price plate says once the pass is owned, or while the Dashboard has it off sale.
 local OWNED_LABEL = "Owned"
+local OFF_SALE_LABEL = "Off sale"
+-- An owned or off-sale Buy plate loses its green and its Robux symbol.
+local MUTED_FILL = ColorSequence.new(Color3.fromRGB(205, 205, 205), Color3.fromRGB(150, 150, 150))
+local MUTED_EDGE = Color3.fromRGB(80, 80, 80)
+-- Added currency-tile art relative to the authored shine behind it.
+local ICON_TO_SHINE = 0.85
 
 --[[ Tables ]]--
 local StoreHandler = {
@@ -70,6 +76,76 @@ local function Owns(entryId: string): boolean
 	return false
 end
 
+-- A tile's product art. Currency tiles were drawn with only the shine behind where the art goes, so
+-- their icon is added once over that shine, at a slightly smaller size.
+local function IconOf(row: Instance): ImageLabel?
+	local icon = row:FindFirstChild("Icon")
+	if icon and icon:IsA("ImageLabel") then
+		return icon
+	end
+	local shine = row:FindFirstChild("Effect")
+	if not shine or not shine:IsA("GuiObject") then
+		return nil
+	end
+	local created = Instance.new("ImageLabel")
+	created.Name = "Icon"
+	created.BackgroundTransparency = 1
+	created.ScaleType = Enum.ScaleType.Fit
+	created.AnchorPoint = shine.AnchorPoint
+	created.Position = shine.Position
+	created.Size = UDim2.new(
+		shine.Size.X.Scale * ICON_TO_SHINE,
+		shine.Size.X.Offset * ICON_TO_SHINE,
+		shine.Size.Y.Scale * ICON_TO_SHINE,
+		shine.Size.Y.Offset * ICON_TO_SHINE
+	)
+	created.ZIndex = shine.ZIndex
+	created.Parent = row
+	return created
+end
+
+-- Every color on a Buy plate that says "green": the fill gradient and the outlines.
+local function PlateColors(buy: Instance): { Instance }
+	local parts: { Instance } = {}
+
+	for _, descendant in buy:GetDescendants() do
+		if descendant:IsA("UIGradient") or descendant:IsA("UIStroke") then
+			parts[#parts + 1] = descendant
+		end
+	end
+
+	return parts
+end
+
+-- Greys a Buy plate out, or puts back the colors it was drawn with.
+local function SetMuted(row: StoreRow, muted: boolean): ()
+	local buy = row.Row:FindFirstChild("Buy")
+	if not buy then
+		return
+	end
+
+	if not row.Drawn then
+		local drawn = {}
+		for _, part in PlateColors(buy) do
+			drawn[part] = if part:IsA("UIGradient") then part.Color else (part :: UIStroke).Color
+		end
+		row.Drawn = drawn
+	end
+
+	for part, color in row.Drawn :: { [Instance]: any } do
+		if part:IsA("UIGradient") then
+			part.Color = if muted then MUTED_FILL else color
+		elseif part:IsA("UIStroke") then
+			part.Color = if muted then MUTED_EDGE else color
+		end
+	end
+
+	local symbol = Authored.Resolve(buy, { "Price", "Symbol" })
+	if symbol and symbol:IsA("GuiObject") then
+		symbol.Visible = not muted
+	end
+end
+
 --[[ Handling ]]--
 function StoreHandler.OnStart(self: StoreHandler): ()
 	local screen = UIHandler:GetPanel(SCREEN_NAME)
@@ -80,6 +156,7 @@ function StoreHandler.OnStart(self: StoreHandler): ()
 
 	self.Screen = screen
 	self.Rows = {}
+	self.Sale = {}
 	local currency = Authored.Resolve(screen, CURRENCY_PATH)
 	if currency and currency:IsA("GuiObject") then
 		CardGrid.Bind(currency)
@@ -140,6 +217,12 @@ function StoreHandler.BindSection(self: StoreHandler, parent: Instance?, prefix:
 			contains.Text = meta.blurb
 		end
 
+		local art = meta.icon
+		local icon = if art then IconOf(row) else nil
+		if icon and art then
+			icon.Image = art
+		end
+
 		local buy = row:FindFirstChild("Buy")
 		if buy and buy:IsA("GuiObject") then
 			Animate.Press(buy)
@@ -173,14 +256,15 @@ function StoreHandler.BindSkips(self: StoreHandler): ()
 	end
 end
 
---- Asks the server to open the Roblox prompt. A product with no id yet never gets that far.
-function StoreHandler.Buy(_self: StoreHandler, entryId: string): ()
+--- Asks the server to open the Roblox prompt. A product with no id yet, or one the Dashboard has
+--- off sale, never gets that far: Roblox would only answer with its own error dialog.
+function StoreHandler.Buy(self: StoreHandler, entryId: string): ()
 	local entry = Products:Get(entryId)
 	if not entry then
 		return
 	end
 
-	if entry.productId <= 0 then
+	if entry.productId <= 0 or self.Sale[entryId] == false then
 		UIHandler:Toast(`{if entry.meta then entry.meta.name else entryId} is not on sale yet`)
 		return
 	end
@@ -193,40 +277,53 @@ function StoreHandler.Buy(_self: StoreHandler, entryId: string): ()
 	Bus.Purchase.RequestPurchase:Fire(entry.productId)
 end
 
---- Owned passes read as owned, and the header counts them.
+--- Every plate shows its Marketplace price; owned passes and off-sale products read grey, and the
+--- header counts what is owned.
 function StoreHandler.Refresh(self: StoreHandler): ()
 	local owned = 0
 
 	for _, row in self.Rows do
 		local entry = Products:Get(row.EntryId)
-		if not entry or entry.productType == "devproduct" then
+		if not entry then
 			continue
 		end
 
-		local has = Owns(row.EntryId)
+		local has = entry.productType ~= "devproduct" and Owns(row.EntryId)
 		if has then
 			owned += 1
 		end
+
+		local offSale = self.Sale[row.EntryId] == false
 
 		-- The drawn price is left alone until the Marketplace answers with the real one: a row that
 		-- says nothing reads worse than a row that says the placeholder.
 		local buy = row.Row:FindFirstChild("Buy")
 		local price = buy and Authored.Resolve(buy, { "Price" })
-		local label = if has then OWNED_LABEL else row.Price
+		local label = if has then OWNED_LABEL elseif offSale then OFF_SALE_LABEL else row.Price
 
 		if price and label then
 			Authored.SetPair(price, label)
 		end
+
+		SetMuted(row, has or offSale)
 	end
 
 	Authored.SetPair(Authored.Resolve(self.Screen, OWNED_PATH), `{owned}/{StoreConfig.OwnedTotal} Owned`)
 end
 
---- Robux prices, read once. A missing id or a failed call leaves the drawn placeholder alone.
+--- Robux prices and sale state, read once per session, so a price changed on the Dashboard shows
+--- from the next join. A missing id or a failed call leaves the drawn placeholder alone.
 function StoreHandler.FetchPrices(self: StoreHandler): ()
+	local entryIds = { StoreConfig.Skips.Daily, StoreConfig.Skips.Playtime }
 	for _, row in self.Rows do
-		local entry = Products:Get(row.EntryId)
-		if not entry or entry.productId <= 0 then
+		entryIds[#entryIds + 1] = row.EntryId
+	end
+
+	local prices: { [string]: string } = {}
+
+	for _, entryId in entryIds do
+		local entry = Products:Get(entryId)
+		if not entry or entry.productId <= 0 or self.Sale[entryId] ~= nil then
 			continue
 		end
 
@@ -234,10 +331,20 @@ function StoreHandler.FetchPrices(self: StoreHandler): ()
 		local ok, info = pcall(function()
 			return MarketplaceService:GetProductInfoAsync(entry.productId, infoType)
 		end)
-
-		if ok and info and info.PriceInRobux then
-			row.Price = tostring(info.PriceInRobux)
+		if not ok or not info then
+			continue
 		end
+
+		-- A product with no price set is as unbuyable as one switched off sale.
+		local price = info.PriceInRobux
+		self.Sale[entryId] = info.IsForSale == true and typeof(price) == "number"
+		if typeof(price) == "number" then
+			prices[entryId] = tostring(price)
+		end
+	end
+
+	for _, row in self.Rows do
+		row.Price = prices[row.EntryId] or row.Price
 	end
 
 	self:Refresh()
@@ -247,11 +354,15 @@ export type StoreRow = {
 	Row: Frame,
 	EntryId: string,
 	Price: string?,
+	-- The plate's own colors, captured the first time it is greyed so they can be put back.
+	Drawn: { [Instance]: any }?,
 }
 
 export type StoreHandler = typeof(StoreHandler) & {
 	Screen: ScreenGui,
 	Rows: { StoreRow },
+	-- Sale state from the Marketplace by registry id; nil until the answer arrives.
+	Sale: { [string]: boolean },
 }
 
 return StoreHandler :: StoreHandler

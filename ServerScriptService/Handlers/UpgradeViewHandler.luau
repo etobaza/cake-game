@@ -101,6 +101,12 @@ type Saved = {
 	CanQuery: boolean,
 }
 
+-- Decals and Textures draw even on a fully transparent part, so they are hidden on their own.
+type Snapshot = {
+	Parts: { [BasePart]: Saved },
+	Decals: { [Decal]: number },
+}
+
 --[[ Private Functions ]]--
 -- Authored suffix of a child: "Upgrade" and "BuildPlaceholder" read as 1.
 local function SuffixOf(childName: string): (string?, number)
@@ -146,7 +152,7 @@ function UpgradeViewHandler.Claim(self: UpgradeViewHandler, player: Player, bake
 		return
 	end
 
-	local saved: { [BasePart]: Saved } = {}
+	local saved: Snapshot = { Parts = {}, Decals = {} }
 
 	for _, view in VIEWS do
 		local folder = self:ResolveFolder(bakery, view)
@@ -156,11 +162,13 @@ function UpgradeViewHandler.Claim(self: UpgradeViewHandler, player: Player, bake
 
 		for _, piece in folder:GetDescendants() do
 			if piece:IsA("BasePart") then
-				saved[piece] = {
+				saved.Parts[piece] = {
 					Transparency = piece.Transparency,
 					CanCollide = piece.CanCollide,
 					CanQuery = piece.CanQuery,
 				}
+			elseif piece:IsA("Decal") then
+				saved.Decals[piece] = piece.Transparency
 			end
 		end
 	end
@@ -266,11 +274,17 @@ function UpgradeViewHandler.Restore(self: UpgradeViewHandler, player: Player): (
 		return
 	end
 
-	for part, entry in saved do
+	for part, entry in saved.Parts do
 		if part.Parent then
 			part.Transparency = entry.Transparency
 			part.CanCollide = entry.CanCollide
 			part.CanQuery = entry.CanQuery
+		end
+	end
+
+	for decal, transparency in saved.Decals do
+		if decal.Parent then
+			decal.Transparency = transparency
 		end
 	end
 
@@ -313,30 +327,36 @@ function UpgradeViewHandler.SetShown(self: UpgradeViewHandler, player: Player, c
 		return
 	end
 
-	local pieces: { BasePart } = if child:IsA("BasePart") then { child } else {}
-	for _, piece in child:GetDescendants() do
-		if piece:IsA("BasePart") then
-			table.insert(pieces, piece)
-		end
-	end
+	local pieces: { Instance } = child:GetDescendants()
+	table.insert(pieces, child)
 
 	for _, piece in pieces do
-		local authored = saved[piece]
+		if piece:IsA("BasePart") then
+			local authored = saved.Parts[piece]
 
-		if visible and authored then
-			piece.Transparency = authored.Transparency
-			piece.CanCollide = authored.CanCollide
-			piece.CanQuery = authored.CanQuery
-		elseif not visible then
-			piece.Transparency = 1
-			piece.CanCollide = false
-			piece.CanQuery = false
+			if visible and authored then
+				piece.Transparency = authored.Transparency
+				piece.CanCollide = authored.CanCollide
+				piece.CanQuery = authored.CanQuery
+			elseif not visible then
+				piece.Transparency = 1
+				piece.CanCollide = false
+				piece.CanQuery = false
+			end
+		elseif piece:IsA("Decal") then
+			local authored = saved.Decals[piece]
+
+			if visible and authored then
+				piece.Transparency = authored
+			elseif not visible then
+				piece.Transparency = 1
+			end
 		end
 	end
 end
 
 export type UpgradeViewHandler = typeof(UpgradeViewHandler) & {
-	Saved: { [Player]: { [BasePart]: Saved } },
+	Saved: { [Player]: Snapshot },
 }
 
 return UpgradeViewHandler :: UpgradeViewHandler

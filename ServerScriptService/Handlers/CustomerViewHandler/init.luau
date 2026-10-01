@@ -31,6 +31,8 @@ local FoodModel = require(_Shared.FoodModel)
 local Recipes = require(_Configs.Registries.Recipes)
 local DayCycleConfig = require(_Configs.DayCycle)
 local GuestsConfig = require(_Configs.Guests)
+local SoundPlayer = require(_Shared.SoundPlayer)
+local SoundsConfig = require(_Configs.Sounds)
 local Spots = require(script.Spots)
 local Street = require(script.Street)
 local TickHandler = require(_Handlers.TickHandler)
@@ -331,6 +333,10 @@ function CustomerViewHandler.Eat(
 	if head and head:IsA("BasePart") then
 		head:SetAttribute(VFX.ChoosingAttribute, false)
 		Bus.VFX.Burst:Fire(reaction, head, head.CFrame, player.UserId, workspace:GetServerTimeNow())
+		local voice: SoundsConfig.SoundName? = SoundsConfig.Reactions[reaction]
+		if voice then
+			SoundPlayer.Play(voice, head)
+		end
 	end
 end
 
@@ -414,7 +420,12 @@ function CustomerViewHandler.RefreshGuest(
 	end
 	local head = guest.Model:FindFirstChild("Head")
 	if head then
-		head:SetAttribute(VFX.ChoosingAttribute, customer.State == "Choosing")
+		local choosing = customer.State == "Choosing"
+		-- A newly seated guest whistles once to call the player over for their order.
+		if choosing and head:GetAttribute(VFX.ChoosingAttribute) ~= true then
+			SoundPlayer.Play("WaiterWhistle", head)
+		end
+		head:SetAttribute(VFX.ChoosingAttribute, choosing)
 	end
 end
 

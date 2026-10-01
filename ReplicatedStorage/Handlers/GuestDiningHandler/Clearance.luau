@@ -82,12 +82,15 @@ function Clearance.Target(
 	return head.CFrame:PointToWorldSpace(Vector3.new(center.X, center.Y, front - radius - gap))
 end
 
+-- The push is capped: the authored bite brings the hand to the mouth, so a full push would
+-- float the food away from the hand that holds it.
 function Clearance.KeepOutside(
 	head: BasePart,
 	parts: { BasePart },
 	foodFrame: CFrame,
 	foodSize: Vector3,
-	gap: number
+	gap: number,
+	maxPush: number
 ): CFrame
 	local center = (foodFrame * CFrame.new(0, foodSize.Y / 2, 0)).Position
 	local localCenter = head.CFrame:PointToObjectSpace(center)
@@ -97,7 +100,7 @@ function Clearance.KeepOutside(
 		return foodFrame
 	end
 
-	local correction = math.max(0, localCenter.Z + radius + gap - front)
+	local correction = math.clamp(localCenter.Z + radius + gap - front, 0, maxPush)
 
 	return foodFrame + head.CFrame.LookVector * correction
 end

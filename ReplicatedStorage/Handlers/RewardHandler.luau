@@ -62,6 +62,14 @@ local function GridCells(grid: Instance): { Frame }
 	end)
 	return cells
 end
+-- Tile art grows with the reward, and the last tile of a track wears the chest.
+local function SetIcon(cell: Frame, reward: Rewards.Reward?, isFinal: boolean): ()
+	local icon = cell:FindFirstChild("Icon")
+	if reward and icon and icon:IsA("ImageLabel") then
+		icon.Image = Rewards.GetIcon(reward, isFinal)
+	end
+end
+
 -- Beige is the plain face, Green the one behind a taken reward. The tile punches on the way over,
 -- which is the whole of the "you got it" feedback on these screens.
 local function SetFace(cell: Frame, claimed: boolean): ()
@@ -238,6 +246,7 @@ function RewardHandler.RefreshDaily(self: RewardHandler): ()
 
 		SetFace(cell, isTaken)
 		Authored.SetPair(cell:FindFirstChild("Name"), if reward then `{Format.Number(reward.Cash)}` else "-")
+		SetIcon(cell, reward, index == #Rewards.Daily.Days)
 
 		local claim = cell:FindFirstChild("Claim")
 		if claim and claim:IsA("GuiObject") then
@@ -271,6 +280,7 @@ function RewardHandler.RefreshPlaytime(self: RewardHandler): ()
 
 		SetFace(cell, isTaken)
 		Authored.SetPair(cell:FindFirstChild("Reward"), if reward then `{Format.Number(reward.Cash)}` else "-")
+		SetIcon(cell, reward, index == #Rewards.Playtime.Tiers)
 
 		local claim = cell:FindFirstChild("ClaimButton")
 		if claim and claim:IsA("GuiObject") then

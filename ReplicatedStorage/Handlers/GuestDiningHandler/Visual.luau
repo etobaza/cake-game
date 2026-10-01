@@ -208,8 +208,14 @@ function Visual.Align(self: Visual): ()
 	end
 
 	-- Preserve the authored hand motion while keeping large food outside avatar accessories.
-	local frame =
-		Clearance.KeepOutside(self.Head, self.HeadParts, hand.CFrame * Config.Grip, food.Size, Config.FaceClearance)
+	local frame = Clearance.KeepOutside(
+		self.Head,
+		self.HeadParts,
+		hand.CFrame * Config.Grip,
+		food.Size,
+		Config.FaceClearance,
+		Config.MaxFacePush
+	)
 	food:SetCFrame(frame)
 	food.Model.Parent = self.Model
 end

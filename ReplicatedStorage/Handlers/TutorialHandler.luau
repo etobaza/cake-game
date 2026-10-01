@@ -75,13 +75,14 @@ function TutorialHandler.OnStart(self: TutorialHandler): ()
 		print("[TutorialHandler] StarterGui.Tutorial must be authored and saved")
 		return
 	end
-	self.View = Presenter.new(screen, function(text: string): boolean
+	self.View = Presenter.new(screen, function(text: string): number?
 		if UIHandler.StatusVisible:peek() then
-			return false
+			return nil
 		end
 
-		UIHandler:Toast(text)
-		return true
+		return UIHandler:Toast(text)
+	end, function(token: number): ()
+		UIHandler:ClearToast(token)
 	end)
 	self.Janitor:Add(self.View, "Destroy")
 	self.GuestHighlight = GuestHighlight.new(Players.LocalPlayer.UserId)

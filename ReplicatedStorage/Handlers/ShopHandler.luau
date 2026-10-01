@@ -64,6 +64,10 @@ local ALL_SLOTS: { { string } } = {
 
 -- The one node the artist drew contents into; every other box borrows its icon.
 local ICON_TEMPLATE = { "Row4L", "Slot1", "Icon" }
+-- Upgrade art geometry inside a node box, as fractions of the box.
+local ART_SCALE = 0.72
+local ART_CAPTIONED_Y = 0.42
+local CAPTION_HEIGHT = 0.3
 
 -- Node paint per state. The cream and the green are the authored ones, the rest follow from them.
 local BOX_COLOR: { [string]: Color3 } = {
@@ -155,6 +159,37 @@ local function GetDetail(
 	end
 
 	return `{entry.blurb}\nLevel {targetLevel}/{entry.maxLevel}`
+end
+
+-- Art fills the box above a small level caption; nodes without art keep the authored full-box name.
+local function ApplyArt(node: Node, entry: Upgrades.UpgradeEntry?): ()
+	local icon = node.Icon
+	local art = if entry then entry.icon else nil
+	node.HasArt = icon ~= nil and art ~= nil
+	local label = node.Slot:FindFirstChild("UpgradeName")
+	if label and label:IsA("TextLabel") and not node.LabelLayout then
+		node.LabelLayout = { Size = label.Size, Position = label.Position, AnchorPoint = label.AnchorPoint }
+	end
+	local captioned = entry ~= nil and entry.maxLevel > 1
+	if icon and art then
+		icon.Image = art
+		icon.AnchorPoint = Vector2.new(0.5, 0.5)
+		icon.Size = UDim2.fromScale(ART_SCALE, ART_SCALE)
+		icon.Position = UDim2.fromScale(0.5, if captioned then ART_CAPTIONED_Y else 0.5)
+	end
+	local layout = node.LabelLayout
+	if not label or not label:IsA("TextLabel") or not layout then
+		return
+	end
+	if node.HasArt then
+		label.AnchorPoint = Vector2.new(0.5, 1)
+		label.Position = UDim2.new(0.5, 0, 1, -1)
+		label.Size = UDim2.new(1, -6, CAPTION_HEIGHT, 0)
+	else
+		label.AnchorPoint = layout.AnchorPoint
+		label.Position = layout.Position
+		label.Size = layout.Size
+	end
 end
 
 --[[ Handling ]]--
@@ -250,6 +285,7 @@ function ShopHandler.CollectSlots(self: ShopHandler): ()
 			PurchaseLevel = 1,
 			Selected = false,
 			State = nil,
+			HasArt = false,
 		}
 
 		-- A box is its own click target: the drawing has no button inside it, and adding one would
@@ -377,12 +413,19 @@ function ShopHandler.Refresh(self: ShopHandler): ()
 		node.Slot:SetAttribute("PurchaseLevel", if entry then node.PurchaseLevel else nil)
 		local state = if entry then GetState(entry, node.PurchaseLevel, levels, playerLevel, cash) else "Empty"
 
+		ApplyArt(node, entry)
 		self:PaintNode(node, state, entry ~= nil and key == selected)
 		local label = node.Slot:FindFirstChild("UpgradeName")
 		if label and label:IsA("TextLabel") then
-			label.Text = if entry then Upgrades:GetDisplayName(entry.id, node.PurchaseLevel - 1) else ""
-			if entry and entry.maxLevel > 1 and not entry.names then
-				label.Text ..= `\n{node.PurchaseLevel}/{entry.maxLevel}`
+			-- With art the picture names the upgrade; the label is only its level caption.
+			local level = if entry and entry.maxLevel > 1 then `{node.PurchaseLevel}/{entry.maxLevel}` else ""
+			if node.HasArt then
+				label.Text = level
+			else
+				label.Text = if entry then Upgrades:GetDisplayName(entry.id, node.PurchaseLevel - 1) else ""
+				if entry and entry.maxLevel > 1 and not entry.names then
+					label.Text ..= `\n{level}`
+				end
 			end
 		end
 	end
@@ -411,7 +454,7 @@ function ShopHandler.PaintNode(_self: ShopHandler, node: Node, state: string, is
 	local label = node.Slot:FindFirstChild("UpgradeName")
 	local icon = node.Icon
 	if icon then
-		icon.Visible = label == nil
+		icon.Visible = node.HasArt or label == nil
 		icon.ImageTransparency = ICON_TRANSPARENCY[state]
 	end
 end
@@ -519,6 +562,10 @@ export type Node = {
 	-- What the node looked like last time it was painted, so a change can be felt as well as seen.
 	Selected: boolean?,
 	State: string?,
+	-- The upgrade's own art is shown; the label is then a level caption below it.
+	HasArt: boolean,
+	-- Authored label geometry, restored when a node shows a name instead of art.
+	LabelLayout: { Size: UDim2, Position: UDim2, AnchorPoint: Vector2 }?,
 }
 
 export type ShopHandler = typeof(ShopHandler) & {

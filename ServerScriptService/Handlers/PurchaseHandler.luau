@@ -290,6 +290,29 @@ end
 function PurchaseHandler.OnInit(_self: PurchaseHandler)
 	MarketplaceService.ProcessReceipt = processReceipt
 
+	-- Gamepasses never reach ProcessReceipt; this server-side event is the only in-session signal
+	-- that one was bought. Without it a new pass would only apply after a rejoin.
+	MarketplaceService.PromptGamePassPurchaseFinished:Connect(
+		function(player: Player, passId: number, wasPurchased: boolean)
+			local product = Products:GetByProductId(passId)
+			if not product or product.productType ~= "gamepass" then
+				return
+			end
+
+			if wasPurchased then
+				grantProduct(player, passId, false)
+				return
+			end
+
+			local key = `{player.UserId}_{passId}`
+			local pending = pendingPromises[key]
+			if pending then
+				pending.reject("Cancelled")
+				pendingPromises[key] = nil
+			end
+		end
+	)
+
 	for _, player in Players:GetPlayers() do
 		loadProcessedReceipts(player)
 	end

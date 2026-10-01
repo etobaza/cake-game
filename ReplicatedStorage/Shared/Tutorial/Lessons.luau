@@ -1,5 +1,6 @@
 --!strict
--- Optional lessons appear at their first useful moment and can always be dismissed.
+-- Optional lessons appear at their first useful moment, once, and never ask the player
+-- to discard useful items or leave a waiting guest for a detour.
 
 --[[ Modules ]]--
 local Buildings = require(script.Parent.Parent.Configs.Buildings)
@@ -13,6 +14,16 @@ local Types = require(script.Parent.Parent.GameTypes)
 local Lessons = {}
 
 --[[ Private Functions ]]--
+-- A dish a seated guest is waiting for belongs at their table, not on the display.
+local function ordered(session: any, recipeId: string): boolean
+	for _, customer in session.Customers do
+		if customer.State == "Waiting" and table.find(customer.Orders, recipeId) then
+			return true
+		end
+	end
+	return false
+end
+
 local function wanted(cloud: any, topic: string): boolean
 	local lessons = cloud.Tutorial.Lessons
 	return not lessons[topic] and not lessons["Dismissed:" .. topic]
@@ -40,19 +51,30 @@ local function floor(cloud: any, session: any, props: any): Types.TutorialGoal?
 				id
 			)
 		end
-		return State.FreeHands(session, props, "Free your hand so you can pick up the broom.")
-			or State.Goal(
-				"broom",
-				"Take the broom",
-				"Cooking sometimes leaves a puddle. A broom lets you clean it.",
-				Buildings.Kinds.Broom.ToolId
-			)
+		-- A busy hand postpones this optional lesson instead of sending useful items to the trash.
+		local free, ready = State.FreeHands(session, props, "Free your hand so you can pick up the broom.", false)
+		if not ready then
+			return free
+		end
+		return State.Goal(
+			"broom",
+			"Take the broom",
+			"Cooking sometimes leaves a puddle. A broom lets you clean it.",
+			Buildings.Kinds.Broom.ToolId
+		)
 	end
 	return nil
 end
 
 local function garden(cloud: any, session: any, props: any): Types.TutorialGoal?
 	if not wanted(cloud, "Garden") then
+		return nil
+	end
+	-- The garden pulls the player away from the kitchen, so it waits for the untimed morning
+	-- unless the player is already working there with the watering can.
+	local held = session.Hands[1]
+	local watering = held and held.Kind == "Tool" and held.Id == Buildings.Kinds.WateringCan.ToolId
+	if session.Day.Phase ~= "Prep" and not watering then
 		return nil
 	end
 	local ids = {}
@@ -63,7 +85,7 @@ local function garden(cloud: any, session: any, props: any): Types.TutorialGoal?
 	end
 	table.sort(ids)
 	local id = ids[1]
-	return if id then Cooking.Garden(cloud, session, props, id, Garden.Sources[id]) else nil
+	return if id then Cooking.Garden(cloud, session, props, id, Garden.Sources[id], false) else nil
 end
 
 --[[ Handling ]]--
@@ -92,23 +114,17 @@ function Lessons.Summary(session: any, page: string): Types.TutorialGoal
 end
 
 function Lessons.Resolve(cloud: any, session: any, props: any, page: string): Types.TutorialGoal?
-	if page == "Upgrades" and wanted(cloud, "Upgrades") then
-		local goal = State.Gui(
-			"upgrades",
-			"See what this upgrade changes",
-			"The selected upgrade's name, price and result are shown here. Buying is optional.",
-			"Upgrades.MainFrame.Main.Bottom"
-		)
-		goal.topic = "Upgrades"
-		return goal
-	end
 	if page ~= "None" then
 		return nil
 	end
 	local held = session.Hands[1]
 	if held and held.Kind == "Burnt" and not cloud.Tutorial.Actions.DisposedBurnt and wanted(cloud, "Cooking") then
-		local goal =
-			State.FreeHands(session, props, "Burnt food cannot be served. Throw it away, then make a fresh batch.")
+		local goal = State.FreeHands(
+			session,
+			props,
+			"Burnt food cannot be served. Throw it away, then make a fresh batch.",
+			false
+		)
 		if goal then
 			goal.topic = "Cooking"
 		end
@@ -124,7 +140,7 @@ function Lessons.Resolve(cloud: any, session: any, props: any, page: string): Ty
 			if station.Kind ~= "Oven" or station.State == "Idle" then
 				continue
 			end
-			local goal = Cooking.AtStation(session, props, id, station)
+			local goal = Cooking.AtStation(session, props, id, station, false)
 			if goal then
 				goal.topic = "Cooking"
 				goal.recipeId = station.RecipeId
@@ -132,7 +148,7 @@ function Lessons.Resolve(cloud: any, session: any, props: any, page: string): Ty
 			end
 		end
 	end
-	if wanted(cloud, "Display") and held and held.Kind == "Dish" then
+	if wanted(cloud, "Display") and held and held.Kind == "Dish" and not ordered(session, held.Id) then
 		local display = State.EmptyDisplay(session, props)
 		if display then
 			local goal = State.Goal(
@@ -147,7 +163,7 @@ function Lessons.Resolve(cloud: any, session: any, props: any, page: string): Ty
 		end
 	end
 	if wanted(cloud, "Cart") and props.rail_cart then
-		local goal = nil
+		local goal: Types.TutorialGoal? = nil
 		if held and held.Kind == "Ingredient" and not Ingredients:IsInfinite(held.Id) then
 			goal = State.Goal(
 				"cart_load",
@@ -156,13 +172,16 @@ function Lessons.Resolve(cloud: any, session: any, props: any, page: string): Ty
 				"rail_cart"
 			)
 		elseif #cloud.GardenCart.Queue > 0 then
-			goal = State.FreeHands(session, props, "Free your hand before collecting a delivery.")
-				or State.Goal(
+			local free, ready =
+				State.FreeHands(session, props, "Free your hand before collecting a delivery.", false)
+			goal = if ready
+				then State.Goal(
 					"cart_take",
 					"Collect your kitchen delivery",
 					"The rail output stores delivered produce. Take one ingredient at a time.",
 					"rail_output"
 				)
+				else free
 		end
 		if goal then
 			goal.topic = "Cart"

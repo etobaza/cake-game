@@ -26,8 +26,7 @@ local TopbarIcon = require(_Packages["topbar-plus"])
 
 --[[ Constants ]]--
 -- One row per icon: the page it toggles, the art it wears, its hover caption and where it sits in
--- the row. The images are the ones the old CoreBtns strip used, so the topbar reads as what it
--- replaced.
+-- the row. Both are flat white glyphs: the old CoreBtns calendar and a generated ticket to match it.
 local ICONS: { { Page: string, Image: string, Caption: string, Order: number } } = {
 	{
 		Page = Pages.Names.DailyRewards,
@@ -37,7 +36,7 @@ local ICONS: { { Page: string, Image: string, Caption: string, Order: number } }
 	},
 	{
 		Page = Pages.Names.Codes,
-		Image = "rbxassetid://109386928213191",
+		Image = "rbxassetid://78526395786332",
 		Caption = "Codes",
 		Order = 2,
 	},

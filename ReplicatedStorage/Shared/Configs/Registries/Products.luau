@@ -22,6 +22,8 @@ export type ProductMeta = {
 	amount: number,
 	-- Only for grant = "Stat": which BaseStats key the bonus lands on.
 	stat: string?,
+	-- Tile art; tiles without one keep their authored image.
+	icon: string?,
 }
 
 -- The authored shape; Registry.Build stamps `id` onto every entry.
@@ -47,38 +49,39 @@ end
 local list: { [string]: ProductDefinition } = {
 	--[[ Currency packages ]]--
 	cash_1 = {
-		productId = 0,
+		productId = 3715828865,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "350$", grant = "Cash", amount = 350 },
+		meta = { name = "Cash", value = "350$", grant = "Cash", amount = 350, icon = "rbxassetid://96216232687018" },
 	},
 	cash_2 = {
-		productId = 0,
+		productId = 3715828878,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "1 000$", grant = "Cash", amount = 1000 },
+		meta = { name = "Cash", value = "1 000$", grant = "Cash", amount = 1000, icon = "rbxassetid://114454707057271" },
 	},
 	cash_3 = {
-		productId = 0,
+		productId = 3715828888,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "3 000$", grant = "Cash", amount = 3000 },
+		meta = { name = "Cash", value = "3 000$", grant = "Cash", amount = 3000, icon = "rbxassetid://71273978435843" },
 	},
 	cash_4 = {
-		productId = 0,
+		productId = 3715828897,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "8 000$", grant = "Cash", amount = 8000 },
+		meta = { name = "Cash", value = "8 000$", grant = "Cash", amount = 8000, icon = "rbxassetid://127494963095045" },
 	},
 	cash_5 = {
-		productId = 0,
+		productId = 3715828907,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "25 000$", grant = "Cash", amount = 25000 },
+		meta = { name = "Cash", value = "25 000$", grant = "Cash", amount = 25000, icon = "rbxassetid://110097182380053" },
 	},
 
 	--[[ Gamepasses ]]--
 	-- Both plug into systems that already exist: the multiplier into every coin the player earns,
 	-- the stat bonus into the same sum the upgrades feed.
 	pass_vip = {
-		productId = 0,
+		productId = 2002796698,
 		productType = "gamepass",
 		meta = {
+			icon = "rbxassetid://82564416622684",
 			name = "VIP",
 			blurb = "Every sale pays 25% more, forever.",
 			grant = "CashMultiplier",
@@ -86,9 +89,10 @@ local list: { [string]: ProductDefinition } = {
 		},
 	},
 	pass_display = {
-		productId = 0,
+		productId = 2001338949,
 		productType = "gamepass",
 		meta = {
+			icon = "rbxassetid://88029545591527",
 			name = "Bigger Window",
 			blurb = "Two more display slots on top of your upgrades.",
 			grant = "Stat",
@@ -99,7 +103,7 @@ local list: { [string]: ProductDefinition } = {
 
 	--[[ Featured ]]--
 	starter_pack = {
-		productId = 0,
+		productId = 3715828914,
 		productType = "permanent_devproduct",
 		meta = {
 			name = "Starter Pack",
@@ -111,12 +115,12 @@ local list: { [string]: ProductDefinition } = {
 
 	--[[ Reward track skips ]]--
 	skip_daily = {
-		productId = 0,
+		productId = 3715828918,
 		productType = "devproduct",
 		meta = { name = "Skip 1 Day", grant = "SkipDaily", amount = 1 },
 	},
 	skip_playtime = {
-		productId = 0,
+		productId = 3715828921,
 		productType = "devproduct",
 		meta = { name = "Skip All", grant = "SkipPlaytime", amount = 0 },
 	},

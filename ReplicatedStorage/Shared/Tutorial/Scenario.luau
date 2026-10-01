@@ -16,7 +16,7 @@ local Types = require(script.Parent.Parent.GameTypes)
 local Scenario = {}
 
 --[[ Private Functions ]]--
-local function sweep(session: any, props: any): Types.TutorialGoal
+local function sweep(session: any, props: any): Types.TutorialGoal?
 	local held = session.Hands[1]
 	local broom = Buildings.Kinds.Broom.ToolId
 	local spills = {}
@@ -50,13 +50,16 @@ local function sweep(session: any, props: any): Types.TutorialGoal
 			spills[1]
 		)
 	end
-	return State.FreeHands(session, props, "Free your hand to take the broom.")
-		or State.Goal(
-			"intro_broom",
-			"First, pick up the broom",
-			"Follow the arrows. Let's tidy the kitchen before your first bake.",
-			broom
-		)
+	local free, ready = State.FreeHands(session, props, "Free your hand to take the broom.", true)
+	if not ready then
+		return free
+	end
+	return State.Goal(
+		"intro_broom",
+		"First, pick up the broom",
+		"Follow the arrows. Let's tidy the kitchen before your first bake.",
+		broom
+	)
 end
 
 local function clean(session: any, now: number): Types.TutorialGoal
@@ -147,7 +150,7 @@ local function resolve(cloud: any, session: any, props: any, page: string, now: 
 	local teachOven = session.Tutorial.OvenLesson
 		and not cloud.Tutorial.Actions.CollectedOvenDish
 		and not cloud.Tutorial.Lessons["Dismissed:Cooking"]
-	local urgent = if active or teachOven then Cooking.Urgent(session, props) else nil
+	local urgent = if active or teachOven then Cooking.Urgent(session, props, active) else nil
 	if urgent then
 		if not active then
 			urgent.topic = "Cooking"

@@ -24,6 +24,7 @@ local BaseConfig = require(_Configs.Base)
 local BaseHandler = require(_Handlers.BaseHandler)
 local BuildingHandler = require(_Handlers.BuildingHandler)
 local BuildingsConfig = require(_Configs.Buildings)
+local CharacterAnimations = require(_Configs.CharacterAnimations)
 local Bus = require(_Shared.Bus)
 local CleaningAction = require(ServerScriptService.CleaningAction)
 local DataHandler = require(_Handlers.DataHandler)
@@ -33,6 +34,7 @@ local InventoryHandler = require(_Handlers.InventoryHandler)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local PlayerHandler = require(_Handlers.PlayerHandler)
 local Sanitize = require(_Shared.Sanitize)
+local SoundPlayer = require(_Shared.SoundPlayer)
 local TickHandler = require(_Handlers.TickHandler)
 local View = require(_Handlers.BuildingHandler.View)
 
@@ -349,6 +351,17 @@ function CleaningHandler.Clean(self: CleaningHandler, player: Player, spillId: s
 	end
 	Bus.Player.PlayAction:FireClient(player, "Sweep")
 	Bus.VFX.Burst:Fire("Sweep", root, root.CFrame, player.UserId, workspace:GetServerTimeNow())
+	SoundPlayer.Play("Broom", root)
+	-- The success chime follows the sweep clip; releasing the bakery cancels a pending one.
+	runtime.Janitor:Add(
+		task.delay(CharacterAnimations.Actions.Sweep.LockSeconds, function(): ()
+			if root.Parent then
+				SoundPlayer.Play("BroomSuccess", root)
+			end
+		end),
+		true,
+		"SweepSound"
+	)
 
 	return true
 end

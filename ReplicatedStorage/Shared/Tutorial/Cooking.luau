@@ -36,7 +36,7 @@ local function choose(recipe: any, page: string, mixer: string): Types.TutorialG
 	return goal
 end
 
-local function stationGoal(session: any, props: any, id: string, station: any): Types.TutorialGoal?
+local function stationGoal(session: any, props: any, id: string, station: any, discard: boolean): Types.TutorialGoal?
 	if station.State == "Idle" then
 		return nil
 	end
@@ -50,13 +50,16 @@ local function stationGoal(session: any, props: any, id: string, station: any): 
 				id
 			)
 		end
-		return State.FreeHands(session, props, "Free your hand so you can carry a log.")
-			or State.Goal(
-				"wood_" .. id,
-				"Take a log from the woodpile",
-				"The loaded oven needs firewood. Take one log, then bring it back.",
-				"fuel"
-			)
+		local free, ready = State.FreeHands(session, props, "Free your hand so you can carry a log.", discard)
+		if not ready then
+			return free
+		end
+		return State.Goal(
+			"wood_" .. id,
+			"Take a log from the woodpile",
+			"The loaded oven needs firewood. Take one log, then bring it back.",
+			"fuel"
+		)
 	end
 	if station.State == "Mixing" or station.State == "Cooking" then
 		return waiting(
@@ -66,9 +69,13 @@ local function stationGoal(session: any, props: any, id: string, station: any): 
 			id
 		)
 	end
-	local clear =
-		State.FreeHands(session, props, "You carry one item at a time. Free your hand before collecting this batch.")
-	if clear then
+	local clear, ready = State.FreeHands(
+		session,
+		props,
+		"You carry one item at a time. Free your hand before collecting this batch.",
+		discard
+	)
+	if not ready then
 		return clear
 	end
 	if station.State == "Burnt" then
@@ -89,23 +96,33 @@ local function stationGoal(session: any, props: any, id: string, station: any): 
 	)
 end
 
-function Cooking.Garden(cloud: any, session: any, props: any, id: string, source: any): Types.TutorialGoal
+function Cooking.Garden(
+	cloud: any,
+	session: any,
+	props: any,
+	id: string,
+	source: any,
+	discard: boolean
+): Types.TutorialGoal?
 	local node = cloud.Garden[source.Group][id]
 	local held = session.Hands[1]
 	if node and node.Stock > 0 then
-		local free = State.FreeHands(
+		local free, ready = State.FreeHands(
 			session,
 			props,
-			"Harvesting needs an empty hand. Return your tool or put down the item first."
+			"Harvesting needs an empty hand. Return your tool or put down the item first.",
+			discard
 		)
-		local goal = free
-			or State.Goal(
-				"harvest_" .. id,
-				"Collect one " .. source.Produce,
-				"Each harvest puts one ingredient in your hand. Cared-for sources keep producing.",
-				id
-			)
-		if not free and goal.target then
+		if not ready then
+			return free
+		end
+		local goal = State.Goal(
+			"harvest_" .. id,
+			"Collect one " .. source.Produce,
+			"Each harvest puts one ingredient in your hand. Cared-for sources keep producing.",
+			id
+		)
+		if goal.target then
 			goal.target.control = "Harvest"
 		end
 		return goal
@@ -120,8 +137,11 @@ function Cooking.Garden(cloud: any, session: any, props: any, id: string, source
 		)
 	end
 	if source.Care == "Animal" then
-		return State.FreeHands(session, props, "Brushing an animal needs an empty hand.")
-			or State.Goal("care_" .. id, "Brush the animal", "Keeping it clean lets it produce ingredients.", id)
+		local free, ready = State.FreeHands(session, props, "Brushing an animal needs an empty hand.", discard)
+		if not ready then
+			return free
+		end
+		return State.Goal("care_" .. id, "Brush the animal", "Keeping it clean lets it produce ingredients.", id)
 	end
 	if held and held.Kind == "Tool" and held.Id == Buildings.Kinds.WateringCan.ToolId then
 		return State.Goal(
@@ -131,16 +151,19 @@ function Cooking.Garden(cloud: any, session: any, props: any, id: string, source
 			id
 		)
 	end
-	return State.FreeHands(session, props, "Free your hand to take the watering can.")
-		or State.Goal(
-			"take_can",
-			"Take the watering can",
-			"Use the can on the dry plant, then return it to free your hand.",
-			Buildings.Kinds.WateringCan.ToolId
-		)
+	local free, ready = State.FreeHands(session, props, "Free your hand to take the watering can.", discard)
+	if not ready then
+		return free
+	end
+	return State.Goal(
+		"take_can",
+		"Take the watering can",
+		"Use the can on the dry plant, then return it to free your hand.",
+		Buildings.Kinds.WateringCan.ToolId
+	)
 end
 
-local function ingredient(cloud: any, session: any, props: any, id: string, mixer: string): Types.TutorialGoal
+local function ingredient(cloud: any, session: any, props: any, id: string, mixer: string): Types.TutorialGoal?
 	local entry = Ingredients:Get(id)
 	local name = if entry then entry.name else id
 	if Ingredients:IsInfinite(id) then
@@ -177,7 +200,7 @@ local function ingredient(cloud: any, session: any, props: any, id: string, mixe
 	end
 	local sourceId, source = GardenSource.Find(id)
 	if sourceId and source and (cloud.Base.Upgrades[source.Upgrade] or 0) > 0 then
-		return Cooking.Garden(cloud, session, props, sourceId, source)
+		return Cooking.Garden(cloud, session, props, sourceId, source, true)
 	end
 	return State.Goal(
 		"unavailable_" .. id,
@@ -188,11 +211,11 @@ local function ingredient(cloud: any, session: any, props: any, id: string, mixe
 end
 
 --[[ Handling ]]--
-function Cooking.AtStation(session: any, props: any, id: string, station: any): Types.TutorialGoal?
-	return stationGoal(session, props, id, station)
+function Cooking.AtStation(session: any, props: any, id: string, station: any, discard: boolean): Types.TutorialGoal?
+	return stationGoal(session, props, id, station, discard)
 end
 
-function Cooking.Urgent(session: any, props: any): Types.TutorialGoal?
+function Cooking.Urgent(session: any, props: any, discard: boolean): Types.TutorialGoal?
 	local bestId: string? = nil
 	local best: any = nil
 	for id, station in session.Stations do
@@ -206,7 +229,7 @@ function Cooking.Urgent(session: any, props: any): Types.TutorialGoal?
 	if not best or not bestId then
 		return nil
 	end
-	local goal = stationGoal(session, props, bestId, best)
+	local goal = stationGoal(session, props, bestId, best, discard)
 	if goal then
 		goal.urgent = true
 		goal.recipeId = best.RecipeId
@@ -217,24 +240,30 @@ end
 function Cooking.Resolve(cloud: any, session: any, props: any, recipe: any, page: string): Types.TutorialGoal?
 	local held = session.Hands[1]
 	if held and held.Kind == "Burnt" then
-		return State.FreeHands(
+		local goal = State.FreeHands(
 			session,
 			props,
-			"Burnt food cannot be served. Make a fresh batch after throwing it away."
+			"Burnt food cannot be served. Make a fresh batch after throwing it away.",
+			true
 		)
+		return goal
 	end
 	if held and held.Kind == "Dish" and held.Id == recipe.id then
 		return nil
 	end
 	for slot, recipeId in session.Display do
 		if recipeId == recipe.id then
-			return State.FreeHands(session, props, "Free your hand to collect the dish you already made.")
-				or State.Goal(
-					"display_take",
-					"Take your dish from the display",
-					"You already made it. Carry this dish to the guest when their order is ready.",
-					Buildings.GetId("Display", slot)
-				)
+			local free, ready =
+				State.FreeHands(session, props, "Free your hand to collect the dish you already made.", true)
+			if not ready then
+				return free
+			end
+			return State.Goal(
+				"display_take",
+				"Take your dish from the display",
+				"You already made it. Carry this dish to the guest when their order is ready.",
+				Buildings.GetId("Display", slot)
+			)
 		end
 	end
 	if held and held.Kind == "Dough" then
@@ -251,7 +280,7 @@ function Cooking.Resolve(cloud: any, session: any, props: any, recipe: any, page
 	end
 	for id, station in session.Stations do
 		if station.State ~= "Idle" then
-			return stationGoal(session, props, id, station)
+			return stationGoal(session, props, id, station, true)
 		end
 	end
 	local startKind = Recipes:GetStartStation(recipe)
@@ -265,13 +294,16 @@ function Cooking.Resolve(cloud: any, session: any, props: any, recipe: any, page
 		)
 	end
 	if startKind ~= "Mixer" then
-		return State.FreeHands(session, props, "Free your hand before preparing this drink.")
-			or State.Goal(
-				"direct_" .. recipe.id,
-				"Prepare " .. recipe.name,
-				"Use this station to prepare a drink from today's menu.",
-				stationId
-			)
+		local free, ready = State.FreeHands(session, props, "Free your hand before preparing this drink.", true)
+		if not ready then
+			return free
+		end
+		return State.Goal(
+			"direct_" .. recipe.id,
+			"Prepare " .. recipe.name,
+			"Use this station to prepare a drink from today's menu.",
+			stationId
+		)
 	end
 	if session.Cooking.SelectedRecipeId ~= recipe.id then
 		local selected = Recipes:Get(session.Cooking.SelectedRecipeId)
@@ -279,13 +311,6 @@ function Cooking.Resolve(cloud: any, session: any, props: any, recipe: any, page
 			if selected then
 				return Cooking.Resolve(cloud, session, props, selected, page)
 			end
-		end
-		if held and session.Cooking.SelectedRecipeId then
-			return State.FreeHands(
-				session,
-				props,
-				"Free your hand before changing the recipe to match the guest's order."
-			)
 		end
 		return choose(recipe, page, stationId)
 	end
@@ -345,9 +370,13 @@ function Cooking.Resolve(cloud: any, session: any, props: any, recipe: any, page
 			stationId
 		)
 	end
-	local free =
-		State.FreeHands(session, props, "This item is not needed in the bowl right now. Free your hand to continue.")
-	if free then
+	local free, ready = State.FreeHands(
+		session,
+		props,
+		"This item is not needed in the bowl right now. Free your hand to continue.",
+		true
+	)
+	if not ready then
 		return free
 	end
 	if missing[1] then

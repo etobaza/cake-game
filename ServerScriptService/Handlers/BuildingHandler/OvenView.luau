@@ -20,6 +20,7 @@ local LoggerUtil = require(_Shared.Libs.Logger)
 local Motion = require(_Configs.OvenMotion)
 local OvenFuel = require(_Configs.OvenFuel)
 local OvenDial = require(script.Parent.OvenDial)
+local SoundPlayer = require(_Shared.SoundPlayer)
 
 --[[ Constants ]]--
 local FULL_TURN = math.pi * 2
@@ -64,6 +65,7 @@ export type OvenView = typeof(setmetatable(
 		FuelCount: number,
 		FireEffects: { ParticleEmitter },
 		FireEnabled: boolean?,
+		FireSound: Sound?,
 	},
 	OvenView
 ))
@@ -200,6 +202,8 @@ function OvenView.BindFire(self: OvenView, body: BasePart): ()
 		self.FireEffects[#self.FireEffects + 1] = effect
 	end
 	fire.Parent = self.FuelRoot
+	-- The crackle loops only while firewood burns; the fire part owns it.
+	self.FireSound = SoundPlayer.Create("OvenFire", fire)
 	self.Janitor:Add(fire, "Destroy")
 end
 
@@ -247,6 +251,9 @@ function OvenView.ApplyFuel(self: OvenView): ()
 		self.FireEnabled = burning
 		for _, effect in self.FireEffects do
 			effect.Enabled = burning
+		end
+		if self.FireSound then
+			self.FireSound.Playing = burning
 		end
 	end
 	local model = self.FuelModel
