@@ -283,7 +283,9 @@ local function paint(record: any, owned: boolean, state: any, day: number): ()
 	end
 	record.StockJanitor:Cleanup()
 	if owned then
-		for index = 1, stock do
+		-- A save can hold more stock than this source has anchors; GardenNode clamps it later in the
+		-- build, so the extra portions simply are not drawn here.
+		for index = 1, math.min(stock, #record.Frames) do
 			local frame = stockFrame(record, index)
 			local visual = stockVisual(record, frame)
 			if not visual then

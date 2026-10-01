@@ -81,9 +81,10 @@ function GardenSave.Migrate(data: any): ()
 				remaining = Config.ProduceSeconds
 			end
 		end
-		add(cloud.Pantry, source.Produce, math.max(0, stock - Config.Capacity))
+		local capacity = source.Capacity or Config.Capacity
+		add(cloud.Pantry, source.Produce, math.max(0, stock - capacity))
 		group[id] = {
-			Stock = math.min(stock, Config.Capacity),
+			Stock = math.min(stock, capacity),
 			GrowRemaining = remaining,
 			CareRemaining = if old.Watered then Config.WaterSeconds elseif old.Fed then Config.CleanSeconds else 0,
 			CleanDay = 0,

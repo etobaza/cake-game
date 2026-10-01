@@ -258,6 +258,12 @@ local function processReceipt(receiptInfo: any): Enum.ProductPurchaseDecision
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 
+	-- Without a loaded profile the receipt cannot be stored durably and the grant has nowhere to
+	-- land; Roblox retries the receipt once the profile is ready or on the next join.
+	if not DataHandler:GetData(player) then
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+
 	if isReceiptProcessed(player, receiptId) then
 		return Enum.ProductPurchaseDecision.PurchaseGranted
 	end
@@ -410,6 +416,11 @@ end
 
 function PurchaseHandler.OnStart(self: PurchaseHandler)
 	Bus.Purchase.RequestPurchase.OnServerEvent:Connect(function(player: Player, productId: number)
+		-- Only prompt for products this game sells; the client cannot open arbitrary prompts.
+		if typeof(productId) ~= "number" or productId <= 0 or not Products:GetByProductId(productId) then
+			return
+		end
+
 		self:PurchaseProduct(player, productId)
 	end)
 

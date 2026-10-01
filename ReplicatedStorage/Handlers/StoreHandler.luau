@@ -320,6 +320,7 @@ function StoreHandler.FetchPrices(self: StoreHandler): ()
 	end
 
 	local prices: { [string]: string } = {}
+	local offSale: { string } = {}
 
 	for _, entryId in entryIds do
 		local entry = Products:Get(entryId)
@@ -341,6 +342,14 @@ function StoreHandler.FetchPrices(self: StoreHandler): ()
 		if typeof(price) == "number" then
 			prices[entryId] = tostring(price)
 		end
+		if not self.Sale[entryId] then
+			offSale[#offSale + 1] = `{entryId} ({entry.productId})`
+		end
+	end
+
+	-- Points at the Creator Dashboard: these need a price and must be switched on sale there.
+	if #offSale > 0 then
+		print(`[StoreHandler] Off sale on the Marketplace: {table.concat(offSale, ", ")}`)
 	end
 
 	for _, row in self.Rows do
