@@ -58,6 +58,7 @@ local FILTER_OFF = Color3.fromRGB(205, 191, 161)
 local BONUS_ROW_HEIGHT = 24
 local BONUS_ROW_GAP = 4
 local BONUS_FOOTER_SHIFT = 28
+local PICKED_MIN_GAP = 12
 
 --[[ Tables ]]--
 local MenuHandler = {
@@ -179,6 +180,7 @@ function MenuHandler.OnStart(self: MenuHandler): ()
 
 	self:BuildCells()
 	self:BuildPickedSlots()
+	self:BindPickedLayout()
 	self:BindFilters()
 	self:BindHeader()
 	self:CollectBonuses()
@@ -309,6 +311,33 @@ function MenuHandler.BuildPickedSlots(self: MenuHandler): ()
 
 		self.PickedSlots[index] = { Filled = filledClone, Empty = emptyClone }
 	end
+end
+
+--- The drawn plates are a fixed 116 by 84. Square them to the strip height (or to the width when
+--- five squares do not fit) and spread the leftover width between them, so the row spans edge to edge.
+function MenuHandler.BindPickedLayout(self: MenuHandler): ()
+	local strip = self.PickedStrip
+	if not strip:IsA("GuiObject") then
+		return
+	end
+	local layout = strip:FindFirstChildOfClass("UIListLayout")
+	local count = DayCycleConfig.MenuMax
+	local function refresh(): ()
+		local size = Authored.UnscaledSize(strip)
+		local side = math.floor(math.min(size.Y, (size.X - PICKED_MIN_GAP * (count - 1)) / count))
+		if side <= 0 then
+			return
+		end
+		if layout and count > 1 then
+			layout.Padding = UDim.new(0, math.floor((size.X - side * count) / (count - 1)))
+		end
+		for _, slot in self.PickedSlots do
+			slot.Filled.Size = UDim2.fromOffset(side, side)
+			slot.Empty.Size = UDim2.fromOffset(side, side)
+		end
+	end
+	self.Janitor:Add(strip:GetPropertyChangedSignal("AbsoluteSize"):Connect(refresh), "Disconnect")
+	refresh()
 end
 
 function MenuHandler.BindFilters(self: MenuHandler): ()
