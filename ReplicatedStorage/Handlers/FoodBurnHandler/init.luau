@@ -136,10 +136,11 @@ function FoodBurnHandler.Track(self: FoodBurnHandler, instance: Instance): ()
 		Updated = 0,
 	}
 	self.Entries[instance] = entry
-	-- A completed burnt preview must not flash fresh while its exact texture loads.
+	-- Burnt food must not flash fresh while its exact texture loads: a carried tray copy is rebuilt
+	-- on pickup and would show the authored texture for the half second the copy takes.
 	local source = instance:FindFirstChildWhichIsA("SurfaceAppearance")
 	local fade = instance:GetAttribute(Config.FadeAttribute)
-	if isPreview and source and typeof(fade) == "number" and fade > 0 then
+	if source and typeof(fade) == "number" and fade > 0 then
 		entry.Original, entry.Tint = source, source.Color
 		applyTint(source, source.Color, math.clamp(fade, 0, 1))
 	end
