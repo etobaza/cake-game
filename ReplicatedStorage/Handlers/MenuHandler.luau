@@ -322,6 +322,16 @@ function MenuHandler.BindPickedLayout(self: MenuHandler): ()
 	end
 	local layout = strip:FindFirstChildOfClass("UIListLayout")
 	local count = DayCycleConfig.MenuMax
+	-- The row always fits, so the authored scrolling frame is only a container. A fractional UIScale
+	-- can still overshoot the canvas by a pixel and reveal its bar, so the bar is removed outright.
+	if strip:IsA("ScrollingFrame") then
+		strip.ScrollingEnabled = false
+		strip.ScrollBarThickness = 0
+		strip.ScrollBarImageTransparency = 1
+		strip.BackgroundTransparency = 1
+		strip.BorderSizePixel = 0
+		strip.CanvasPosition = Vector2.zero
+	end
 	local function refresh(): ()
 		local size = Authored.UnscaledSize(strip)
 		local side = math.floor(math.min(size.Y, (size.X - PICKED_MIN_GAP * (count - 1)) / count))
