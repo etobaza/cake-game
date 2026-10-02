@@ -291,9 +291,10 @@ function RewardHandler.RefreshPlaytime(self: RewardHandler): ()
 			timer.Visible = not isReady
 		end
 
+		-- The authored Mark is an alert "!", not a tick: the green face already shows a taken reward.
 		local mark = cell:FindFirstChild("Mark")
 		if mark and mark:IsA("GuiObject") then
-			mark.Visible = isTaken
+			mark.Visible = false
 		end
 
 		local timerText = if isTaken then "Claimed" elseif isReady then "Ready" else Format.Time(due - elapsed)
