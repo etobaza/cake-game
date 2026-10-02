@@ -27,6 +27,11 @@ local Cats = {
 	} :: { [string]: string },
 	-- The supplied set has no dedicated playing, drinking or scratching clips.
 	ClipByPose = { Idle = "Idle", Play = "Idle", Sit = "Sit", Lay = "Lay", Walk = "Walk" } :: { [string]: string },
+	-- Procedural scratching: the body pitches nose-up around the hind feet (a fraction of the mesh
+	-- length behind its centre) so the front paws rest on the post; lower hind legs stay planted.
+	ScratchPitch = math.rad(45),
+	ScratchPivot = 0.13,
+	ScratchPawLift = 0.3,
 	Counts = { { Min = 1, Max = 2 }, { Min = 2, Max = 4 } },
 	-- Each slot uses the authored habitat's local space; Y is measured from its base.
 	Slots = {
@@ -46,7 +51,8 @@ local Cats = {
 			Level = 2,
 			Habitat = "CatHabitatThree",
 			Pose = "Scratch",
-			Offset = Vector3.new(0, 0, 1.4),
+			-- Hind feet on the platform top, front paws against the post (radius 0.54).
+			Offset = Vector3.new(0, 0.507, 0.85),
 			Yaw = -90,
 		},
 	},

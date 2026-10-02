@@ -216,6 +216,9 @@ local function bind(model: Model): Visual
 		local scale = mesh.Size.X / 5.465
 		local floor = -mesh.Size.Y / 2
 		local usingClip = playClip(pose, now)
+		local scratching = pose == "Scratch"
+		local pivot = CFrame.new(mesh.Size.X * Config.ScratchPivot, floor, 0)
+		local stand = pivot * CFrame.Angles(0, 0, -Config.ScratchPitch) * pivot:Inverse()
 		for _, joint in joints do
 			-- Animator is the only bone writer while an authored clip is active.
 			if usingClip then
@@ -250,13 +253,13 @@ local function bind(model: Model): Visual
 			if pose == "Play" and front and not isHead then
 				lift += math.max(0, math.sin(t * 3 + (if p.Z > 0 then 0 else math.pi))) * 0.3 * scale
 			end
-			if pose == "Scratch" and front and not isHead then
-				lift += (0.65 + math.sin(t * 7 + (if p.Z > 0 then 0 else math.pi)) * 0.18) * scale
-			end
-			if pose == "Scratch" and isHead then
-				lift += 0.22 * scale
+			if scratching and front and not isHead then
+				lift += (Config.ScratchPawLift + math.sin(t * 7 + (if p.Z > 0 then 0 else math.pi)) * 0.18) * scale
 			end
 			local target = CFrame.new(p.X, y + lift, p.Z) * turn * rest.Rotation
+			if scratching and (front or not (string.find(name, "LowerLeg") or string.find(name, "Foot"))) then
+				target = stand * target
+			end
 			poses[bone] = target
 			local parent = (if joint.Parent then poses[joint.Parent] else nil) or CFrame.identity
 			bone.Transform = (parent * bone.CFrame):ToObjectSpace(target)
