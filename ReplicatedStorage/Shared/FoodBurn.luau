@@ -28,6 +28,7 @@ function FoodBurn.Target(linear: Color3): Color3
 	local color = Vector3.new(overlay(linear.R, tint.X), overlay(linear.G, tint.Y), overlay(linear.B, tint.Z))
 	local gray = color:Dot(Config.GrayWeights)
 	color = color:Lerp(Vector3.one * gray, Config.Desaturation)
+	color = color:Lerp(Config.Charcoal, Config.CharcoalBlend)
 	return Color3.new(color.X, color.Y, color.Z)
 end
 

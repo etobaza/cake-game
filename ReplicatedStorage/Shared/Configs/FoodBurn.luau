@@ -10,6 +10,10 @@ return {
 	OverlayDouble = Vector3.new(0.427084, 0.176358, 0.129414),
 	GrayWeights = Vector3.new(0.141452, 0.145833, 0.046637),
 	Desaturation = 0.1,
+	-- cake-game: the fully burnt end of the fade (the dial's red burn mark) reads as charcoal, not
+	-- the original's browned crust. Linear RGB, mixed over the tinted colour.
+	Charcoal = Vector3.new(0.012, 0.009, 0.008),
+	CharcoalBlend = 0.95,
 	-- Bound client texture memory while preserving the source UVs and painted pattern.
 	TextureSize = 512,
 	RefreshSeconds = 0.15,
