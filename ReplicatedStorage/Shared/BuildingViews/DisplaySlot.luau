@@ -1,5 +1,5 @@
 --!strict
--- Prompt view of one display slot: the dish on it, or an offer to put one down.
+-- Prompt view of one display slot or the kitchen window: the dish on it, or an offer to put one down.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -19,21 +19,32 @@ local DisplaySlot = {}
 
 --[[ Handling ]]--
 function DisplaySlot.Describe(context: Types.Context): Types.PromptState
-	local display = context.Session(BuildingsConfig.Kinds[context.Kind].StateField :: string) or {}
+	local kind = BuildingsConfig.Kinds[context.Kind]
+	local display = context.Session(kind.StateField :: string) or {}
 	local index = context.Index
+	local isWindow = context.Kind == "Window"
 
 	local function FireTake(): ()
-		Bus.Cafe.DisplayTake:Fire(index)
+		if isWindow then
+			Bus.Cafe.WindowTake:Fire(index)
+		else
+			Bus.Cafe.DisplayTake:Fire(index)
+		end
 	end
 
 	local function FirePlace(): ()
-		Bus.Cafe.DisplayPlace:Fire(index)
+		if isWindow then
+			Bus.Cafe.WindowPlace:Fire(index)
+		else
+			Bus.Cafe.DisplayPlace:Fire(index)
+		end
 	end
 
 	-- The slot key may arrive as a number or a string — replication makes no promise about the type.
 	local dish = display[index] or display[tostring(index)]
 	local held = context.Held()
-	local leftovers = context.Session("DisplayLeftovers") or {}
+	local leftovers = context.Session(kind.LeftoversField or "DisplayLeftovers") or {}
+	local empty = if isWindow then kind.Label else `Slot {index}`
 	local label = if leftovers[index] or leftovers[tostring(index)] then "Leftover Pastry" else context.RecipeName(dish)
 
 	if dish then
@@ -54,11 +65,11 @@ function DisplaySlot.Describe(context: Types.Context): Types.PromptState
 	end
 
 	if not held or (held.Kind ~= "Dish" and held.Kind ~= "Leftover") then
-		return { Label = `Slot {index}` }
+		return { Label = empty }
 	end
 
 	return {
-		Label = `Slot {index}`,
+		Label = empty,
 		Action = "Place",
 		Fire = FirePlace,
 	}

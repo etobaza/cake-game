@@ -78,6 +78,10 @@ export type Kind = {
 	FurnitureByIndex: { [number]: Furniture }?,
 	-- Hands item this rack gives. The world mesh hides while that item is held.
 	ToolId: string?,
+	-- Display-slot kinds: session table of leftover flags kept beside StateField.
+	LeftoversField: string?,
+	-- Food spot in the dressed authored part's space, for kinds without a reference anchor.
+	SurfaceOffset: CFrame?,
 	-- The woodpile hands out one log per visit. Each log refreshes the oven's timed fire.
 	GivesFuel: boolean?,
 	-- Hotbar art of the tool this rack gives. Until it is filled in the slot shows the name alone.
@@ -190,7 +194,28 @@ local Buildings = {
 			Prefix = "display",
 			Stat = "DisplaySlots",
 			StateField = "Display",
+			LeftoversField = "DisplayLeftovers",
 			Hidden = true,
+		},
+		-- Lemon Cake BP_Counter9 (IsWindowCounter): one pastry, reachable from kitchen and café. Guests
+		-- never buy from it; an assistant carries it on to a free display.
+		Window = {
+			Class = "DisplaySlot",
+			Size = Vector3.new(2.5, 2.5, 2.5),
+			Color = Color3.fromRGB(240, 220, 170),
+			Label = "Kitchen Window",
+			Facing = Vector3.new(1, 0, 0),
+			Prefix = "window",
+			Stat = "WindowSlots",
+			StateField = "Window",
+			LeftoversField = "WindowLeftovers",
+			RequiredUpgrade = "cafe_window",
+			WorldModel = { "1ndFloor", "Cafe", "Upgrades", "KitchenWindow", "Upgrade", "Window" },
+			-- The middle of the sill cloth, 2.74 studs below the window mesh's centre.
+			SurfaceOffset = CFrame.new(0, -2.74, 0),
+			-- Just above a dish on the sill rather than at the arch's centre.
+			PromptLift = -1.2,
+			Singles = { { Id = "window_1" } },
 		},
 		Table = {
 			Class = "CafeTable",
@@ -499,7 +524,17 @@ function Buildings.ResolvePath(root: Instance, path: { string }): Instance?
 	local current: Instance? = root
 
 	for _, name in path do
-		current = current and current:FindFirstChild(name)
+		local child = current and current:FindFirstChild(name)
+		-- Some authored names carry stray spaces ("KitchenWindow ").
+		if not child and current then
+			for _, candidate in current:GetChildren() do
+				if string.gsub(candidate.Name, "^%s*(.-)%s*$", "%1") == name then
+					child = candidate
+					break
+				end
+			end
+		end
+		current = child
 	end
 
 	return current

@@ -77,10 +77,10 @@ local function itemsFor(building: any): { { Id: string, Kind: string, SeatIndex:
 	if not state then
 		return {}
 	end
-	if building.Kind == "Display" then
+	if building.Definition.Class == "DisplaySlot" then
 		local id = state[building.Index]
 		local data = DataHandler:GetData(building.Player)
-		local leftover = data and data.Session.DisplayLeftovers[building.Index]
+		local leftover = data and data.Session[building.Definition.LeftoversField or "DisplayLeftovers"][building.Index]
 		return if id then { { Id = id, Kind = if leftover then "Leftover" else "Dish" } } else {}
 	end
 	if building.Kind == "Table" then
@@ -112,12 +112,18 @@ function FoodSurfaceView.new(root: Instance, building: any): FoodSurfaceView?
 	local anchor = anchors and anchors:FindFirstChild(building.Id)
 	local surface = anchor and anchor:FindFirstChild(Config.SurfaceAttachment)
 	local transform = BaseHandler:GetTransform(building.Player)
-	if not surface or not surface:IsA("Attachment") or not transform then
+	local offset = building.Definition.SurfaceOffset
+	local frames: { CFrame }
+	if surface and surface:IsA("Attachment") and transform then
+		frames = { transform * surface.WorldCFrame }
+	elseif offset then
+		-- Authored parts already stand in the claimed bakery, so no template transform applies.
+		frames = { building.Part.CFrame * offset }
+	else
 		return nil
 	end
-	local frames = { transform * surface.WorldCFrame }
 	local second = if anchor then anchor:FindFirstChild(`{Config.SurfaceAttachment}2`) else nil
-	if second and second:IsA("Attachment") then
+	if second and second:IsA("Attachment") and transform then
 		frames[2] = transform * second.WorldCFrame
 	end
 	local folder = Instance.new("Folder")

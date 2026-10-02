@@ -7,6 +7,7 @@
 -- stat must be added in both places.
 export type StatKey =
 	| "DisplaySlots"
+	| "WindowSlots"
 	| "TableCount"
 	| "TipMult"
 	| "AssistantSlots"
@@ -34,6 +35,8 @@ export type StatKey =
 local BaseStats = {
 	-- Cafe
 	DisplaySlots = 1,
+	-- Kitchen window pass-through (Lemon Cake BP_Counter9): one food slot once rebuilt.
+	WindowSlots = 0,
 	TableCount = 1,
 	TipMult = 1,
 	AssistantSlots = 0,

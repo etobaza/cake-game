@@ -73,6 +73,9 @@ return {
 	Display = {} :: { [number]: string },
 	-- Overnight packages retain their recipe only to recover their original base price.
 	DisplayLeftovers = {} :: { [number]: boolean },
+	-- [slotIndex] = recipeId on the kitchen window; the assistant carries it to a free display.
+	Window = {} :: { [number]: string },
+	WindowLeftovers = {} :: { [number]: boolean },
 
 	-- [tableId] = table state
 	Tables = {} :: { [string]: GameTypes.CafeTable },

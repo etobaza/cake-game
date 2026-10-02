@@ -109,6 +109,9 @@ return {
 		DisplayPlace = Packet("CafeDisplayPlace", Packet.NumberU8), -- slotIndex
 		-- Client -> Server: take a dish from the display into hands
 		DisplayTake = Packet("CafeDisplayTake", Packet.NumberU8), -- slotIndex
+		-- Client -> Server: put a dish from hands onto / take one from the kitchen window
+		WindowPlace = Packet("CafeWindowPlace", Packet.NumberU8), -- slotIndex
+		WindowTake = Packet("CafeWindowTake", Packet.NumberU8), -- slotIndex
 		-- Client -> Server: clean a dirty table
 		CleanTable = Packet("CafeCleanTable", Packet.String), -- tableId
 		-- Client -> Server: serve what is in hands to a customer

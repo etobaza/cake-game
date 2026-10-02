@@ -117,7 +117,10 @@ function AssistantHandler.UpdateAssistants(self: AssistantHandler): ()
 		self.NextActionAt[player] = now + ASSISTANT_INTERVAL
 
 		if DayCycleHandler:IsShiftActive(player) and UpgradeHandler:HasStat(player, "AssistantSlots") then
-			self:DoTask(player, GetTask(player))
+			-- Lemon Cake BP_Assistant clears the kitchen window between its other jobs.
+			if not self:CarryFromWindow(player) then
+				self:DoTask(player, GetTask(player))
+			end
 		end
 	end
 end
@@ -166,6 +169,20 @@ function AssistantHandler.CarryToDisplay(_self: AssistantHandler, player: Player
 	end
 
 	return DisplayHandler:PlaceDish(player, recipeId)
+end
+
+-- Moves the kitchen window's pastry to a free display. With no free display it stays on the window.
+function AssistantHandler.CarryFromWindow(_self: AssistantHandler, player: Player): boolean
+	if not DisplayHandler:HasFreeSlot(player) then
+		return false
+	end
+
+	local recipeId, leftover = DisplayHandler:TakeWindowDish(player)
+	if not recipeId then
+		return false
+	end
+
+	return DisplayHandler:PlaceDish(player, recipeId, leftover)
 end
 
 export type AssistantHandler = typeof(AssistantHandler) & {

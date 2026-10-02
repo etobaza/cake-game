@@ -46,25 +46,45 @@ function DisplayHandler.OnStart(self: DisplayHandler): ()
 end
 
 -- Like BP_Counter.DailyReset: fresh stock becomes half-price leftovers once; frozen food melts.
+-- The kitchen window is a BP_Counter too, so it ages the same way.
 function DisplayHandler.AgeStock(_self: DisplayHandler, player: Player): ()
 	local data = DataHandler:GetData(player)
 	if not data then
 		return
 	end
-	for index, recipeId in data.Session.Display do
-		if data.Session.DisplayLeftovers[index] then
-			continue
-		end
-		local recipe = Recipes:Get(recipeId)
-		if not recipe then
-			continue
-		end
-		if recipe.station == "Freezer" then
-			data.Session.Display[index] = nil
-		else
-			data.Session.DisplayLeftovers[index] = true
+	local function age(dishes: { [number]: string }, leftovers: { [number]: boolean }): ()
+		for index, recipeId in dishes do
+			if leftovers[index] then
+				continue
+			end
+			local recipe = Recipes:Get(recipeId)
+			if not recipe then
+				continue
+			end
+			if recipe.station == "Freezer" then
+				dishes[index] = nil
+			else
+				leftovers[index] = true
+			end
 		end
 	end
+	age(data.Session.Display, data.Session.DisplayLeftovers)
+	age(data.Session.Window, data.Session.WindowLeftovers)
+end
+
+-- The assistant's pickup from the kitchen window: the dish and whether it was a leftover.
+function DisplayHandler.TakeWindowDish(_self: DisplayHandler, player: Player): (string?, boolean)
+	local data = DataHandler:GetData(player)
+	if not data then
+		return nil, false
+	end
+	for index, recipeId in data.Session.Window do
+		local leftover = data.Session.WindowLeftovers[index] == true
+		data.Session.Window[index] = nil
+		data.Session.WindowLeftovers[index] = nil
+		return recipeId, leftover
+	end
+	return nil, false
 end
 
 function DisplayHandler.GetGuestCapacity(_self: DisplayHandler, player: Player): number
@@ -141,7 +161,7 @@ function DisplayHandler.HasFreeSlot(self: DisplayHandler, player: Player): boole
 end
 
 -- Puts a dish into the first free slot past the player's hands: used by the assistant.
-function DisplayHandler.PlaceDish(self: DisplayHandler, player: Player, recipeId: string): boolean
+function DisplayHandler.PlaceDish(self: DisplayHandler, player: Player, recipeId: string, leftover: boolean?): boolean
 	local display = GetDisplay(player)
 	local leftovers = GetLeftovers(player)
 	if not display or not leftovers then
@@ -150,7 +170,11 @@ function DisplayHandler.PlaceDish(self: DisplayHandler, player: Player, recipeId
 
 	for slotIndex = 2, self:GetGuestCapacity(player) + 1 do
 		if not display[slotIndex] then
-			leftovers[slotIndex] = nil
+			if leftover then
+				leftovers[slotIndex] = true
+			else
+				leftovers[slotIndex] = nil
+			end
 			display[slotIndex] = recipeId
 			return true
 		end

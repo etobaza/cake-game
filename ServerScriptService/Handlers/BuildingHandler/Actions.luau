@@ -32,6 +32,8 @@ local BY_ID = {
 local BY_SLOT = {
 	{ Packet = Bus.Cafe.DisplayPlace, Action = "Place", Kind = "Display" },
 	{ Packet = Bus.Cafe.DisplayTake, Action = "Take", Kind = "Display" },
+	{ Packet = Bus.Cafe.WindowPlace, Action = "Place", Kind = "Window" },
+	{ Packet = Bus.Cafe.WindowTake, Action = "Take", Kind = "Window" },
 }
 
 --[[ Tables ]]--

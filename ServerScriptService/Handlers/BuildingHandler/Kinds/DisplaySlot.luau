@@ -21,6 +21,12 @@ local PickupOrigin = require(script.Parent.Parent.PickupOrigin)
 local DisplaySlot = {}
 
 --[[ Private Functions ]]--
+-- Display and kitchen window keep their leftover flags in their own session tables.
+local function GetLeftovers(building: any): { [number]: boolean }?
+	local data = DataHandler:GetData(building.Player)
+	return data and data.Session[building.Definition.LeftoversField or "DisplayLeftovers"]
+end
+
 -- A slot's leftover flag is either set or absent, never stored as false.
 local function SetLeftover(leftovers: { [number]: boolean }, index: number, isLeftover: boolean): ()
 	if isLeftover then
@@ -71,11 +77,10 @@ function DisplaySlot.Place(building: any): boolean
 		Bus.Progress.ActionFailed:FireClient(building.Player, "nothing_to_place")
 		return false
 	end
-	local data = DataHandler:GetData(building.Player)
-	if not data then
+	local leftovers = GetLeftovers(building)
+	if not leftovers then
 		return false
 	end
-	local leftovers = data.Session.DisplayLeftovers
 	local heldLeftover = held.Kind == "Leftover"
 	local current = display[building.Index]
 	if current then
@@ -109,11 +114,10 @@ function DisplaySlot.Take(building: any): boolean
 		return false
 	end
 
-	local data = DataHandler:GetData(building.Player)
-	if not data then
+	local leftovers = GetLeftovers(building)
+	if not leftovers then
 		return false
 	end
-	local leftovers = data.Session.DisplayLeftovers
 	local kind: GameTypes.ItemKind = if leftovers[building.Index] then "Leftover" else "Dish"
 	if
 		not InventoryHandler:Push(building.Player, { Kind = kind, Id = recipeId }, PickupOrigin.ForBuilding(building))
