@@ -77,13 +77,26 @@ function DisplayHandler.GetGuestCapacity(_self: DisplayHandler, player: Player):
 end
 
 -- Slot 1 and bonus ledges are storage. Purchased window pedestals are slots 2..N+1.
-function DisplayHandler.FindStockedSlot(self: DisplayHandler, player: Player): number?
+-- Claimed pedestals are skipped; a stocked preferred pedestal wins so a guest buys where they stand.
+function DisplayHandler.FindStockedSlot(
+	self: DisplayHandler,
+	player: Player,
+	claimed: { [number]: boolean }?,
+	preferred: number?
+): number?
 	local display = GetDisplay(player)
 	if not display then
 		return nil
 	end
-	for index = 2, self:GetGuestCapacity(player) + 1 do
-		if display[index] then
+	local last = self:GetGuestCapacity(player) + 1
+	local function free(index: number): boolean
+		return display[index] ~= nil and not (claimed and claimed[index])
+	end
+	if preferred and preferred >= 2 and preferred <= last and free(preferred) then
+		return preferred
+	end
+	for index = 2, last do
+		if free(index) then
 			return index
 		end
 	end

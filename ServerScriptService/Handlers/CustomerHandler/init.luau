@@ -103,6 +103,35 @@ local function FreePosition(customers: any, field: string, limit: number): numbe
 	return nil
 end
 
+-- Pedestals held by other window shoppers. Display guests never outnumber pedestals, so a
+-- browser can always find one of its own; only Shopping/Purchasing claims block a sale.
+local function ClaimedSlots(customers: any, exceptId: string, buyersOnly: boolean): { [number]: boolean }
+	local claimed: { [number]: boolean } = {}
+	for id, customer in customers do
+		local slot = customer.DisplaySlot
+		if
+			id ~= exceptId
+			and slot
+			and (not buyersOnly or customer.State == "Shopping" or customer.State == "Purchasing")
+		then
+			claimed[slot] = true
+		end
+	end
+	return claimed
+end
+
+-- A random unclaimed pedestal other than the current one, so roaming guests actually move.
+local function FreePedestal(player: Player, customers: any, customerId: string, current: number?): number?
+	local claimed = ClaimedSlots(customers, customerId, false)
+	local free: { number } = {}
+	for slot = 2, DisplayHandler:GetGuestCapacity(player) + 1 do
+		if not claimed[slot] and slot ~= current then
+			free[#free + 1] = slot
+		end
+	end
+	return if #free > 0 then free[math.random(#free)] else current
+end
+
 local function PickWeighted(entries: { CustomerTypes.CustomerTypeEntry }): CustomerTypes.CustomerTypeEntry?
 	local total = 0
 	for _, entry in entries do
@@ -329,6 +358,9 @@ function CustomerHandler.SpawnCustomer(self: CustomerHandler, player: Player): b
 		SeatIndex = seatIndex,
 		QueuePosition = queuePosition,
 		DisplayPosition = displayPosition,
+		DisplaySlot = if entry.kind == "Display"
+			then FreePedestal(player, data.Session.Customers, customerId, nil)
+			else nil,
 		Orders = orders,
 		-- Stored per guest so the released deadline and patience bar share one duration.
 		Patience = patience,
@@ -819,12 +851,27 @@ function CustomerHandler.UpdateShopper(
 			local catId = CatHandler:Reserve(player, customerId)
 			if catId then
 				customer.CatId = catId
+				-- The adopter walks to the cat, so its pedestal is free for other browsers.
+				customer.DisplaySlot = nil
 				self.Guests[player][customerId]:Adopt()
 				self.CustomerShopping:Fire(player, customerId)
 				return
 			end
-			local slot = DisplayHandler:FindStockedSlot(player)
+			local customers = GetCustomers(player)
+			if not customers then
+				return
+			end
+			local slot = DisplayHandler:FindStockedSlot(
+				player,
+				ClaimedSlots(customers, customerId, true),
+				customer.DisplaySlot
+			)
 			if not slot then
+				if DisplayHandler:FindStockedSlot(player) then
+					-- Every stocked pedestal already has a buyer: keep browsing until one frees up.
+					customer.BrowseEndsAt = now + DisplayCustomers.RoamPauseMinSeconds
+					return
+				end
 				Bus.Progress.ActionFailed:FireClient(player, "display_empty")
 				self:FinishCustomer(player, customerId, customer, false)
 				return
@@ -833,8 +880,18 @@ function CustomerHandler.UpdateShopper(
 			customer.PatienceEndsAt = now + customer.Patience
 			self.Guests[player][customerId]:Shop()
 			self.CustomerShopping:Fire(player, customerId)
+			-- A browser standing at the chosen pedestal steps aside to a free one.
+			for otherId, other in customers do
+				if otherId ~= customerId and other.DisplaySlot == slot then
+					other.DisplaySlot = FreePedestal(player, customers, otherId, slot)
+					if other.State == "Arriving" or other.State == "Browsing" then
+						self.CustomerShopping:Fire(player, otherId)
+					end
+				end
+			end
 		elseif customer.RoamAt and now >= customer.RoamAt then
 			customer.RoamAt = nil
+			customer.DisplaySlot = FreePedestal(player, GetCustomers(player), customerId, customer.DisplaySlot)
 			self.CustomerShopping:Fire(player, customerId)
 		end
 	end

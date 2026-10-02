@@ -114,7 +114,8 @@ function CustomerViewHandler.OnStart(self: CustomerViewHandler): ()
 	end)
 	CustomerHandler.CustomerShopping:Connect(function(player: Player, customerId: string)
 		local guest = self:GetGuest(player, customerId)
-		if guest then
+		-- A guest still entering routes from the doorway callback, which reads the new pedestal.
+		if guest and guest.Model:GetAttribute("VisitorState") ~= "Entering" then
 			self:Route(player, customerId, guest)
 		end
 	end)

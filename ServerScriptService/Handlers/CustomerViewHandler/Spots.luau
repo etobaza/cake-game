@@ -66,7 +66,8 @@ local function DisplaySpot(player: Player, customer: any): Spot?
 		return nil
 	end
 	local shopping = customer.State == "Shopping"
-	local slot = if shopping then customer.DisplaySlot else math.random(2, bought + 1)
+	-- CustomerHandler gives every display guest its own pedestal, so guests never stack.
+	local slot = customer.DisplaySlot or math.random(2, bought + 1)
 	local building = slot and BuildingHandler:GetBuilding(player, BuildingsConfig.GetId(DISPLAY_KIND, slot))
 	if not building then
 		return nil
