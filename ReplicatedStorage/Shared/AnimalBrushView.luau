@@ -69,10 +69,15 @@ end
 
 function AnimalBrushView.Align(self: AnimalBrushView): ()
 	local brush, hand = self.Brush, self.Hand
-	if not brush or not hand then
+	local target = self.Character:GetAttribute(Config.BrushTargetAttribute)
+	if not brush or not hand or typeof(target) ~= "CFrame" then
 		return
 	end
-	brush:SetCFrame(hand.CFrame * Config.BrushGrip)
+	-- The animated hand rolls the pad sideways, so only its position is followed. The pad stays
+	-- upright (length on Z) with its bristles (-Y) facing the horizontal brushing direction.
+	local facing = target.LookVector
+	local back = -facing
+	brush:SetCFrame(CFrame.fromMatrix(hand.Position, back:Cross(Vector3.yAxis), back, Vector3.yAxis) * Config.BrushGrip)
 	brush.Model.Parent = self.Parent
 end
 

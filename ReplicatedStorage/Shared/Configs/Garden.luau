@@ -64,7 +64,8 @@ local Garden = {
 	BrushTargetAttribute = "GardenBrushTarget",
 	BrushStationAttribute = "GardenBrushStation",
 	BrushSize = Vector3.new(0.8, 0.4, 1.05),
-	BrushGrip = CFrame.new(0, -0.3, -0.1) * CFrame.Angles(math.rad(90), 0, 0),
+	-- Offset in the upright pad frame (-Y points at the animal); the origin is the bristle face.
+	BrushGrip = CFrame.new(0, -0.55, 0),
 	BrushBlendSeconds = 0.3,
 	WaterTurnSpeed = 12,
 	-- Water lands at the roots without moving the player from their approach position.
