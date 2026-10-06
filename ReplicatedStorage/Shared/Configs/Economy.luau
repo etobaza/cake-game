@@ -25,11 +25,21 @@ local Economy = {
 	XPShiftComplete = 20,
 	-- XP penalty for every customer who left with nothing.
 	XPLostCustomer = 3,
+
+	-- Service streak: each consecutive well-timed table sale before this one raises its tip by this
+	-- share, up to the cap. Only the tip grows; the dish price is unchanged.
+	StreakTipBonusPerStep = 0.1,
+	StreakTipBonusMax = 1,
 }
 
 --[[ Handling ]]--
 function Economy.GetDishXP(price: number): number
 	return math.max(math.round(price * Economy.XPPerCoin), Economy.XPMinPerDish)
+end
+
+--- Extra tip share earned by a sale that continues a streak of `streak` earlier good sales.
+function Economy.GetStreakTipBonus(streak: number): number
+	return math.clamp(streak * Economy.StreakTipBonusPerStep, 0, Economy.StreakTipBonusMax)
 end
 
 return Economy

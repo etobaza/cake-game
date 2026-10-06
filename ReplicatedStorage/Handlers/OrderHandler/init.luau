@@ -10,6 +10,7 @@ local _Shared = ReplicatedStorage.Shared
 local _Handlers = ReplicatedStorage.Handlers
 
 --[[ Modules ]]--
+local Animate = require(_Shared.UI.Animate)
 local Buildings = require(_Shared.Configs.Buildings)
 local Authored = require(_Shared.UI.Authored)
 local Card = require(script.Card)
@@ -51,6 +52,7 @@ end
 function OrderHandler.OnStart(self: OrderHandler): ()
 	self.Janitor = Janitor.new()
 	self.Cards = {}
+	self.Stages = {}
 	self.Accumulator = 0
 	self.Root = UIHandler:GetHud("Order") :: Frame
 	local container = self.Root:FindFirstChild("Container") :: Frame
@@ -172,6 +174,7 @@ function OrderHandler.Refresh(self: OrderHandler): ()
 	self.Layout.Padding = UDim.new(0, gap)
 	self.Scroll.CanvasSize = UDim2.fromOffset(math.max(0, padding + #orders * (cardWidth + gap) - gap), 0)
 	local now = workspace:GetServerTimeNow()
+	local stages: { [string]: string } = {}
 	for index, card in self.Cards do
 		card.Root.Size = UDim2.new(0, cardWidth, 1, -10)
 		local order = orders[index]
@@ -181,6 +184,15 @@ function OrderHandler.Refresh(self: OrderHandler): ()
 		end
 		local customer = order.Customer
 		local choosing = customer.State == "Choosing"
+		-- Cards follow guests as earlier orders finish; only a guest's own change punches.
+		local stage = customer.State
+		local previous = self.Stages[order.CustomerId]
+		stages[order.CustomerId] = stage
+		if previous == nil then
+			Animate.Pop(card.Slot, Config.Pop.Appear)
+		elseif previous ~= stage and stage == "Waiting" then
+			Animate.Pop(card.Slot, Config.Pop.Placed)
+		end
 		local recipe = if choosing then nil else Recipes:Get(customer.Orders[1])
 		local names = {}
 		if not choosing then
@@ -212,6 +224,7 @@ function OrderHandler.Refresh(self: OrderHandler): ()
 			now
 		)
 	end
+	self.Stages = stages
 end
 
 function OrderHandler.Destroy(self: OrderHandler): ()
@@ -221,6 +234,8 @@ end
 export type OrderHandler = typeof(OrderHandler) & {
 	Janitor: any,
 	Cards: { Card.Card },
+	-- Each shown guest's last order state, so a card punches when its own guest changes.
+	Stages: { [string]: string },
 	Tooltip: Card.Tooltip,
 	Root: Frame,
 	Template: Frame,

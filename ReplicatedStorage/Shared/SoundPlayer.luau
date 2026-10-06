@@ -29,8 +29,12 @@ function SoundPlayer.Create(name: Config.SoundName, parent: Instance): Sound
 end
 
 --- Plays once and removes itself. Destroying the returned sound (or its parent) stops it early.
-function SoundPlayer.Play(name: Config.SoundName, parent: Instance?): Sound
+--- `playbackSpeed` shifts the pitch, so repeated feedback (coins, streaks) can climb.
+function SoundPlayer.Play(name: Config.SoundName, parent: Instance?, playbackSpeed: number?): Sound
 	local sound = SoundPlayer.Create(name, parent or SoundService)
+	if playbackSpeed then
+		sound.PlaybackSpeed = playbackSpeed
+	end
 	sound.Ended:Once(function(): ()
 		sound:Destroy()
 	end)

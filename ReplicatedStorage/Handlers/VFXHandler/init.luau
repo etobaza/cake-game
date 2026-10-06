@@ -13,6 +13,7 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Tools = require(ReplicatedStorage.Handlers.ToolViewHandler)
 local Character = require(script.Character)
 local Effect = require(script.Effect)
+local Procedural = require(script.Procedural)
 local Target = require(script.Target)
 
 --[[ Constants ]]--
@@ -170,8 +171,14 @@ function VFXHandler.OnStart(self: VFXHandler): ()
 	end
 	for name in Config.Effects do
 		local template = folder:FindFirstChild(name)
+		local definition = Config.Procedural[name]
 		if template and template:IsA("BasePart") then
 			self.Templates[name] = template
+		elseif definition then
+			-- Built once and kept detached; every burst clones it like an authored part.
+			local built = Procedural.Build(name, definition, folder)
+			self.Templates[name] = built
+			self.Janitor:Add(built, "Destroy")
 		else
 			print(`[VFXHandler] Missing template {name}`)
 		end

@@ -17,9 +17,13 @@ function Format.Number(value: number): string
 	return if value < 0 and whole > 0 then `-{formatted}` else formatted
 end
 
---- Seconds -> "M:SS".
+--- Seconds -> "M:SS", or "H:MM:SS" from an hour up so "60:32" never reads as minutes.
 function Format.Time(seconds: number): string
 	local clamped = math.max(seconds, 0)
+
+	if clamped >= 3600 then
+		return string.format("%d:%02d:%02d", clamped // 3600, (clamped % 3600) // 60, clamped % 60)
+	end
 
 	return string.format("%d:%02d", clamped // 60, clamped % 60)
 end

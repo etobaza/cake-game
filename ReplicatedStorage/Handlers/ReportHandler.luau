@@ -69,6 +69,16 @@ local function prepareLayout(screen: ScreenGui, panel: Instance, content: Scroll
 	content.AutomaticCanvasSize = Enum.AutomaticSize.None
 	content.CanvasSize = UDim2.fromScale(0, 0)
 	content.CanvasPosition = Vector2.zero
+	-- Rows added after the screen was drawn copy an authored row's styling.
+	for _, row in Config.Rows do
+		local template = if row.Template then content:FindFirstChild(row.Template) else nil
+		if not content:FindFirstChild(row.Key) and template then
+			local copy = template:Clone()
+			copy.Name = row.Key
+			Authored.SetPair(copy:FindFirstChild("Txt"), row.Label)
+			copy.Parent = content
+		end
+	end
 	local rowCount = #Config.Rows
 	local rowSize = UDim2.new(1, -4, 1 / rowCount, -math.ceil(ROW_GAP * (rowCount - 1) / rowCount))
 	for index, row in Config.Rows do

@@ -23,6 +23,7 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Authored = require(_Shared.UI.Authored)
 local Bus = require(_Shared.Bus)
 local DataClient = require(_Handlers.DataHandlerClient)
+local FeedbackHandler = require(_Handlers.FeedbackHandler)
 local GameTypes = require(_Shared.GameTypes)
 local Press = require(_Shared.UI.Press)
 local UIHandler = require(_Handlers.UIHandler)
@@ -96,7 +97,8 @@ local TAB_OFF = Color3.fromRGB(168, 163, 156)
 
 --[[ Tables ]]--
 local ShopHandler = {
-	dependencies = { "DataClient", "UIHandler" },
+	-- FeedbackHandler celebrates a node the moment it is bought.
+	dependencies = { "DataClient", "UIHandler", "FeedbackHandler" },
 }
 
 --[[ Private Functions ]]--
@@ -285,6 +287,7 @@ function ShopHandler.CollectSlots(self: ShopHandler): ()
 			PurchaseLevel = 1,
 			Selected = false,
 			State = nil,
+			Painted = nil,
 			HasArt = false,
 		}
 
@@ -440,6 +443,11 @@ function ShopHandler.PaintNode(_self: ShopHandler, node: Node, state: string, is
 	if becameSelected or becameOwned then
 		Animate.Pop(node.Slot)
 	end
+	local painted = if node.UpgradeId then `{node.UpgradeId}:{node.PurchaseLevel}` else nil
+	if becameOwned and painted ~= nil and painted == node.Painted then
+		FeedbackHandler:Celebrate(node.Slot, "Purchase")
+	end
+	node.Painted = painted
 
 	node.Selected = isSelected
 	node.State = state
@@ -562,6 +570,9 @@ export type Node = {
 	-- What the node looked like last time it was painted, so a change can be felt as well as seen.
 	Selected: boolean?,
 	State: string?,
+	-- Which upgrade level that paint showed: tabs reuse the boxes, so a state change only counts as
+	-- a purchase when the box still shows the same upgrade.
+	Painted: string?,
 	-- The upgrade's own art is shown; the label is then a level caption below it.
 	HasArt: boolean,
 	-- Authored label geometry, restored when a node shows a name instead of art.

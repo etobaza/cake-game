@@ -21,6 +21,111 @@ return {
 		DepthMode = Enum.HighlightDepthMode.AlwaysOnTop,
 	},
 	Stages = { Sweep = 1, Cook = 2, Serve = 3, Clean = 4, Completed = 4, Skipped = 4 },
+	-- After the introduction: help a player who stopped making progress or repeats a failed action.
+	-- Each situation first explains the cause in a short toast; a pointer follows only if the player
+	-- still has not acted, so the step is understood rather than clicked through.
+	Coach = {
+		Enabled = true,
+		-- Seconds without progress before the explanation (Nudge) and the pointer (Point).
+		-- Cooldown = true makes the nudge wait for `Cooldown` seconds after the previous one.
+		Delays = {
+			Stuck = { Nudge = 30, Point = 50, Cooldown = true },
+			Urgent = { Nudge = 8, Point = 15, Cooldown = false },
+			Prep = { Nudge = 60, Point = 90, Cooldown = true },
+			Feature = { Nudge = 0, Point = 8, Cooldown = false },
+		},
+		Cooldown = 60,
+		-- Pointers per step kind and session; afterwards that step only gets the explanation.
+		PointsPerStep = 2,
+		-- Repeated refusals in this window skip the wait and show the pointer at once.
+		FailureCount = 2,
+		FailureWindow = 30,
+		BoostSeconds = 20,
+		-- Refusal codes that signal a misunderstanding rather than a busy station or distance.
+		Confusion = {
+			bake_before_serving = true,
+			wrong_dish = true,
+			nothing_to_serve = true,
+			nothing_to_place = true,
+			need_firewood = true,
+			select_recipe = true,
+			ingredient_not_needed = true,
+			ingredient_complete = true,
+			missing_ingredients = true,
+			nothing_to_load = true,
+			need_frozen_mix = true,
+			wrong_frozen_mix = true,
+			wrong_station = true,
+			not_ready = true,
+			need_broom = true,
+			need_watering_can = true,
+			nothing_to_harvest = true,
+		} :: { [string]: boolean },
+		-- Steps another guide already leads to (the carried-tool return path): explanation only.
+		NudgeOnly = { return_tool = true } :: { [string]: boolean },
+		-- One between-days feature introduction stays in the toast this long before the next.
+		IntroSeconds = 6,
+	},
+	-- Bought upgrades the player has to use actively. A feature owned for a whole shift without
+	-- one use becomes due: the evening, the next preparation and the next shift explain it once.
+	-- If another whole shift passes unused, the guide retires for good.
+	Features = {
+		{
+			id = "display",
+			upgrade = "cafe_display",
+			prefix = "display",
+			actions = { Place = true },
+			intro = "Counter guests buy dishes from the display",
+		},
+		{
+			id = "window",
+			upgrade = "cafe_window",
+			prefix = "window",
+			actions = { Place = true },
+			intro = "Pass dishes through the kitchen window",
+		},
+		{
+			id = "oven2",
+			upgrade = "kitchen_oven",
+			prefix = "oven",
+			minIndex = 2,
+			actions = { Load = true },
+			intro = "Two ovens bake two batches at once",
+		},
+		{
+			id = "freezer",
+			upgrade = "kitchen_freezer",
+			prefix = "freezer",
+			actions = { Load = true },
+			station = "Freezer",
+			intro = "Frozen mixes chill in the freezer",
+		},
+		{
+			id = "coffee",
+			upgrade = "cafe_coffee",
+			prefix = "coffee",
+			station = "Coffee",
+			intro = "Make coffee at the coffee machine",
+		},
+		{
+			id = "assistant",
+			upgrade = "cafe_assistant",
+			-- Used once the evening plan gives the assistant any job.
+			task = true,
+			intro = "Your assistant works the job you chose",
+		},
+	} :: {
+		{
+			id: string,
+			upgrade: string,
+			prefix: string?,
+			minIndex: number?,
+			actions: { [string]: boolean }?,
+			station: string?,
+			task: boolean?,
+			intro: string,
+		}
+	},
 	Topics = {
 		{
 			id = "Cooking",

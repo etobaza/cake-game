@@ -20,6 +20,7 @@ local Inventory = require(_Handlers.InventoryHandler)
 local Pantry = require(_Handlers.PantryHandler)
 local Economy = require(_Handlers.EconomyHandler)
 local PickupOrigin = require(script.Parent.Parent.PickupOrigin)
+local SoundPlayer = require(_Shared.SoundPlayer)
 local Upgrades = require(_Handlers.UpgradeHandler)
 local VFX = require(_Shared.Configs.VFX)
 local WateringInteraction = require(script.Parent.Parent.WateringInteraction)
@@ -262,6 +263,9 @@ function GardenNode.Harvest(building: any): boolean
 		return false
 	end
 	building.State.Stock -= 1
+	if source.Care == "Plant" then
+		SoundPlayer.Play("PickingFruit", building.Part)
+	end
 	return true
 end
 

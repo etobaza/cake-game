@@ -17,6 +17,11 @@ return {
 		ContentPadding = 5,
 		HotbarGap = 12,
 	},
+	-- Card punches (Animate.Pop start scale): a new guest's card grows in, a placed order kicks.
+	Pop = {
+		Appear = 0.55,
+		Placed = 1.25,
+	},
 	TooltipWidth = 280,
 	TooltipHeight = 76,
 	TooltipGap = 8,

@@ -78,6 +78,33 @@ The Roblox menu, respawn, and the saved collapsed preference suppress tutorial p
 
 Animal harvest hints resolve the kitchen `AnimalProduce` target while brushing still resolves the animal. Evening lessons resolve the shared `BakeryMenu` header's Menu/Next Day controls.
 
+## Coaching after the introduction
+
+Once the introduction is completed or skipped, `Shared/Tutorial/Coach` fills the gaps the optional lessons leave. It only runs when no introduction step or optional lesson has a goal and the saved collapsed preference is off. It presents through the same `Presenter`, so the toast, the finger and the Beam are shared with the tutorial and never stack. The design follows a nudge-then-pointer ladder: the first help level is a cause-and-fix line of at most eight words with no pointer, so the player works out the action. The pointer follows only if the player still has not acted.
+
+- **Stuck.** `Shared/Tutorial/Assist` picks the most useful next step from live kitchen data: burnt food, an oven dish about to burn, a carried dish a seated guest ordered, dough waiting for its station, a guest ready to order, the oldest waiting order (via the existing `Cooking.Resolve` route), and a dirty seat while new guests are coming. During preparation it can also suggest opening the bakery when nothing is happening. Mixing, baking and eating are waiting, not hesitation, so they produce nothing. It never suggests throwing away a usable item.
+- **Timing.** The wait restarts whenever the step changes or the player changes their hands, stations, display, selected recipe, tables, spills or orders. Guests arriving or leaving on their own do not count as the player's progress. `Configs/Tutorial.Coach.Delays` sets the waits: the explanation after 30 seconds and the pointer after 50; an oven dish about to burn 8 and 15; an idle preparation 60 and 90. A new explanation waits 60 seconds after the previous one, except for urgent and feature moments.
+- **Repeated refusals.** Two refusals in 30 seconds whose `Progress.ActionFailed` code means a misunderstanding (the `Confusion` set, for example `bake_before_serving` or `wrong_dish`) skip the wait and show the pointer at once. The refusal toast itself remains `UIHandler`'s and already explains the cause. Codes such as distance or a busy station do not count.
+- **Fading.** Each step kind gets at most two pointers per session; afterwards it only gets the explanation. The carried-tool return path (`return_tool`) never gets a coaching pointer, because `ToolReturnHandler` already leads there.
+
+### Unused upgrades
+
+`Configs/Tutorial.Features` lists bought features that need an active habit: display counter, kitchen window, second oven, freezer, coffee machine and assistant. Passive upgrades are excluded. The garden, animals and rail cart keep their existing optional lessons.
+
+The server's tutorial `Run` writes three additive flags and never changes progress or rewards:
+
+- `Actions["Use:<id>"]` is set by the first accepted action that `Features.Matches`, for example `Load` on `oven_2` or `Place` on any display. The assistant counts as used once a job other than `None` is planned.
+- `Lessons["Due:<id>"]` is set at `ShiftEnded` for a feature that was owned when that shift started and was not used. Joining mid-shift or buying mid-shift never makes a feature due.
+- `Lessons["Feature:<id>"]` retires the guide after a second whole unused shift.
+
+While a feature is due, the client explains it once at each natural point:
+
+- **Evening plan.** The plan asks for an assistant job (pointing at the Helper plate on the menu page) or for the station's recipe on tomorrow's menu (Coffee, or an unlocked frozen dessert).
+- **Next preparation.** Each due feature gets one short introduction line, shown for six seconds, with no pointer.
+- **Next shift.** A just-in-time moment appears when the feature would help. Examples: carrying dough while the first oven is busy, carrying a frozen mix, a full display with an unordered dish in hand, or a guest ordering coffee. These moments explain at once and point after eight seconds.
+
+Using the feature, or retiring it, ends all of these for good. `tutorialstatus` lists the flags among Actions and Lessons. `tutorialreset` clears them with the rest of the tutorial save.
+
 ## Cmdr
 
 Commands use the existing `TutorialDebug` group: allowed in Studio, and restricted to the server admin registry in published servers. Hint previews affect only the executor and never modify a profile.

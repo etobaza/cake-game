@@ -25,6 +25,8 @@ export type SaleParams = {
 	menuSize: number,
 	-- The recipe was unlocked recently and still gives a temporary bonus.
 	isNewRecipe: boolean,
+	-- Extra tip share from the service streak (`Economy.GetStreakTipBonus`); 0 when omitted.
+	streakBonus: number?,
 }
 
 --[[ Tables ]]--
@@ -57,6 +59,7 @@ function Tips.GetSaleValue(params: SaleParams): number
 	end
 
 	local tip = recipe.price * rate * params.customerMultiplier * params.tipStat
+	tip *= 1 + (params.streakBonus or 0)
 
 	return math.round((recipe.price + tip) * 100) / 100
 end

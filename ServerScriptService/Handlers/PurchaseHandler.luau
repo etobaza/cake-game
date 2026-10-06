@@ -155,10 +155,10 @@ local function trackRobuxSpent(player: Player, spent: number)
 		return
 	end
 
-	-- Do not invent a full Stats schema; only write when present, or create the one field we own.
+	-- Only write when present, or create it with our field and the template default for the rest.
 	local stats = data.Cloud.Stats
 	if stats == nil then
-		data.Cloud.Stats = { RobuxSpent = spent }
+		data.Cloud.Stats = { RobuxSpent = spent, BestStreak = 0 }
 		return
 	end
 

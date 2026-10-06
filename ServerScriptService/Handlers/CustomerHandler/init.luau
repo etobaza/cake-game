@@ -24,6 +24,7 @@ local DisplayHandler = require(ServerScriptService.Handlers.DisplayHandler)
 local DisplayCustomers = require(_Configs.DisplayCustomers)
 local Economy = require(_Configs.Economy)
 local EconomyHandler = require(ServerScriptService.Handlers.EconomyHandler)
+local FeedbackConfig = require(_Configs.Feedback)
 local GuestState = require(script.GuestState)
 local InventoryHandler = require(ServerScriptService.Handlers.InventoryHandler)
 local LoggerUtil = require(_Libs.Logger)
@@ -70,6 +71,9 @@ CustomerHandler.CustomerLeft = Signal() :: Signal.Signal<Player, string, boolean
 CustomerHandler.CustomerShopping = Signal() :: Signal.Signal<Player, string>
 CustomerHandler.CustomerPurchased = Signal() :: Signal.Signal<Player, string>
 CustomerHandler.CustomerAdopted = Signal() :: Signal.Signal<Player, string>
+-- A dish was paid for: player, customerId, credited coins, streak tip bonus share, sale grade,
+-- table-service streak after the sale, and whether it is the run's first to beat the record.
+CustomerHandler.DishSold = Signal() :: Signal.Signal<Player, string, number, number, string, number, boolean>
 
 --[[ Private Functions ]]--
 local function GetCustomers(player: Player): any?
@@ -183,6 +187,14 @@ local function ScriptedOrder(player: Player): string?
 	return data and TutorialPolicy.FirstOrder(data.Cloud, data.Session)
 end
 
+-- How quickly the guest was served, as a reaction; the protected tutorial guest is always delighted.
+local function GetReaction(customer: any, now: number): string
+	if customer.TutorialProtected then
+		return "Happy"
+	end
+	return VFXRules.Reaction(customer.Kind, customer.PatienceEndsAt, customer.Patience, now)
+end
+
 --[[ Handling ]]--
 function CustomerHandler.OnInit(self: CustomerHandler): ()
 	self.Runtime = {}
@@ -245,6 +257,8 @@ function CustomerHandler.StartShift(self: CustomerHandler, player: Player): ()
 		-- Ids never restart: a guest walking out still owns their body while the next shift spawns.
 		NextId = if previous then previous.NextId else 1,
 		ScriptedGuest = data ~= nil and TutorialPolicy.IsActive(data.Cloud),
+		-- The current streak run already announced its new record.
+		RecordShown = false,
 	}
 end
 
@@ -253,6 +267,11 @@ function CustomerHandler.ClearCustomers(self: CustomerHandler, player: Player): 
 		guest:Destroy()
 	end
 	self.Guests[player] = nil
+	-- The streak belongs to one shift; closing the doors is not a mistake, so nothing is announced.
+	local data = DataHandler:GetData(player)
+	if data then
+		data.Session.Streak = 0
+	end
 	local customers = GetCustomers(player)
 	if not customers then
 		return
@@ -473,7 +492,13 @@ function CustomerHandler.ArriveAtDisplay(self: CustomerHandler, player: Player, 
 			return
 		end
 		guest:Purchase()
-		self:PayForDish(player, customer, recipeId, if leftover then DisplayCustomers.LeftoverPriceMultiplier else 1)
+		self:PayForDish(
+			player,
+			customerId,
+			customer,
+			recipeId,
+			if leftover then DisplayCustomers.LeftoverPriceMultiplier else 1
+		)
 		customer.PurchaseEndsAt = now + DisplayCustomers.PurchaseSeconds
 		self.CustomerPurchased:Fire(player, customerId)
 	end
@@ -569,7 +594,7 @@ function CustomerHandler.ServeDish(self: CustomerHandler, player: Player, custom
 		return false
 	end
 
-	self:PayForDish(player, customer, recipeId)
+	self:PayForDish(player, customerId, customer, recipeId)
 	if customer.TableId then
 		TableHandler:ServeMenu(player, customer.TableId, customerId, recipeId)
 	end
@@ -594,14 +619,7 @@ function CustomerHandler.StartEating(
 	if not guest then
 		return
 	end
-	local reaction = if customer.TutorialProtected
-		then "Happy"
-		else VFXRules.Reaction(
-			customer.Kind,
-			customer.PatienceEndsAt,
-			customer.Patience,
-			workspace:GetServerTimeNow()
-		)
+	local reaction = GetReaction(customer, workspace:GetServerTimeNow())
 	guest:Eat()
 
 	self.CustomerEating:Fire(player, customerId, recipeId, reaction)
@@ -630,8 +648,9 @@ function CustomerHandler.FindWaitingFor(_self: CustomerHandler, player: Player, 
 end
 
 function CustomerHandler.PayForDish(
-	_self: CustomerHandler,
+	self: CustomerHandler,
 	player: Player,
+	customerId: string,
 	customer: any,
 	recipeId: string,
 	priceMultiplier: number?
@@ -643,15 +662,18 @@ function CustomerHandler.PayForDish(
 		return
 	end
 
+	local now = workspace:GetServerTimeNow()
 	local patienceLeft = if customer.TutorialProtected
 		then 1
-		else math.clamp(
-			(customer.PatienceEndsAt - workspace:GetServerTimeNow()) / (customer.Patience or entry.patience),
-			0,
-			1
-		)
+		else math.clamp((customer.PatienceEndsAt - now) / (customer.Patience or entry.patience), 0, 1)
 
-	-- Counter purchases are takeaways, with no timed table-service tip.
+	-- Counter purchases are takeaways: no timed tip, no streak.
+	local grade: FeedbackConfig.Grade = if customer.Kind == "Display"
+		then "Sold"
+		else FeedbackConfig.GradeByReaction[GetReaction(customer, now)] or "Great"
+	-- A sale that keeps the streak tips extra for the good sales before it.
+	local keepsStreak = grade == "Perfect" or grade == "Great"
+	local streakBonus = if keepsStreak then Economy.GetStreakTipBonus(data.Session.Streak) else 0
 	local coins = if customer.Kind == "Display"
 		then recipe.price * (priceMultiplier or 1)
 		else Tips.GetSaleValue({
@@ -661,14 +683,67 @@ function CustomerHandler.PayForDish(
 			tipStat = UpgradeHandler:GetStat(player, "TipMult"),
 			menuSize = #data.Session.Day.Menu,
 			isNewRecipe = EconomyHandler:IsRecipeNew(player, recipeId),
+			streakBonus = streakBonus,
 		})
 
 	local before = data.Cloud.Cash
 	DayCycleHandler:AddResult(player, coins, Economy.GetDishXP(recipe.price), 0, 0)
+	-- What actually reached the wallet, pass multipliers included; zero once the shift has closed.
+	local credited = math.round((data.Cloud.Cash - before) * 100) / 100
 	if customer.TutorialProtected then
-		data.Session.Tutorial.LastSale = math.round((data.Cloud.Cash - before) * 100) / 100
-		data.Session.Tutorial.SaleAt = workspace:GetServerTimeNow()
+		data.Session.Tutorial.LastSale = credited
+		data.Session.Tutorial.SaleAt = now
 	end
+	if credited <= 0 then
+		return
+	end
+
+	local streak, record = 0, false
+	if keepsStreak then
+		streak, record = self:AdvanceStreak(player)
+	elseif grade == "Late" then
+		self:BreakStreak(player)
+	end
+	self.DishSold:Fire(player, customerId, credited, streakBonus, grade, streak, record)
+end
+
+-- One more good sale: the shift streak, the day's best and the all-time record follow it. Returns
+-- the new streak and whether this sale is the first of the run to beat the record.
+function CustomerHandler.AdvanceStreak(self: CustomerHandler, player: Player): (number, boolean)
+	local data = DataHandler:GetData(player)
+	if not data then
+		return 0, false
+	end
+	local streak = data.Session.Streak + 1
+	data.Session.Streak = streak
+	DayCycleHandler:RecordBest(player, "BestStreak", streak)
+
+	local stats = data.Cloud.Stats
+	if streak <= (stats.BestStreak or 0) then
+		return streak, false
+	end
+	stats.BestStreak = streak
+	local runtime = self.Runtime[player]
+	local record = runtime ~= nil and not runtime.RecordShown and streak >= FeedbackConfig.Streak.RecordFrom
+	if record and runtime then
+		runtime.RecordShown = true
+	end
+	return streak, record
+end
+
+-- A late dish or a walk-out ends the streak; the owner sees what was lost.
+function CustomerHandler.BreakStreak(self: CustomerHandler, player: Player): ()
+	local data = DataHandler:GetData(player)
+	local lost = if data then data.Session.Streak else 0
+	if not data or lost <= 0 then
+		return
+	end
+	data.Session.Streak = 0
+	local runtime = self.Runtime[player]
+	if runtime then
+		runtime.RecordShown = false
+	end
+	Bus.Cafe.StreakLost:FireClient(player, lost)
 end
 
 -- Customer leaving: a happy one counts as served, an impatient one as a loss.
@@ -717,6 +792,8 @@ function CustomerHandler.FinishCustomer(
 		return
 	end
 
+	-- A guest who walked out ends the service streak.
+	self:BreakStreak(player)
 	DayCycleHandler:AddResult(player, 0, -Economy.XPLostCustomer, 0, 1)
 	Logger:Debug(`{player.Name}: guest {customerId} left with nothing`)
 end
@@ -906,6 +983,7 @@ export type CustomerHandler = typeof(CustomerHandler) & {
 			FirstGuest: boolean,
 			ScriptedGuest: boolean,
 			DisplayFlow: number,
+			RecordShown: boolean,
 		},
 	},
 }

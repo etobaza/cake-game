@@ -23,9 +23,11 @@ local Animate = require(_Shared.UI.Animate)
 local Authored = require(_Shared.UI.Authored)
 local Bus = require(_Shared.Bus)
 local DataClient = require(_Handlers.DataHandlerClient)
+local FeedbackHandler = require(_Handlers.FeedbackHandler)
 local Format = require(_Shared.UI.Format)
 local Press = require(_Shared.UI.Press)
 local Rewards = require(_Configs.Rewards)
+local SoundPlayer = require(_Shared.SoundPlayer)
 local UIHandler = require(_Handlers.UIHandler)
 
 --[[ Constants ]]--
@@ -39,13 +41,18 @@ local DAILY_GRID = { "MainFrame", "Content" }
 
 local PLAYTIME_SCREEN = "Playtime"
 local PLAYTIME_GRID = { "MainFrame", "Container", "Content" }
+-- The alert "!" on the HUD button that opens the playtime screen.
+local PLAYTIME_ALERT = "SideBtns.Rewards.Mark"
+-- The authored timer is a narrow, left-aligned strip; "1:00:52" needs nearly the whole tile.
+local PLAYTIME_TIMER_WIDTH = 0.9
 
 -- How often an open screen redraws its countdowns. One timer for the whole handler, not one per tile.
 local TICK_SECONDS = 1
 
 --[[ Tables ]]--
 local RewardHandler = {
-	dependencies = { "DataClient", "UIHandler" },
+	-- FeedbackHandler bursts confetti over a tile as it is taken.
+	dependencies = { "DataClient", "UIHandler", "FeedbackHandler" },
 }
 
 --[[ Private Functions ]]--
@@ -70,8 +77,25 @@ local function SetIcon(cell: Frame, reward: Rewards.Reward?, isFinal: boolean): 
 	end
 end
 
+-- Centres the countdown under the tile and gives hour-long waits room to fit.
+local function CenterTimer(cell: Frame): ()
+	local timer = cell:FindFirstChild("Timer")
+	if not timer or not timer:IsA("GuiObject") then
+		return
+	end
+
+	timer.AnchorPoint = Vector2.new(0.5, timer.AnchorPoint.Y)
+	timer.Position = UDim2.new(0.5, 0, timer.Position.Y.Scale, timer.Position.Y.Offset)
+	timer.Size = UDim2.new(PLAYTIME_TIMER_WIDTH, 0, timer.Size.Y.Scale, timer.Size.Y.Offset)
+	for _, label in timer:GetChildren() do
+		if label:IsA("TextLabel") then
+			label.TextXAlignment = Enum.TextXAlignment.Center
+		end
+	end
+end
+
 -- Beige is the plain face, Green the one behind a taken reward. The tile punches on the way over,
--- which is the whole of the "you got it" feedback on these screens.
+-- and confetti bursts over it when it was taken while bound; already-taken tiles stay quiet.
 local function SetFace(cell: Frame, claimed: boolean): ()
 	local beige = cell:FindFirstChild("Beige")
 	local green = cell:FindFirstChild("Green")
@@ -84,8 +108,12 @@ local function SetFace(cell: Frame, claimed: boolean): ()
 		green.Visible = claimed
 	end
 
-	if claimed and cell:GetAttribute("Claimed") ~= true then
+	local previous = cell:GetAttribute("Claimed")
+	if claimed and previous ~= true then
 		Animate.Pop(cell)
+	end
+	if claimed and previous == false then
+		FeedbackHandler:Celebrate(cell)
 	end
 
 	cell:SetAttribute("Claimed", claimed)
@@ -112,6 +140,7 @@ function RewardHandler.OnStart(self: RewardHandler): ()
 	self:BindPlaytime()
 
 	Bus.Progress.RewardGranted.OnClientEvent:Connect(function(message: string)
+		SoundPlayer.Play("Reward")
 		UIHandler:Toast(message)
 	end)
 
@@ -139,6 +168,9 @@ function RewardHandler.OnStart(self: RewardHandler): ()
 			if self.Playtime and self.Playtime.Enabled then
 				self:RefreshPlaytime()
 			end
+
+			-- A tier comes due while the screen is closed, so the HUD alert is checked regardless.
+			self:RefreshAlert()
 		end
 	end)
 end
@@ -213,7 +245,13 @@ function RewardHandler.BindPlaytime(self: RewardHandler): ()
 	self.Playtime = screen
 	self.PlaytimeCells = GridCells(grid)
 
+	local ok, alert = pcall(UIHandler.GetHud, UIHandler, PLAYTIME_ALERT)
+	if ok and alert:IsA("GuiObject") then
+		self.PlaytimeAlert = alert
+	end
+
 	for index, cell in self.PlaytimeCells do
+		CenterTimer(cell)
 		local claim = cell:FindFirstChild("ClaimButton")
 		if claim and claim:IsA("GuiObject") then
 			Animate.Press(claim)
@@ -227,6 +265,29 @@ end
 function RewardHandler.Refresh(self: RewardHandler): ()
 	self:RefreshDaily()
 	self:RefreshPlaytime()
+	self:RefreshAlert()
+end
+
+--- The HUD "!" shows only while some playtime tier is due and not yet taken.
+function RewardHandler.RefreshAlert(self: RewardHandler): ()
+	local alert = self.PlaytimeAlert
+	if not alert then
+		return
+	end
+
+	local record = DataClient:GetData({ "Playtime" }, "Session")
+	local startedAt = if record then record.StartedAt else 0
+	local claimed = if record then record.Claimed else {}
+	local elapsed = if startedAt > 0 then workspace:GetServerTimeNow() - startedAt else 0
+	local hasReady = false
+	for index = 1, #Rewards.Playtime.Tiers do
+		if elapsed >= Rewards.GetTierSeconds(index) and not Claimed(claimed, index) then
+			hasReady = true
+			break
+		end
+	end
+
+	alert.Visible = hasReady
 end
 
 --- A tile is either already taken, the one that can be taken now, or a wait.
@@ -309,6 +370,7 @@ export type RewardHandler = typeof(RewardHandler) & {
 	Playtime: ScreenGui?,
 	DailyCells: { Frame },
 	PlaytimeCells: { Frame },
+	PlaytimeAlert: GuiObject?,
 }
 
 return RewardHandler :: RewardHandler

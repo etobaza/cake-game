@@ -7,6 +7,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 --[[ Modules ]]--
+local Bus = require(ReplicatedStorage.Shared.Bus)
+local Coach = require(ReplicatedStorage.Shared.Tutorial.Coach)
 local Config = require(ReplicatedStorage.Shared.Configs.Tutorial)
 local DataClient = require(script.Parent.DataHandlerClient)
 local Flux = require(ReplicatedStorage.Packages.flux)
@@ -85,10 +87,19 @@ function TutorialHandler.OnStart(self: TutorialHandler): ()
 		UIHandler:ClearToast(token)
 	end)
 	self.Janitor:Add(self.View, "Destroy")
+	self.Coach = Coach.new()
 	self.GuestHighlight = GuestHighlight.new(Players.LocalPlayer.UserId)
 	self.Janitor:Add(self.GuestHighlight, "Destroy")
 	self.Janitor:Add(
 		DataClient:SubscribeToAll(function(): ()
+			self:Refresh()
+		end),
+		"Disconnect"
+	)
+	-- Repeated misunderstandings raise the coaching level; the refusal toast itself stays UIHandler's.
+	self.Janitor:Add(
+		Bus.Progress.ActionFailed.OnClientEvent:Connect(function(reason: string): ()
+			self.Coach:Failed(reason, os.clock())
 			self:Refresh()
 		end),
 		"Disconnect"
@@ -141,6 +152,12 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 	local props = Interact:GetOwnedIds()
 	local now = workspace:GetServerTimeNow()
 	local goal = Scenario.Resolve(cloud, session, props, self.Page, now, Pages.CanOpen(Pages.Names.None))
+	-- After the introduction, coaching fills the gaps the optional lessons leave.
+	if goal or TutorialPolicy.IsActive(cloud) or cloud.Tutorial.Collapsed then
+		self.Coach:Reset()
+	else
+		goal = self.Coach:Update(cloud, session, props, self.Page, now, os.clock())
+	end
 
 	local completedAt = session.Tutorial.CompletedAt
 	if completedAt > 0 and now - completedAt < Config.SuccessSeconds then
@@ -151,8 +168,10 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 			waiting = true,
 		}
 	end
+	-- Other guides stay quiet while the tutorial is showing the player what to do.
+	self.Guiding = goal ~= nil and not cloud.Tutorial.Collapsed
 	self.View:Set(goal, cloud.Tutorial)
-	local needsFrame = goal ~= nil or guestId ~= nil
+	local needsFrame = goal ~= nil or guestId ~= nil or self.Coach:IsPending()
 	if needsFrame and not self.Janitor:Get("Frame") then
 		self.Janitor:Add(
 			RunService.RenderStepped:Connect(function(deltaTime: number): ()
@@ -175,14 +194,17 @@ end
 function TutorialHandler.Destroy(self: TutorialHandler): ()
 	self.Janitor:Destroy()
 	self.View = nil
+	self.Guiding = false
 end
 
 export type TutorialHandler = typeof(TutorialHandler) & {
 	Janitor: any,
 	View: any,
 	GuestHighlight: GuestHighlight.GuestHighlight,
+	Coach: Coach.Coach,
 	Page: string,
 	Elapsed: number,
+	Guiding: boolean?,
 }
 
 return TutorialHandler :: TutorialHandler

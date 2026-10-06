@@ -28,6 +28,7 @@ local Pages = require(_Shared.UI.Stores.Pages)
 local Progression = require(_Configs.Progression)
 local UseClock = require(_Shared.UI.Hooks.UseClock)
 local UseData = require(_Shared.UI.Hooks.UseData)
+local Wallet = require(_Shared.UI.Stores.Wallet)
 
 --[[ Constants ]]--
 -- The shift countdown turns urgent this many seconds before the doors close.
@@ -57,6 +58,11 @@ return function(hud: Instance, deps: Deps): ()
 	local data = deps.Data
 
 	local cash = UseData.Path(data, { "Cash" }, "Cloud", 0)
+	-- Coins still flying into the plate are added as they land.
+	local shownCash = Flux(function(): number
+		local value = cash()
+		return value - Wallet.Hold(value)
+	end)
 	local level = UseData.Path(data, { "Level" }, "Cloud", 1)
 	local xp = UseData.Path(data, { "XP" }, "Cloud", 0)
 	local phase = UseData.Path(data, { "Day", "Phase" }, "Session", "Prep")
@@ -94,7 +100,7 @@ return function(hud: Instance, deps: Deps): ()
 	end, true)
 
 	HydrateHud(hud, {
-		BalanceValue = cash,
+		BalanceValue = shownCash,
 		FormatBalance = function(value: number): string
 			return `{Format.Number(value)}$`
 		end,

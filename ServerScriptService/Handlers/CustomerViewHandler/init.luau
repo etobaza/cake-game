@@ -27,6 +27,7 @@ local DataHandler = require(_Handlers.DataHandler)
 local DayCycleHandler = require(_Handlers.DayCycleHandler)
 local Guest = require(script.Guest)
 local DiningConfig = require(_Configs.GuestDining)
+local FeedbackConfig = require(_Configs.Feedback)
 local FoodModel = require(_Shared.FoodModel)
 local Recipes = require(_Configs.Registries.Recipes)
 local DayCycleConfig = require(_Configs.DayCycle)
@@ -59,6 +60,13 @@ local function GetCustomer(player: Player, customerId: string): any?
 	local data = DataHandler:GetData(player)
 
 	return data and data.Session.Customers[customerId]
+end
+
+-- Where this guest's dish sits on their table, mirrored from the table's food view.
+local function PlateFrame(player: Player, customer: any): CFrame?
+	local building = customer.TableId and BuildingHandler:GetBuilding(player, customer.TableId)
+	local foodView = building and building.FoodVisual
+	return foodView and foodView.Frames[customer.SeatIndex or 1]
 end
 
 local function SitAt(player: Player, customerId: string, guest: Guest.Guest, seat: Seat): ()
@@ -106,6 +114,20 @@ function CustomerViewHandler.OnStart(self: CustomerViewHandler): ()
 	CustomerHandler.CustomerEating:Connect(
 		function(player: Player, customerId: string, recipeId: string, reaction: string)
 			self:Eat(player, customerId, recipeId, reaction)
+		end
+	)
+
+	CustomerHandler.DishSold:Connect(
+		function(
+			player: Player,
+			customerId: string,
+			coins: number,
+			streakBonus: number,
+			grade: string,
+			streak: number,
+			record: boolean
+		)
+			self:Sell(player, customerId, coins, streakBonus, grade, streak, record)
 		end
 	)
 
@@ -315,9 +337,7 @@ function CustomerViewHandler.Eat(
 		and recipe.asset ~= nil
 		and FoodModel.FindAsset(recipe.asset) ~= nil
 	model:SetAttribute(DiningConfig.HeldAttribute, if canHold then recipeId else nil)
-	local building = customer.TableId and BuildingHandler:GetBuilding(player, customer.TableId)
-	local foodView = building and building.FoodVisual
-	local plateFrame = foodView and foodView.Frames[customer.SeatIndex or 1]
+	local plateFrame = PlateFrame(player, customer)
 	model:SetAttribute(DiningConfig.PlateAttribute, if plateFrame then plateFrame.Position else nil)
 	model:SetAttribute(DiningConfig.StartedAttribute, customer.EatEndsAt - DayCycleConfig.EatSeconds)
 	model:SetAttribute(DiningConfig.EndsAttribute, customer.EatEndsAt)
@@ -339,6 +359,49 @@ function CustomerViewHandler.Eat(
 			SoundPlayer.Play(voice, head)
 		end
 	end
+end
+
+-- A paid dish: every nearby player sees the burst at the plate, while the owner also receives the
+-- credited coins to fly into their balance, anchored to the guest's head.
+function CustomerViewHandler.Sell(
+	self: CustomerViewHandler,
+	player: Player,
+	customerId: string,
+	coins: number,
+	streakBonus: number,
+	grade: string,
+	streak: number,
+	record: boolean
+): ()
+	local guest = self:GetGuest(player, customerId)
+	local customer = GetCustomer(player, customerId)
+	local head = guest and guest.Model:FindFirstChild("Head")
+	local headPart = if head and head:IsA("BasePart") then head else nil
+	local frame: CFrame? = if customer then PlateFrame(player, customer) else nil
+	if not frame and headPart then
+		-- Window shoppers carry their pastry below the head.
+		frame = headPart.CFrame * CFrame.new(0, -FeedbackConfig.CarriedDrop, 0)
+	end
+	if not frame then
+		return
+	end
+
+	local style = FeedbackConfig.Grades[grade :: FeedbackConfig.Grade]
+	if style and style.Effect then
+		Bus.VFX.Burst:Fire(style.Effect, nil :: any, frame, player.UserId, workspace:GetServerTimeNow())
+	end
+	local data = DataHandler:GetData(player)
+	Bus.Cafe.Sale:FireClient(
+		player,
+		coins,
+		streakBonus,
+		grade,
+		streak,
+		record,
+		headPart :: any,
+		frame.Position,
+		if data then data.Cloud.Cash else 0
+	)
 end
 
 function CustomerViewHandler.Leave(self: CustomerViewHandler, player: Player, customerId: string): ()
@@ -422,9 +485,13 @@ function CustomerViewHandler.RefreshGuest(
 	local head = guest.Model:FindFirstChild("Head")
 	if head then
 		local choosing = customer.State == "Choosing"
-		-- A newly seated guest whistles once to call the player over for their order.
-		if choosing and head:GetAttribute(VFX.ChoosingAttribute) ~= true then
+		local wasChoosing = head:GetAttribute(VFX.ChoosingAttribute) == true
+		-- A newly seated guest whistles once to call the player over for their order, and confirms
+		-- it with a chime once the order is placed.
+		if choosing and not wasChoosing then
 			SoundPlayer.Play("WaiterWhistle", head)
+		elseif wasChoosing and customer.State == "Waiting" then
+			SoundPlayer.Play("OrderUp", head)
 		end
 		head:SetAttribute(VFX.ChoosingAttribute, choosing)
 	end

@@ -14,10 +14,12 @@ local _Libs = _Shared.Libs
 --[[ Modules ]]--
 local BuildingHandler = require(ServerScriptService.Handlers.BuildingHandler)
 local Bus = require(_Shared.Bus)
+local CharacterAnimations = require(_Shared.Configs.CharacterAnimations)
 local CleaningAction = require(ServerScriptService.CleaningAction)
 local DataHandler = require(ServerScriptService.Handlers.DataHandler)
 local Sanitize = require(_Shared.Sanitize)
 local Signal = require(_Libs.Signal)
+local SoundPlayer = require(_Shared.SoundPlayer)
 local TutorialEvents = require(ServerScriptService.TutorialEvents)
 
 --[[ Constants ]]--
@@ -130,6 +132,19 @@ function TableHandler.Clean(self: TableHandler, player: Player, tableId: string,
 	end
 	if manual then
 		Bus.Player.PlayAction:FireClient(player, "Cleaning")
+		-- The success chime follows the wipe clip, as it does after sweeping a spill.
+		local building = BuildingHandler:GetBuilding(player, tableId)
+		if building then
+			building.Janitor:Add(
+				task.delay(CharacterAnimations.Actions.Cleaning.LockSeconds or 0, function(): ()
+					if building.Part.Parent then
+						SoundPlayer.Play("BroomSuccess", building.Part)
+					end
+				end),
+				true,
+				"CleanSound"
+			)
+		end
 	end
 	self.TableCleaned:Fire(player, tableId)
 	return true

@@ -27,6 +27,17 @@ export type TutorialGoal = {
 	topic: string?,
 }
 
+-- A post-tutorial coaching moment: a short cause-and-fix message, then optionally a pointer step.
+-- `delay` selects the Configs/Tutorial.Coach.Delays row. `anchor` keeps a message-only nudge
+-- attached to the open page it belongs to.
+export type CoachSituation = {
+	key: string,
+	message: string,
+	step: TutorialGoal?,
+	delay: "Stuck" | "Urgent" | "Prep" | "Feature",
+	anchor: TutorialTarget?,
+}
+
 -- Cooking station. Every recipe starts on the Mixer, then moves to its own station.
 export type StationKind = "Mixer" | "Oven" | "Freezer" | "Coffee"
 export type StationState = "Idle" | "Loaded" | "Mixing" | "Cooking" | "Ready" | "Burnt"

@@ -20,6 +20,7 @@ local Inventory = require(_Handlers.InventoryHandler)
 local PickupOrigin = require(script.Parent.Parent.PickupOrigin)
 local RailPath = require(script.Parent.Parent.RailPath)
 local Sanitize = require(_Shared.Sanitize)
+local SoundPlayer = require(_Shared.SoundPlayer)
 
 --[[ Tables ]]--
 local RailCart = {}
@@ -126,6 +127,7 @@ function RailCart.LoadCart(building: any): boolean
 	}
 	state.SpawnRemaining = Config.CartLoadSeconds + Config.CartSpawnSeconds
 	Inventory:Pop(building.Player)
+	SoundPlayer.Play("Cart", building.Part)
 	return true
 end
 

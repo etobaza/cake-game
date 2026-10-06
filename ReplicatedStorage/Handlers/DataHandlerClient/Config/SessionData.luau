@@ -42,8 +42,13 @@ return {
 			Perfect = 0,
 			Good = 0,
 			Late = 0,
+			-- Longest service streak of the shift.
+			BestStreak = 0,
 		},
 	},
+
+	-- Consecutive well-timed table sales in the running shift; a late dish or a walk-out ends it.
+	Streak = 0,
 
 	-- What the player carries, oldest first.
 	Hands = {} :: { GameTypes.ItemStack },

@@ -7,6 +7,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 --[[ Modules ]]--
 local Analytics = require(script.Parent.Analytics)
 local Buildings = require(ReplicatedStorage.Shared.Configs.Buildings)
+local Config = require(ReplicatedStorage.Shared.Configs.Tutorial)
+local Features = require(ReplicatedStorage.Shared.Tutorial.Features)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Policy = require(ReplicatedStorage.Shared.TutorialPolicy)
 local StateMachine = require(ReplicatedStorage.Shared.Libs.StateMachine)
@@ -73,6 +75,8 @@ function Run.new(player: Player, data: any, release: (Player) -> (), prepareFloo
 		PrepareFloor = prepareFloor,
 		Janitor = Janitor.new(),
 		Machine = nil,
+		-- Feature ids owned when the current shift began; nil when joined mid-shift.
+		ShiftFeatures = nil,
 	}, Run)
 	local active = Policy.IsActive(data.Cloud)
 	data.Session.Tutorial.Protected = active
@@ -215,6 +219,11 @@ function Run.Action(self: Run, action: string, id: string): ()
 	then
 		self.Data.Session.Tutorial.OvenLesson = true
 	end
+	for _, feature in Config.Features do
+		if Features.Matches(feature, action, id) and not saved.Actions[`Use:{feature.id}`] then
+			saved.Actions[`Use:{feature.id}`] = true
+		end
+	end
 	local milestone = Milestones[action]
 	if milestone then
 		mark(self, milestone)
@@ -262,6 +271,42 @@ function Run.Action(self: Run, action: string, id: string): ()
 	self:Refresh()
 end
 
+-- Only features owned for the whole shift can be judged unused at its end.
+function Run.ShiftStarted(self: Run): ()
+	local cloud = self.Data.Cloud
+	local owned = {}
+	for _, feature in Config.Features do
+		if feature.task and Features.Used(cloud, feature) and not cloud.Tutorial.Actions[`Use:{feature.id}`] then
+			cloud.Tutorial.Actions[`Use:{feature.id}`] = true
+		end
+		if Features.Owned(cloud, feature) then
+			owned[feature.id] = true
+		end
+	end
+	self.ShiftFeatures = owned
+end
+
+-- The first unused shift makes a feature's guide due; a second unused shift retires it.
+function Run.ShiftEnded(self: Run): ()
+	local owned = self.ShiftFeatures
+	self.ShiftFeatures = nil
+	if not owned then
+		return
+	end
+	local cloud = self.Data.Cloud
+	local lessons = cloud.Tutorial.Lessons
+	for _, feature in Config.Features do
+		if not owned[feature.id] or Features.Used(cloud, feature) or lessons[`Feature:{feature.id}`] then
+			continue
+		end
+		if lessons[`Due:{feature.id}`] then
+			lessons[`Feature:{feature.id}`] = true
+		else
+			lessons[`Due:{feature.id}`] = true
+		end
+	end
+end
+
 function Run.Finish(self: Run, status: string): ()
 	if not Policy.IsActive(self.Data.Cloud) then
 		return
@@ -275,7 +320,15 @@ function Run.Destroy(self: Run): ()
 end
 
 export type Run = typeof(setmetatable(
-	{} :: { Player: Player, Data: any, Release: (Player) -> (), PrepareFloor: () -> boolean?, Janitor: any, Machine: any },
+	{} :: {
+		Player: Player,
+		Data: any,
+		Release: (Player) -> (),
+		PrepareFloor: () -> boolean?,
+		Janitor: any,
+		Machine: any,
+		ShiftFeatures: { [string]: boolean }?,
+	},
 	Run
 ))
 

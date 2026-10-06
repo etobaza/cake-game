@@ -562,6 +562,20 @@ function DayCycleHandler.AddResult(
 	day.Summary.Lost = day.Summary.Lost + lost
 end
 
+-- Keeps the highest value seen today for a report row, such as the best service streak.
+function DayCycleHandler.RecordBest(_self: DayCycleHandler, player: Player, key: string, value: number): ()
+	local day = getDay(player)
+	if not day or day.Phase == "Summary" then
+		return
+	end
+	for _, row in DayReportConfig.Rows do
+		if row.Key == key then
+			day.Summary[key] = math.max(day.Summary[key] or 0, value)
+			return
+		end
+	end
+end
+
 -- Only accepted server gameplay calls this method; there is no client counter packet.
 function DayCycleHandler.RecordStat(_self: DayCycleHandler, player: Player, key: string): ()
 	local day = getDay(player)

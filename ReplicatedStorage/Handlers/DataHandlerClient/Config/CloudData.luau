@@ -12,6 +12,8 @@ return {
 
 	Stats = {
 		RobuxSpent = 0,
+		-- Longest service streak ever; Reconcile adds it to older profiles.
+		BestStreak = 0,
 	},
 
 	-- Base state: Upgrades = [upgradeId] = level

@@ -116,6 +116,20 @@ return {
 		CleanTable = Packet("CafeCleanTable", Packet.String), -- tableId
 		-- Client -> Server: serve what is in hands to a customer
 		Serve = Packet("CafeServe", Packet.String), -- customerId
+		-- Server -> Client: a dish was paid for; presentation of the server-credited amount
+		Sale = Packet(
+			"CafeSale",
+			Packet.NumberF64,
+			Packet.NumberF32,
+			Packet.String,
+			Packet.NumberU16,
+			Packet.Boolean8,
+			Packet.Instance,
+			Packet.Vector3F32,
+			Packet.NumberF64
+		), -- coins, streakTipBonus, grade, streak, newRecord, guestHead, salePosition, cashAfter
+		-- Server -> Client: a mistake ended the service streak at this length
+		StreakLost = Packet("CafeStreakLost", Packet.NumberU16), -- lost streak
 		-- Client -> Server: mop a spill
 		CleanSpill = Packet("CafeCleanSpill", Packet.String), -- spillId
 		-- Client -> Server: pick up the broom (or put it back)

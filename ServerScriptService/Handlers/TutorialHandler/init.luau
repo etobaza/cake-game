@@ -74,6 +74,25 @@ function TutorialHandler.OnStart(self: TutorialHandler): ()
 		end),
 		"Disconnect"
 	)
+	-- Feature guides judge whole shifts: owned at the start, unused by the end.
+	self.Janitor:Add(
+		DayCycleHandler.ShiftStarted:Connect(function(player: Player): ()
+			local run = self.Runs[player]
+			if run then
+				run:ShiftStarted()
+			end
+		end),
+		"Disconnect"
+	)
+	self.Janitor:Add(
+		DayCycleHandler.ShiftEnded:Connect(function(player: Player): ()
+			local run = self.Runs[player]
+			if run then
+				run:ShiftEnded()
+			end
+		end),
+		"Disconnect"
+	)
 	self.Janitor:Add(
 		Events.Action:Connect(function(player: Player, action: string, id: string): ()
 			local run = self.Runs[player]

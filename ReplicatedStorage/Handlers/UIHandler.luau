@@ -103,10 +103,7 @@ function UIHandler.OnStart(self: UIHandler): ()
 		self:Toast(UIText.GetFailure(reason))
 	end)
 
-	Bus.Day.LevelUp.OnClientEvent:Connect(function(level: number)
-		self:Toast(`Level up: {level}`)
-	end)
-
+	-- Level ups get FeedbackHandler's full-screen banner instead of a toast.
 	Bus.Day.StoryUnlocked.OnClientEvent:Connect(function(stage: number)
 		self:Toast(`Story chapter {stage} unlocked`)
 	end)
@@ -242,7 +239,7 @@ function UIHandler.FormatNumber(_self: UIHandler, value: number): string
 	return Format.Number(value)
 end
 
---- Seconds -> "M:SS".
+--- Seconds -> "M:SS", or "H:MM:SS" from an hour up.
 function UIHandler.FormatTime(_self: UIHandler, seconds: number): string
 	return Format.Time(seconds)
 end

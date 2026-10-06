@@ -28,8 +28,11 @@ local PantryHandler = require(_Handlers.PantryHandler)
 local PickupOrigin = require(script.Parent.Parent.PickupOrigin)
 local PlayerHandler = require(_Handlers.PlayerHandler)
 local Recipes = require(_Configs.Registries.Recipes)
+local Sounds = require(_Configs.Sounds)
+local SoundPlayer = require(_Shared.SoundPlayer)
 local StateMachine = require(_Libs.StateMachine)
 local UpgradeHandler = require(_Handlers.UpgradeHandler)
+local VFXConfig = require(_Configs.VFX)
 
 --[[ Constants ]]--
 local FUEL: GameTypes.ItemKind = "Fuel"
@@ -158,10 +161,44 @@ local function LoadIngredient(building: any, held: any): boolean
 	return true
 end
 
+-- The station's working loop runs only while it mixes or cooks.
+local function SetWorkSound(building: any, working: boolean): ()
+	local name: Sounds.SoundName? = Sounds.StationWork[building.Kind]
+	if not name then
+		return
+	end
+	if not working then
+		building.Janitor:Remove("WorkSound")
+		return
+	end
+	local sound = SoundPlayer.Create(name, building.Part)
+	building.Janitor:Add(sound, "Destroy", "WorkSound")
+	sound:Play()
+end
+
+local function PlayDoorSound(building: any): ()
+	local name: Sounds.SoundName? = Sounds.StationDoor[building.Kind]
+	if name then
+		SoundPlayer.Play(name, building.Part)
+	end
+end
+
+-- A finished batch rings and sparkles over the station so the player knows to collect it.
+local function AnnounceReady(building: any): ()
+	local part: BasePart = building.Part
+	local name: Sounds.SoundName? = Sounds.StationReady[building.Kind]
+	if name then
+		SoundPlayer.Play(name, part)
+	end
+	local frame = part.CFrame + Vector3.new(0, part.Size.Y / 2 + VFXConfig.StationReadyLift, 0)
+	Bus.VFX.Burst:Fire("StationReady", nil :: any, frame, building.Player.UserId, workspace:GetServerTimeNow())
+end
+
 -- Every state writes its own name into the data: that field is what the client reads.
 local function BuildStates(building: any, state: any): any
 	local function EnterIdle(): ()
 		SetMixerLocked(building, false)
+		SetWorkSound(building, false)
 		state.State = "Idle"
 		state.RecipeId = nil
 		state.PhaseStartedAt = 0
@@ -174,6 +211,7 @@ local function BuildStates(building: any, state: any): any
 	local function EnterBaking(stateName: string): () -> ()
 		return function()
 			SetMixerLocked(building, stateName == "Mixing")
+			SetWorkSound(building, true)
 			state.State = stateName
 			state.PhaseStartedAt = workspace:GetServerTimeNow()
 			state.BurnAt = 0
@@ -183,6 +221,7 @@ local function BuildStates(building: any, state: any): any
 
 	local function EnterLoaded(): ()
 		SetMixerLocked(building, false)
+		SetWorkSound(building, false)
 		state.State = "Loaded"
 		state.PhaseStartedAt = 0
 		state.ReadyAt = 0
@@ -190,11 +229,16 @@ local function BuildStates(building: any, state: any): any
 		state.HeatPausedAt = 0
 	end
 
-	local function EnterReady(): ()
+	-- The previous state is nil when a rebuilt station resumes in Ready; only a finished timer announces.
+	local function EnterReady(previous: any): ()
 		SetMixerLocked(building, false)
+		SetWorkSound(building, false)
 		state.State = "Ready"
 		state.PhaseStartedAt = state.ReadyAt
 		state.BurnAt = 0
+		if previous then
+			AnnounceReady(building)
+		end
 		if building.Definition.Mixes then
 			-- The completed batch keeps RecipeId; the next batch needs a fresh selection.
 			local data = DataHandler:GetData(building.Player)
@@ -220,6 +264,7 @@ local function BuildStates(building: any, state: any): any
 
 	local function EnterBurnt(): ()
 		SetMixerLocked(building, false)
+		SetWorkSound(building, false)
 		state.State = "Burnt"
 		Logger:Debug(`{building.Player.Name}: {state.RecipeId} burned`)
 	end
@@ -284,7 +329,7 @@ function Station.BuildConfig(building: any): any
 			local enter = entry.onEnter
 			entry.onEnter = function(previous: any): ()
 				if previous then
-					enter()
+					enter(previous)
 				end
 			end
 		end
@@ -429,6 +474,7 @@ function Station.Load(building: any): boolean
 
 	state.ReadyAt = workspace:GetServerTimeNow() + recipe.cookSeconds
 
+	PlayDoorSound(building)
 	building:SetState("Cooking")
 
 	return true
@@ -539,6 +585,7 @@ function Station.Collect(building: any): boolean
 		return Reject(building, "hands_full")
 	end
 
+	PlayDoorSound(building)
 	building:SetState("Idle")
 
 	return true

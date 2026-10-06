@@ -45,6 +45,8 @@ function Card.new(root: Frame, tooltip: Tooltip): Card
 	local fill = clip:FindFirstChild("Fill") :: Frame
 	local self = setmetatable({
 		Root = root,
+		-- Centre-anchored card art: the part that punches when the order changes.
+		Slot = slot,
 		Background = slot:FindFirstChild("Background") :: ImageLabel,
 		Icon = slot:FindFirstChild("Icon") :: ImageLabel,
 		Ponder = slot:FindFirstChild("Ponder") :: TextLabel,
@@ -200,6 +202,7 @@ end
 export type Card = typeof(setmetatable(
 	{} :: {
 		Root: Frame,
+		Slot: Frame,
 		Background: ImageLabel,
 		Icon: ImageLabel,
 		Ponder: TextLabel,
