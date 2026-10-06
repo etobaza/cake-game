@@ -14,6 +14,7 @@ local Config = require(ReplicatedStorage.Shared.Configs.Hint)
 local Geometry = require(script.Parent.HintGeometry)
 local HintAnimation = require(script.Parent.HintAnimation)
 local HintBeam = require(script.Parent.HintBeam)
+local HintRoute = require(script.Parent.HintRoute)
 local Surface = require(script.Parent.HintSurface)
 
 --[[ Types ]]
@@ -36,6 +37,7 @@ export type Options = {
 	TargetPoint: Vector2?,
 	WorldOffset: Vector3?,
 	Occlusion: boolean?,
+	Route: boolean?,
 }
 type Target = GuiObject | WorldTarget
 type WorldResolved = { kind: "World", point: Vector3, instance: Instance? }
@@ -168,7 +170,17 @@ local function resolve(self: View): Resolved?
 		return resolveGui(target, camera.ViewportSize, self.Options)
 	end
 
-	return resolveWorld(target)
+	local resolved = resolveWorld(target)
+	if not resolved or resolved.kind ~= "World" or self.Options.Route == false then
+		return resolved
+	end
+
+	-- A target in another room points at the doorway first.
+	local point, door = HintRoute.Waypoint(resolved.point)
+	if door then
+		return { kind = "World", point = point, instance = door }
+	end
+	return resolved
 end
 
 local function obstructed(point: Vector3, target: Instance?, camera: Camera): boolean

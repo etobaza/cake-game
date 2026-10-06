@@ -34,7 +34,7 @@ export type CoachSituation = {
 	key: string,
 	message: string,
 	step: TutorialGoal?,
-	delay: "Stuck" | "Urgent" | "Prep" | "Feature",
+	delay: "Stuck" | "Urgent" | "Prep" | "Feature" | "Summary" | "Idle" | "Waste",
 	anchor: TutorialTarget?,
 }
 

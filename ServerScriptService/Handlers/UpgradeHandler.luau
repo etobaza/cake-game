@@ -147,7 +147,7 @@ function UpgradeHandler.TryBuy(self: UpgradeHandler, player: Player, upgradeId: 
 		return false
 	end
 
-	if not EconomyHandler:TrySpend(player, cost) then
+	if not EconomyHandler:TrySpend(player, cost, "Shop", upgradeId) then
 		Bus.Progress.ActionFailed:FireClient(player, "not_enough_coins")
 		return false
 	end

@@ -47,12 +47,17 @@ Defaults supplied to `Hint.new` are merged with each `Gui` or `World` call. Per-
 | `WorldOffset` | Offset from the live world position. |
 | `Beam` | Show the authored player-to-target ArrowBeam for a world hint (default true). GUI hints never show a beam. |
 | `Occlusion` | Throttled obstacle checks (default true); exposes `Occluded` to the caller, not pathfinding. |
+| `Route` | Lead a world hint through doorways when its target is in another room (default true). See below. |
 
 One `BindToRenderStep` callback runs after the camera for all hints. Only the winning hint draws. GUI bounds track visibility, ancestor clipping, scrolling and rotation; the generic geometry helper also retains support for the existing billboard ingredient controls. World targets use viewport projection, camera-relative edge direction and a smoothly interpolated shortest rotation arc. The two finger poses blend through a manually stepped Ripple tween with quintic easing, a rest, a short held press and a slower release. Smooth overlapping opacity avoids abrupt alpha clamps. Moving targets retain their animation phase; suppressed hints pause it. FingerPeriod controls the full cycle, with phase fractions in Configs/Hint.FingerPhases. Screen-edge fitting keeps the hand visible. Overlays do not capture input, move the character or control the camera.
 
 `SetEnabled(false)` temporarily suppresses a hint without dropping its target. `IsVisible()` reports whether it won presentation, `IsOnScreen()` reports whether the visible marker is inside its safe projection region, and `GetBounds()` returns the active viewport rectangle (a point rectangle for world markers). These queries reflect the most recent render callback. `Destroy()` removes its render registration and GUI; destroying the GUI externally also releases the owner. If no owners remain, the shared callback unbinds.
 
 Tuning and sprite IDs live in `Shared/Configs/Hint`. `HintAnimation` owns the four named states `Rest`, `Press`, `Hold`, and `Release`, with explicit next states and phase fractions in the config. The separate caption below the finger has been removed; hints no longer create a text label or distance badge. `HintSurface` creates only a transient guidance overlay. The legacy authored tutorial ScreenGui remains disabled on every device.
+
+## Doorway routing
+
+`Shared/UI/HintRoute` keeps world guidance from pointing through walls. A point's room is found by a short downward ray onto the bakery floor folders listed in `Configs/Hint.Route.Floors` (Cafe, Kitchen, Garden); a point above none of them is `Outside`. Doorways are models named `door` (lowercased, as in `Configs/Collision`) under the bakery's `1ndFloor`; each one joins the two rooms sampled `SideDistance` studs either side of it, and the two front-door leaves merge into one waypoint. When the local player stands in another room than the target, the finger and Beam aim at the first doorway on the path with the fewest doorways (cafe to garden goes through both kitchen doors in turn); after the player walks through, the next doorway or the target takes over. Targets outside every room are never rerouted. The doorway graph is re-read every `RefreshSeconds`, because streaming may load floors after the first read. `ToolReturnHandler` routes its rack beam the same way. Set `Route = false` for a world hint that must point straight at its target.
 
 ## Authored arrow beam
 
@@ -82,10 +87,27 @@ Animal harvest hints resolve the kitchen `AnimalProduce` target while brushing s
 
 Once the introduction is completed or skipped, `Shared/Tutorial/Coach` fills the gaps the optional lessons leave. It only runs when no introduction step or optional lesson has a goal and the saved collapsed preference is off. It presents through the same `Presenter`, so the toast, the finger and the Beam are shared with the tutorial and never stack. The design follows a nudge-then-pointer ladder: the first help level is a cause-and-fix line of at most eight words with no pointer, so the player works out the action. The pointer follows only if the player still has not acted.
 
-- **Stuck.** `Shared/Tutorial/Assist` picks the most useful next step from live kitchen data: burnt food, an oven dish about to burn, a carried dish a seated guest ordered, dough waiting for its station, a guest ready to order, the oldest waiting order (via the existing `Cooking.Resolve` route), and a dirty seat while new guests are coming. During preparation it can also suggest opening the bakery when nothing is happening. Mixing, baking and eating are waiting, not hesitation, so they produce nothing. It never suggests throwing away a usable item.
-- **Timing.** The wait restarts whenever the step changes or the player changes their hands, stations, display, selected recipe, tables, spills or orders. Guests arriving or leaving on their own do not count as the player's progress. `Configs/Tutorial.Coach.Delays` sets the waits: the explanation after 30 seconds and the pointer after 50; an oven dish about to burn 8 and 15; an idle preparation 60 and 90. A new explanation waits 60 seconds after the previous one, except for urgent and feature moments.
+- **Stuck.** `Shared/Tutorial/Assist` picks the most useful next step from live kitchen data, in this order:
+  1. Burnt food in hand.
+  2. An oven dish about to burn.
+  3. A seated guest with less than `HurrySeconds` (20) of patience left. Their dish becomes urgent.
+  4. A carried dish a seated guest ordered, or the display for one nobody ordered.
+  5. Dough waiting for its station.
+  6. An oven whose fire went out under a batch, or a burnt batch blocking a station.
+  7. A guest ready to order.
+  8. The oldest waiting order, via the existing `Cooking.Resolve` route.
+  9. A finished batch left in its station.
+  10. A used place, with the normal delay while new guests are coming and the idle delay otherwise.
+  11. A spill: take the broom, then sweep.
+  12. During a quiet shift with an empty display slot, baking a menu dish for the display.
+
+  During preparation it suggests baking one dish for the empty display, then opening with the clock. Mixing, baking and eating are waiting, not hesitation, so they produce nothing. It never suggests throwing away a usable item, with one exception below.
+- **Wrong dish.** During a shift with a waiting guest, a carried dish or dough that no table guest ordered (orders are rolled at spawn, so guests still arriving or choosing count), with no free display or kitchen window spot, only blocks the hands. Until the player has binned such an item once (the server's `DisposedDish` action, set by `BuildingHandler.Discard`), it outranks every step after the urgent oven and points at the trash: `Nobody ordered this: bin it` after `Waste.Nudge` (4) seconds without progress and the pointer after `Waste.Point` (10), halved on the first days. A free display spot keeps the display suggestion instead; a free kitchen window suppresses this help. After the first binned dish the player knows where the trash is, so this help stops.
+- **Evening plan.** After the first evening (which the `NextDay` lesson teaches), an idle plan is led from Report to the menu, then to picking 3 to 5 recipes (message only, anchored to the recipe grid), then to Next Day.
+- **Timing.** The wait restarts whenever the step changes or the player changes their hands, stations, display, selected recipe, tables, spills or orders. Guests arriving or leaving on their own do not count as the player's progress. `Configs/Tutorial.Coach.Delays` sets the waits: the explanation after 30 seconds and the pointer after 50; an urgent dish or guest 8 and 15; an idle preparation 60 and 90; quiet-moment suggestions and the evening plan 45 and 70. A new explanation waits 60 seconds after the previous one, except for urgent and feature moments.
+- **Fresh bakers.** Players forget the routine most right after the introduction. `Coach.Experience` scales every delay except feature moments by `Cloud.Day`. Days 1 to 3 use half the delays (explanation after 15 seconds, pointer after 25), a 25-second cooldown and up to five pointers per step kind. Days 4 to 6 use three quarters, a 40-second cooldown and three pointers. Later days use the plain values.
 - **Repeated refusals.** Two refusals in 30 seconds whose `Progress.ActionFailed` code means a misunderstanding (the `Confusion` set, for example `bake_before_serving` or `wrong_dish`) skip the wait and show the pointer at once. The refusal toast itself remains `UIHandler`'s and already explains the cause. Codes such as distance or a busy station do not count.
-- **Fading.** Each step kind gets at most two pointers per session; afterwards it only gets the explanation. The carried-tool return path (`return_tool`) never gets a coaching pointer, because `ToolReturnHandler` already leads there.
+- **Fading.** After the fresh-baker days, each step kind gets at most two pointers per session; afterwards it only gets the explanation. The carried-tool return path (`return_tool`) never gets a coaching pointer, because `ToolReturnHandler` already leads there.
 
 ### Unused upgrades
 

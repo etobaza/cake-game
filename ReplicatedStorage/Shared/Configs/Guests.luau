@@ -60,9 +60,11 @@ local Guests = {
 	},
 
 	--[[ Movement ]]--
-	-- Studs per second. Slower than the player on purpose: a guest crossing the room should read
-	-- as a guest arriving, not as something teleporting into a chair.
+	-- Studs per second for the street crowd.
 	WalkSpeed = 6,
+	-- A guest heading into or out of the bakery walks faster than the street crowd, since the player
+	-- is waiting on them, yet still slower than the player (16) so the arrival reads as a walk.
+	CafeWalkSpeed = 11,
 	-- Studs per second squared: guests ease into a stride and out of it instead of starting or
 	-- stopping dead.
 	Acceleration = 8,
@@ -106,10 +108,12 @@ local Guests = {
 	-- Shoppers stay in the aisle, on the room side of the pastry display.
 	DisplayApproachDistance = 7,
 	DisplayStandDistance = 5,
-	-- Two waiting places stay on the porch, beside the entrance lane.
-	QueueSide = 5,
-	QueueOutsideDistance = 5,
-	QueueGap = 4,
+	-- A queued guest (only the protected introduction guest waits for a table) stands inside, along
+	-- the wall beside the entrance lane, facing the room. Measured in the door's space.
+	QueueSide = 5.5,
+	QueueInsideDistance = 2.5,
+	QueueGap = 3.2,
+	QueueLookDistance = 8,
 
 	-- How often the shared tick mirrors choosing state for guest VFX.
 	RefreshInterval = 0.25,

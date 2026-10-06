@@ -240,7 +240,7 @@ function Guest.new(customerId: string, name: string, rig: Model, position: Vecto
 	self.Facing = CreateFacing(root)
 	self.Heading = root.CFrame.LookVector
 	self.Speed = 0
-	self.SpeedLimit = GuestsConfig.WalkSpeed
+	self.SpeedLimit = GuestsConfig.CafeWalkSpeed
 	rig.Parent = parent
 
 	-- Server owned: a guest walking under a client's control would be one more thing to trust.

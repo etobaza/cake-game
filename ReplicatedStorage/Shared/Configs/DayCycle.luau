@@ -20,13 +20,21 @@ local DayCycle = {
 	MenuMin = 3,
 	MenuMax = 5,
 
-	-- Lemon Cake build 6596857: BP_ClientSpawner.ClientDelayTimer = 10 seconds.
+	-- Lemon Cake build 6596857: BP_ClientSpawner.ClientDelayTimer = 10 seconds. Shortened here, since
+	-- a ten-second gap between guests left the room empty right after the introduction.
 	-- CustomerHandler applies the display-flow multiplier (0.5-2), independent of seat count.
-	SpawnInterval = 10,
-	-- Keep the opening responsive; subsequent arrivals use the reference game's interval.
+	SpawnInterval = 6,
+	-- Keep the opening responsive; subsequent arrivals use SpawnInterval.
 	FirstSpawnDelay = 0.5,
+	-- An empty bakery calls its next guest in within this many seconds, whatever the timer says.
+	EmptySpawnDelay = 1.5,
+	-- Finishing the introduction sends this many guests in a row, RushSpawnInterval apart, so the
+	-- player has work at once. Rush guests (and the first guest of a shift, and any guest arriving to
+	-- an empty bakery) step in from the porch and choose in Orders.FirstGuestChooseSeconds.
+	TutorialRushGuests = 2,
+	RushSpawnInterval = 2,
 
-	-- Guests allowed on top of the capacity: a short queue is pressure, a long one is only lost patience.
+	-- Guests allowed on top of the capacity: room for visitors roaming while every place is taken.
 	QueueSlack = 2,
 
 	-- How long a guest stays at the table with the dish before leaving. The seat stays taken for it,

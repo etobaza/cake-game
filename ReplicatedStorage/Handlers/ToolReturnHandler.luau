@@ -1,7 +1,7 @@
 --!strict
 -- While the local player carries a rack tool (any building kind with a ToolId), the rack's own
 -- model (hidden by the server) is shown as a local outline, and the hint arrow beam leads back
--- to it.
+-- to it, through the doorway when the rack is in another room.
 
 --[[ Services ]]--
 local CollectionService = game:GetService("CollectionService")
@@ -19,6 +19,7 @@ local BuildingsConfig = require(_Configs.Buildings)
 local Config = require(_Configs.ToolReturn)
 local DataClient = require(script.Parent.DataHandlerClient)
 local HintBeam = require(_Shared.UI.HintBeam)
+local HintRoute = require(_Shared.UI.HintRoute)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local TutorialHandler = require(script.Parent.TutorialHandler)
 
@@ -196,7 +197,8 @@ function ToolReturnHandler.Step(self: ToolReturnHandler): ()
 		self.Beam:Hide()
 		return
 	end
-	self.Beam:Show(ghost:GetPivot().Position)
+	-- A rack in another room is reached through the doorway first.
+	self.Beam:Show((HintRoute.Waypoint(ghost:GetPivot().Position)))
 end
 
 function ToolReturnHandler.Destroy(self: ToolReturnHandler): ()

@@ -30,6 +30,6 @@ return function(context: any, player: Player?): string
 	if cash >= budget then
 		return `{target.Name} already has enough coins for all remaining upgrades.`
 	end
-	EconomyHandler:AddCash(target, budget - cash)
+	EconomyHandler:AddCash(target, budget - cash, "Admin")
 	return `{target.Name} now has {EconomyHandler:GetCash(target)} coins. Remaining upgrades cost {budget}.`
 end

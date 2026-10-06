@@ -25,6 +25,8 @@ local PurchaseHandler = {
 
 -- Signal fired when any purchase completes successfully
 PurchaseHandler.PurchaseCompleted = Signal() :: Signal.Signal<Player, number, boolean> -- player, productId, isGift
+-- Signal fired when a known product's purchase prompt is shown (player, productId)
+PurchaseHandler.PurchasePrompted = Signal() :: Signal.Signal<Player, number>
 
 -- Pending gifts: [sender.UserId] = recipient.UserId
 local pendingGifts: { [number]: number } = {}
@@ -351,6 +353,7 @@ function PurchaseHandler.PurchaseProduct(_self: PurchaseHandler, player: Player,
 
 	if product.productType == "gamepass" then
 		MarketplaceService:PromptGamePassPurchase(player, productId)
+		PurchaseHandler.PurchasePrompted:Fire(player, productId)
 		return promise
 	end
 
@@ -360,6 +363,7 @@ function PurchaseHandler.PurchaseProduct(_self: PurchaseHandler, player: Player,
 	end
 
 	MarketplaceService:PromptProductPurchase(player, productId)
+	PurchaseHandler.PurchasePrompted:Fire(player, productId)
 	return promise
 end
 

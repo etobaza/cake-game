@@ -125,7 +125,7 @@ function StoreHandler.Grant(self: StoreHandler, player: Player, productId: numbe
 	end
 
 	if meta.grant == "Cash" then
-		EconomyHandler:AddCash(player, meta.amount)
+		EconomyHandler:AddCash(player, meta.amount, "IAP", entry.id)
 		Logger:Info(`{player.Name} bought {entry.id} for {meta.amount} coins`)
 		return
 	end

@@ -33,10 +33,25 @@ return {
 			Urgent = { Nudge = 8, Point = 15, Cooldown = false },
 			Prep = { Nudge = 60, Point = 90, Cooldown = true },
 			Feature = { Nudge = 0, Point = 8, Cooldown = false },
+			-- Evening plan after the first one: report, 3 to 5 recipes, Next Day.
+			Summary = { Nudge = 45, Point = 70, Cooldown = true },
+			-- Nothing is demanded: quiet moments, spills, used places without new guests.
+			Idle = { Nudge = 45, Point = 70, Cooldown = true },
+			-- A wrong dish in hand while guests wait, until the player has binned one once.
+			Waste = { Nudge = 4, Point = 10, Cooldown = false },
 		},
 		Cooldown = 60,
 		-- Pointers per step kind and session; afterwards that step only gets the explanation.
 		PointsPerStep = 2,
+		-- Fresh bakers forget the routine most: the first days wait less and point more often.
+		-- `Scale` multiplies every delay except Feature; the lowest MaxDay that is >= Cloud.Day wins,
+		-- later days use the plain values above.
+		Experience = {
+			{ MaxDay = 3, Scale = 0.5, Cooldown = 25, PointsPerStep = 5 },
+			{ MaxDay = 6, Scale = 0.75, Cooldown = 40, PointsPerStep = 3 },
+		},
+		-- A waiting guest with less patience than this left makes their dish urgent.
+		HurrySeconds = 20,
 		-- Repeated refusals in this window skip the wait and show the pointer at once.
 		FailureCount = 2,
 		FailureWindow = 30,

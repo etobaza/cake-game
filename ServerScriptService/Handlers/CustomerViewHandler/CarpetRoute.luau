@@ -82,6 +82,37 @@ local function ClosestNode(nodes: { Node }, point: Vector3, params: RaycastParam
 end
 
 --[[ Handling ]]--
+-- A random point on the runner, weighted by strip length, at least `clearance` from `avoid`.
+function CarpetRoute.RandomPoint(base: Instance?, floorY: number, avoid: Vector3, clearance: number): Vector3?
+	if not base then
+		return nil
+	end
+	local strips = GetStrips(base, floorY)
+	local total = 0
+	for _, strip in strips do
+		total += (strip.Finish - strip.Start).Magnitude
+	end
+	if total <= EPSILON then
+		return nil
+	end
+	for _ = 1, 8 do
+		local pick = math.random() * total
+		for _, strip in strips do
+			local length = (strip.Finish - strip.Start).Magnitude
+			if pick > length then
+				pick -= length
+				continue
+			end
+			local point = strip.Start:Lerp(strip.Finish, pick / length)
+			if (point - avoid).Magnitude >= clearance then
+				return point
+			end
+			break
+		end
+	end
+	return nil
+end
+
 -- Includes the exact destination, excludes the starting point. Missing carpet preserves direct travel.
 function CarpetRoute.Build(base: Instance?, from: Vector3, destination: Vector3): { Vector3 }
 	if not base then

@@ -77,6 +77,22 @@ local function signature(session: any): string
 	return table.concat(parts, "|")
 end
 
+type Profile = { Scale: number, Cooldown: number, PointsPerStep: number }
+
+-- Fresh bakers get shorter waits and more pointers; the plain values apply afterwards.
+local function profile(cloud: any): Profile
+	local day = cloud.Day or 1
+	local chosen: Profile = { Scale = 1, Cooldown = Settings.Cooldown, PointsPerStep = Settings.PointsPerStep }
+	local bound = math.huge
+	for _, row in Settings.Experience do
+		if day <= row.MaxDay and row.MaxDay < bound then
+			bound = row.MaxDay
+			chosen = { Scale = row.Scale, Cooldown = row.Cooldown, PointsPerStep = row.PointsPerStep }
+		end
+	end
+	return chosen
+end
+
 local function stepKind(step: Types.TutorialGoal): string
 	return string.match(step.id, "^%a+") or step.id
 end
@@ -161,7 +177,7 @@ function Coach.Select(
 ): Types.CoachSituation?
 	local phase = session.Day.Phase
 	if phase == "Summary" then
-		return Features.Summary(cloud, session, page)
+		return Features.Summary(cloud, session, page) or Assist.Summary(session, page)
 	end
 	if page ~= "None" then
 		return nil
@@ -204,6 +220,8 @@ function Coach.Update(
 	end
 	self.Active = true
 	local delays = Settings.Delays[situation.delay]
+	local level = profile(cloud)
+	local scale = if situation.delay == "Feature" then 1 else level.Scale
 	if situation.key ~= self.Key or (progressed and situation.delay ~= "Feature") then
 		self.Key = situation.key
 		self.Since = clock
@@ -216,9 +234,9 @@ function Coach.Update(
 	local step = situation.step
 	if step and not step.waiting and not Settings.NudgeOnly[step.id] then
 		local kind = stepKind(step)
-		local allowed = self.Pointing or boosted or (self.Points[kind] or 0) < Settings.PointsPerStep
+		local allowed = self.Pointing or boosted or (self.Points[kind] or 0) < level.PointsPerStep
 		-- The explanation always comes first, unless repeated refusals already showed it.
-		if allowed and (self.Pointing or boosted or (self.Nudged and elapsed >= delays.Point)) then
+		if allowed and (self.Pointing or boosted or (self.Nudged and elapsed >= delays.Point * scale)) then
 			if not self.Pointing then
 				self.Pointing = true
 				self.Points[kind] = (self.Points[kind] or 0) + 1
@@ -230,10 +248,10 @@ function Coach.Update(
 	if self.Nudged then
 		return nudge(situation)
 	end
-	if elapsed < delays.Nudge then
+	if elapsed < delays.Nudge * scale then
 		return nil
 	end
-	if delays.Cooldown and not boosted and clock - self.LastNudgeAt < Settings.Cooldown then
+	if delays.Cooldown and not boosted and clock - self.LastNudgeAt < level.Cooldown then
 		return nil
 	end
 	self.Nudged = true

@@ -21,6 +21,12 @@ local Progression = require(_Configs.Progression)
 local Recipes = require(_Configs.Registries.Recipes)
 local Signal = require(_Libs.Signal)
 
+--[[ Types ]]--
+-- Why coins moved. The names match Enum.AnalyticsEconomyTransactionType where one fits; Admin
+-- covers support tools and is never reported as economy.
+export type CashReason = "Gameplay" | "TimedReward" | "IAP" | "Shop" | "Admin"
+export type CashFlow = "Source" | "Sink"
+
 --[[ Private Variables ]]--
 local Logger = LoggerUtil.new({ name = "EconomyHandler" })
 
@@ -32,6 +38,9 @@ local EconomyHandler = {
 
 -- Fired after a level up, with the new level and the recipes it unlocked.
 EconomyHandler.LevelUp = Signal() :: Signal.Signal<Player, number, { string }>
+-- Fired after every wallet change with the amount that actually moved, the new balance, the reason
+-- and an optional item id (recipe, upgrade, product).
+EconomyHandler.CashChanged = Signal() :: Signal.Signal<Player, CashFlow, number, number, CashReason, string?>
 
 --[[ Private Functions ]]--
 local function GetCloud(player: Player): any?
@@ -75,7 +84,13 @@ end
 --- Adds coins, multiplied by whatever passes the player owns.
 --- The multiplier lands here rather than at the till: this is the one place coins are created, so a
 --- pass that pays more pays more on everything, and there is no second path to forget about.
-function EconomyHandler.AddCash(_self: EconomyHandler, player: Player, amount: number): ()
+function EconomyHandler.AddCash(
+	self: EconomyHandler,
+	player: Player,
+	amount: number,
+	reason: CashReason?,
+	itemId: string?
+): ()
 	if amount <= 0 then
 		return
 	end
@@ -86,8 +101,14 @@ function EconomyHandler.AddCash(_self: EconomyHandler, player: Player, amount: n
 	end
 
 	local multiplier = Products:GetCashMultiplier(cloud.Passes)
+	local before = cloud.Cash
 
-	cloud.Cash = math.round((cloud.Cash + amount * multiplier) * 100) / 100
+	cloud.Cash = math.round((before + amount * multiplier) * 100) / 100
+
+	local credited = math.round((cloud.Cash - before) * 100) / 100
+	if credited > 0 then
+		self.CashChanged:Fire(player, "Source", credited, cloud.Cash, reason or "Gameplay", itemId)
+	end
 end
 
 -- Server-only support operation: exact balance, deliberately unaffected by pass multipliers.
@@ -104,7 +125,13 @@ function EconomyHandler.SetAdminCash(_self: EconomyHandler, player: Player, amou
 end
 
 -- Spends coins if there are enough. Returns false without touching the data.
-function EconomyHandler.TrySpend(_self: EconomyHandler, player: Player, amount: number): boolean
+function EconomyHandler.TrySpend(
+	self: EconomyHandler,
+	player: Player,
+	amount: number,
+	reason: CashReason?,
+	itemId: string?
+): boolean
 	if amount <= 0 then
 		return false
 	end
@@ -115,6 +142,7 @@ function EconomyHandler.TrySpend(_self: EconomyHandler, player: Player, amount: 
 	end
 
 	cloud.Cash = math.round((cloud.Cash - amount) * 100) / 100
+	self.CashChanged:Fire(player, "Sink", amount, cloud.Cash, reason or "Shop", itemId)
 
 	return true
 end

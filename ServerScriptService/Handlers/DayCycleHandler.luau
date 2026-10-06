@@ -533,14 +533,16 @@ function DayCycleHandler.ReleaseTutorialClock(_self: DayCycleHandler, player: Pl
 	end
 end
 
--- Pays out immediately: the visible summary and wallet cannot drift apart.
+-- Pays out immediately: the visible summary and wallet cannot drift apart. `itemId` names what
+-- earned the coins (a recipe, a cat adoption) for economy analytics.
 function DayCycleHandler.AddResult(
 	_self: DayCycleHandler,
 	player: Player,
 	coins: number,
 	xp: number,
 	served: number,
-	lost: number
+	lost: number,
+	itemId: string?
 ): ()
 	local day = getDay(player)
 	if not day then
@@ -555,7 +557,7 @@ function DayCycleHandler.AddResult(
 		return
 	end
 	local before = data.Cloud.Cash
-	EconomyHandler:AddCash(player, coins)
+	EconomyHandler:AddCash(player, coins, "Gameplay", itemId)
 	day.Summary.Coins = math.round((day.Summary.Coins + data.Cloud.Cash - before) * 100) / 100
 	day.Summary.XP = day.Summary.XP + EconomyHandler:AwardXP(player, xp)
 	day.Summary.Served = day.Summary.Served + served

@@ -327,7 +327,7 @@ function Street.Take(player: Player, customerId: string, opening: boolean?): boo
 	base.Reserved[customerId] = selected
 	Appearance.Visit(player, selected.Identity)
 	local guest = selected.Guest
-	guest.SpeedLimit = WalkSpeed
+	guest.SpeedLimit = GuestsConfig.CafeWalkSpeed
 	guest.Route = nil
 	if opening then
 		-- Reuse a ready rig at the porch; only the first admission skips the street approach.

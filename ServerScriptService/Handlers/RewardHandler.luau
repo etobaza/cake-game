@@ -34,6 +34,11 @@ local Logger = LoggerUtil.new({ name = "RewardHandler" })
 
 --[[ Constants ]]--
 local MAX_CODE_LENGTH = 32
+-- Economy reason per reward track; the rest are timed rewards. Skipped tiers are bought with Robux.
+local REASONS: { [string]: EconomyHandler.CashReason } = {
+	Code = "Gameplay",
+	PlaytimeSkip = "IAP",
+}
 
 --[[ Tables ]]--
 local RewardHandler = {
@@ -94,10 +99,18 @@ function RewardHandler.StartClock(_self: RewardHandler, player: Player): ()
 	data.Session.Playtime.StartedAt = workspace:GetServerTimeNow()
 end
 
---- Pays a reward and tells the client what it was, so the toast can name it.
-function RewardHandler.Pay(_self: RewardHandler, player: Player, reward: Rewards.Reward, source: string): ()
+--- Pays a reward and tells the client what it was, so the toast can name it. `kind` is the reward
+--- track (Code, Daily, Playtime, PlaytimeSkip) reported to economy analytics; `source` is only for
+--- the player.
+function RewardHandler.Pay(
+	_self: RewardHandler,
+	player: Player,
+	reward: Rewards.Reward,
+	source: string,
+	kind: string
+): ()
 	if reward.Cash > 0 then
-		EconomyHandler:AddCash(player, reward.Cash)
+		EconomyHandler:AddCash(player, reward.Cash, REASONS[kind] or "TimedReward", kind)
 	end
 
 	if reward.XP > 0 then
@@ -130,7 +143,7 @@ function RewardHandler.Redeem(self: RewardHandler, player: Player, code: string)
 	end
 
 	DataList.Append(used, stored)
-	self:Pay(player, reward, `Code {stored}`)
+	self:Pay(player, reward, `Code {stored}`, "Code")
 
 	return true
 end
@@ -173,7 +186,7 @@ function RewardHandler.ClaimDaily(self: RewardHandler, player: Player): boolean
 
 	data.Cloud.Rewards.Day = day
 	data.Cloud.Rewards.ClaimedAt = os.time()
-	self:Pay(player, reward, `Day {day}`)
+	self:Pay(player, reward, `Day {day}`, "Daily")
 
 	return true
 end
@@ -199,7 +212,7 @@ function RewardHandler.ClaimPlaytime(self: RewardHandler, player: Player, index:
 	end
 
 	DataList.Append(record.Claimed, index)
-	self:Pay(player, reward, `{index * Rewards.Playtime.Interval // 60} minutes played`)
+	self:Pay(player, reward, `{index * Rewards.Playtime.Interval // 60} minutes played`, "Playtime")
 
 	return true
 end
@@ -229,7 +242,7 @@ function RewardHandler.GrantSkip(self: RewardHandler, player: Player, productId:
 			local reward = Rewards.GetTier(index)
 			if reward and not DataList.Contains(record.Claimed, index) then
 				DataList.Append(record.Claimed, index)
-				self:Pay(player, reward, `Tier {index}`)
+				self:Pay(player, reward, `Tier {index}`, "PlaytimeSkip")
 			end
 		end
 

@@ -49,6 +49,15 @@ local function collectOrders(): { Order }
 end
 
 --[[ Handling ]]--
+-- Number dining places in purchase order: the starting table owns 1/2, the upgrade 3/4.
+-- These identify seats, so serving an earlier order never renumbers the remaining cards.
+function OrderHandler.SeatLabel(tableId: string, seatIndex: number?): string
+	local slotOrder = Buildings.Kinds.Table.SlotOrder
+	local tableIndex = Buildings.GetIndex(tableId)
+	local tableNumber = if slotOrder then table.find(slotOrder, tableIndex) or tableIndex else tableIndex
+	return `#{(tableNumber - 1) * Tables.SeatCount + (seatIndex or 1)}`
+end
+
 function OrderHandler.OnStart(self: OrderHandler): ()
 	self.Janitor = Janitor.new()
 	self.Cards = {}
@@ -203,14 +212,8 @@ function OrderHandler.Refresh(self: OrderHandler): ()
 				end
 			end
 		end
-		-- Number dining places in purchase order: the starting table owns 1/2, the upgrade 3/4.
-		-- These identify seats, so serving an earlier order never renumbers the remaining cards.
 		local name = if choosing then "Picking a pastry" else table.concat(names, " + ")
-		local slotOrder = Buildings.Kinds.Table.SlotOrder
-		local tableIndex = Buildings.GetIndex(customer.TableId)
-		local tableNumber = if slotOrder then table.find(slotOrder, tableIndex) or tableIndex else tableIndex
-		local number = (tableNumber - 1) * Tables.SeatCount + (customer.SeatIndex or 1)
-		local label = `#{number}`
+		local label = OrderHandler.SeatLabel(customer.TableId, customer.SeatIndex)
 		local remaining = if choosing or customer.TutorialProtected
 			then 1
 			else math.clamp((customer.PatienceEndsAt - now) / math.max(customer.Patience, 1), 0, 1)

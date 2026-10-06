@@ -642,12 +642,14 @@ function BuildingHandler.Discard(self: BuildingHandler, player: Player, trashId:
 
 	local data = DataHandler:GetData(player)
 	local held = data and data.Session.Hands[1]
-	local burnt = held and held.Kind == "Burnt"
+	local kind = held and held.Kind
 	if not InventoryHandler:Discard(player) then
 		return false
 	end
-	if burnt then
+	if kind == "Burnt" then
 		TutorialEvents.Action:Fire(player, "DisposeBurnt", trashId)
+	elseif kind == "Dish" or kind == "Dough" then
+		TutorialEvents.Action:Fire(player, "DisposeDish", trashId)
 	end
 
 	local visual = building.Visual

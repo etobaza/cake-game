@@ -13,8 +13,11 @@ local _Configs = _Shared.Configs
 local _Handlers = ServerScriptService.Handlers
 
 --[[ Modules ]]--
+local BaseHandler = require(_Handlers.BaseHandler)
 local BuildingHandler = require(_Handlers.BuildingHandler)
 local BuildingsConfig = require(_Configs.Buildings)
+local CarpetRoute = require(script.Parent.CarpetRoute)
+local DisplayCustomers = require(_Configs.DisplayCustomers)
 local GuestsConfig = require(_Configs.Guests)
 local FoodPresentation = require(_Configs.FoodPresentation)
 local TableConfig = require(_Configs.TableMenus)
@@ -56,19 +59,31 @@ local function GetPart(player: Player, buildingId: string): BasePart?
 	return building and building.Part
 end
 
-local function DisplaySpot(player: Player, customer: any): Spot?
+-- A visitor without a pedestal of its own roams the café runner; each new route picks a new point.
+local function RoamSpot(player: Player, door: BasePart): Spot?
+	local floorY = door.Position.Y - door.Size.Y / 2
+	local point = CarpetRoute.RandomPoint(
+		BaseHandler:GetBase(player),
+		floorY,
+		Vector3.new(door.Position.X, floorY, door.Position.Z),
+		DisplayCustomers.RoamDoorClearance
+	)
+	return if point then { Target = point } else nil
+end
+
+local function DisplaySpot(player: Player, customer: any, door: BasePart): Spot?
 	local bought = math.clamp(
 		UpgradeHandler:GetLevel(player, FoodPresentation.DisplayUpgrade),
 		0,
 		FoodPresentation.DisplayPedestals
 	)
-	if bought == 0 then
-		return nil
+	-- Pedestals are handed out one per browser; visitors beyond them, or with none bought, roam.
+	local slot = customer.DisplaySlot
+	if bought == 0 or not slot then
+		return RoamSpot(player, door)
 	end
 	local shopping = customer.State == "Shopping"
-	-- CustomerHandler gives every display guest its own pedestal, so guests never stack.
-	local slot = customer.DisplaySlot or math.random(2, bought + 1)
-	local building = slot and BuildingHandler:GetBuilding(player, BuildingsConfig.GetId(DISPLAY_KIND, slot))
+	local building = BuildingHandler:GetBuilding(player, BuildingsConfig.GetId(DISPLAY_KIND, slot))
 	if not building then
 		return nil
 	end
@@ -120,17 +135,22 @@ function Spots.Resolve(player: Player, customer: any, door: BasePart): Spot
 	end
 
 	if customer.Kind == DISPLAY_GUEST then
-		local spot = DisplaySpot(player, customer)
+		local spot = DisplaySpot(player, customer, door)
 		if spot then
 			return spot
 		end
 	end
 
+	-- The line runs along the inside wall from the entrance; everyone in it faces the dining room.
 	local place = (customer.QueuePosition or 1) - 1
-	local offset =
-		Vector3.new(GuestsConfig.QueueSide + place * GuestsConfig.QueueGap, 0, -GuestsConfig.QueueOutsideDistance)
+	local side = GuestsConfig.QueueSide + place * GuestsConfig.QueueGap
+	local target = FloorPoint(door, Vector3.new(side, 0, GuestsConfig.QueueInsideDistance))
+	local look = FloorPoint(
+		door,
+		Vector3.new(side, 0, GuestsConfig.QueueInsideDistance + GuestsConfig.QueueLookDistance)
+	)
 
-	return { Target = FloorPoint(door, offset), LookAt = door.Position }
+	return { Target = target, LookAt = look }
 end
 
 return Spots

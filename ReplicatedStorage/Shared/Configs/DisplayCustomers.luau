@@ -7,6 +7,12 @@ return {
 	RoamPauseMaxSeconds = 5,
 	PurchaseSeconds = 0.2,
 	SeatedChance = 0.75,
+	-- Visitors who found no free chair roam the room on top of the pedestal browsers. Without a
+	-- pedestal they walk between random points of the café runner, as BP_Client.ClientRoam picks
+	-- random points in the shop's bounding box.
+	RoamGuests = 2,
+	-- Roam points closer than this to the entrance are skipped, so nobody idles in the doorway.
+	RoamDoorClearance = 8,
 	FlowChange = 0.01,
 	FlowMin = 0.5,
 	FlowMax = 2,

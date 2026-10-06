@@ -67,5 +67,31 @@ return {
 		MinTextureLength = 0.1,
 		MinTextureSpacing = 0.1,
 	},
+
+	-- A world target in another room points at the doorway first (Shared/UI/HintRoute).
+	Route = {
+		-- Room name -> folder (from a bakery) whose parts are that room's walkable floor. A point
+		-- straight above one of them is in that room; a point above none is Outside.
+		Floors = {
+			Cafe = { "1ndFloor", "Cafe", "WoodStructure" },
+			Kitchen = { "1ndFloor", "Kitchen", "Up/Ground" },
+			Garden = { "1ndFloor", "Garden", "Ground" },
+		} :: { [string]: { string } },
+		Outside = "Outside",
+		-- Doorways are models with this lowercased name under DoorRoot, as in Configs/Collision.
+		DoorRoot = { "1ndFloor" },
+		DoorName = "door",
+		-- How far either side of a doorway its two rooms are sampled.
+		SideDistance = 6,
+		-- Leaves of one doorway (the double front door) closer than this share one waypoint.
+		MergeDistance = 8,
+		-- Height of the waypoint above the doorway's bottom.
+		AimHeight = 3,
+		-- A point is classified by a ray cast down from ProbeLift above it, ProbeDepth long.
+		ProbeLift = 1,
+		ProbeDepth = 24,
+		-- Doorways are re-read this often: streaming may load a bakery's floors after the first read.
+		RefreshSeconds = 3,
+	},
 	Accent = Color3.fromRGB(255, 223, 141),
 }

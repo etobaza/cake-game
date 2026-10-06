@@ -23,6 +23,7 @@ local Milestones = {
 	TakeOrder = "OrderTaken",
 	Mopped = "Mopped",
 	DisposeBurnt = "DisposedBurnt",
+	DisposeDish = "DisposedDish",
 }
 local Lessons = { Place = "Display", TakeCart = "Cart", NextDay = "NextDay" }
 

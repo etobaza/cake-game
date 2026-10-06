@@ -111,6 +111,14 @@ function CustomerViewHandler.OnStart(self: CustomerViewHandler): ()
 		self:Seat(player, customerId, tableId)
 	end)
 
+	-- The guest ahead got a table: the rest of the line steps forward.
+	CustomerHandler.QueueMoved:Connect(function(player: Player, customerId: string)
+		local guest = self:GetGuest(player, customerId)
+		if guest and guest.Model:GetAttribute("VisitorState") ~= "Entering" then
+			self:Route(player, customerId, guest)
+		end
+	end)
+
 	CustomerHandler.CustomerEating:Connect(
 		function(player: Player, customerId: string, recipeId: string, reaction: string)
 			self:Eat(player, customerId, recipeId, reaction)
@@ -286,14 +294,15 @@ function CustomerViewHandler.Route(
 		else nil
 
 	local points: { Vector3 } = {}
+	local start = guest.Root.Position
+	-- Everyone comes in through the doorway, the line by the entrance included.
+	if door.CFrame:PointToObjectSpace(start).Z < 0 then
+		start = Spots.Inside(door)
+		table.insert(points, start)
+	end
 	if customer.State == "Queued" then
 		table.insert(points, spot.Target)
 	else
-		local start = guest.Root.Position
-		if door.CFrame:PointToObjectSpace(start).Z < 0 then
-			start = Spots.Inside(door)
-			table.insert(points, start)
-		end
 		for _, point in CarpetRoute.Build(BaseHandler:GetBase(player), start, spot.Approach or spot.Target) do
 			table.insert(points, point)
 		end

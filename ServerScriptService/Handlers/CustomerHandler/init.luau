@@ -66,6 +66,8 @@ local CustomerHandler = {
 -- these are notifications about it, not a second copy.
 CustomerHandler.CustomerSpawned = Signal() :: Signal.Signal<Player, string>
 CustomerHandler.CustomerSeated = Signal() :: Signal.Signal<Player, string, string>
+-- A queued guest moved up the line (customerId); their spot comes from the new QueuePosition.
+CustomerHandler.QueueMoved = Signal() :: Signal.Signal<Player, string>
 CustomerHandler.CustomerEating = Signal() :: Signal.Signal<Player, string, string, string>
 CustomerHandler.CustomerLeft = Signal() :: Signal.Signal<Player, string, boolean>
 CustomerHandler.CustomerShopping = Signal() :: Signal.Signal<Player, string>
@@ -254,6 +256,7 @@ function CustomerHandler.StartShift(self: CustomerHandler, player: Player): ()
 		DisplayFlow = if previous then previous.DisplayFlow else 1,
 		NextSpawnAt = workspace:GetServerTimeNow() + DayCycleConfig.FirstSpawnDelay,
 		FirstGuest = true,
+		Rush = 0,
 		-- Ids never restart: a guest walking out still owns their body while the next shift spawns.
 		NextId = if previous then previous.NextId else 1,
 		ScriptedGuest = data ~= nil and TutorialPolicy.IsActive(data.Cloud),
@@ -321,11 +324,10 @@ function CustomerHandler.SpawnCustomer(self: CustomerHandler, player: Player): b
 	end
 
 	local tableId = if entry.kind == "Seated" then TableHandler:FindFree(player) else nil
-	-- Original visitors browse the store when dining places are full and displays are unlocked.
+	-- Lemon Cake BP_Client.FindTable: with no free, clean chair the visitor roams the shop for 5-15
+	-- seconds, then looks for a cat or a stocked display, and otherwise leaves. The room stays alive
+	-- even while every place is taken, and no table queue builds up.
 	if not scriptedEntry and entry.kind == "Seated" and not tableId then
-		if not hasDisplay then
-			return false
-		end
 		entry = PickType(player, "Display")
 		if not entry then
 			return false
@@ -342,7 +344,11 @@ function CustomerHandler.SpawnCustomer(self: CustomerHandler, player: Player): b
 		then FreePosition(data.Session.Customers, "QueuePosition", DayCycleConfig.QueueSlack)
 		else nil
 	local displayPosition = if entry.kind == "Display"
-		then FreePosition(data.Session.Customers, "DisplayPosition", DisplayHandler:GetGuestCapacity(player))
+		then FreePosition(
+			data.Session.Customers,
+			"DisplayPosition",
+			DisplayHandler:GetGuestCapacity(player) + DisplayCustomers.RoamGuests
+		)
 		else nil
 	-- Display capacity must never turn into an unbounded dining queue.
 	if entry.kind == "Seated" and not tableId and not queuePosition then
@@ -352,10 +358,15 @@ function CustomerHandler.SpawnCustomer(self: CustomerHandler, player: Player): b
 		return false
 	end
 	local opening = runtime.FirstGuest
-	if not Street.Take(player, customerId, opening) then
+	-- Rush arrivals skip the street walk and the long menu read, like the shift's first guest.
+	local rush = opening or runtime.Rush > 0 or CountCustomers(data.Session.Customers) == 0
+	if not Street.Take(player, customerId, rush) then
 		return false
 	end
 	runtime.FirstGuest = false
+	if runtime.Rush > 0 then
+		runtime.Rush -= 1
+	end
 	runtime.NextId += 1
 	if scriptedEntry then
 		runtime.ScriptedGuest = false
@@ -405,7 +416,7 @@ function CustomerHandler.SpawnCustomer(self: CustomerHandler, player: Player): b
 		end
 	end, function(served: boolean): ()
 		self:FinishCustomer(player, customerId, customer, served)
-	end, if opening then OrdersConfig.FirstGuestChooseSeconds else nil)
+	end, if rush then OrdersConfig.FirstGuestChooseSeconds else nil)
 	self.CustomerSpawned:Fire(player, customerId)
 	return true
 end
@@ -439,7 +450,7 @@ function CustomerHandler.SeatQueue(self: CustomerHandler, player: Player): ()
 
 		local tableId = TableHandler:FindFree(player)
 		if not tableId then
-			return
+			break
 		end
 
 		local seatIndex = TableHandler:Occupy(player, tableId, customerId)
@@ -447,11 +458,29 @@ function CustomerHandler.SeatQueue(self: CustomerHandler, player: Player): ()
 			customer.QueuePosition = nil
 			customer.TableId = tableId
 			customer.SeatIndex = seatIndex
+			-- Waiting in line already cost patience; the walk to the chair starts a fresh wait.
+			if not customer.TutorialProtected then
+				customer.PatienceEndsAt = workspace:GetServerTimeNow() + customer.Patience
+			end
 			local guest = self.Guests[player] and self.Guests[player][customerId]
 			if guest then
 				guest:Seat()
 			end
 			self.CustomerSeated:Fire(player, customerId, tableId)
+		end
+	end
+
+	-- Close the gaps so the line keeps its arrival order from the door outwards.
+	local place = 0
+	for _, customerId in queued do
+		local customer = customers[customerId]
+		if not customer or customer.State ~= "Queued" then
+			continue
+		end
+		place += 1
+		if customer.QueuePosition ~= place then
+			customer.QueuePosition = place
+			self.QueueMoved:Fire(player, customerId)
 		end
 	end
 end
@@ -687,7 +716,7 @@ function CustomerHandler.PayForDish(
 		})
 
 	local before = data.Cloud.Cash
-	DayCycleHandler:AddResult(player, coins, Economy.GetDishXP(recipe.price), 0, 0)
+	DayCycleHandler:AddResult(player, coins, Economy.GetDishXP(recipe.price), 0, 0, recipeId)
 	-- What actually reached the wallet, pass multipliers included; zero once the shift has closed.
 	local credited = math.round((data.Cloud.Cash - before) * 100) / 100
 	if customer.TutorialProtected then
@@ -774,7 +803,8 @@ function CustomerHandler.FinishCustomer(
 	self.CustomerLeft:Fire(player, customerId, served)
 	if isDisplay then
 		local runtime = self.Runtime[player]
-		if runtime then
+		-- Roamers in a bakery without pedestals never saw a display, so they say nothing about its stock.
+		if runtime and DisplayHandler:GetGuestCapacity(player) > 0 then
 			runtime.DisplayFlow = math.clamp(
 				runtime.DisplayFlow + (if served then -DisplayCustomers.FlowChange else DisplayCustomers.FlowChange),
 				DisplayCustomers.FlowMin,
@@ -815,6 +845,7 @@ function CustomerHandler.ReleaseTutorial(self: CustomerHandler, player: Player):
 	if runtime then
 		runtime.ScriptedGuest = false
 		runtime.NextSpawnAt = now + DayCycleConfig.FirstSpawnDelay
+		runtime.Rush = DayCycleConfig.TutorialRushGuests
 	end
 end
 
@@ -858,10 +889,15 @@ function CustomerHandler.UpdatePlayerCustomers(self: CustomerHandler, player: Pl
 		end
 	end
 
+	local count = CountCustomers(customers)
+	if count == 0 then
+		-- Nobody to serve is the dullest moment of a shift: bring the next arrival forward.
+		runtime.NextSpawnAt = math.min(runtime.NextSpawnAt, now + DayCycleConfig.EmptySpawnDelay)
+	end
 	local capacity = self:GetCapacity(player)
-	local hasCapacity = CountCustomers(customers) < DayCycleConfig.GetMaxActive(capacity)
+	local hasCapacity = count < DayCycleConfig.GetMaxActive(capacity)
 	if hasCapacity and now >= runtime.NextSpawnAt - GuestsConfig.Street.AdmissionLeadSeconds then
-		Street.Prepare(player, runtime.FirstGuest)
+		Street.Prepare(player, runtime.FirstGuest or runtime.Rush > 0 or count == 0)
 	end
 	if now < runtime.NextSpawnAt then
 		return
@@ -880,7 +916,10 @@ function CustomerHandler.UpdatePlayerCustomers(self: CustomerHandler, player: Pl
 		end
 	end
 
-	runtime.NextSpawnAt = now + DayCycleConfig.GetSpawnInterval() * runtime.DisplayFlow
+	runtime.NextSpawnAt = now
+		+ if runtime.Rush > 0
+			then DayCycleConfig.RushSpawnInterval
+			else DayCycleConfig.GetSpawnInterval() * runtime.DisplayFlow
 end
 
 function CustomerHandler.UpdateOneCustomer(
@@ -949,7 +988,10 @@ function CustomerHandler.UpdateShopper(
 					customer.BrowseEndsAt = now + DisplayCustomers.RoamPauseMinSeconds
 					return
 				end
-				Bus.Progress.ActionFailed:FireClient(player, "display_empty")
+				-- Lemon Cake's NoDisplayPastry notice; a bakery without pedestals has nothing to report.
+				if DisplayHandler:GetGuestCapacity(player) > 0 then
+					Bus.Progress.ActionFailed:FireClient(player, "display_empty")
+				end
 				self:FinishCustomer(player, customerId, customer, false)
 				return
 			end
@@ -981,6 +1023,8 @@ export type CustomerHandler = typeof(CustomerHandler) & {
 			NextSpawnAt: number,
 			NextId: number,
 			FirstGuest: boolean,
+			-- Guests still owed a quick arrival after the introduction ends.
+			Rush: number,
 			ScriptedGuest: boolean,
 			DisplayFlow: number,
 			RecordShown: boolean,

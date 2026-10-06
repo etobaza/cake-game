@@ -445,7 +445,7 @@ function CatHandler.Complete(self: CatHandler, player: Player, id: string, custo
 	-- The cat is destroyed right after, so the burst plays at its frame with no anchor instance.
 	Bus.VFX.Burst:Fire("Happy", nil :: any, cat.Part.CFrame, player.UserId, workspace:GetServerTimeNow())
 	cat.Model:Destroy()
-	DayCycleHandler:AddResult(player, Config.AdoptReward, 0, 0, 0)
+	DayCycleHandler:AddResult(player, Config.AdoptReward, 0, 0, 0, "CatAdoption")
 	Bus.Progress.RewardGranted:FireClient(player, "A cat found a home!")
 	return true
 end
