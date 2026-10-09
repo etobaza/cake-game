@@ -87,6 +87,22 @@ function Press.IsClick(input: InputObject): boolean
 	return CLICK_TYPES[input.UserInputType] == true
 end
 
+--- Keeps a world-space plate Active only while the player is not on mouse and keyboard. An Active
+--- GuiObject sinks the right button and the wheel, so the camera stops turning and zooming under
+--- the cursor; the frame's own InputBegan still fires without Active, so mouse clicks keep working.
+--- Touch needs Active so a tap does not also steer the camera, and the gamepad binding reads it.
+--- Call after Bind/BindTap, which turn Active on.
+function Press.SinkUnlessMouse(object: GuiObject): any
+	local janitor = Janitor.new()
+	local function apply(): ()
+		object.Active = UserInputService.PreferredInput ~= Enum.PreferredInput.KeyboardAndMouse
+	end
+	apply()
+	janitor:Add(UserInputService:GetPropertyChangedSignal("PreferredInput"):Connect(apply), "Disconnect")
+	janitor:LinkToInstance(object)
+	return janitor
+end
+
 --- Owns pointer and gamepad bindings until the returned Janitor or object is destroyed.
 function Press.Bind(object: GuiObject, callback: () -> ()): any
 	local janitor = Janitor.new()

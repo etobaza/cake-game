@@ -204,6 +204,8 @@ function MixHandler.BuildBillboard(self: MixHandler): ()
 			end),
 			"Destroy"
 		)
+		-- Right-drag and the wheel over the floating card still turn and zoom the camera on PC.
+		self.Janitor:Add(Press.SinkUnlessMouse(notDoneClone), "Destroy")
 
 		self.BillboardChips[index] = { Done = doneClone, NotDone = notDoneClone }
 	end

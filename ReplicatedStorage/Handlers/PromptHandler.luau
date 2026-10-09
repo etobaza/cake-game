@@ -27,6 +27,7 @@ local Interact = require(ReplicatedStorage.Handlers.InteractHandler)
 local Janitor = require(_Packages.janitor)
 local Flux = require(_Packages.flux)
 local Pages = require(_Shared.UI.Stores.Pages)
+local Press = require(_Shared.UI.Press)
 local Scope = require(_Shared.UI.Scope)
 
 --[[ Constants ]]--
@@ -228,7 +229,8 @@ function PromptHandler.OnStart(self: PromptHandler): ()
 	local root = self.Root
 	if root then
 		self.Lifetime:Add(bindLayout(root), "Destroy")
-		root.Active = true
+		-- The plate still answers a mouse click while inactive; only touch and gamepad need it to sink input.
+		self.Lifetime:Add(Press.SinkUnlessMouse(root), "Destroy")
 
 		self.Lifetime:Add(
 			root.InputBegan:Connect(function(input: InputObject)
