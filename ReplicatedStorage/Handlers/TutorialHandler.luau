@@ -30,6 +30,11 @@ local TutorialPolicy = require(ReplicatedStorage.Shared.TutorialPolicy)
 local Types = require(ReplicatedStorage.Shared.GameTypes)
 local UIHandler = require(script.Parent.UIHandler)
 
+--[[ Constants ]]--
+-- The HUD clock's tutorial target, and the scale a revealed HUD element pops in from.
+local CLOCK_TARGET = "UI.HUD.Time"
+local HUD_POP_FROM = 0.4
+
 --[[ Tables ]]--
 local TutorialHandler = {
 	-- Resolve authored targets after the data, screen and world-prompt owners are ready.
@@ -72,39 +77,75 @@ local function stageLine(cloud: any, session: any, goal: Types.TutorialGoal): st
 	return if goal.topic then lines.Topics[goal.topic] else nil
 end
 
--- The HUD buttons the introduction keeps hidden (all side buttons but the shop) and the topbar
--- row. When it ends they arrive one after another with a pop.
-local function setHudLocked(self: any, locked: boolean): ()
-	if self.HudLocked == locked then
-		return
-	end
-	local first = self.HudLocked == nil
-	self.HudLocked = locked
-	TopbarHandler:SetVisible(not locked)
-	local found, side = pcall(function(): Instance
-		return UIHandler:GetHud("SideBtns")
+-- What the HUD shows while the introduction runs: each element appears when the player first
+-- needs it and pops in. Side buttons other than HudDuringIntro, the level bar and the topbar row
+-- wait for the end; the balance arrives with the Serve stage, just before the first sale; the
+-- clock arrives when the player is asked to open (and stays once the bakery has opened).
+local function hudShown(cloud: any, session: any, goal: Types.TutorialGoal?): { [string]: boolean }
+	local active = TutorialPolicy.IsActive(cloud)
+	local stage = session.Tutorial.Stage
+	local target = goal and goal.target
+	local askedToOpen = target ~= nil and target.kind == "Gui" and target.id == CLOCK_TARGET
+	return {
+		Side = not active,
+		Quests = not active,
+		Topbar = not active,
+		Currency = not active or stage == "Serve" or stage == "Clean",
+		Time = not active or session.Day.Phase ~= "Prep" or askedToOpen,
+	}
+end
+
+local function reveal(element: GuiObject, delay: number): ()
+	task.delay(delay, function(): ()
+		if element.Parent and element.Visible then
+			Animate.Pop(element, HUD_POP_FROM)
+		end
 	end)
-	if not found then
-		return
-	end
+end
+
+local function applyHud(self: any, cloud: any, session: any, goal: Types.TutorialGoal?): ()
+	local wanted = hudShown(cloud, session, goal)
+	local shown = self.HudShown
+	local first = shown == nil
+	local current: { [string]: boolean } = shown or {}
+	self.HudShown = current
 	local order = 0
-	for _, button in side:GetChildren() do
-		if not button:IsA("GuiObject") or table.find(Config.HudDuringIntro, button.Name) then
-			continue
+	local function set(key: string, elements: { GuiObject }): ()
+		local visible = wanted[key]
+		if current[key] == visible then
+			return
 		end
-		if locked then
-			button.Visible = false
-			continue
+		current[key] = visible
+		for _, element in elements do
+			element.Visible = visible
+			if visible and not first then
+				order += 1
+				reveal(element, order * Config.HudRevealStagger)
+			end
 		end
-		button.Visible = true
-		if not first then
-			order += 1
-			task.delay(order * Config.HudRevealStagger, function(): ()
-				if button.Parent then
-					Animate.Pop(button, 0.4)
-				end
-			end)
+	end
+	local function hud(path: string): { GuiObject }
+		local found, element = pcall(function(): Instance
+			return UIHandler:GetHud(path)
+		end)
+		return if found and element:IsA("GuiObject") then { element } else {}
+	end
+
+	local side = {}
+	for _, element in hud("SideBtns") do
+		for _, button in element:GetChildren() do
+			if button:IsA("GuiObject") and not table.find(Config.HudDuringIntro, button.Name) then
+				table.insert(side, button)
+			end
 		end
+	end
+	set("Side", side)
+	set("Quests", hud("Quests"))
+	set("Currency", hud("Currency"))
+	set("Time", hud("Time"))
+	if current.Topbar ~= wanted.Topbar then
+		current.Topbar = wanted.Topbar
+		TopbarHandler:SetVisible(wanted.Topbar)
 	end
 end
 
@@ -232,7 +273,6 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 		self.GuestHighlight:Clear()
 		return
 	end
-	setHudLocked(self, TutorialPolicy.IsActive(cloud))
 	local guestId = incomingGuest(cloud, session)
 	self.GuestHighlight:Update(guestId)
 	local props = Interact:GetOwnedIds()
@@ -279,6 +319,7 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 	-- Other guides stay quiet while the tutorial is showing the player what to do.
 	self.Guiding = goal ~= nil and not cloud.Tutorial.Collapsed
 	self.TargetId = if goal and goal.target and goal.target.kind == "World" then goal.target.id else nil
+	applyHud(self, cloud, session, goal)
 	self.View:Set(goal, cloud.Tutorial, coaching, progress, line)
 	local needsFrame = goal ~= nil or guestId ~= nil or self.Coach:IsPending()
 	if needsFrame and not self.Janitor:Get("Frame") then
@@ -317,8 +358,8 @@ export type TutorialHandler = typeof(TutorialHandler) & {
 	Guiding: boolean?,
 	-- The world target the shown goal points at, if any.
 	TargetId: string?,
-	-- Whether the introduction currently keeps the HUD buttons hidden; nil before the first check.
-	HudLocked: boolean?,
+	-- Which gated HUD parts are showing; nil before the first check.
+	HudShown: { [string]: boolean }?,
 	-- The guest whose order card the player tapped.
 	OrderSeen: string?,
 	-- The cart lesson's load prompt was shown, and its dismissal was sent.

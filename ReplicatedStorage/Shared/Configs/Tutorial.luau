@@ -27,8 +27,9 @@ return {
 	-- the arrows and finger at once.
 	PointDelay = 2.5,
 	FocusDelay = 7,
-	-- The only side buttons shown during the introduction; the rest (and the topbar row) arrive
-	-- this many seconds apart once it ends.
+	-- The only side buttons shown during the introduction. The rest, the level bar, the balance,
+	-- the clock and the topbar row each appear when first needed (TutorialHandler), this many
+	-- seconds apart.
 	HudDuringIntro = { "Shop" },
 	HudRevealStagger = 0.18,
 	ReminderSeconds = 18,
