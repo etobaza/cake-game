@@ -11,6 +11,7 @@ local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 local TextService = game:GetService("TextService")
 
 --[[ Modules ]]--
@@ -85,6 +86,8 @@ type View = {
 	Item: Frame,
 	ItemIcon: ImageLabel,
 	Button: TextButton,
+	-- The typing voice, when Voice.Id is set: one sound restarted per letter.
+	Voice: Sound?,
 }
 
 --[[ Tables ]]--
@@ -429,6 +432,19 @@ local function build(janitor: any): View
 	buttonPadding.PaddingRight = UDim.new(0, 16)
 	buttonPadding.Parent = button
 
+	-- Like BattlesOfEmpires' text voice: one reusable sound, restarted on every letter, so letters
+	-- never stack into a loud chatter.
+	local voice: Sound? = nil
+	if STYLE.Voice.Id ~= "" then
+		local created = Instance.new("Sound")
+		created.Name = "TutorialVoice"
+		created.SoundId = STYLE.Voice.Id
+		created.Volume = STYLE.Voice.Volume
+		created.Parent = SoundService
+		janitor:Add(created, "Destroy")
+		voice = created
+	end
+
 	local portrait: Frame?, portraitScale: UIScale?, face: ImageLabel? = nil, nil, nil
 	if PORTRAIT.Images.Neutral ~= "" then
 		portrait, portraitScale, face = buildFace(body)
@@ -459,6 +475,7 @@ local function build(janitor: any): View
 		Item = item,
 		ItemIcon = icon,
 		Button = button,
+		Voice = voice,
 	}
 end
 
@@ -913,10 +930,14 @@ function Dialog.Type(self: Dialog, deltaTime: number, now: number): ()
 		local char = content.Chars[self.Typed]
 		if char ~= " " then
 			self.HopAt = now
-			if STYLE.SoundEvery > 0 and self.Typed % STYLE.SoundEvery == 0 then
-				local pitch = STYLE.SoundPitch
-				SoundPlayer.Play("Pop", nil, pitch.Min + math.random() * (pitch.Max - pitch.Min))
-			end
+		end
+		-- Only letters and digits speak; spaces and punctuation stay silent.
+		local voice = view.Voice
+		if voice and string.find(char, "^%w$") then
+			local pitch = STYLE.Voice.Pitch
+			voice.PlaybackSpeed = pitch.Min + math.random() * (pitch.Max - pitch.Min)
+			voice.TimePosition = 0
+			voice:Play()
 		end
 	end
 	if self.Typed >= total then
