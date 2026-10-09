@@ -142,8 +142,9 @@ return {
 		SentencePause = 0.18,
 		CommaPause = 0.07,
 		-- The typing voice, BattlesOfEmpires style: one quiet sound restarted on each letter.
-		-- Silent while Id is empty (the old pop on every fourth letter was too loud).
-		Voice = { Id = "", Volume = 0.3, Pitch = { Min = 0.95, Max = 1.1 } },
+		-- Silent while Id is empty (the old pop on every fourth letter was too loud). The id is the
+		-- public "UnderTale - sans.(Text)" audio that BattlesOfEmpires' SFX.Dialogue.TextSay uses.
+		Voice = { Id = "rbxassetid://5416485881", Volume = 0.3, Pitch = { Min = 0.95, Max = 1.1 } },
 		AppearSeconds = 0.32,
 		-- A new line makes the bubble swell and hop (Lemon Cake's AN_DialogueChange).
 		Boing = { Seconds = 0.35, Scale = 1.03, Lift = 10 },
