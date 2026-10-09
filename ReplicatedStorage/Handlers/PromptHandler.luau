@@ -56,16 +56,21 @@ local PRESS_POP = 0.86
 -- text with a small punch, instead of replaying the whole entrance.
 local SWAP_SECONDS = 0.3
 local SWAP_POP = 0.94
--- A status-only plate (a busy station) drops its card: one large outlined line, centred.
+-- A status-only plate (a busy station) swaps its card for a small wooden sign
+-- (funset_ui_status_plate_wood, generated with Codex in the HUD icon style) with one centred line.
 local STATUS_CARD_SCALE = 0.7
+local STATUS_PLATE_IMAGE = "rbxassetid://129385372765867"
+-- The sign art is about four times wider than tall; in the card's shape that is this size.
+local STATUS_PLATE_SIZE = UDim2.fromScale(0.98, 0.64)
 local STATUS_NAME_POSITION = UDim2.fromScale(0.5, 0.5)
-local STATUS_NAME_SIZE = UDim2.fromScale(0.9, 0.5)
+local STATUS_NAME_SIZE = UDim2.fromScale(0.78, 0.4)
 local STATUS_TEXT_SIZE = 36
--- The status line's lettering: white face, dark cocoa outline and drop shadow.
+-- The status line's lettering: white face, a thin dark cocoa outline and a short drop shadow. A
+-- thick outline on billboard text merges into a shapeless blob.
 local STATUS_FACE = Color3.fromRGB(255, 255, 255)
 local STATUS_INK = Color3.fromRGB(58, 32, 22)
-local STATUS_OUTLINE = 2.5
-local STATUS_SHADOW_DROP = UDim2.fromScale(0, 0.09)
+local STATUS_OUTLINE = 1.5
+local STATUS_SHADOW_DROP = UDim2.fromScale(0, 0.05)
 
 --[[ Tables ]]--
 local PromptHandler = {
@@ -447,6 +452,8 @@ type Authored = {
 	Limits: { [UITextSizeConstraint]: number },
 	-- The card art (background, dashed lines) a status line floats without.
 	Card: { [GuiObject]: boolean },
+	-- The wooden sign drawn behind the status line instead.
+	Plate: ImageLabel,
 	-- Each name label's own position, colour and outline.
 	Labels: { [TextLabel]: { Position: UDim2, Color: Color3 } },
 	Strokes: { [UIStroke]: { Color: Color3, Thickness: number } },
@@ -471,7 +478,19 @@ local function remember(billboard: BillboardGui, root: Frame, name: GuiObject): 
 			card[piece] = piece.Visible
 		end
 	end
+	local plate = Instance.new("ImageLabel")
+	plate.Name = "StatusPlate"
+	plate.AnchorPoint = Vector2.new(0.5, 0.5)
+	plate.Position = UDim2.fromScale(0.5, 0.5)
+	plate.Size = STATUS_PLATE_SIZE
+	plate.BackgroundTransparency = 1
+	plate.Image = STATUS_PLATE_IMAGE
+	plate.ScaleType = Enum.ScaleType.Stretch
+	plate.ZIndex = math.max(name.ZIndex - 1, 1)
+	plate.Visible = false
+	plate.Parent = root
 	return {
+		Plate = plate,
 		Size = billboard.Size,
 		Position = name.Position,
 		NameSize = name.Size,
@@ -482,8 +501,8 @@ local function remember(billboard: BillboardGui, root: Frame, name: GuiObject): 
 	}
 end
 
--- Remembers the authored name plate, then switches between it and the status line: no card, just
--- large white lettering with a dark outline over its own drop shadow, floating at the station.
+-- Remembers the authored name plate, then switches between it and the status line: the card art
+-- gives way to the wooden sign, with white lettering over a short drop shadow.
 function PromptHandler.StatusLayout(self: PromptHandler, root: Frame, status: boolean): ()
 	local billboard = self.Billboard
 	local name = root:FindFirstChild("Name")
@@ -508,6 +527,7 @@ function PromptHandler.StatusLayout(self: PromptHandler, root: Frame, status: bo
 	for piece, visible in authored.Card do
 		piece.Visible = visible and not status
 	end
+	authored.Plate.Visible = status
 	for label, original in authored.Labels do
 		-- The pair's dark half drops below the face and becomes its shadow.
 		local shadow = label.Name == "Shadow"
