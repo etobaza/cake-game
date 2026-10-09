@@ -30,6 +30,8 @@ export type Presenter = typeof(setmetatable(
 		-- Coaching goals keep the short status toast instead of the bubble.
 		Coaching: boolean,
 		Progress: string?,
+		-- The bubble's line for this step: the stage line during the introduction.
+		Line: string?,
 		TargetOutline: Highlight?,
 		Collapsed: boolean,
 		Announced: string,
@@ -74,7 +76,8 @@ function Presenter.Set(
 	goal: Types.TutorialGoal?,
 	saved: { Collapsed: boolean },
 	coaching: boolean?,
-	progress: string?
+	progress: string?,
+	line: string?
 ): ()
 	local key = if goal then goal.id else ""
 	if key ~= self.GoalKey then
@@ -84,6 +87,7 @@ function Presenter.Set(
 	self.Goal = goal
 	self.Coaching = coaching == true
 	self.Progress = progress
+	self.Line = line
 	self.Collapsed = saved.Collapsed
 	self.Focus:Resolve(goal and goal.target)
 	self:Outline(if goal and goal.highlight and self.Focus.Target then self.Focus.Target.model else nil)
@@ -165,11 +169,15 @@ function Presenter.Draw(self: Presenter, _deltaTime: number, page: string): ()
 		return
 	end
 
-	-- A pressing finger promises an action. Cooking/eating need no repeated clicks.
-	if goal.waiting then
+	-- A pressing finger promises an action. Cooking/eating need no repeated clicks. The player
+	-- first gets a moment to find the target alone: the finger follows after PointDelay and the
+	-- dimming spotlight after FocusDelay (urgent steps point at once).
+	local waited = os.clock() - self.EligibleSince
+	local pointAfter = if goal.urgent then 0 else Config.PointDelay
+	if goal.waiting or waited < pointAfter then
 		self.Focus:Hide()
 	else
-		self.Focus:Update()
+		self.Focus:Update(goal.urgent == true or waited >= Config.FocusDelay)
 	end
 
 	local target = self.Focus.Target
@@ -178,6 +186,7 @@ function Presenter.Draw(self: Presenter, _deltaTime: number, page: string): ()
 		-- The bubble owns the step: it stays up, so it never waits behind other toasts.
 		hideToast(self)
 		local shown = table.clone(goal)
+		shown.title = self.Line or goal.title
 		-- A target that is out of reach (a scrolled recipe, a far mixer) says how to reach it.
 		if target and target.message then
 			shown.title = target.message

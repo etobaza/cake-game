@@ -42,7 +42,8 @@ function Focus.Resolve(self: Focus, spec: Types.TutorialTarget?): ()
 	self.Target = if camera then Targets.Resolve(spec, camera.ViewportSize) else nil
 end
 
-function Focus.Update(self: Focus): ()
+--- `dim` adds the darkening spotlight around a GUI target; without it only the finger points.
+function Focus.Update(self: Focus, dim: boolean?): ()
 	local target, spec = self.Target, self.Spec
 	local camera = workspace.CurrentCamera
 
@@ -62,6 +63,7 @@ function Focus.Update(self: Focus): ()
 			IncludeDescendants = spec.kind == "Order" or (spec.kind == "Gui" and spec.id == "UI.HUD.Time"),
 			-- A small order card needs room around it to stand out from the dimmed HUD.
 			Padding = if spec.kind == "Order" then TutorialConfig.OrderFocusPadding else nil,
+			Dim = dim ~= false,
 		})
 		return
 	end

@@ -21,9 +21,11 @@ local Lessons = require(ReplicatedStorage.Shared.Tutorial.Lessons)
 local OrderHandler = require(script.Parent.OrderHandler)
 local Pages = require(ReplicatedStorage.Shared.UI.Stores.Pages)
 local Presenter = require(ReplicatedStorage.Shared.UI.Tutorial.Presenter)
+local Recipes = require(ReplicatedStorage.Shared.Configs.Registries.Recipes)
 local Scenario = require(ReplicatedStorage.Shared.Tutorial.Scenario)
 local Scope = require(ReplicatedStorage.Shared.UI.Scope)
 local TutorialPolicy = require(ReplicatedStorage.Shared.TutorialPolicy)
+local Types = require(ReplicatedStorage.Shared.GameTypes)
 local UIHandler = require(script.Parent.UIHandler)
 
 --[[ Tables ]]--
@@ -46,6 +48,26 @@ local function incomingGuest(cloud: any, session: any): string?
 	end
 
 	return if customer.State == "Arriving" or customer.State == "Queued" then guestId else nil
+end
+
+-- One short line per stage (or optional lesson), so the bubble does not change with every small
+-- step; the pointer and the item tile carry the step itself. Recovery and urgent steps, and steps
+-- outside any stage, keep their own title.
+local function stageLine(cloud: any, session: any, goal: Types.TutorialGoal): string?
+	if goal.recovery or goal.urgent then
+		return nil
+	end
+	local lines = Config.Dialog.Lines
+	-- The evening plan is its own lesson, even during the introduction.
+	if TutorialPolicy.IsActive(cloud) and session.Day.Phase ~= "Summary" then
+		local template = lines.Stages[session.Tutorial.Stage]
+		if not template then
+			return nil
+		end
+		local recipe = Recipes:Get(TutorialPolicy.Recipe(session) or "")
+		return string.format(template, if recipe then recipe.name else "bread")
+	end
+	return if goal.topic then lines.Topics[goal.topic] else nil
 end
 
 local function playerRoom(): string?
@@ -214,10 +236,11 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 	-- The introduction counts its four stages on the bubble.
 	local stage = if TutorialPolicy.IsActive(cloud) then Config.Stages[session.Tutorial.Stage] else nil
 	local progress = if stage then `{stage}/{Config.Stages.Clean}` else nil
+	local line = if goal and not coaching then stageLine(cloud, session, goal) else nil
 	-- Other guides stay quiet while the tutorial is showing the player what to do.
 	self.Guiding = goal ~= nil and not cloud.Tutorial.Collapsed
 	self.TargetId = if goal and goal.target and goal.target.kind == "World" then goal.target.id else nil
-	self.View:Set(goal, cloud.Tutorial, coaching, progress)
+	self.View:Set(goal, cloud.Tutorial, coaching, progress, line)
 	local needsFrame = goal ~= nil or guestId ~= nil or self.Coach:IsPending()
 	if needsFrame and not self.Janitor:Get("Frame") then
 		self.Janitor:Add(

@@ -15,6 +15,7 @@ local SoundService = game:GetService("SoundService")
 local TextService = game:GetService("TextService")
 
 --[[ Modules ]]--
+local Animate = require(script.Parent.Parent.Animate)
 local CatsConfig = require(ReplicatedStorage.Shared.Configs.Cats)
 local Config = require(ReplicatedStorage.Shared.Configs.Tutorial)
 local Ease = require(script.Parent.Parent.Ease)
@@ -41,6 +42,8 @@ local PLATE_INSIDE = 0.35
 local POP_STRENGTH = 1.6
 -- The appear pop starts from this scale.
 local APPEAR_FROM = 0.55
+-- A new item in the tile punches from this scale.
+local ITEM_POP = 0.7
 -- Wide enough that one line never wraps while its natural width is measured.
 local UNWRAPPED_WIDTH = 100000
 -- Extra pixels beside a snug line, so rounding never wraps its last word.
@@ -109,6 +112,8 @@ export type Dialog = typeof(setmetatable(
 		Measuring: string,
 		-- Measured copy: wrapped heights at the widest text width, and the unwrapped line width.
 		Heights: { Title: number, Hint: number, Width: number, Line: number },
+		-- What the item tile shows now ("" for nothing), so a new item can punch.
+		ItemKey: string,
 		Wanted: boolean,
 		-- When the last Hide arrived; a step that returns within the grace keeps the bubble up.
 		HideAt: number?,
@@ -557,10 +562,6 @@ local function moodFor(goal: Types.TutorialGoal): string
 	return moods.Default
 end
 
-local function hasItem(goal: Types.TutorialGoal): boolean
-	return goal.recipeId ~= nil or (goal.itemId ~= nil and goal.itemKind ~= nil)
-end
-
 local function showItem(icon: ImageLabel, goal: Types.TutorialGoal): ()
 	local recipe = goal.recipeId and Recipes:Get(goal.recipeId)
 	if recipe then
@@ -589,6 +590,7 @@ function Dialog.new(acknowledge: (string) -> ()): Dialog
 		Measured = "",
 		Measuring = "",
 		Heights = { Title = 0, Hint = 0, Width = 0, Line = 0 },
+		ItemKey = "",
 		Wanted = false,
 		HideAt = nil,
 		Shown = 0,
@@ -640,14 +642,19 @@ function Dialog.Show(self: Dialog, goal: Types.TutorialGoal, progress: string?):
 	-- One short line reads at a glance; the longer hint stays in the goal data for later use.
 	local hint = if STYLE.ShowHint then goal.hint else ""
 	local button = STYLE.Acknowledge[goal.id]
-	local key = `{goal.id}|{title}|{hint}|{progress or ""}|{button or ""}|{goal.recipeId or goal.itemId or ""}`
+	-- The line only changes with its words: smaller steps inside one stage keep the bubble as it
+	-- is and only refresh its item tile and mood.
+	local key = `{title}|{hint}|{progress or ""}|{button or ""}`
 	local current = self.Current
 	if current and current.Key == key then
 		current.Goal = goal
 		self.Pending = nil
+		self:Refresh(goal)
 		return
 	end
-	if self.Pending and self.Pending.Key == key then
+	local pending = self.Pending
+	if pending and pending.Key == key then
+		pending.Goal = goal
 		return
 	end
 	local titlePlain = plain(title)
@@ -662,9 +669,10 @@ function Dialog.Show(self: Dialog, goal: Types.TutorialGoal, progress: string?):
 		Button = button,
 		Mood = moodFor(goal),
 	}
-	-- The same step with new wording (a live count, a seat number) redraws without the stamp.
-	if not current or self.Shown < 1 or current.Goal.id == goal.id then
-		self:Present(content, current ~= nil and current.Goal.id == goal.id)
+	-- The same words with a new badge or button redraw at once, without typing or the stamp.
+	local sameLine = current ~= nil and current.Title == content.Title and current.Hint == content.Hint
+	if not current or self.Shown < 1 or sameLine then
+		self:Present(content, sameLine)
 		return
 	end
 	self.Pending = content
@@ -704,18 +712,37 @@ function Dialog.Present(self: Dialog, content: Content, instant: boolean): ()
 	local view = self.View
 	view.Title.Text = content.Title
 	view.Hint.Text = content.Hint
-	view.Title.MaxVisibleGraphemes = 0
-	view.Hint.MaxVisibleGraphemes = 0
-	self:SetMood(content.Mood)
+	view.Title.MaxVisibleGraphemes = if self.Typed > 0 then -1 else 0
+	view.Hint.MaxVisibleGraphemes = if self.Typed > 0 then -1 else 0
 	view.Badge.Text = content.Progress or ""
 	view.Badge.Visible = content.Progress ~= nil and os.clock() >= self.DoneUntil
 	view.Button.Text = content.Button or ""
 	view.Button.Visible = content.Button ~= nil
-	view.Item.Visible = hasItem(content.Goal)
-	if view.Item.Visible then
-		showItem(view.ItemIcon, content.Goal)
-	end
+	self:Refresh(content.Goal)
 	self:Layout()
+end
+
+-- The parts that follow every small step: the mentor's mood and the item tile (a new item punches
+-- so the eye goes to it).
+function Dialog.Refresh(self: Dialog, goal: Types.TutorialGoal): ()
+	local view = self.View
+	if os.clock() >= self.DoneUntil then
+		self:SetMood(moodFor(goal))
+	end
+	local item = if goal.recipeId then `Recipe:{goal.recipeId}` elseif goal.itemId then `{goal.itemKind}:{goal.itemId}` else ""
+	if item == self.ItemKey then
+		return
+	end
+	local wasVisible = view.Item.Visible
+	self.ItemKey = item
+	view.Item.Visible = item ~= ""
+	if item ~= "" then
+		showItem(view.ItemIcon, goal)
+		Animate.Pop(view.Item, ITEM_POP)
+	end
+	if wasVisible ~= view.Item.Visible then
+		self:Layout()
+	end
 end
 
 function Dialog.SetMood(self: Dialog, mood: string): ()

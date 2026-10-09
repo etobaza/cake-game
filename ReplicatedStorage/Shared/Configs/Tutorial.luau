@@ -22,6 +22,10 @@ return {
 	SuccessSeconds = 4,
 	RefreshInterval = 0.15,
 	GoalSettleSeconds = 0.25,
+	-- A new step first lets the player look for the target alone: the finger and arrows follow
+	-- after PointDelay, and the dimming spotlight around a GUI target after FocusDelay.
+	PointDelay = 2.5,
+	FocusDelay = 7,
 	ReminderSeconds = 18,
 	GuestHighlight = {
 		Color = Color3.fromRGB(255, 221, 128),
@@ -163,6 +167,24 @@ return {
 		MinShowSeconds = 1.4,
 		DoneSeconds = 0.75,
 		DoneText = "Done!",
+		-- The bubble's line per introduction stage (%s is the recipe) and per optional lesson
+		-- topic. Steps inside a stage share its line; recovery and urgent steps keep their own.
+		Lines = {
+			Stages = {
+				Sweep = "Tidy the {kitchen}",
+				Cook = "Bake {%s}",
+				Serve = "Serve your {guest}",
+				Clean = "Clean the {table}",
+			} :: { [string]: string },
+			Topics = {
+				Cooking = "Finish your {bake}",
+				Floor = "Sweep the {spill}",
+				Display = "Stock the {display}",
+				Garden = "Tend the {garden}",
+				Cart = "Use the {cart}",
+				NextDay = "Plan {tomorrow}",
+			} :: { [string]: string },
+		},
 		-- Read-only steps the player can acknowledge from the bubble itself.
 		Acknowledge = { order_card = "Got it" } :: { [string]: string },
 	},
