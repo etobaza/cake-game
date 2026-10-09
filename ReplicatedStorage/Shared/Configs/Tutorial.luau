@@ -22,8 +22,9 @@ return {
 	SuccessSeconds = 4,
 	RefreshInterval = 0.15,
 	GoalSettleSeconds = 0.25,
-	-- A new step first lets the player look for the target alone: the finger and arrows follow
-	-- after PointDelay, and the dimming spotlight around a GUI target after FocusDelay.
+	-- A new step on a screen target (HUD, page, order card) first lets the player look alone: the
+	-- finger follows after PointDelay and the dimming spotlight after FocusDelay. World targets get
+	-- the arrows and finger at once.
 	PointDelay = 2.5,
 	FocusDelay = 7,
 	ReminderSeconds = 18,
