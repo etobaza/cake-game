@@ -24,6 +24,8 @@ local Presenter = require(ReplicatedStorage.Shared.UI.Tutorial.Presenter)
 local Recipes = require(ReplicatedStorage.Shared.Configs.Registries.Recipes)
 local Scenario = require(ReplicatedStorage.Shared.Tutorial.Scenario)
 local Scope = require(ReplicatedStorage.Shared.UI.Scope)
+local TopbarHandler = require(script.Parent.TopbarHandler)
+local Animate = require(ReplicatedStorage.Shared.UI.Animate)
 local TutorialPolicy = require(ReplicatedStorage.Shared.TutorialPolicy)
 local Types = require(ReplicatedStorage.Shared.GameTypes)
 local UIHandler = require(script.Parent.UIHandler)
@@ -31,7 +33,7 @@ local UIHandler = require(script.Parent.UIHandler)
 --[[ Tables ]]--
 local TutorialHandler = {
 	-- Resolve authored targets after the data, screen and world-prompt owners are ready.
-	dependencies = { "DataClient", "UIHandler", "InteractHandler", "PromptHandler", "OrderHandler" },
+	dependencies = { "DataClient", "UIHandler", "InteractHandler", "PromptHandler", "OrderHandler", "TopbarHandler" },
 	priority = 70,
 }
 
@@ -68,6 +70,42 @@ local function stageLine(cloud: any, session: any, goal: Types.TutorialGoal): st
 		return string.format(template, if recipe then recipe.name else "bread")
 	end
 	return if goal.topic then lines.Topics[goal.topic] else nil
+end
+
+-- The HUD buttons the introduction keeps hidden (all side buttons but the shop) and the topbar
+-- row. When it ends they arrive one after another with a pop.
+local function setHudLocked(self: any, locked: boolean): ()
+	if self.HudLocked == locked then
+		return
+	end
+	local first = self.HudLocked == nil
+	self.HudLocked = locked
+	TopbarHandler:SetVisible(not locked)
+	local found, side = pcall(function(): Instance
+		return UIHandler:GetHud("SideBtns")
+	end)
+	if not found then
+		return
+	end
+	local order = 0
+	for _, button in side:GetChildren() do
+		if not button:IsA("GuiObject") or table.find(Config.HudDuringIntro, button.Name) then
+			continue
+		end
+		if locked then
+			button.Visible = false
+			continue
+		end
+		button.Visible = true
+		if not first then
+			order += 1
+			task.delay(order * Config.HudRevealStagger, function(): ()
+				if button.Parent then
+					Animate.Pop(button, 0.4)
+				end
+			end)
+		end
+	end
 end
 
 local function playerRoom(): string?
@@ -194,6 +232,7 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 		self.GuestHighlight:Clear()
 		return
 	end
+	setHudLocked(self, TutorialPolicy.IsActive(cloud))
 	local guestId = incomingGuest(cloud, session)
 	self.GuestHighlight:Update(guestId)
 	local props = Interact:GetOwnedIds()
@@ -278,6 +317,8 @@ export type TutorialHandler = typeof(TutorialHandler) & {
 	Guiding: boolean?,
 	-- The world target the shown goal points at, if any.
 	TargetId: string?,
+	-- Whether the introduction currently keeps the HUD buttons hidden; nil before the first check.
+	HudLocked: boolean?,
 	-- The guest whose order card the player tapped.
 	OrderSeen: string?,
 	-- The cart lesson's load prompt was shown, and its dismissal was sent.

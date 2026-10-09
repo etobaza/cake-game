@@ -135,6 +135,13 @@ function TopbarHandler.CreateIcon(
 	return icon
 end
 
+--- Shows or hides every icon; the introduction keeps the row away until it ends.
+function TopbarHandler.SetVisible(self: TopbarHandler, visible: boolean): ()
+	for _, icon in self.Icons do
+		icon:setEnabled(visible)
+	end
+end
+
 export type TopbarHandler = typeof(TopbarHandler) & {
 	Janitor: any,
 	Icons: { [string]: TopbarIcon.Icon },

@@ -45,6 +45,7 @@ local Signal = require(_Libs.Signal)
 local Station = require(script.Kinds.Station)
 local TickHandler = require(_Handlers.TickHandler)
 local TutorialEvents = require(ServerScriptService.TutorialEvents)
+local TutorialPolicy = require(_Shared.TutorialPolicy)
 local TrashView = require(script.TrashView)
 local TableMenuView = require(script.TableMenuView)
 local UpgradeHandler = require(_Handlers.UpgradeHandler)
@@ -552,6 +553,10 @@ function BuildingHandler.SelectRecipe(self: BuildingHandler, player: Player, rec
 
 	if not DayCycleHandler:IsOnMenu(player, recipeId) then
 		Bus.Progress.ActionFailed:FireClient(player, "not_on_menu")
+		return false
+	end
+	-- The introduction teaches one dish; the client only offers that one too.
+	if TutorialPolicy.IsActive(data.Cloud) and recipeId ~= TutorialPolicy.Recipe(data.Session) then
 		return false
 	end
 

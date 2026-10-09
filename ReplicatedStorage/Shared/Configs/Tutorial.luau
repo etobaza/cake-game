@@ -27,6 +27,10 @@ return {
 	-- the arrows and finger at once.
 	PointDelay = 2.5,
 	FocusDelay = 7,
+	-- The only side buttons shown during the introduction; the rest (and the topbar row) arrive
+	-- this many seconds apart once it ends.
+	HudDuringIntro = { "Shop" },
+	HudRevealStagger = 0.18,
 	ReminderSeconds = 18,
 	GuestHighlight = {
 		Color = Color3.fromRGB(255, 221, 128),

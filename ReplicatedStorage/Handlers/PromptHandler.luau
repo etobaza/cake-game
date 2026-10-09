@@ -56,6 +56,11 @@ local PRESS_POP = 0.86
 -- text with a small punch, instead of replaying the whole entrance.
 local SWAP_SECONDS = 0.3
 local SWAP_POP = 0.94
+-- A status-only plate (a busy station) is a smaller card with its one line centred and larger.
+local STATUS_CARD_SCALE = 0.7
+local STATUS_NAME_POSITION = UDim2.fromScale(0.5, 0.5)
+local STATUS_NAME_SIZE = UDim2.fromScale(0.9, 0.5)
+local STATUS_TEXT_SIZE = 30
 
 --[[ Tables ]]--
 local PromptHandler = {
@@ -411,6 +416,7 @@ function PromptHandler.Refresh(self: PromptHandler, prompt: ProximityPrompt): ()
 	if action and action:IsA("GuiObject") then
 		action.Visible = actionable
 	end
+	self:StatusLayout(root, not actionable)
 
 	-- The art stacks one icon per input kind (plus spare variants); exactly one is up.
 	local chosen = pickIcon()
@@ -426,6 +432,47 @@ function PromptHandler.Refresh(self: PromptHandler, prompt: ProximityPrompt): ()
 			child.Visible = wanted
 			shown = shown or wanted
 		end
+	end
+end
+
+type Authored = {
+	Size: UDim2,
+	Position: UDim2,
+	NameSize: UDim2,
+	Limits: { [UITextSizeConstraint]: number },
+}
+
+local function remember(billboard: BillboardGui, name: GuiObject): Authored
+	local limits = {}
+	for _, constraint in name:GetDescendants() do
+		if constraint:IsA("UITextSizeConstraint") then
+			limits[constraint] = constraint.MaxTextSize
+		end
+	end
+	return { Size = billboard.Size, Position = name.Position, NameSize = name.Size, Limits = limits }
+end
+
+-- Remembers the authored name plate, then switches between it and the compact status card.
+function PromptHandler.StatusLayout(self: PromptHandler, root: Frame, status: boolean): ()
+	local billboard = self.Billboard
+	local name = root:FindFirstChild("Name")
+	if not billboard or not name or not name:IsA("GuiObject") then
+		return
+	end
+	local authored = self.Authored or remember(billboard, name)
+	self.Authored = authored
+	billboard.Size = if status
+		then UDim2.new(
+			authored.Size.X.Scale * STATUS_CARD_SCALE,
+			authored.Size.X.Offset * STATUS_CARD_SCALE,
+			authored.Size.Y.Scale * STATUS_CARD_SCALE,
+			authored.Size.Y.Offset * STATUS_CARD_SCALE
+		)
+		else authored.Size
+	name.Position = if status then STATUS_NAME_POSITION else authored.Position
+	name.Size = if status then STATUS_NAME_SIZE else authored.NameSize
+	for constraint, size in authored.Limits do
+		constraint.MaxTextSize = if status then STATUS_TEXT_SIZE else size
 	end
 end
 
@@ -446,6 +493,8 @@ export type PromptHandler = typeof(PromptHandler) & {
 	Current: ProximityPrompt?,
 	-- When the plate last lost its prompt; see SWAP_SECONDS.
 	HiddenAt: number,
+	-- The authored billboard size and name plate, restored when a status card turns actionable.
+	Authored: Authored?,
 	ScreenOffset: Vector2,
 	Highlight: InteractionHighlight.InteractionHighlight,
 }

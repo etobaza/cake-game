@@ -31,6 +31,7 @@ local Ingredients = require(_Configs.Registries.Ingredients)
 local GardenSource = require(_Shared.GardenSource)
 local Press = require(_Shared.UI.Press)
 local Recipes = require(_Configs.Registries.Recipes)
+local TutorialPolicy = require(_Shared.TutorialPolicy)
 local UIHandler = require(_Handlers.UIHandler)
 
 --[[ Constants ]]--
@@ -175,13 +176,17 @@ local function SelectedRecipe(): Recipes.RecipeEntry?
 end
 
 -- Today's menu, as the mixer sees it: coffee and anything else that starts elsewhere is left out.
+-- During the introduction only its dish is offered, so the first bake cannot wander off.
 local function MixerMenu(): { Recipes.RecipeEntry }
 	local menu = DataClient:GetData({ "Day", "Menu" }, "Session") or {}
+	local cloud = DataClient:GetData({}, "Cloud")
+	local session = DataClient:GetData({}, "Session")
+	local only = if cloud and session and TutorialPolicy.IsActive(cloud) then TutorialPolicy.Recipe(session) else nil
 	local offered = {}
 
 	for index = 1, #menu do
 		local recipe = Recipes:Get(menu[index])
-		if recipe and Recipes:GetStartStation(recipe) == STATION_KIND then
+		if recipe and Recipes:GetStartStation(recipe) == STATION_KIND and (not only or recipe.id == only) then
 			offered[#offered + 1] = recipe
 		end
 	end
@@ -217,6 +222,13 @@ function RecipePickHandler.OnStart(self: RecipePickHandler): ()
 
 	DataClient:WaitForData()
 	self:Refresh()
+	-- Finishing the introduction opens the whole menu again.
+	self.Janitor:Add(
+		DataClient:SubscribeToPath({ "Tutorial", "Status" }, function()
+			self:Refresh()
+		end, "Cloud", true),
+		"Disconnect"
+	)
 	for _, path in { { "Pantry" }, { "Garden" }, { "Base", "Upgrades" } } do
 		self.Janitor:Add(
 			DataClient:SubscribeToPath(path, function()
@@ -226,7 +238,8 @@ function RecipePickHandler.OnStart(self: RecipePickHandler): ()
 		)
 	end
 
-	for _, path in { { "Day", "Menu" }, { "Cooking" }, { "Stations" } } do
+	-- The tutorial's guest and progress decide whether the menu is limited to its dish.
+	for _, path in { { "Day", "Menu" }, { "Cooking" }, { "Stations" }, { "Tutorial" } } do
 		self.Janitor:Add(
 			DataClient:SubscribeToPath(path, function()
 				self:Refresh()
