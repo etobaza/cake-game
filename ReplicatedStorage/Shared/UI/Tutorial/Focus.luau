@@ -7,6 +7,7 @@ local Interact = require(ReplicatedStorage.Handlers.InteractHandler)
 local PromptHandler = require(ReplicatedStorage.Handlers.PromptHandler)
 local Geometry = require(script.Parent.Geometry)
 local Targets = require(script.Parent.Targets)
+local TutorialConfig = require(ReplicatedStorage.Shared.Configs.Tutorial)
 local Types = require(ReplicatedStorage.Shared.GameTypes)
 
 local Focus = {}
@@ -56,8 +57,11 @@ function Focus.Update(self: Focus): ()
 	if target.gui then
 		self.Hint:Gui(target.gui, {
 			Key = key,
-			-- The sign, ribbon and time label extend outside their transparent clock container.
-			IncludeDescendants = spec.kind == "Gui" and spec.id == "UI.HUD.Time",
+			-- The sign, ribbon and time label extend outside their transparent clock container; an
+			-- order card's art grows past its frame on hover and its seat badge sits outside it.
+			IncludeDescendants = spec.kind == "Order" or (spec.kind == "Gui" and spec.id == "UI.HUD.Time"),
+			-- A small order card needs room around it to stand out from the dimmed HUD.
+			Padding = if spec.kind == "Order" then TutorialConfig.OrderFocusPadding else nil,
 		})
 		return
 	end

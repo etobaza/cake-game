@@ -187,13 +187,9 @@ end
 
 function ToolReturnHandler.Step(self: ToolReturnHandler): ()
 	local ghost = self.Ghost
-	-- The tutorial owns the player's attention while it shows a goal: no outline, no second beam.
-	local guiding = TutorialHandler.Guiding == true
-	local outline = ghost and ghost:FindFirstChildOfClass("Highlight")
-	if outline then
-		outline.Enabled = not guiding
-	end
-	if not ghost or not ghost.Parent or guiding then
+	-- The outline always shows; while the tutorial shows a goal its beam owns the player's
+	-- attention, so the beam back to the rack waits.
+	if not ghost or not ghost.Parent or TutorialHandler.Guiding == true then
 		self.Beam:Hide()
 		return
 	end

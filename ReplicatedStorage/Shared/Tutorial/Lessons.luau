@@ -6,18 +6,23 @@
 local Buildings = require(script.Parent.Parent.Configs.Buildings)
 local Cooking = require(script.Parent.Cooking)
 local Garden = require(script.Parent.Parent.Configs.Garden)
-local Ingredients = require(script.Parent.Parent.Configs.Registries.Ingredients)
+local GardenSource = require(script.Parent.Parent.GardenSource)
 local State = require(script.Parent.State)
 local Types = require(script.Parent.Parent.GameTypes)
+
+--[[ Constants ]]--
+local GARDEN_ROOM = "Garden"
+-- Orders are rolled when a guest spawns, so a guest still on the way or choosing already has one.
+local UNSERVED = { Queued = true, Arriving = true, Choosing = true, Waiting = true }
 
 --[[ Tables ]]--
 local Lessons = {}
 
 --[[ Private Functions ]]--
--- A dish a seated guest is waiting for belongs at their table, not on the display.
+-- A dish a table guest still has to receive belongs at their table, not on the display.
 local function ordered(session: any, recipeId: string): boolean
 	for _, customer in session.Customers do
-		if customer.State == "Waiting" and table.find(customer.Orders, recipeId) then
+		if customer.Kind ~= "Display" and UNSERVED[customer.State] and table.find(customer.Orders, recipeId) then
 			return true
 		end
 	end
@@ -27,6 +32,57 @@ end
 local function wanted(cloud: any, topic: string): boolean
 	local lessons = cloud.Tutorial.Lessons
 	return not lessons[topic] and not lessons["Dismissed:" .. topic]
+end
+
+-- Produce harvested in the garden itself. Milk and eggs come out of kitchen baskets, so the cart
+-- has nothing to carry for them.
+local function grownInGarden(ingredientId: string): boolean
+	local _, source = GardenSource.Find(ingredientId)
+	return source ~= nil and source.OutputPath == nil
+end
+
+local function delivered(cloud: any): boolean
+	for _, cart in cloud.GardenCart.Carts do
+		if cart.Arrived then
+			return true
+		end
+	end
+	return false
+end
+
+-- The cart is taught in two moments: loading garden produce while standing in the garden, then
+-- collecting the first delivery once it has arrived. Carrying produce indoors by hand after the
+-- first prompt retires the lesson (TutorialHandler sends the dismissal).
+local function cart(cloud: any, session: any, props: any, room: string?): Types.TutorialGoal?
+	if not wanted(cloud, "Cart") or not props.rail_cart then
+		return nil
+	end
+	if not cloud.Tutorial.Actions.LoadedCart then
+		local held = session.Hands[1]
+		if room ~= GARDEN_ROOM or not held or held.Kind ~= "Ingredient" or not grownInGarden(held.Id) then
+			return nil
+		end
+		return State.Goal(
+			"cart_load",
+			"Send this ingredient to the kitchen",
+			"Load the cart; it makes the trip and returns by itself.",
+			"rail_cart"
+		)
+	end
+	if not delivered(cloud) then
+		return nil
+	end
+	-- A busy hand waits: an arrival is no reason to send the player off to return a tool.
+	local _, ready = State.FreeHands(session, props, "", false)
+	if not ready then
+		return nil
+	end
+	return State.Goal(
+		"cart_take",
+		"Collect your kitchen delivery",
+		"The rail output stores delivered produce. Take one ingredient at a time.",
+		"rail_output"
+	)
 end
 
 local function floor(cloud: any, session: any, props: any): Types.TutorialGoal?
@@ -84,8 +140,15 @@ local function garden(cloud: any, session: any, props: any): Types.TutorialGoal?
 		end
 	end
 	table.sort(ids)
-	local id = ids[1]
-	return if id then Cooking.Garden(cloud, session, props, id, Garden.Sources[id], false) else nil
+	-- Growing produce needs nothing from the player; a waiting goal here would only silence the
+	-- other guides for the whole morning.
+	for _, id in ids do
+		local goal = Cooking.Garden(cloud, session, props, id, Garden.Sources[id], false)
+		if goal and not goal.waiting then
+			return goal
+		end
+	end
+	return nil
 end
 
 --[[ Handling ]]--
@@ -113,7 +176,21 @@ function Lessons.Summary(session: any, page: string): Types.TutorialGoal
 	return goal
 end
 
-function Lessons.Resolve(cloud: any, session: any, props: any, page: string): Types.TutorialGoal?
+-- Whether the cart lesson is waiting for its first load while the player carries garden produce
+-- somewhere other than the garden: they chose to walk it in by hand.
+function Lessons.CarriedPastCart(cloud: any, session: any, props: any, room: string?): boolean
+	local held = session.Hands[1]
+	return wanted(cloud, "Cart")
+		and props.rail_cart == true
+		and not cloud.Tutorial.Actions.LoadedCart
+		and room ~= nil
+		and room ~= GARDEN_ROOM
+		and held ~= nil
+		and held.Kind == "Ingredient"
+		and grownInGarden(held.Id)
+end
+
+function Lessons.Resolve(cloud: any, session: any, props: any, page: string, room: string?): Types.TutorialGoal?
 	if page ~= "None" then
 		return nil
 	end
@@ -162,31 +239,10 @@ function Lessons.Resolve(cloud: any, session: any, props: any, page: string): Ty
 			return goal
 		end
 	end
-	if wanted(cloud, "Cart") and props.rail_cart then
-		local goal: Types.TutorialGoal? = nil
-		if held and held.Kind == "Ingredient" and not Ingredients:IsInfinite(held.Id) then
-			goal = State.Goal(
-				"cart_load",
-				"Send this ingredient to the kitchen",
-				"Load the cart; it makes the trip and returns by itself.",
-				"rail_cart"
-			)
-		elseif #cloud.GardenCart.Queue > 0 then
-			local free, ready =
-				State.FreeHands(session, props, "Free your hand before collecting a delivery.", false)
-			goal = if ready
-				then State.Goal(
-					"cart_take",
-					"Collect your kitchen delivery",
-					"The rail output stores delivered produce. Take one ingredient at a time.",
-					"rail_output"
-				)
-				else free
-		end
-		if goal then
-			goal.topic = "Cart"
-			return goal
-		end
+	local cartGoal = cart(cloud, session, props, room)
+	if cartGoal then
+		cartGoal.topic = "Cart"
+		return cartGoal
 	end
 	local gardenGoal = garden(cloud, session, props)
 	if gardenGoal then

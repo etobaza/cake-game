@@ -2,6 +2,7 @@
 -- One guest's speech bubble: the ordered dishes, their names, the seat number and the patience left.
 
 --[[ Services ]]--
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --[[ References ]]--
@@ -103,7 +104,9 @@ function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup): Bub
 	-- patience bar would both vanish.
 	billboard.AlwaysOnTop = false
 	billboard.LightInfluence = 0
-	billboard.ZIndexBehavior = Enum.ZIndexBehavior.Global
+	-- A CanvasGroup only draws under Sibling ordering; under Global the patience bar stays empty.
+	-- Sibling ZIndex values below are ordered within each parent.
+	billboard.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 	local panel = Instance.new("Frame")
 	panel.Name = "Panel"
@@ -234,7 +237,10 @@ function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup): Bub
 		end
 	end, true)
 	self.Janitor:Add(billboard, "Destroy")
-	billboard.Parent = model
+	-- A ViewportFrame draws nothing inside a BillboardGui that lives in the Workspace; under
+	-- PlayerGui, with the head as Adornee, the dish preview renders. The handler destroys the bubble
+	-- once its guest model is gone.
+	billboard.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 	Animate.Pop(panel, Config.Pop.Appear)
 	return self
 end

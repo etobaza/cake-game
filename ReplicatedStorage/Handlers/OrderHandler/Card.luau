@@ -36,7 +36,7 @@ local function drawFill(clip: Frame, fill: Frame, value: number): ()
 end
 
 --[[ Handling ]]--
-function Card.new(root: Frame, tooltip: Tooltip): Card
+function Card.new(root: Frame, tooltip: Tooltip, onTap: (customerId: string) -> ()): Card
 	local slot = root:FindFirstChild("Slot") :: Frame
 	local header = root:FindFirstChild("Header") :: Frame
 	header.Visible = false
@@ -74,6 +74,9 @@ function Card.new(root: Frame, tooltip: Tooltip): Card
 				self.Tooltip.ActiveCard = self.Root
 			end
 			self:RefreshHeader()
+			if self.CustomerId then
+				onTap(self.CustomerId)
+			end
 		end),
 		"Destroy"
 	)

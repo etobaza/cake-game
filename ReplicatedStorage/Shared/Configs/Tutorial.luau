@@ -9,7 +9,11 @@ return {
 	RecommendedRecipe = "bread",
 	FirstGuestType = "regular",
 	FirstBakeGrace = 30,
-	OrderPreviewSeconds = 2.5,
+	-- The first order card stays in focus until the player taps it; this is only the fallback for
+	-- players who cannot tap it (gamepad).
+	OrderPreviewSeconds = 20,
+	-- Extra room around the order card's spotlight, in pixels.
+	OrderFocusPadding = 22,
 	SuccessSeconds = 4,
 	RefreshInterval = 0.15,
 	GoalSettleSeconds = 0.25,

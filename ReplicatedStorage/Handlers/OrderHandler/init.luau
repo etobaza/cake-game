@@ -18,6 +18,7 @@ local Config = require(_Shared.Configs.Orders)
 local DataClient = require(_Handlers.DataHandlerClient)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Recipes = require(_Shared.Configs.Registries.Recipes)
+local Signal = require(_Shared.Libs.Signal)
 local Tables = require(_Shared.Configs.TableMenus)
 local UIHandler = require(_Handlers.UIHandler)
 
@@ -25,11 +26,17 @@ local UIHandler = require(_Handlers.UIHandler)
 local OrderHandler = {
 	dependencies = { "DataClient", "UIHandler" },
 	priority = 80,
+	-- Fires with the guest's id when the local player taps an order card.
+	Tapped = Signal() :: Signal.Signal<string>,
 }
 
 type Order = { CustomerId: string, Customer: any }
 
 --[[ Private Functions ]]--
+local function tapped(customerId: string): ()
+	OrderHandler.Tapped:Fire(customerId)
+end
+
 local function collectOrders(): { Order }
 	local orders: { Order } = {}
 	local customers = DataClient:GetData({ "Customers" }, "Session") or {}
@@ -123,7 +130,7 @@ function OrderHandler.OnStart(self: OrderHandler): ()
 		local root = container:FindFirstChild(tostring(index)) :: Frame
 		root.LayoutOrder = index
 		root.Parent = scroll
-		local card = Card.new(root, self.Tooltip)
+		local card = Card.new(root, self.Tooltip, tapped)
 		self.Cards[index] = card
 		self.Janitor:Add(card, "Destroy")
 	end
@@ -170,7 +177,7 @@ function OrderHandler.Refresh(self: OrderHandler): ()
 		root.Name = tostring(#self.Cards + 1)
 		root.LayoutOrder = #self.Cards + 1
 		root.Parent = self.Scroll
-		local card = Card.new(root, self.Tooltip)
+		local card = Card.new(root, self.Tooltip, tapped)
 		table.insert(self.Cards, card)
 		self.Janitor:Add(root, "Destroy")
 		self.Janitor:Add(card, "Destroy")

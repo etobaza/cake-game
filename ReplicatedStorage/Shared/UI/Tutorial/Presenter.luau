@@ -99,8 +99,7 @@ function Presenter.Draw(self: Presenter, _deltaTime: number, page: string): ()
 	end
 
 	-- A pressing finger promises an action. Cooking/eating need no repeated clicks.
-	local readingOrder = goal.target and goal.target.kind == "Order"
-	if goal.waiting and not readingOrder then
+	if goal.waiting then
 		self.Focus:Hide()
 	else
 		self.Focus:Update()

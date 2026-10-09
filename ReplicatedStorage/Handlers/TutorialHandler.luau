@@ -13,8 +13,11 @@ local Config = require(ReplicatedStorage.Shared.Configs.Tutorial)
 local DataClient = require(script.Parent.DataHandlerClient)
 local Flux = require(ReplicatedStorage.Packages.flux)
 local GuestHighlight = require(ReplicatedStorage.Shared.UI.Tutorial.GuestHighlight)
+local HintRoute = require(ReplicatedStorage.Shared.UI.HintRoute)
 local Interact = require(script.Parent.InteractHandler)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local Lessons = require(ReplicatedStorage.Shared.Tutorial.Lessons)
+local OrderHandler = require(script.Parent.OrderHandler)
 local Pages = require(ReplicatedStorage.Shared.UI.Stores.Pages)
 local Presenter = require(ReplicatedStorage.Shared.UI.Tutorial.Presenter)
 local Scenario = require(ReplicatedStorage.Shared.Tutorial.Scenario)
@@ -25,7 +28,7 @@ local UIHandler = require(script.Parent.UIHandler)
 --[[ Tables ]]--
 local TutorialHandler = {
 	-- Resolve authored targets after the data, screen and world-prompt owners are ready.
-	dependencies = { "DataClient", "UIHandler", "InteractHandler", "PromptHandler" },
+	dependencies = { "DataClient", "UIHandler", "InteractHandler", "PromptHandler", "OrderHandler" },
 	priority = 70,
 }
 
@@ -42,6 +45,12 @@ local function incomingGuest(cloud: any, session: any): string?
 	end
 
 	return if customer.State == "Arriving" or customer.State == "Queued" then guestId else nil
+end
+
+local function playerRoom(): string?
+	local character = Players.LocalPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	return if root and root:IsA("BasePart") then HintRoute.Room(root.Position) else nil
 end
 
 local function bindViewport(self: any): ()
@@ -104,6 +113,14 @@ function TutorialHandler.OnStart(self: TutorialHandler): ()
 		end),
 		"Disconnect"
 	)
+	-- Tapping the first order card ends its preview step.
+	self.Janitor:Add(
+		OrderHandler.Tapped:Connect(function(customerId: string): ()
+			self.OrderSeen = customerId
+			self:Refresh()
+		end),
+		"Disconnect"
+	)
 	self.Janitor:Add(
 		Players.LocalPlayer.CharacterAdded:Connect(function(): ()
 			self:Refresh()
@@ -151,7 +168,21 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 	self.GuestHighlight:Update(guestId)
 	local props = Interact:GetOwnedIds()
 	local now = workspace:GetServerTimeNow()
-	local goal = Scenario.Resolve(cloud, session, props, self.Page, now, Pages.CanOpen(Pages.Names.None))
+	local room = playerRoom()
+	-- Walking garden produce indoors after the cart was pointed out means the player prefers their
+	-- hands: retire the lesson instead of asking again at every harvest.
+	if self.CartPrompted and not self.CartDismissed and Lessons.CarriedPastCart(cloud, session, props, room) then
+		self.CartDismissed = true
+		Bus.Tutorial.Control:Fire("Dismiss", "Cart")
+	end
+	local goal = Scenario.Resolve(cloud, session, props, self.Page, now, {
+		canClose = Pages.CanOpen(Pages.Names.None),
+		orderSeen = self.OrderSeen,
+		room = room,
+	})
+	if goal and goal.id == "cart_load" then
+		self.CartPrompted = true
+	end
 	-- After the introduction, coaching fills the gaps the optional lessons leave.
 	if goal or TutorialPolicy.IsActive(cloud) or cloud.Tutorial.Collapsed then
 		self.Coach:Reset()
@@ -205,6 +236,11 @@ export type TutorialHandler = typeof(TutorialHandler) & {
 	Page: string,
 	Elapsed: number,
 	Guiding: boolean?,
+	-- The guest whose order card the player tapped.
+	OrderSeen: string?,
+	-- The cart lesson's load prompt was shown, and its dismissal was sent.
+	CartPrompted: boolean?,
+	CartDismissed: boolean?,
 }
 
 return TutorialHandler :: TutorialHandler

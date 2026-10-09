@@ -89,7 +89,14 @@ local function clean(session: any, now: number): Types.TutorialGoal
 	)
 end
 
-local function serve(session: any, now: number): Types.TutorialGoal
+-- The first order card is shown until the player taps it (or the fallback runs out).
+local function previewing(session: any, customer: any, now: number, orderSeen: string?): boolean
+	return customer.State == "Waiting"
+		and orderSeen ~= session.Tutorial.GuestId
+		and now - customer.OrderStartedAt < Config.OrderPreviewSeconds
+end
+
+local function serve(session: any, now: number, orderSeen: string?): Types.TutorialGoal
 	local context = session.Tutorial
 	local customer = session.Customers[context.GuestId]
 	if session.Day.Phase == "Prep" then
@@ -119,15 +126,14 @@ local function serve(session: any, now: number): Types.TutorialGoal
 			customer.SeatIndex or 1
 		)
 	end
-	if now - customer.OrderStartedAt < Config.OrderPreviewSeconds then
+	if previewing(session, customer, now, orderSeen) then
 		local goal = State.Goal(
 			"order_card",
 			"This is your guest's order",
-			"The card shows the dish and table.seat number. Bring the matching dish to that place.",
+			"Tap the card to see the dish. Its number is the seat to bring that dish to.",
 			nil
 		)
 		goal.target = { kind = "Order", id = context.GuestId }
-		goal.waiting = true
 		return goal
 	end
 	return State.SeatGoal(
@@ -140,7 +146,14 @@ local function serve(session: any, now: number): Types.TutorialGoal
 end
 
 --[[ Handling ]]--
-local function resolve(cloud: any, session: any, props: any, page: string, now: number): Types.TutorialGoal?
+local function resolve(
+	cloud: any,
+	session: any,
+	props: any,
+	page: string,
+	now: number,
+	facts: Types.TutorialContext
+): Types.TutorialGoal?
 	local active = Policy.IsActive(cloud)
 	if session.Day.Phase == "Summary" then
 		return if not cloud.Tutorial.Lessons.NextDay and not cloud.Tutorial.Lessons["Dismissed:NextDay"]
@@ -168,7 +181,7 @@ local function resolve(cloud: any, session: any, props: any, page: string, now: 
 		return urgent
 	end
 	if not active then
-		return Lessons.Resolve(cloud, session, props, page)
+		return Lessons.Resolve(cloud, session, props, page, facts.room)
 	end
 	local context = session.Tutorial
 	if context.Stage == "Sweep" then
@@ -188,10 +201,10 @@ local function resolve(cloud: any, session: any, props: any, page: string, now: 
 		customer
 		and (
 			customer.State == "Choosing"
-			or (customer.State == "Waiting" and now - customer.OrderStartedAt < Config.OrderPreviewSeconds)
+			or previewing(session, customer, now, facts.orderSeen)
 		)
 	then
-		local goal = serve(session, now)
+		local goal = serve(session, now, facts.orderSeen)
 		goal.recipeId = recipe.id
 		return goal
 	end
@@ -201,7 +214,7 @@ local function resolve(cloud: any, session: any, props: any, page: string, now: 
 		return goal
 	end
 	if held and held.Kind == "Dish" then
-		local serving = serve(session, now)
+		local serving = serve(session, now, facts.orderSeen)
 		serving.recipeId = held.Id
 		return serving
 	end
@@ -214,9 +227,10 @@ function Scenario.Resolve(
 	props: any,
 	page: string,
 	now: number,
-	canClose: boolean?
+	facts: Types.TutorialContext?
 ): Types.TutorialGoal?
-	return Navigation.Resolve(resolve(cloud, session, props, page, now), page, canClose ~= false)
+	local known: Types.TutorialContext = facts or {}
+	return Navigation.Resolve(resolve(cloud, session, props, page, now, known), page, known.canClose ~= false)
 end
 
 return Scenario

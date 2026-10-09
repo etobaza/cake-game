@@ -27,6 +27,15 @@ export type TutorialGoal = {
 	topic: string?,
 }
 
+-- Client-only facts the tutorial reads beside replicated data. `room` is the bakery room the local
+-- player stands in (Configs/Hint.Route.Floors names), nil when unknown or outside every room.
+export type TutorialContext = {
+	canClose: boolean?,
+	-- The guest whose order card the player tapped.
+	orderSeen: string?,
+	room: string?,
+}
+
 -- A post-tutorial coaching moment: a short cause-and-fix message, then optionally a pointer step.
 -- `delay` selects the Configs/Tutorial.Coach.Delays row. `anchor` keeps a message-only nudge
 -- attached to the open page it belongs to.

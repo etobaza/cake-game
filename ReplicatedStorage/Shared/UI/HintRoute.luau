@@ -175,6 +175,13 @@ local function firstDoor(edges: { Edge }, from: string, to: string, origin: Vect
 end
 
 --[[ Handling ]]--
+--- The bakery room a point stands in, or nil when it is above no room's floor.
+function HintRoute.Room(point: Vector3): string?
+	refreshFloors()
+	local _, room = floorAt(point)
+	return room
+end
+
 --- Where guidance toward `target` should point right now: the target itself, or the first doorway
 --- toward it with that doorway's model. Targets outside every room are never rerouted.
 function HintRoute.Waypoint(target: Vector3): (Vector3, Instance?)

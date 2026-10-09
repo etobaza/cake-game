@@ -24,6 +24,7 @@ local Milestones = {
 	Mopped = "Mopped",
 	DisposeBurnt = "DisposedBurnt",
 	DisposeDish = "DisposedDish",
+	LoadCart = "LoadedCart",
 }
 local Lessons = { Place = "Display", TakeCart = "Cart", NextDay = "NextDay" }
 
@@ -235,6 +236,10 @@ function Run.Action(self: Run, action: string, id: string): ()
 	end
 	if action == "Harvest" then
 		saved.Actions[`Harvest:{id}`] = true
+		-- One harvest teaches the routine; later sources are reached through cooking guidance.
+		if not saved.Lessons.Garden then
+			saved.Lessons.Garden = true
+		end
 	end
 	if action == "Tend" then
 		saved.Actions[`Care:{id}`] = true
