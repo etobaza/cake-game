@@ -29,7 +29,6 @@ local Flux = require(_Packages.flux)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Press = require(_Shared.UI.Press)
 local Scope = require(_Shared.UI.Scope)
-local SoundPlayer = require(_Shared.SoundPlayer)
 
 --[[ Constants ]]--
 local TEMPLATE_TIMEOUT = 10
@@ -50,9 +49,9 @@ local PRESS_INPUTS = {
 	[Enum.UserInputType.Touch] = true,
 }
 
--- A press answers at once, before the server does: the plate punches and clicks.
+-- A press answers at once, before the server does: the plate punches. It stays silent, because
+-- each accepted action already plays its own sound (Get, Put, Mixing...).
 local PRESS_POP = 0.86
-local PRESS_PITCH = 1.15
 -- Moving between nearby props within this many seconds keeps the plate up and only swaps its
 -- text with a small punch, instead of replaying the whole entrance.
 local SWAP_SECONDS = 0.3
@@ -362,7 +361,6 @@ function PromptHandler.Pressed(self: PromptHandler, prompt: ProximityPrompt): ()
 		return
 	end
 	Animate.Pop(root, PRESS_POP)
-	SoundPlayer.Play("Pop", nil, PRESS_PITCH)
 end
 
 function PromptHandler.Hide(self: PromptHandler, prompt: ProximityPrompt): ()
