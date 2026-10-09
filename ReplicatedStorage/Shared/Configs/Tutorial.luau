@@ -1,6 +1,8 @@
 --!strict
 -- Tutorial tuning and copy. Progress and target selection live outside this data module.
 
+local Sounds = require(script.Parent.Sounds)
+
 return {
 	-- Disabling presentation and protection never resets saved progress.
 	Enabled = true,
@@ -141,10 +143,14 @@ return {
 		CharSeconds = 0.022,
 		SentencePause = 0.18,
 		CommaPause = 0.07,
-		-- The typing voice, BattlesOfEmpires style: one quiet sound restarted on each letter.
-		-- Silent while Id is empty (the old pop on every fourth letter was too loud). The id is the
-		-- public "UnderTale - sans.(Text)" audio that BattlesOfEmpires' SFX.Dialogue.TextSay uses.
-		Voice = { Id = "rbxassetid://5416485881", Volume = 0.3, Pitch = { Min = 0.95, Max = 1.1 } },
+		-- The typing voice, BattlesOfEmpires style: one quiet sound (Configs/Sounds) restarted on
+		-- each letter; nil Sound types silently. ReplySpread varies the pitch of the player's
+		-- ResponseText blip.
+		Voice = {
+			Sound = "TextSay" :: Sounds.SoundName?,
+			Pitch = { Min = 0.95, Max = 1.1 },
+			ReplySpread = 0.15,
+		},
 		AppearSeconds = 0.32,
 		-- A new line makes the bubble swell and hop (Lemon Cake's AN_DialogueChange).
 		Boing = { Seconds = 0.35, Scale = 1.03, Lift = 10 },

@@ -86,7 +86,7 @@ type View = {
 	Item: Frame,
 	ItemIcon: ImageLabel,
 	Button: TextButton,
-	-- The typing voice, when Voice.Id is set: one sound restarted per letter.
+	-- The typing voice, when Voice.Sound is set: one sound restarted per letter.
 	Voice: Sound?,
 }
 
@@ -435,14 +435,9 @@ local function build(janitor: any): View
 	-- Like BattlesOfEmpires' text voice: one reusable sound, restarted on every letter, so letters
 	-- never stack into a loud chatter.
 	local voice: Sound? = nil
-	if STYLE.Voice.Id ~= "" then
-		local created = Instance.new("Sound")
-		created.Name = "TutorialVoice"
-		created.SoundId = STYLE.Voice.Id
-		created.Volume = STYLE.Voice.Volume
-		created.Parent = SoundService
-		janitor:Add(created, "Destroy")
-		voice = created
+	if STYLE.Voice.Sound then
+		voice = SoundPlayer.Create(STYLE.Voice.Sound, SoundService)
+		janitor:Add(voice, "Destroy")
 	end
 
 	local portrait: Frame?, portraitScale: UIScale?, face: ImageLabel? = nil, nil, nil
@@ -608,6 +603,7 @@ function Dialog.new(acknowledge: (string) -> ()): Dialog
 		view.Button.Activated:Connect(function(): ()
 			local current = self.Current
 			if current then
+				self:Reply()
 				self.Acknowledge(current.Goal.id)
 			end
 		end),
@@ -617,8 +613,9 @@ function Dialog.new(acknowledge: (string) -> ()): Dialog
 	janitor:Add(
 		view.Bubble.InputBegan:Connect(function(input: InputObject): ()
 			local current = self.Current
-			if current and Press.IsClick(input) then
+			if current and Press.IsClick(input) and self.Typed < #current.Chars then
 				self.Typed = #current.Chars
+				self:Reply()
 			end
 		end),
 		"Disconnect"
@@ -675,6 +672,13 @@ end
 
 -- Steps hand over through a frame or two without a goal; the bubble only leaves once no step has
 -- returned within `HideGrace`, so the Done! stamp still plays between them.
+-- The player's side of the conversation (Got it, skipping a line) answers with its own short
+-- blip, BattlesOfEmpires' ResponseText.
+function Dialog.Reply(_self: Dialog): ()
+	local spread = STYLE.Voice.ReplySpread
+	SoundPlayer.Play("ResponseText", nil, 1 + (math.random() * 2 - 1) * spread)
+end
+
 function Dialog.Hide(self: Dialog): ()
 	if self.Wanted and not self.HideAt then
 		self.HideAt = os.clock()

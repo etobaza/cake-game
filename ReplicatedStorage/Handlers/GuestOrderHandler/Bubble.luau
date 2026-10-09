@@ -4,6 +4,7 @@
 --[[ Services ]]--
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 --[[ References ]]--
 local _Shared = ReplicatedStorage.Shared
@@ -14,10 +15,12 @@ local Config = require(_Shared.Configs.Orders)
 local FoodPreview = require(_Shared.UI.FoodPreview)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Recipes = require(_Shared.Configs.Registries.Recipes)
+local SoundPlayer = require(_Shared.SoundPlayer)
 local Theme = require(_Shared.UI.Theme)
 
 --[[ Constants ]]--
 local STYLE = Config.Bubble
+local VOICE = STYLE.Voice
 
 --[[ Types ]]--
 export type View = {
@@ -52,6 +55,10 @@ export type Bubble = typeof(setmetatable(
 		State: string,
 		Low: boolean,
 		NextWobbleAt: number,
+		-- The caption being typed, the guest's voice and when it last spoke.
+		Said: string,
+		Voice: Sound,
+		VoiceAt: number,
 	},
 	Bubble
 ))
@@ -230,7 +237,12 @@ function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup): Bub
 		State = "",
 		Low = false,
 		NextWobbleAt = 0,
+		Said = "",
+		-- The guest's voice: one positional blip at the head, restarted per letter.
+		Voice = SoundPlayer.Create("NpcText", head),
+		VoiceAt = -math.huge,
 	}, Bubble)
+	self.Janitor:Add(self.Voice, "Destroy")
 	self.Janitor:Add(function(): ()
 		for _, icon in icons do
 			FoodPreview.Clear(icon)
@@ -306,13 +318,58 @@ function Bubble.Show(self: Bubble, view: View): ()
 	self.Ponder.Text = if choosing
 		then string.rep(".", math.floor(view.Now / Config.PonderInterval) % 3 + 1)
 		else "!"
-	self.Caption.Text = if ordered
-		then table.concat(names, " + ")
-		elseif choosing then "Choosing..."
-		else STYLE.QueuedText
+	self:Say(if ordered then table.concat(names, " + ") elseif choosing then "Choosing..." else STYLE.QueuedText)
 	self.Badge.Visible = view.Seat ~= nil
 	self.BadgeText.Text = view.Seat or ""
 	self:SetRemaining(view.Remaining, view.Now)
+end
+
+-- New words type out letter by letter with the guest's blip, like an NPC talking over its head.
+function Bubble.Say(self: Bubble, text: string): ()
+	if text == self.Said then
+		return
+	end
+	self.Said = text
+	self.Caption.Text = text
+	self.Caption.MaxVisibleGraphemes = 0
+	local letters = utf8.len(text) or #text
+	local chars = {}
+	for _, code in utf8.codes(text) do
+		table.insert(chars, utf8.char(code))
+	end
+	local started = os.clock()
+	local typed = 0
+	self.Janitor:Add(
+		RunService.RenderStepped:Connect(function(): ()
+			local due = math.min(letters, math.floor((os.clock() - started) / VOICE.CharSeconds) + 1)
+			while typed < due do
+				typed += 1
+				self:Blip(chars[typed])
+			end
+			self.Caption.MaxVisibleGraphemes = typed
+			if typed >= letters then
+				self.Caption.MaxVisibleGraphemes = -1
+				self.Janitor:Remove("Typing")
+			end
+		end),
+		"Disconnect",
+		"Typing"
+	)
+end
+
+function Bubble.Blip(self: Bubble, char: string?): ()
+	if not char or not string.find(char, "^%w$") then
+		return
+	end
+	-- Restarting the blip before this much of it has played turns the voice into a buzz.
+	local now = os.clock()
+	if now - self.VoiceAt < VOICE.Restart then
+		return
+	end
+	self.VoiceAt = now
+	self.Voice.PlaybackSpeed = 1 + (math.random() * 2 - 1) * VOICE.Spread
+	self.Voice.TimePosition = 0
+	self.Voice:Play()
 end
 
 function Bubble.Destroy(self: Bubble): ()

@@ -50,6 +50,9 @@ return {
 		WobbleDegrees = 6,
 		LowGradient = ColorSequence.new(Color3.fromRGB(255, 120, 90), Color3.fromRGB(220, 30, 30)),
 		QueuedText = "Need a table!",
+		-- New bubble words type out with the guest's NpcText blip (BattlesOfEmpires' NPC voice):
+		-- seconds per letter, the minimum time before the blip may restart, and pitch spread.
+		Voice = { CharSeconds = 0.03, Restart = 0.07, Spread = 0.05 },
 	},
 	TooltipWidth = 280,
 	TooltipHeight = 76,

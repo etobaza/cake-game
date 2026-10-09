@@ -31,6 +31,9 @@ export type SoundName =
 	| "StreakMilestone"
 	| "NewRecord"
 	| "FireWhoosh"
+	| "TextSay"
+	| "NpcText"
+	| "ResponseText"
 
 export type Definition = {
 	Id: string,
@@ -75,6 +78,12 @@ local sounds: { [SoundName]: Definition } = {
 	NewRecord = { Id = "rbxassetid://103918660379424", Volume = 0.5 },
 	-- Flares at streak milestones; played slowed and low, it is the flame snuffing out.
 	FireWhoosh = { Id = "rbxassetid://100453569471578", Volume = 0.4 },
+	-- Typing voices, the set BattlesOfEmpires uses (SoundService.SFX.Dialogue). TextSay is the
+	-- public "UnderTale - sans.(Text)" audio, the guide's voice; NpcText and ResponseText are
+	-- engine sounds, so they always load: guests' bubbles and the player's own replies.
+	TextSay = { Id = "rbxassetid://5416485881", Volume = 0.3 },
+	NpcText = { Id = "rbxasset://sounds/clickfast.wav", Volume = 0.25, MaxDistance = 40 },
+	ResponseText = { Id = "rbxasset://sounds/switch3.wav", Volume = 0.2 },
 }
 
 -- Loops while a station mixes or cooks, keyed by building kind.
