@@ -11,6 +11,10 @@ export type PromptState = {
 	Fire: (() -> ())?,
 	-- Colour the building takes while it is in this state; nil keeps its own colour. See Tints.
 	Tint: Color3?,
+	-- Keeps the prompt up with only its status line while there is nothing to do (a station
+	-- mixing or baking), so the plate does not vanish and pop back in when the action returns.
+	-- InteractHandler honours it only on the prop the player last used.
+	Status: boolean?,
 }
 
 export type Context = {

@@ -192,19 +192,20 @@ function Station.Describe(context: Types.Context): Types.PromptState
 		}
 	end
 	if state == "Loaded" then
-		return { Label = "Needs firewood" }
+		return { Label = "Needs firewood", Status = true }
 	end
 
 	if state == "Mixing" then
 		return {
 			Label = `Mixing {context.Seconds(station.ReadyAt)}s`,
 			Tint = Tints.Busy,
+			Status = true,
 		}
 	end
 
 	if state == "Cooking" then
 		if (station.HeatPausedAt or 0) > 0 then
-			return { Label = "Baking paused · Needs firewood", Tint = Tints.Busy }
+			return { Label = "Baking paused · Needs firewood", Tint = Tints.Busy, Status = true }
 		end
 		local verb = if context.Kind == "Oven"
 			then "Baking"
@@ -215,6 +216,7 @@ function Station.Describe(context: Types.Context): Types.PromptState
 			Action = if GetKind(context).LoadFeedback then "Check" else nil,
 			Fire = if GetKind(context).LoadFeedback then FireCollect else nil,
 			Tint = Tints.Busy,
+			Status = true,
 		}
 	end
 

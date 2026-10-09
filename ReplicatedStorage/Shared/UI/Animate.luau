@@ -144,6 +144,17 @@ function Animate.Enter(element: GuiObject, rise: number?): ()
 	Animate.Pop(element)
 end
 
+-- An element that stays up while its content changes (a prompt plate moving to the next prop):
+-- cancels a running exit and settles back to rest without the full entrance.
+function Animate.Settle(element: GuiObject): ()
+	ExitTokens[element] = (ExitTokens[element] or 0) + 1
+	Animate.Scale(element):spring(1)
+	local rise = Rises[element]
+	if rise then
+		rise:spring(0)
+	end
+end
+
 -- Layout supplies the resting point; the animation keeps its current rise offset.
 function Animate.Place(element: GuiObject, position: UDim2): ()
 	element:SetAttribute("RestPosition", position)

@@ -26,7 +26,8 @@ local Recipes = require(_Configs.Registries.Recipes)
 local Types = require(_Views.Types)
 
 --[[ Constants ]]--
--- Some labels are countdowns, so we redraw on a timer instead of on data change.
+-- Prompts redraw on the next frame after replicated data changes, so an accepted action shows at
+-- once; countdown labels also redraw on this timer.
 local REFRESH_INTERVAL = 0.2
 
 -- Views without Paint are cast because the solver treats a missing optional field as a mismatch.
@@ -134,6 +135,7 @@ function InteractHandler.OnInit(self: InteractHandler): ()
 	self.Props = {}
 	self.UserId = Players.LocalPlayer.UserId
 	self.Accumulator = 0
+	self.Dirty = false
 end
 
 function InteractHandler.OnStart(self: InteractHandler): ()
@@ -157,13 +159,19 @@ function InteractHandler.OnStart(self: InteractHandler): ()
 
 	DataClient:WaitForData()
 
+	-- Several writes often land together; they are drawn once, on the next frame.
+	DataClient:SubscribeToAll(function(): ()
+		self.Dirty = true
+	end)
+
 	RunService.Heartbeat:Connect(function(deltaTime: number)
 		self.Accumulator += deltaTime
-		if self.Accumulator < REFRESH_INTERVAL then
+		if self.Accumulator < REFRESH_INTERVAL and not self.Dirty then
 			return
 		end
 
 		self.Accumulator = 0
+		self.Dirty = false
 		self:RefreshAll()
 	end)
 end
@@ -239,7 +247,10 @@ function InteractHandler.RefreshProp(self: InteractHandler, part: BasePart): ()
 	-- There is no floating label anymore: the status line rides on the prompt plate instead, so
 	-- countdowns like the oven's stay visible to whoever stands at the station.
 	if prompt then
-		prompt.Enabled = state.Action ~= nil
+		-- A status-only plate stays only on the prop the player last used: elsewhere it would take
+		-- the one shared prompt slot from a nearby prop that has an action.
+		local status = state.Status == true and part == self.LastUsed
+		prompt.Enabled = state.Action ~= nil or status
 		prompt.ActionText = state.Action or ""
 		prompt.ObjectText = state.Label
 		prompt.HoldDuration = 0
@@ -276,6 +287,7 @@ function InteractHandler.Trigger(self: InteractHandler, instance: Instance?): ()
 
 	local state = self:Describe(instance :: BasePart)
 	if state.Fire then
+		self.LastUsed = instance :: BasePart
 		state.Fire()
 	end
 end
@@ -296,6 +308,10 @@ export type InteractHandler = typeof(InteractHandler) & {
 	Props: { [Instance]: boolean },
 	UserId: number,
 	Accumulator: number,
+	-- Replicated data changed since the last redraw.
+	Dirty: boolean,
+	-- The prop the player last triggered; only it keeps a status-only prompt.
+	LastUsed: BasePart?,
 }
 
 return InteractHandler :: InteractHandler

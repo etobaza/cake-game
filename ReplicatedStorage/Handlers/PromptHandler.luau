@@ -29,6 +29,7 @@ local Flux = require(_Packages.flux)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Press = require(_Shared.UI.Press)
 local Scope = require(_Shared.UI.Scope)
+local SoundPlayer = require(_Shared.SoundPlayer)
 
 --[[ Constants ]]--
 local TEMPLATE_TIMEOUT = 10
@@ -48,6 +49,14 @@ local PRESS_INPUTS = {
 	[Enum.UserInputType.MouseButton1] = true,
 	[Enum.UserInputType.Touch] = true,
 }
+
+-- A press answers at once, before the server does: the plate punches and clicks.
+local PRESS_POP = 0.86
+local PRESS_PITCH = 1.15
+-- Moving between nearby props within this many seconds keeps the plate up and only swaps its
+-- text with a small punch, instead of replaying the whole entrance.
+local SWAP_SECONDS = 0.3
+local SWAP_POP = 0.94
 
 --[[ Tables ]]--
 local PromptHandler = {
@@ -158,6 +167,7 @@ function PromptHandler.OnInit(self: PromptHandler): ()
 	self.Lifetime = Janitor.new()
 	self.Lifetime:Add(self.Janitor, "Destroy")
 	self.Current = nil
+	self.HiddenAt = -math.huge
 	self.ScreenOffset = Vector2.zero
 	self.Highlight = InteractionHighlight.new(function(part: BasePart): BasePart
 		return AmbientMotion:GetVisiblePart(part)
@@ -224,6 +234,16 @@ function PromptHandler.OnStart(self: PromptHandler): ()
 		"Disconnect"
 	)
 
+	-- The local press is acknowledged on the spot; the action itself still waits for the server.
+	self.Lifetime:Add(
+		ProximityPromptService.PromptTriggered:Connect(function(prompt: ProximityPrompt, player: Player)
+			if player == Players.LocalPlayer and prompt == self.Current then
+				self:Pressed(prompt)
+			end
+		end),
+		"Disconnect"
+	)
+
 	-- A Custom-style prompt has no stock button, so the plate itself answers a tap or a click --
 	-- that is what the cursor icon in the art promises. The keyboard key keeps working on its own.
 	local root = self.Root
@@ -265,6 +285,9 @@ function PromptHandler.Show(self: PromptHandler, prompt: ProximityPrompt): ()
 		return
 	end
 
+	-- Still showing another prompt, or it only just left: the plate moves over instead of
+	-- leaving and entering again.
+	local swapping = self.Current ~= nil or os.clock() - self.HiddenAt < SWAP_SECONDS
 	self.Current = prompt
 	self.Janitor:Cleanup()
 
@@ -320,9 +343,26 @@ function PromptHandler.Show(self: PromptHandler, prompt: ProximityPrompt): ()
 	self.Highlight:SetEnabled(billboard.Enabled and canHighlight(prompt))
 
 	local root = self.Root
-	if root then
+	if root and swapping then
+		Animate.Settle(root)
+		Animate.Pop(root, SWAP_POP)
+	elseif root then
 		Animate.Enter(root)
 	end
+end
+
+function PromptHandler.Pressed(self: PromptHandler, prompt: ProximityPrompt): ()
+	local part = prompt.Parent
+	local root = self.Root
+	if not root or not part or not part:IsA("BasePart") or not part:HasTag(BuildingsConfig.Tag) then
+		return
+	end
+	-- A status-only plate has nothing to press.
+	if Interact:Describe(part).Fire == nil then
+		return
+	end
+	Animate.Pop(root, PRESS_POP)
+	SoundPlayer.Play("Pop", nil, PRESS_PITCH)
 end
 
 function PromptHandler.Hide(self: PromptHandler, prompt: ProximityPrompt): ()
@@ -332,6 +372,7 @@ function PromptHandler.Hide(self: PromptHandler, prompt: ProximityPrompt): ()
 	end
 
 	self.Current = nil
+	self.HiddenAt = os.clock()
 	self.Janitor:Cleanup()
 	self.Highlight:Hide()
 
@@ -366,9 +407,16 @@ function PromptHandler.Refresh(self: PromptHandler, prompt: ProximityPrompt): ()
 	writePair(root:FindFirstChild("Txt"), prompt.ActionText)
 	writePair(root:FindFirstChild("Name"), prompt.ObjectText)
 
+	-- A status-only prompt (a busy station) keeps just its name plate: no action, no key icon.
+	local actionable = prompt.ActionText ~= ""
+	local action = root:FindFirstChild("Txt")
+	if action and action:IsA("GuiObject") then
+		action.Visible = actionable
+	end
+
 	-- The art stacks one icon per input kind (plus spare variants); exactly one is up.
 	local chosen = pickIcon()
-	local shown = false
+	local shown = not actionable
 
 	for _, child in root:GetChildren() do
 		if child:IsA("ImageLabel") and string.sub(child.Name, 1, 4) == "Icon" then
@@ -398,6 +446,8 @@ export type PromptHandler = typeof(PromptHandler) & {
 	Billboard: BillboardGui?,
 	Root: Frame?,
 	Current: ProximityPrompt?,
+	-- When the plate last lost its prompt; see SWAP_SECONDS.
+	HiddenAt: number,
 	ScreenOffset: Vector2,
 	Highlight: InteractionHighlight.InteractionHighlight,
 }
