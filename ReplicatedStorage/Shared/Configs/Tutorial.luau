@@ -28,10 +28,11 @@ return {
 	PointDelay = 2.5,
 	FocusDelay = 7,
 	-- The only side buttons shown during the introduction. The rest, the level bar, the balance,
-	-- the clock and the topbar row each appear when first needed (TutorialHandler), this many
-	-- seconds apart.
+	-- the clock and the topbar row each slide in from their edge when first needed
+	-- (TutorialHandler, Stores/HudReveal). New side buttons join while the column is out: it rides
+	-- off for this many seconds and comes back with them.
 	HudDuringIntro = { "Shop" },
-	HudRevealStagger = 0.18,
+	HudSideSwapSeconds = 0.45,
 	ReminderSeconds = 18,
 	GuestHighlight = {
 		Color = Color3.fromRGB(255, 221, 128),

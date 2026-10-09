@@ -25,15 +25,14 @@ local Recipes = require(ReplicatedStorage.Shared.Configs.Registries.Recipes)
 local Scenario = require(ReplicatedStorage.Shared.Tutorial.Scenario)
 local Scope = require(ReplicatedStorage.Shared.UI.Scope)
 local TopbarHandler = require(script.Parent.TopbarHandler)
-local Animate = require(ReplicatedStorage.Shared.UI.Animate)
+local HudReveal = require(ReplicatedStorage.Shared.UI.Stores.HudReveal)
 local TutorialPolicy = require(ReplicatedStorage.Shared.TutorialPolicy)
 local Types = require(ReplicatedStorage.Shared.GameTypes)
 local UIHandler = require(script.Parent.UIHandler)
 
 --[[ Constants ]]--
--- The HUD clock's tutorial target, and the scale a revealed HUD element pops in from.
+-- The HUD clock's tutorial target.
 local CLOCK_TARGET = "UI.HUD.Time"
-local HUD_POP_FROM = 0.4
 
 --[[ Tables ]]--
 local TutorialHandler = {
@@ -78,7 +77,7 @@ local function stageLine(cloud: any, session: any, goal: Types.TutorialGoal): st
 end
 
 -- What the HUD shows while the introduction runs: each element appears when the player first
--- needs it and pops in. Side buttons other than HudDuringIntro, the level bar and the topbar row
+-- needs it. Side buttons other than HudDuringIntro, the level bar and the topbar row
 -- wait for the end; the balance arrives with the Serve stage, just before the first sale; the
 -- clock arrives when the player is asked to open (and stays once the bakery has opened).
 local function hudShown(cloud: any, session: any, goal: Types.TutorialGoal?): { [string]: boolean }
@@ -95,57 +94,61 @@ local function hudShown(cloud: any, session: any, goal: Types.TutorialGoal?): { 
 	}
 end
 
-local function reveal(element: GuiObject, delay: number): ()
-	task.delay(delay, function(): ()
-		if element.Parent and element.Visible then
-			Animate.Pop(element, HUD_POP_FROM)
-		end
+local function sideButtons(): { GuiObject }
+	local found, side = pcall(function(): Instance
+		return UIHandler:GetHud("SideBtns")
 	end)
+	local buttons = {}
+	if not found then
+		return buttons
+	end
+	for _, button in side:GetChildren() do
+		if button:IsA("GuiObject") and not table.find(Config.HudDuringIntro, button.Name) then
+			table.insert(buttons, button)
+		end
+	end
+	return buttons
 end
 
+-- Groups slide in from their own edge through HydrateHud's Ripple springs (HudReveal). New side
+-- buttons cannot slide inside their list on their own, so the column rides out, gains them and
+-- rides back in.
 local function applyHud(self: any, cloud: any, session: any, goal: Types.TutorialGoal?): ()
 	local wanted = hudShown(cloud, session, goal)
 	local shown = self.HudShown
 	local first = shown == nil
 	local current: { [string]: boolean } = shown or {}
 	self.HudShown = current
-	local order = 0
-	local function set(key: string, elements: { GuiObject }): ()
-		local visible = wanted[key]
-		if current[key] == visible then
-			return
-		end
-		current[key] = visible
-		for _, element in elements do
-			element.Visible = visible
-			if visible and not first then
-				order += 1
-				reveal(element, order * Config.HudRevealStagger)
-			end
-		end
-	end
-	local function hud(path: string): { GuiObject }
-		local found, element = pcall(function(): Instance
-			return UIHandler:GetHud(path)
-		end)
-		return if found and element:IsA("GuiObject") then { element } else {}
-	end
 
-	local side = {}
-	for _, element in hud("SideBtns") do
-		for _, button in element:GetChildren() do
-			if button:IsA("GuiObject") and not table.find(Config.HudDuringIntro, button.Name) then
-				table.insert(side, button)
-			end
+	for _, name in { "Currency", "Time", "Quests" } do
+		if current[name] ~= wanted[name] then
+			current[name] = wanted[name]
+			HudReveal.Set(name, wanted[name])
 		end
 	end
-	set("Side", side)
-	set("Quests", hud("Quests"))
-	set("Currency", hud("Currency"))
-	set("Time", hud("Time"))
+	if current.Side ~= wanted.Side then
+		current.Side = wanted.Side
+		local visible = wanted.Side
+		if first or not visible then
+			for _, button in sideButtons() do
+				button.Visible = visible
+			end
+		else
+			HudReveal.Set("SideBtns", false)
+			task.delay(Config.HudSideSwapSeconds, function(): ()
+				for _, button in sideButtons() do
+					button.Visible = true
+				end
+				HudReveal.Set("SideBtns", true)
+			end)
+		end
+	end
 	if current.Topbar ~= wanted.Topbar then
 		current.Topbar = wanted.Topbar
 		TopbarHandler:SetVisible(wanted.Topbar)
+	end
+	if first then
+		HudReveal.Ready()
 	end
 end
 

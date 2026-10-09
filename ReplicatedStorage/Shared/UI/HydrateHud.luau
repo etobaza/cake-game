@@ -19,6 +19,7 @@ local _Packages = ReplicatedStorage.Packages
 local Animate = require(_Shared.UI.Animate)
 local Flux = require(_Packages.flux)
 local HudLayout = require(_Shared.UI.HudLayout)
+local HudReveal = require(_Shared.UI.Stores.HudReveal)
 local Press = require(_Shared.UI.Press)
 local UITypes = require(_Shared.UI.Types)
 
@@ -256,11 +257,15 @@ return function(hud: Instance, props: Props): ()
 		end
 	end
 
-	-- The HUD rides in from the screen edges on spawn and leaves the same way while a page is open.
+	-- The HUD rides in from the screen edges on spawn and leaves the same way while a page is open,
+	-- or while the introduction has not revealed that group yet (HudReveal).
 	for index, entry in GROUPS do
 		local group = resolve(hud, entry.Name)
 		if group and group:IsA("GuiObject") then
-			slideGroup(group, entry.Edge, (index - 1) * INTRO_STAGGER, props.HudShown)
+			local name = entry.Name
+			slideGroup(group, entry.Edge, (index - 1) * INTRO_STAGGER, function(): boolean
+				return read(props.HudShown) and HudReveal.Shown(name)
+			end)
 		end
 	end
 
@@ -293,7 +298,8 @@ return function(hud: Instance, props: Props): ()
 		draw()
 		Flux(function()
 			local collapsed = Flux.read(props.QuestsCollapsed)
-			slide:spring(if not read(props.HudShown) then 2 elseif collapsed then 1 else 0)
+			local hidden = not read(props.HudShown) or not HudReveal.Shown("Quests")
+			slide:spring(if hidden then 2 elseif collapsed then 1 else 0)
 			spin:spring(if collapsed then 180 else 0)
 		end, true)
 	end
