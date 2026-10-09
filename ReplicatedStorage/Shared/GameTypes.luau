@@ -25,6 +25,8 @@ export type TutorialGoal = {
 	waiting: boolean?,
 	urgent: boolean?,
 	topic: string?,
+	-- The world target glows while this step is shown (a spill to find).
+	highlight: boolean?,
 }
 
 -- Client-only facts the tutorial reads beside replicated data. `room` is the bakery room the local
@@ -34,6 +36,8 @@ export type TutorialContext = {
 	-- The guest whose order card the player tapped.
 	orderSeen: string?,
 	room: string?,
+	-- The player is on a gamepad, where the order card cannot be tapped.
+	gamepad: boolean?,
 }
 
 -- A post-tutorial coaching moment: a short cause-and-fix message, then optionally a pointer step.

@@ -9,6 +9,9 @@ return {
 	RecommendedRecipe = "bread",
 	FirstGuestType = "regular",
 	FirstBakeGrace = 30,
+	-- Where the introduction's spill lies, in the kitchen floor's local space (studs from its
+	-- centre): beside the walk from the broom rack to the mixer.
+	SpillOffset = Vector3.new(-1.8, 0, 10.3),
 	-- The first order card stays in focus until the player taps it; this is only the fallback for
 	-- players who cannot tap it (gamepad).
 	OrderPreviewSeconds = 20,
@@ -23,6 +26,93 @@ return {
 		FillTransparency = 0.8,
 		OutlineTransparency = 0,
 		DepthMode = Enum.HighlightDepthMode.AlwaysOnTop,
+	},
+	-- The guide's speech bubble (Shared/UI/Tutorial/Dialog): a cat mentor at the bottom of the
+	-- screen whose bubble stays up for as long as its step is active. Sizes are reference pixels at
+	-- `ReferenceHeight`; one UIScale follows the viewport height.
+	Dialog = {
+		-- Above the hint overlay's dim (55), so the step text is never darkened.
+		DisplayOrder = 56,
+		ReferenceHeight = 900,
+		MinScale = 0.62,
+		MaxScale = 1.35,
+		Width = 600,
+		MinWidth = 320,
+		-- Share of the viewport width the whole dialog may use.
+		WidthRatio = 0.62,
+		-- Gap above the hotbar, and the bottom margin when no hotbar is found.
+		HotbarGap = 12,
+		BottomMargin = 110,
+		-- Gap below the clock when the dialog moves to the top to clear its own target.
+		TopGap = 14,
+		TopFallback = 130,
+		SpeakerName = "Mochi",
+		Portrait = {
+			Template = "Cats",
+			Size = 132,
+			-- The bubble starts this far into the portrait, so the cat leans over its edge and
+			-- needs no speech tail.
+			BubbleStart = 0.74,
+			-- Camera on the cat's head bone: turned this far off its face, raised and pulled back
+			-- in studs, aimed a little below the head so the chest shows too.
+			FocusBone = "Head",
+			Yaw = 32,
+			Lift = 0.8,
+			Distance = 4.8,
+			FocusDrop = 0.35,
+			FieldOfView = 30,
+			BreathPeriod = 2.6,
+			BreathScale = 0.02,
+			HopPixels = 4,
+			HopSeconds = 0.12,
+		},
+		TitleSize = 24,
+		HintSize = 18,
+		LineGap = 4,
+		Padding = Vector2.new(20, 14),
+		-- Space between the portrait's right edge and the copy.
+		PortraitGap = 8,
+		MinBubbleHeight = 78,
+		Corner = 18,
+		Stroke = 3,
+		ShadowDrop = 6,
+		ShadowTransparency = 0.72,
+		PlateHeight = 28,
+		PlateTextSize = 17,
+		ItemSize = 66,
+		ItemGap = 12,
+		ButtonHeight = 34,
+		ButtonTextSize = 17,
+		Colors = {
+			Ink = Color3.fromRGB(74, 40, 30),
+			Hint = Color3.fromRGB(122, 82, 64),
+			FillTop = Color3.fromRGB(255, 252, 244),
+			FillBottom = Color3.fromRGB(253, 234, 195),
+			Plate = Color3.fromRGB(240, 128, 40),
+			Emphasis = Color3.fromRGB(232, 118, 0),
+			Done = Color3.fromRGB(64, 170, 84),
+			Button = Color3.fromRGB(64, 170, 84),
+			Shadow = Color3.fromRGB(0, 0, 0),
+		},
+		-- Typewriter: seconds per character, extra pauses after sentence and clause marks, and
+		-- a soft pop every few letters (0 turns the sound off).
+		CharSeconds = 0.022,
+		SentencePause = 0.18,
+		CommaPause = 0.07,
+		SoundEvery = 4,
+		SoundPitch = { Min = 1.35, Max = 1.65 },
+		AppearSeconds = 0.32,
+		ExitSeconds = 0.18,
+		MoveSmoothing = 0.08,
+		-- A goal-less moment shorter than this (a step handing over) keeps the bubble up.
+		HideGrace = 0.4,
+		-- A step stays readable at least this long before the next one replaces it, and a
+		-- finished step shows its Done! stamp this long first.
+		MinShowSeconds = 1.4,
+		DoneSeconds = 0.75,
+		DoneText = "Done!",
+		-- Read-only steps the player can acknowledge from the bubble itself.
+		Acknowledge = { order_card = "Got it" } :: { [string]: string },
 	},
 	Stages = { Sweep = 1, Cook = 2, Serve = 3, Clean = 4, Completed = 4, Skipped = 4 },
 	-- After the introduction: help a player who stopped making progress or repeats a failed action.
@@ -164,7 +254,7 @@ return {
 		{
 			id = "Floor",
 			title = "Spills",
-			text = "Take the broom, approach a puddle and use Clean. Return the broom to free your hand before cooking.",
+			text = "Take the broom, approach a puddle and press Sweep. Return the broom to free your hand before cooking.",
 		},
 		{
 			id = "Garden",

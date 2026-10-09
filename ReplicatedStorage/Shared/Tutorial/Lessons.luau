@@ -90,22 +90,18 @@ local function floor(cloud: any, session: any, props: any): Types.TutorialGoal?
 		return nil
 	end
 	local held = session.Hands[1]
-	if cloud.Tutorial.Actions.Mopped and held and held.Id == Buildings.Kinds.Broom.ToolId then
-		return State.Goal(
-			"return_broom",
-			"Return the broom",
-			"A clean floor is ready for work. Put the broom back to free your hand.",
-			held.Id
-		)
-	end
+	local holdingBroom = held ~= nil and held.Id == Buildings.Kinds.Broom.ToolId
+	-- Spills come first: a lifetime Mopped flag must not send the broom back while a puddle remains.
 	for id in session.Spills do
-		if held and held.Id == Buildings.Kinds.Broom.ToolId then
-			return State.Goal(
+		if holdingBroom then
+			local goal = State.Goal(
 				"sweep_" .. id,
-				"Sweep the puddle",
-				"Approach the spill with the broom and use Clean once.",
+				"Sweep the {spill}",
+				"Walk up to the glowing spill with the broom and press Sweep.",
 				id
 			)
+			goal.highlight = true
+			return goal
 		end
 		-- A busy hand postpones this optional lesson instead of sending useful items to the trash.
 		local free, ready = State.FreeHands(session, props, "Free your hand so you can pick up the broom.", false)
@@ -116,6 +112,14 @@ local function floor(cloud: any, session: any, props: any): Types.TutorialGoal?
 			"broom",
 			"Take the broom",
 			"Cooking sometimes leaves a puddle. A broom lets you clean it.",
+			Buildings.Kinds.Broom.ToolId
+		)
+	end
+	if cloud.Tutorial.Actions.Mopped and holdingBroom then
+		return State.Goal(
+			"return_broom",
+			"Floor clean! Return the broom",
+			"Put the broom back on its rack to free your hand.",
 			Buildings.Kinds.Broom.ToolId
 		)
 	end

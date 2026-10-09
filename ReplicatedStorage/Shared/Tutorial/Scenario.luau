@@ -16,7 +16,7 @@ local Types = require(script.Parent.Parent.GameTypes)
 local Scenario = {}
 
 --[[ Private Functions ]]--
-local function sweep(session: any, props: any): Types.TutorialGoal?
+local function sweep(cloud: any, session: any, props: any): Types.TutorialGoal?
 	local held = session.Hands[1]
 	local broom = Buildings.Kinds.Broom.ToolId
 	local spills = {}
@@ -25,11 +25,13 @@ local function sweep(session: any, props: any): Types.TutorialGoal?
 	end
 	table.sort(spills)
 	if not spills[1] then
-		if held and held.Kind == "Tool" and held.Id == broom then
+		-- Only an accepted sweep earns the return step. A broom taken before the spill appeared
+		-- waits here until there is something to sweep.
+		if held and held.Kind == "Tool" and held.Id == broom and cloud.Tutorial.Actions.Mopped then
 			return State.Goal(
 				"intro_return_broom",
-				"Return the broom",
-				"Put it back before we start baking.",
+				"Floor clean! Return the {broom}",
+				"Put the broom back on its rack to free your hands for baking.",
 				broom
 			)
 		end
@@ -43,12 +45,14 @@ local function sweep(session: any, props: any): Types.TutorialGoal?
 		return goal
 	end
 	if held and held.Kind == "Tool" and held.Id == broom then
-		return State.Goal(
+		local goal = State.Goal(
 			"intro_sweep_" .. spills[1],
-			"Sweep this spill",
-			"Use Clean beside the spill. Clear the floor before baking.",
+			"Sweep the {dough spill}",
+			"Walk up to the glowing spill and press Sweep. A clean floor keeps you fast.",
 			spills[1]
 		)
+		goal.highlight = true
+		return goal
 	end
 	local free, ready = State.FreeHands(session, props, "Free your hand to take the broom.", true)
 	if not ready then
@@ -56,8 +60,8 @@ local function sweep(session: any, props: any): Types.TutorialGoal?
 	end
 	return State.Goal(
 		"intro_broom",
-		"First, pick up the broom",
-		"Follow the arrows. Let's tidy the kitchen before your first bake.",
+		"First, pick up the {broom}",
+		"Follow the arrows to the broom rack. Let's tidy the kitchen before your first bake.",
 		broom
 	)
 end
@@ -89,14 +93,15 @@ local function clean(session: any, now: number): Types.TutorialGoal
 	)
 end
 
--- The first order card is shown until the player taps it (or the fallback runs out).
-local function previewing(session: any, customer: any, now: number, orderSeen: string?): boolean
+-- The first order card is shown until the player taps it or acknowledges it in the bubble. Only a
+-- gamepad, which cannot tap the card, also moves on after the fallback time.
+local function previewing(session: any, customer: any, now: number, facts: Types.TutorialContext): boolean
 	return customer.State == "Waiting"
-		and orderSeen ~= session.Tutorial.GuestId
-		and now - customer.OrderStartedAt < Config.OrderPreviewSeconds
+		and facts.orderSeen ~= session.Tutorial.GuestId
+		and (not facts.gamepad or now - customer.OrderStartedAt < Config.OrderPreviewSeconds)
 end
 
-local function serve(session: any, now: number, orderSeen: string?): Types.TutorialGoal
+local function serve(session: any, now: number, facts: Types.TutorialContext): Types.TutorialGoal
 	local context = session.Tutorial
 	local customer = session.Customers[context.GuestId]
 	if session.Day.Phase == "Prep" then
@@ -126,11 +131,11 @@ local function serve(session: any, now: number, orderSeen: string?): Types.Tutor
 			customer.SeatIndex or 1
 		)
 	end
-	if previewing(session, customer, now, orderSeen) then
+	if previewing(session, customer, now, facts) then
 		local goal = State.Goal(
 			"order_card",
-			"This is your guest's order",
-			"Tap the card to see the dish. Its number is the seat to bring that dish to.",
+			"Tap your guest's {order card}",
+			"It shows the dish they want. Its number is the seat to bring that dish to.",
 			nil
 		)
 		goal.target = { kind = "Order", id = context.GuestId }
@@ -185,7 +190,7 @@ local function resolve(
 	end
 	local context = session.Tutorial
 	if context.Stage == "Sweep" then
-		return sweep(session, props)
+		return sweep(cloud, session, props)
 	end
 	if context.Stage == "Clean" then
 		return clean(session, now)
@@ -201,10 +206,10 @@ local function resolve(
 		customer
 		and (
 			customer.State == "Choosing"
-			or previewing(session, customer, now, facts.orderSeen)
+			or previewing(session, customer, now, facts)
 		)
 	then
-		local goal = serve(session, now, facts.orderSeen)
+		local goal = serve(session, now, facts)
 		goal.recipeId = recipe.id
 		return goal
 	end
@@ -214,7 +219,7 @@ local function resolve(
 		return goal
 	end
 	if held and held.Kind == "Dish" then
-		local serving = serve(session, now, facts.orderSeen)
+		local serving = serve(session, now, facts)
 		serving.recipeId = held.Id
 		return serving
 	end

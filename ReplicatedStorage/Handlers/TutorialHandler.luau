@@ -5,6 +5,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 --[[ Modules ]]--
 local Bus = require(ReplicatedStorage.Shared.Bus)
@@ -94,6 +95,13 @@ function TutorialHandler.OnStart(self: TutorialHandler): ()
 		return UIHandler:Toast(text)
 	end, function(token: number): ()
 		UIHandler:ClearToast(token)
+	end, function(goalId: string): ()
+		-- The bubble's button on a read-only step; the order card is its only one today.
+		if goalId == "order_card" then
+			local session = DataClient:GetData({}, "Session")
+			self.OrderSeen = session and session.Tutorial and session.Tutorial.GuestId
+			self:Refresh()
+		end
 	end)
 	self.Janitor:Add(self.View, "Destroy")
 	self.Coach = Coach.new()
@@ -179,29 +187,37 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 		canClose = Pages.CanOpen(Pages.Names.None),
 		orderSeen = self.OrderSeen,
 		room = room,
+		gamepad = UserInputService.PreferredInput == Enum.PreferredInput.Gamepad,
 	})
 	if goal and goal.id == "cart_load" then
 		self.CartPrompted = true
 	end
 	-- After the introduction, coaching fills the gaps the optional lessons leave.
+	local coaching = false
 	if goal or TutorialPolicy.IsActive(cloud) or cloud.Tutorial.Collapsed then
 		self.Coach:Reset()
 	else
 		goal = self.Coach:Update(cloud, session, props, self.Page, now, os.clock())
+		coaching = goal ~= nil
 	end
 
 	local completedAt = session.Tutorial.CompletedAt
 	if completedAt > 0 and now - completedAt < Config.SuccessSeconds then
 		goal = {
 			id = "completed",
-			title = "Your bakery is ready!",
+			title = "Your bakery is {ready}!",
 			hint = "You cooked, served and cleaned your first table. Enjoy your shift!",
 			waiting = true,
 		}
+		coaching = false
 	end
+	-- The introduction counts its four stages on the bubble.
+	local stage = if TutorialPolicy.IsActive(cloud) then Config.Stages[session.Tutorial.Stage] else nil
+	local progress = if stage then `{stage}/{Config.Stages.Clean}` else nil
 	-- Other guides stay quiet while the tutorial is showing the player what to do.
 	self.Guiding = goal ~= nil and not cloud.Tutorial.Collapsed
-	self.View:Set(goal, cloud.Tutorial)
+	self.TargetId = if goal and goal.target and goal.target.kind == "World" then goal.target.id else nil
+	self.View:Set(goal, cloud.Tutorial, coaching, progress)
 	local needsFrame = goal ~= nil or guestId ~= nil or self.Coach:IsPending()
 	if needsFrame and not self.Janitor:Get("Frame") then
 		self.Janitor:Add(
@@ -226,6 +242,7 @@ function TutorialHandler.Destroy(self: TutorialHandler): ()
 	self.Janitor:Destroy()
 	self.View = nil
 	self.Guiding = false
+	self.TargetId = nil
 end
 
 export type TutorialHandler = typeof(TutorialHandler) & {
@@ -236,6 +253,8 @@ export type TutorialHandler = typeof(TutorialHandler) & {
 	Page: string,
 	Elapsed: number,
 	Guiding: boolean?,
+	-- The world target the shown goal points at, if any.
+	TargetId: string?,
 	-- The guest whose order card the player tapped.
 	OrderSeen: string?,
 	-- The cart lesson's load prompt was shown, and its dismissal was sent.

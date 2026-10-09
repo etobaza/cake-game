@@ -79,6 +79,8 @@ function Run.new(player: Player, data: any, release: (Player) -> (), prepareFloo
 		Machine = nil,
 		-- Feature ids owned when the current shift began; nil when joined mid-shift.
 		ShiftFeatures = nil,
+		-- Whether the sweep's skip-for-live-cooking check already ran.
+		SweepJudged = false,
 	}, Run)
 	local active = Policy.IsActive(data.Cloud)
 	data.Session.Tutorial.Protected = active
@@ -135,15 +137,26 @@ function Run.Refresh(self: Run): ()
 	local session = self.Data.Session
 	local context = session.Tutorial
 	if context.Stage == "Sweep" and session.Day.Phase ~= "Summary" then
-		-- Restarting the tutorial must not send an existing batch or dish to the trash.
-		local cooking = session.Cooking.SelectedRecipeId ~= nil
-		for _, station in session.Stations do
-			cooking = cooking or station.State ~= "Idle"
-		end
-		for _, item in session.Hands do
-			cooking = cooking or item.Kind == "Dish" or item.Kind == "Dough"
+		-- Restarting the tutorial must not send an existing batch or dish to the trash. That is
+		-- judged once, when the bakery is first ready: a recipe chosen during the sweep afterwards
+		-- does not skip it.
+		local cooking = false
+		if not self.SweepJudged then
+			cooking = session.Cooking.SelectedRecipeId ~= nil
+			for _, station in session.Stations do
+				cooking = cooking or station.State ~= "Idle"
+			end
+			for _, item in session.Hands do
+				cooking = cooking or item.Kind == "Dish" or item.Kind == "Dough"
+			end
 		end
 		local available = if cooking then false else self.PrepareFloor()
+		if available ~= nil then
+			self.SweepJudged = true
+		end
+		if available == false and not cooking then
+			print(`[TutorialHandler] {self.Player.Name}: no tutorial spill could be placed; skipping the sweep`)
+		end
 		local held = session.Hands[1]
 		local holdingBroom = held and held.Kind == "Tool" and held.Id == Buildings.Kinds.Broom.ToolId
 		local hasSpills = false
@@ -334,6 +347,7 @@ export type Run = typeof(setmetatable(
 		Janitor: any,
 		Machine: any,
 		ShiftFeatures: { [string]: boolean }?,
+		SweepJudged: boolean,
 	},
 	Run
 ))

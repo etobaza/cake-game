@@ -74,7 +74,10 @@ function GuestState.new(customer: any, onReady: () -> (), onFinish: (boolean) ->
 					enter("Choosing")
 				end,
 				onUpdate = function(): ()
-					if self.Now >= customer.ChoosingEndsAt then
+					-- The tutorial guest waits for the player's Take order: the lesson is the action
+					-- itself, and an automatic order would close that step before it was read.
+					-- Releasing the tutorial clears TutorialProtected, so the timer resumes.
+					if not customer.TutorialProtected and self.Now >= customer.ChoosingEndsAt then
 						self:TakeOrder()
 					end
 				end,

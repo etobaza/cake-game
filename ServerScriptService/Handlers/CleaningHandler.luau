@@ -35,6 +35,7 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local PlayerHandler = require(_Handlers.PlayerHandler)
 local Sanitize = require(_Shared.Sanitize)
 local SoundPlayer = require(_Shared.SoundPlayer)
+local TutorialConfig = require(_Configs.Tutorial)
 local TickHandler = require(_Handlers.TickHandler)
 local View = require(_Handlers.BuildingHandler.View)
 
@@ -216,6 +217,18 @@ local function RandomSpillCFrame(player: Player, runtime: Runtime, part: BasePar
 	end
 
 	return nil
+end
+
+-- The introduction's spill always lies on the way from the broom rack to the mixer, where the
+-- player passes anyway; a blocked spot falls back to an ordinary random one.
+local function TutorialSpillCFrame(player: Player, part: BasePart): CFrame?
+	local floor = GetKitchenFloor(player)
+	if not floor then
+		return nil
+	end
+	local offset = TutorialConfig.SpillOffset
+	local goal = floor.CFrame * CFrame.new(offset.X, floor.Size.Y / 2 + part.Size.Y / 2 + 0.01, offset.Z)
+	return if IsOpenFloor(player, part, floor, goal) then goal else nil
 end
 
 --[[ Handling ]]--
@@ -400,7 +413,7 @@ function CleaningHandler.OwnSpill(_self: CleaningHandler, runtime: Runtime, part
 end
 
 -- Puts one puddle on the floor: the first free model, so two spills never share a spot.
-function CleaningHandler.DropSpill(self: CleaningHandler, player: Player): boolean
+function CleaningHandler.DropSpill(self: CleaningHandler, player: Player, tutorial: boolean?): boolean
 	local spills = GetSpills(player)
 	local runtime = self.Runtime[player]
 	if not spills or not runtime then
@@ -419,7 +432,8 @@ function CleaningHandler.DropSpill(self: CleaningHandler, player: Player): boole
 
 		spills[spillId] = true
 		runtime.Parts[spillId] = part
-		local placement = RandomSpillCFrame(player, runtime, part)
+		local placement = (if tutorial then TutorialSpillCFrame(player, part) else nil)
+			or RandomSpillCFrame(player, runtime, part)
 		if placement then
 			MoveProp(part, placement)
 		end
@@ -444,7 +458,7 @@ function CleaningHandler.PrepareTutorial(self: CleaningHandler, player: Player):
 	if CountSpills(data.Session.Spills) > 0 then
 		return true
 	end
-	return self:DropSpill(player)
+	return self:DropSpill(player, true)
 end
 
 -- Cooking is what makes the mess: a station starting a batch may drop dough on the floor.
