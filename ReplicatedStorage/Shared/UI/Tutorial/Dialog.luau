@@ -1,11 +1,12 @@
 --!strict
--- The guide's speech bubble: a cat mentor at the bottom of the screen, above the hotbar, whose
+-- The guide's speech bubble: the mentor at the bottom of the screen, above the hotbar, whose
 -- bubble stays up for as long as its step is active. The step title types out letter by letter,
 -- `{word}` in copy is drawn in the emphasis colour, the bubble moves to the top when it would
 -- cover its own target, and a finished step shows a Done! stamp before the next one replaces it.
 -- Generated in code like the other overlays (FeedbackHandler); it never touches authored screens.
 
 --[[ Services ]]--
+local ContentProvider = game:GetService("ContentProvider")
 local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -39,6 +40,10 @@ local PLATE_INSIDE = 0.35
 local POP_STRENGTH = 1.6
 -- The appear pop starts from this scale.
 local APPEAR_FROM = 0.55
+-- Wide enough that one line never wraps while its natural width is measured.
+local UNWRAPPED_WIDTH = 100000
+-- Extra pixels beside a snug line, so rounding never wraps its last word.
+local SNUG_SLACK = 6
 -- The Done! stamp pops during this share of its time on screen.
 local DONE_POP_SHARE = 0.6
 local SENTENCE_MARKS = { ["."] = true, ["!"] = true, ["?"] = true, ["…"] = true }
@@ -54,6 +59,7 @@ type Content = {
 	TitleLength: number,
 	Progress: string?,
 	Button: string?,
+	Mood: string,
 }
 
 type View = {
@@ -63,8 +69,13 @@ type View = {
 	Pop: UIScale,
 	Portrait: Frame?,
 	PortraitScale: UIScale?,
+	-- The mood artwork when the mentor is drawn from images rather than a model.
+	Face: ImageLabel?,
 	Bubble: Frame,
 	Shadow: Frame,
+	-- The new-line "boing" scales both, so the shadow stays under the bubble.
+	BubbleScale: UIScale,
+	ShadowScale: UIScale,
 	Plate: TextLabel,
 	Badge: TextLabel,
 	Done: TextLabel,
@@ -93,13 +104,16 @@ export type Dialog = typeof(setmetatable(
 		TypeClock: number,
 		Measured: string,
 		Measuring: string,
-		Heights: { Title: number, Hint: number, Width: number },
+		-- Measured copy: wrapped heights at the widest text width, and the unwrapped line width.
+		Heights: { Title: number, Hint: number, Width: number, Line: number },
 		Wanted: boolean,
 		-- When the last Hide arrived; a step that returns within the grace keeps the bubble up.
 		HideAt: number?,
 		Shown: number,
 		LayoutWidth: number,
 		HopAt: number,
+		-- When the current line was presented; drives the bubble's boing.
+		ChangedAt: number,
 		Y: number?,
 		Avoid: Rect?,
 	},
@@ -193,7 +207,55 @@ local function pill(parent: Instance, name: string, fill: Color3): TextLabel
 	return plate
 end
 
--- The mentor: a cat model from the authored templates, idling in its own little world.
+local function portraitHolder(parent: Frame, size: number): (Frame, UIScale)
+	local holder = Instance.new("Frame")
+	holder.Name = "Portrait"
+	holder.AnchorPoint = Vector2.new(0, 1)
+	holder.Position = UDim2.fromScale(0, 1)
+	holder.Size = UDim2.fromOffset(size, size)
+	holder.BackgroundTransparency = 1
+	holder.ZIndex = 10
+	holder.Parent = parent
+	local scale = Instance.new("UIScale")
+	scale.Parent = holder
+	return holder, scale
+end
+
+-- The mentor drawn from its mood images (Portrait.Images); every mood shares one framing, so a
+-- swap never makes it jump.
+local function buildFace(parent: Frame): (Frame, UIScale, ImageLabel)
+	local holder, scale = portraitHolder(parent, PORTRAIT.ImageSize)
+	local face = Instance.new("ImageLabel")
+	face.Name = "Face"
+	face.AnchorPoint = Vector2.new(0.5, 1)
+	face.Position = UDim2.fromScale(0.5, 1)
+	face.Size = UDim2.fromScale(1, 1)
+	face.BackgroundTransparency = 1
+	face.ScaleType = Enum.ScaleType.Fit
+	face.Image = PORTRAIT.Images.Neutral
+	face.ZIndex = 10
+	face.Parent = holder
+	-- Every mood is requested up front, so the first swap does not flash an empty frame.
+	local list = {}
+	for _, image in PORTRAIT.Images do
+		if image ~= "" then
+			local preload = Instance.new("ImageLabel")
+			preload.Image = image
+			table.insert(list, preload)
+		end
+	end
+	task.spawn(function(): ()
+		pcall(function(): ()
+			ContentProvider:PreloadAsync(list)
+		end)
+		for _, preload in list do
+			preload:Destroy()
+		end
+	end)
+	return holder, scale, face
+end
+
+-- The fallback mentor: a cat model from the authored templates, idling in its own little world.
 local function buildPortrait(parent: Frame, janitor: any): (Frame?, UIScale?)
 	local assets = ReplicatedStorage:FindFirstChild("Assets")
 	local models = assets and assets:FindFirstChild("Models")
@@ -204,16 +266,7 @@ local function buildPortrait(parent: Frame, janitor: any): (Frame?, UIScale?)
 		return nil, nil
 	end
 
-	local holder = Instance.new("Frame")
-	holder.Name = "Portrait"
-	holder.AnchorPoint = Vector2.new(0, 1)
-	holder.Position = UDim2.fromScale(0, 1)
-	holder.Size = UDim2.fromOffset(PORTRAIT.Size, PORTRAIT.Size)
-	holder.BackgroundTransparency = 1
-	holder.ZIndex = 10
-	holder.Parent = parent
-	local scale = Instance.new("UIScale")
-	scale.Parent = holder
+	local holder, scale = portraitHolder(parent, PORTRAIT.Size)
 
 	local viewport = Instance.new("ViewportFrame")
 	viewport.Name = "View"
@@ -304,6 +357,8 @@ local function build(janitor: any): View
 	gradient.Rotation = 90
 	gradient.Color = ColorSequence.new(COLORS.FillTop, COLORS.FillBottom)
 	gradient.Parent = bubble
+	local bubbleScale = Instance.new("UIScale")
+	bubbleScale.Parent = bubble
 
 	local shadow = Instance.new("Frame")
 	shadow.Name = "Shadow"
@@ -313,6 +368,8 @@ local function build(janitor: any): View
 	shadow.ZIndex = 2
 	shadow.Parent = body
 	corner(shadow, STYLE.Corner + STYLE.Stroke)
+	local shadowScale = Instance.new("UIScale")
+	shadowScale.Parent = shadow
 
 	local title = label(bubble, "Title", FONT, STYLE.TitleSize, COLORS.Ink)
 	title.ZIndex = 6
@@ -372,7 +429,13 @@ local function build(janitor: any): View
 	buttonPadding.PaddingRight = UDim.new(0, 16)
 	buttonPadding.Parent = button
 
-	local portrait, portraitScale = buildPortrait(body, janitor)
+	local portrait: Frame?, portraitScale: UIScale?, face: ImageLabel? = nil, nil, nil
+	if PORTRAIT.Images.Neutral ~= "" then
+		portrait, portraitScale, face = buildFace(body)
+	else
+		portrait, portraitScale = buildPortrait(body, janitor)
+	end
+	plate.Text = string.upper(if face then PORTRAIT.Name else STYLE.SpeakerName)
 	screen.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
 	return {
@@ -382,8 +445,11 @@ local function build(janitor: any): View
 		Pop = pop,
 		Portrait = portrait,
 		PortraitScale = portraitScale,
+		Face = face,
 		Bubble = bubble,
 		Shadow = shadow,
+		BubbleScale = bubbleScale,
+		ShadowScale = shadowScale,
 		Plate = plate,
 		Badge = badge,
 		Done = done,
@@ -424,6 +490,23 @@ local function hudEdge(path: string, bottom: boolean): number?
 	return if bottom then y + element.AbsoluteSize.Y else y
 end
 
+-- Unwrapped width of one line of copy.
+local function lineWidth(text: string, font: Font, size: number): number
+	if text == "" then
+		return 0
+	end
+	local params = Instance.new("GetTextBoundsParams")
+	params.Text = text
+	params.Font = font
+	params.Size = size
+	params.Width = UNWRAPPED_WIDTH
+	params.RichText = true
+	local ok, bounds = pcall(function(): Vector2
+		return TextService:GetTextBoundsAsync(params)
+	end)
+	return if ok then math.ceil(bounds.X) else UNWRAPPED_WIDTH
+end
+
 local function measure(text: string, font: Font, size: number, width: number): number
 	if text == "" then
 		return 0
@@ -438,6 +521,28 @@ local function measure(text: string, font: Font, size: number, width: number): n
 		return TextService:GetTextBoundsAsync(params)
 	end)
 	return if ok then math.ceil(bounds.Y) else math.ceil(size * 1.25)
+end
+
+-- Which mood the mentor shows for a step: a table of goal ids first, then urgent and recovery
+-- steps, then the plain default.
+local function moodFor(goal: Types.TutorialGoal): string
+	local moods = PORTRAIT.Moods
+	local exact = moods.ById[goal.id]
+	if exact then
+		return exact
+	end
+	for prefix, mood in moods.ByPrefix do
+		if string.sub(goal.id, 1, #prefix) == prefix then
+			return mood
+		end
+	end
+	if goal.urgent then
+		return moods.Urgent
+	end
+	if goal.recovery then
+		return moods.Recovery
+	end
+	return moods.Default
 end
 
 local function hasItem(goal: Types.TutorialGoal): boolean
@@ -471,12 +576,13 @@ function Dialog.new(acknowledge: (string) -> ()): Dialog
 		TypeClock = 0,
 		Measured = "",
 		Measuring = "",
-		Heights = { Title = 0, Hint = 0, Width = 0 },
+		Heights = { Title = 0, Hint = 0, Width = 0, Line = 0 },
 		Wanted = false,
 		HideAt = nil,
 		Shown = 0,
 		LayoutWidth = 0,
 		HopAt = -math.huge,
+		ChangedAt = -math.huge,
 		Y = nil,
 		Avoid = nil,
 	}, Dialog) :: Dialog
@@ -517,7 +623,8 @@ function Dialog.Show(self: Dialog, goal: Types.TutorialGoal, progress: string?):
 	self.Wanted = true
 	self.HideAt = nil
 	local title = goal.title
-	local hint = goal.hint
+	-- One short line reads at a glance; the longer hint stays in the goal data for later use.
+	local hint = if STYLE.ShowHint then goal.hint else ""
 	local button = STYLE.Acknowledge[goal.id]
 	local key = `{goal.id}|{title}|{hint}|{progress or ""}|{button or ""}|{goal.recipeId or goal.itemId or ""}`
 	local current = self.Current
@@ -539,6 +646,7 @@ function Dialog.Show(self: Dialog, goal: Types.TutorialGoal, progress: string?):
 		TitleLength = utf8.len(titlePlain) or #titlePlain,
 		Progress = progress,
 		Button = button,
+		Mood = moodFor(goal),
 	}
 	-- The same step with new wording (a live count, a seat number) redraws without the stamp.
 	if not current or self.Shown < 1 or current.Goal.id == goal.id then
@@ -566,6 +674,9 @@ function Dialog.Present(self: Dialog, content: Content, instant: boolean): ()
 	self.Current = content
 	self.Pending = nil
 	self.ShownAt = os.clock()
+	if not instant then
+		self.ChangedAt = self.ShownAt
+	end
 	self.TypeClock = 0
 	self.Typed = if instant and previous then #content.Chars else 0
 	self.Measured = ""
@@ -574,6 +685,7 @@ function Dialog.Present(self: Dialog, content: Content, instant: boolean): ()
 	view.Hint.Text = content.Hint
 	view.Title.MaxVisibleGraphemes = 0
 	view.Hint.MaxVisibleGraphemes = 0
+	self:SetMood(content.Mood)
 	view.Badge.Text = content.Progress or ""
 	view.Badge.Visible = content.Progress ~= nil and os.clock() >= self.DoneUntil
 	view.Button.Text = content.Button or ""
@@ -585,6 +697,15 @@ function Dialog.Present(self: Dialog, content: Content, instant: boolean): ()
 	self:Layout()
 end
 
+function Dialog.SetMood(self: Dialog, mood: string): ()
+	local face = self.View.Face
+	if not face then
+		return
+	end
+	local image = PORTRAIT.Images[mood]
+	face.Image = if image and image ~= "" then image else PORTRAIT.Images.Neutral
+end
+
 -- Measures the copy for the current width, then sizes and places every part of the bubble.
 function Dialog.Layout(self: Dialog): ()
 	local content = self.Current
@@ -594,15 +715,16 @@ function Dialog.Layout(self: Dialog): ()
 	local view = self.View
 	local viewport = viewportSize()
 	local scale = uiScale(viewport)
-	local width = dialogWidth(viewport, scale)
-	local portrait = if view.Portrait then PORTRAIT.Size else 0
+	local widest = dialogWidth(viewport, scale)
+	local portrait = if view.Portrait then view.Portrait.Size.X.Offset else 0
 	local bubbleX = math.floor(portrait * PORTRAIT.BubbleStart)
-	local bubbleWidth = width - bubbleX
 	local itemSpace = if view.Item.Visible then STYLE.ItemSize + STYLE.ItemGap else 0
-	-- The cat leans over the bubble's left edge; the copy starts clear of it.
-	local textLeft = math.max(STYLE.Padding.X, portrait - bubbleX + STYLE.PortraitGap)
-	local textWidth = bubbleWidth - textLeft - STYLE.Padding.X - itemSpace
-	local key = `{content.Key}@{textWidth}`
+	-- The mentor leans over the bubble's left edge; the copy starts clear of it.
+	local gap = if view.Face then PORTRAIT.ImageGap else STYLE.PortraitGap
+	local textLeft = math.max(STYLE.Padding.X, portrait - bubbleX + gap)
+	local chrome = bubbleX + textLeft + STYLE.Padding.X + itemSpace
+	local widestText = widest - chrome
+	local key = `{content.Key}@{widestText}`
 
 	if self.Measured ~= key then
 		if self.Measuring == key then
@@ -610,18 +732,29 @@ function Dialog.Layout(self: Dialog): ()
 		end
 		self.Measuring = key
 		task.spawn(function(): ()
-			local titleHeight = measure(content.Title, FONT, STYLE.TitleSize, textWidth)
-			local hintHeight = measure(content.Hint, HINT_FONT, STYLE.HintSize, textWidth)
+			local titleHeight = measure(content.Title, FONT, STYLE.TitleSize, widestText)
+			local hintHeight = measure(content.Hint, HINT_FONT, STYLE.HintSize, widestText)
+			local line = math.max(
+				lineWidth(content.Title, FONT, STYLE.TitleSize),
+				lineWidth(content.Hint, HINT_FONT, STYLE.HintSize)
+			)
 			if self.Measuring ~= key then
 				return
 			end
 			self.Measuring = ""
 			self.Measured = key
-			self.Heights = { Title = titleHeight, Hint = hintHeight, Width = textWidth }
+			self.Heights = { Title = titleHeight, Hint = hintHeight, Width = widestText, Line = line }
 			self:Layout()
 		end)
 		return
 	end
+	self.LayoutWidth = widest
+
+	-- A short line gets a snug bubble (text plus its chrome); a long one wraps at the widest.
+	local textWidth = math.min(widestText, self.Heights.Line + SNUG_SLACK)
+	local width = math.max(STYLE.MinWidth, chrome + textWidth)
+	textWidth = width - chrome
+	local bubbleWidth = width - bubbleX
 
 	local heights = self.Heights
 	local top = math.ceil(STYLE.PlateHeight * PLATE_INSIDE)
@@ -631,20 +764,19 @@ function Dialog.Layout(self: Dialog): ()
 	local bubbleHeight = math.max(STYLE.MinBubbleHeight, inner + STYLE.Padding.Y * 2 + top)
 	local height = math.max(bubbleHeight + math.ceil(STYLE.PlateHeight / 2), portrait)
 
-	self.LayoutWidth = width
 	view.Root.Size = UDim2.fromOffset(width, height)
 	view.Bubble.Size = UDim2.fromOffset(bubbleWidth, bubbleHeight)
-	view.Shadow.Position = UDim2.new(1, STYLE.Stroke, 1, STYLE.Stroke + STYLE.ShadowDrop)
 	view.Shadow.Size = UDim2.fromOffset(bubbleWidth + STYLE.Stroke * 2, bubbleHeight + STYLE.Stroke * 2)
 
-	local textTop = STYLE.Padding.Y + top
+	-- The copy sits centred beside a taller item tile.
+	local textTop = STYLE.Padding.Y + top + math.floor((inner - text - buttonSpace) / 2)
 	view.Plate.Position = UDim2.fromOffset(textLeft, 0)
 	view.Title.Position = UDim2.fromOffset(textLeft, textTop)
 	view.Title.Size = UDim2.fromOffset(textWidth, heights.Title)
 	view.Hint.Position = UDim2.fromOffset(textLeft, textTop + heights.Title + STYLE.LineGap)
 	view.Hint.Size = UDim2.fromOffset(textWidth, heights.Hint)
 	view.Button.Position = UDim2.fromOffset(textLeft, textTop + text + STYLE.LineGap * 2)
-	view.Item.Position = UDim2.new(1, -STYLE.Padding.X, 0, textTop + inner / 2)
+	view.Item.Position = UDim2.new(1, -STYLE.Padding.X, 0, STYLE.Padding.Y + top + inner / 2)
 end
 
 function Dialog.Step(self: Dialog, deltaTime: number): ()
@@ -668,6 +800,7 @@ function Dialog.Step(self: Dialog, deltaTime: number): ()
 			and not pending.Goal.recovery
 		if self.DoneUntil <= now and finished and not view.Done.Visible then
 			self.DoneUntil = now + STYLE.DoneSeconds
+			self:SetMood(PORTRAIT.Moods.Done)
 			view.Done.Visible = true
 			view.Badge.Visible = false
 			SoundPlayer.Play("Sparkle")
@@ -705,7 +838,22 @@ function Dialog.Step(self: Dialog, deltaTime: number): ()
 		self:Layout()
 	end
 	self:Place(deltaTime, viewport, scale)
+	self:Boing(now)
 	self:Type(deltaTime, now)
+end
+
+-- Every new line gives the bubble a small hop and swell, like Lemon Cake's dialogue change.
+function Dialog.Boing(self: Dialog, now: number): ()
+	local view = self.View
+	local boing = STYLE.Boing
+	local t = Ease.Clamp((now - self.ChangedAt) / boing.Seconds)
+	local wave = if t < 1 then math.sin(t * math.pi) else 0
+	local grow = 1 + (boing.Scale - 1) * wave
+	view.BubbleScale.Scale = grow
+	view.ShadowScale.Scale = grow
+	view.Bubble.Position = UDim2.new(1, 0, 1, -boing.Lift * wave)
+	view.Shadow.Position =
+		UDim2.new(1, STYLE.Stroke, 1, STYLE.Stroke + STYLE.ShadowDrop - boing.Lift * wave)
 end
 
 -- Bottom centre above the hotbar; at the top, below the clock, when that would cover the target.
@@ -784,6 +932,11 @@ function Dialog.Type(self: Dialog, deltaTime: number, now: number): ()
 		portraitScale.Scale = 1 + PORTRAIT.BreathScale * breath
 		local hop = Ease.Clamp((now - self.HopAt) / PORTRAIT.HopSeconds)
 		local lift = if hop < 1 then math.sin(hop * math.pi) * PORTRAIT.HopPixels else 0
+		-- A ghost floats: a slow bob and sway on top of the talking hop.
+		local float = PORTRAIT.Float
+		local phase = now * 2 * math.pi / float.Period
+		lift += math.sin(phase) * float.Pixels
+		portrait.Rotation = PORTRAIT.Tilt + math.sin(phase * 0.5) * float.Sway
 		portrait.Position = UDim2.new(0, 0, 1, -lift)
 	end
 end

@@ -178,8 +178,9 @@ function Presenter.Draw(self: Presenter, _deltaTime: number, page: string): ()
 		-- The bubble owns the step: it stays up, so it never waits behind other toasts.
 		hideToast(self)
 		local shown = table.clone(goal)
+		-- A target that is out of reach (a scrolled recipe, a far mixer) says how to reach it.
 		if target and target.message then
-			shown.hint = target.message
+			shown.title = target.message
 		end
 		self.Dialog:SetAvoid(targetRect(self))
 		self.Dialog:Show(shown, self.Progress)

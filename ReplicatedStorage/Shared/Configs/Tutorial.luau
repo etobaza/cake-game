@@ -48,6 +48,47 @@ return {
 		TopFallback = 130,
 		SpeakerName = "Mochi",
 		Portrait = {
+			-- Nana Crumble, the friendly ghost of the bakery's old owner (modelled on Lemon Cake's
+			-- ghost mentor, with original art). Uploaded mood images; while Neutral is empty the
+			-- authored cat model below speaks instead.
+			Name = "Nana Crumble",
+			-- funset_tutorial_nana_<mood> (group 712136202), generated with Codex in the HUD icon style
+			-- and keyed to alpha. Images owned by a personal account do not load in this experience.
+			Images = {
+				Neutral = "rbxassetid://91114958777567",
+				Happy = "rbxassetid://91604123612355",
+				Surprised = "rbxassetid://133640805449280",
+				Spooked = "rbxassetid://91917403951074",
+				Sad = "rbxassetid://124430413895917",
+			} :: { [string]: string },
+			Moods = {
+				Default = "Neutral",
+				Urgent = "Spooked",
+				Recovery = "Surprised",
+				-- Shown with the Done! stamp.
+				Done = "Happy",
+				ById = {
+					completed = "Happy",
+					eating = "Happy",
+					guest_arriving = "Happy",
+					order_card = "Surprised",
+					intro_preparing = "Neutral",
+					close_for_oven = "Spooked",
+				} :: { [string]: string },
+				ByPrefix = {
+					intro_sweep_ = "Spooked",
+					discard_ = "Sad",
+				} :: { [string]: string },
+			},
+			-- The mood images' square size; her toque rises above the bubble.
+			ImageSize = 180,
+			-- Gap from the image's right edge to the copy; negative because the art has a
+			-- transparent margin on that side.
+			ImageGap = -18,
+			-- A slow bob and sway, in reference pixels and degrees, around a lean toward the
+			-- bubble (Lemon Cake tilts its speaker portrait 2.5 degrees).
+			Float = { Period = 2.8, Pixels = 3, Sway = 1.5 },
+			Tilt = 2.5,
 			Template = "Cats",
 			Size = 132,
 			-- The bubble starts this far into the portrait, so the cat leans over its edge and
@@ -66,20 +107,22 @@ return {
 			HopPixels = 4,
 			HopSeconds = 0.12,
 		},
-		TitleSize = 24,
+		TitleSize = 26,
 		HintSize = 18,
+		-- The bubble shows only the step title; true adds the goal's longer hint below it.
+		ShowHint = false,
 		LineGap = 4,
 		Padding = Vector2.new(20, 14),
 		-- Space between the portrait's right edge and the copy.
 		PortraitGap = 8,
-		MinBubbleHeight = 78,
+		MinBubbleHeight = 72,
 		Corner = 18,
 		Stroke = 3,
 		ShadowDrop = 6,
 		ShadowTransparency = 0.72,
 		PlateHeight = 28,
 		PlateTextSize = 17,
-		ItemSize = 66,
+		ItemSize = 54,
 		ItemGap = 12,
 		ButtonHeight = 34,
 		ButtonTextSize = 17,
@@ -102,6 +145,8 @@ return {
 		SoundEvery = 4,
 		SoundPitch = { Min = 1.35, Max = 1.65 },
 		AppearSeconds = 0.32,
+		-- A new line makes the bubble swell and hop (Lemon Cake's AN_DialogueChange).
+		Boing = { Seconds = 0.35, Scale = 1.03, Lift = 10 },
 		ExitSeconds = 0.18,
 		MoveSmoothing = 0.08,
 		-- A goal-less moment shorter than this (a step handing over) keeps the bubble up.
