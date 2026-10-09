@@ -432,6 +432,7 @@ function BuildingHandler.Spawn(
 		if not anchor or not View.AttachSeats(part, anchor, base.Transform) then
 			Logger:Warn(`Missing authored guest seats for {buildingId}`)
 		end
+		View.AttachSeatPrompts(part, buildingId, kindName, kind, player.UserId)
 	end
 
 	local building = Building.new(player, buildingId, kindName, kind, BEHAVIORS[kind.Class], part)

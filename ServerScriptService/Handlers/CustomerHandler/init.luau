@@ -328,6 +328,7 @@ function CustomerHandler.SpawnCustomer(self: CustomerHandler, player: Player): b
 	-- seconds, then looks for a cat or a stocked display, and otherwise leaves. The room stays alive
 	-- even while every place is taken, and no table queue builds up.
 	if not scriptedEntry and entry.kind == "Seated" and not tableId then
+		self:NoticeDirtyTables(player, runtime)
 		entry = PickType(player, "Display")
 		if not entry then
 			return false
@@ -419,6 +420,17 @@ function CustomerHandler.SpawnCustomer(self: CustomerHandler, player: Player): b
 	end, if rush then OrdersConfig.FirstGuestChooseSeconds else nil)
 	self.CustomerSpawned:Fire(player, customerId)
 	return true
+end
+
+-- A seated guest found no clean chair. If a used place is what stopped them, say so: otherwise the
+-- guest silently wanders off and the player never learns that tables need cleaning.
+function CustomerHandler.NoticeDirtyTables(_self: CustomerHandler, player: Player, runtime: any): ()
+	local now = workspace:GetServerTimeNow()
+	if now < (runtime.DirtyNoticeAt or 0) or not TableHandler:FindDirty(player) then
+		return
+	end
+	runtime.DirtyNoticeAt = now + DayCycleConfig.DirtyTableNoticeSeconds
+	Bus.Progress.ActionFailed:FireClient(player, "table_dirty")
 end
 
 -- A table freed up — seat the queue in arrival order. Guest ids carry their spawn number, and the
@@ -1028,6 +1040,8 @@ export type CustomerHandler = typeof(CustomerHandler) & {
 			ScriptedGuest: boolean,
 			DisplayFlow: number,
 			RecordShown: boolean,
+			-- Earliest time the next "clean a table" notice may be sent.
+			DirtyNoticeAt: number?,
 		},
 	},
 }

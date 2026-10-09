@@ -28,6 +28,8 @@ local DayCycle = {
 	FirstSpawnDelay = 0.5,
 	-- An empty bakery calls its next guest in within this many seconds, whatever the timer says.
 	EmptySpawnDelay = 1.5,
+	-- A seated guest who finds only used places says so at most this often (CustomerHandler).
+	DirtyTableNoticeSeconds = 20,
 	-- Finishing the introduction sends this many guests in a row, RushSpawnInterval apart, so the
 	-- player has work at once. Rush guests (and the first guest of a shift, and any guest arriving to
 	-- an empty bakery) step in from the porch and choose in Orders.FirstGuestChooseSeconds.

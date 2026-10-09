@@ -20,6 +20,8 @@ local Animate = require(_Shared.UI.Animate)
 local Flux = require(_Packages.flux)
 local HudLayout = require(_Shared.UI.HudLayout)
 local HudReveal = require(_Shared.UI.Stores.HudReveal)
+local OrdersConfig = require(_Shared.Configs.Orders)
+local Pages = require(_Shared.UI.Stores.Pages)
 local Press = require(_Shared.UI.Press)
 local UITypes = require(_Shared.UI.Types)
 
@@ -47,9 +49,11 @@ local INTRO_STAGGER = 0.08
 -- HUD groups that ride in from the screen edges on spawn and leave while a page is open, each
 -- through the edge it lives against. XP is a notification with its own slide, and Quests folds
 -- below with its arrow.
-local GROUPS: { { Name: string, Edge: string } } = {
+-- `Stays` lists pages the group stays up for: the order panel remains while the player picks a
+-- recipe, which is exactly when they need to see what guests want.
+local GROUPS: { { Name: string, Edge: string, Stays: { [string]: boolean }? } } = {
 	{ Name = "Hotbar", Edge = "Bottom" },
-	{ Name = "Order", Edge = "Bottom" },
+	{ Name = "Order", Edge = "Bottom", Stays = OrdersConfig.StaysOverPages },
 	{ Name = "Currency", Edge = "Left" },
 	{ Name = "SideBtns", Edge = "Left" },
 	{ Name = "Time", Edge = "Top" },
@@ -263,8 +267,10 @@ return function(hud: Instance, props: Props): ()
 		local group = resolve(hud, entry.Name)
 		if group and group:IsA("GuiObject") then
 			local name = entry.Name
+			local stays = entry.Stays
 			slideGroup(group, entry.Edge, (index - 1) * INTRO_STAGGER, function(): boolean
-				return read(props.HudShown) and HudReveal.Shown(name)
+				local shown = read(props.HudShown) or (stays ~= nil and stays[Pages.Current()] == true)
+				return shown and HudReveal.Shown(name)
 			end)
 		end
 	end

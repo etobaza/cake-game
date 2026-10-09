@@ -1,5 +1,7 @@
 --!strict
 -- Only seated guests place menu orders. Window shoppers buy stock without an order card.
+-- Each card names what its guest needs next: Take order!, the dish to cook, Serve, or Eating
+-- until they leave.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -11,15 +13,14 @@ local _Handlers = ReplicatedStorage.Handlers
 
 --[[ Modules ]]--
 local Animate = require(_Shared.UI.Animate)
-local Buildings = require(_Shared.Configs.Buildings)
 local Authored = require(_Shared.UI.Authored)
 local Card = require(script.Card)
 local Config = require(_Shared.Configs.Orders)
 local DataClient = require(_Handlers.DataHandlerClient)
+local GuestOrders = require(_Shared.GuestOrders)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Recipes = require(_Shared.Configs.Registries.Recipes)
 local Signal = require(_Shared.Libs.Signal)
-local Tables = require(_Shared.Configs.TableMenus)
 local UIHandler = require(_Handlers.UIHandler)
 
 --[[ Tables ]]--
@@ -44,7 +45,7 @@ local function collectOrders(): { Order }
 		if not customer.TableId then
 			continue
 		end
-		if customer.State ~= "Choosing" and customer.State ~= "Waiting" then
+		if customer.State ~= "Choosing" and customer.State ~= "Waiting" and customer.State ~= "Eating" then
 			continue
 		end
 		orders[#orders + 1] = { CustomerId = customerId, Customer = customer }
@@ -56,13 +57,9 @@ local function collectOrders(): { Order }
 end
 
 --[[ Handling ]]--
--- Number dining places in purchase order: the starting table owns 1/2, the upgrade 3/4.
--- These identify seats, so serving an earlier order never renumbers the remaining cards.
+-- Seat numbers are shared with the speech bubbles and the table prompts (GuestOrders.SeatLabel).
 function OrderHandler.SeatLabel(tableId: string, seatIndex: number?): string
-	local slotOrder = Buildings.Kinds.Table.SlotOrder
-	local tableIndex = Buildings.GetIndex(tableId)
-	local tableNumber = if slotOrder then table.find(slotOrder, tableIndex) or tableIndex else tableIndex
-	return `#{(tableNumber - 1) * Tables.SeatCount + (seatIndex or 1)}`
+	return GuestOrders.SeatLabel(tableId, seatIndex)
 end
 
 function OrderHandler.OnStart(self: OrderHandler): ()
@@ -141,12 +138,15 @@ function OrderHandler.OnStart(self: OrderHandler): ()
 		"Disconnect"
 	)
 	DataClient:WaitForData()
-	self.Janitor:Add(
-		DataClient:SubscribeToPath({ "Customers" }, function(): ()
-			self:Refresh()
-		end, "Session", true),
-		"Disconnect"
-	)
+	-- Guests, and the hands: a matching dish turns its card to Serve.
+	for _, path in { { "Customers" }, { "Hands" } } do
+		self.Janitor:Add(
+			DataClient:SubscribeToPath(path, function(): ()
+				self:Refresh()
+			end, "Session", true),
+			"Disconnect"
+		)
+	end
 	-- A single visual clock for all cards, including choosing dots and timestamp-derived fill.
 	self.Janitor:Add(
 		RunService.Heartbeat:Connect(function(deltaTime: number): ()
@@ -170,6 +170,8 @@ end
 
 function OrderHandler.Refresh(self: OrderHandler): ()
 	local orders = collectOrders()
+	local hands = DataClient:GetData({ "Hands" }, "Session")
+	local held = if hands then hands[#hands] else nil
 	self.Root:SetAttribute("OrderCount", #orders)
 	self.Root.Visible = #orders > 0
 	while #self.Cards < #orders do
@@ -199,7 +201,8 @@ function OrderHandler.Refresh(self: OrderHandler): ()
 			continue
 		end
 		local customer = order.Customer
-		local choosing = customer.State == "Choosing"
+		local need, status = GuestOrders.Need(customer, held, now)
+		local placed = customer.State ~= "Choosing"
 		-- Cards follow guests as earlier orders finish; only a guest's own change punches.
 		local stage = customer.State
 		local previous = self.Stages[order.CustomerId]
@@ -209,30 +212,24 @@ function OrderHandler.Refresh(self: OrderHandler): ()
 		elseif previous ~= stage and stage == "Waiting" then
 			Animate.Pop(card.Slot, Config.Pop.Placed)
 		end
-		local recipe = if choosing then nil else Recipes:Get(customer.Orders[1])
-		local names = {}
-		if not choosing then
-			for _, recipeId in customer.Orders do
-				local dish = Recipes:Get(recipeId)
-				if dish then
-					names[#names + 1] = dish.name
-				end
-			end
-		end
-		local name = if choosing then "Picking a pastry" else table.concat(names, " + ")
-		local label = OrderHandler.SeatLabel(customer.TableId, customer.SeatIndex)
-		local remaining = if choosing or customer.TutorialProtected
-			then 1
-			else math.clamp((customer.PatienceEndsAt - now) / math.max(customer.Patience, 1), 0, 1)
-		card:Show(
-			order.CustomerId,
-			recipe,
-			label,
-			name,
-			math.ceil(remaining * Config.ProgressSteps) / Config.ProgressSteps,
-			choosing,
-			now
-		)
+		-- Served dishes leave the order list, so an eating guest's card shows no dish.
+		local first = customer.Orders[1]
+		local recipe = if placed and first then Recipes:Get(first) else nil
+		local remaining = GuestOrders.Remaining(customer, now)
+		card:Show({
+			CustomerId = order.CustomerId,
+			Recipe = recipe,
+			Label = OrderHandler.SeatLabel(customer.TableId, customer.SeatIndex),
+			Name = if need == "Eating"
+				then "Eating"
+				elseif placed then GuestOrders.DishNames(customer)
+				else "Picking a pastry",
+			Ratio = math.ceil(remaining * Config.ProgressSteps) / Config.ProgressSteps,
+			Need = need,
+			Status = status,
+			Low = need ~= "Eating" and remaining < Config.Bubble.LowPatience,
+			Now = now,
+		})
 	end
 	self.Stages = stages
 end

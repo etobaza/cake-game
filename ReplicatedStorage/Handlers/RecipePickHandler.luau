@@ -8,6 +8,7 @@
 --
 -- Beside the list the screen carries a small card for the recipe in work with one chip per
 -- ingredient, lit as the mixer fills. Nothing is built here; the authored rows and chips are reused.
+-- Dishes guests are waiting for list first and carry a generated "N waiting" badge.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -29,8 +30,11 @@ local DataClient = require(_Handlers.DataHandlerClient)
 local DayCycleConfig = require(_Configs.DayCycle)
 local Ingredients = require(_Configs.Registries.Ingredients)
 local GardenSource = require(_Shared.GardenSource)
+local GuestOrders = require(_Shared.GuestOrders)
+local OrdersConfig = require(_Configs.Orders)
 local Press = require(_Shared.UI.Press)
 local Recipes = require(_Configs.Registries.Recipes)
+local Theme = require(_Shared.UI.Theme)
 local TutorialPolicy = require(_Shared.TutorialPolicy)
 local UIHandler = require(_Handlers.UIHandler)
 
@@ -194,6 +198,37 @@ local function MixerMenu(): { Recipes.RecipeEntry }
 	return offered
 end
 
+-- A pill over the row's top-left corner, above the dish icon: how many guests wait for this dish.
+local function buildWaitingBadge(row: Frame): TextLabel
+	local style = OrdersConfig.WaitingBadge
+	local badge = Instance.new("TextLabel")
+	badge.Name = "Waiting"
+	badge.AutomaticSize = Enum.AutomaticSize.X
+	badge.Position = UDim2.fromOffset(4, 2)
+	badge.Size = UDim2.fromOffset(0, style.Height)
+	badge.BackgroundColor3 = style.Color
+	badge.BorderSizePixel = 0
+	badge.FontFace = Theme.Fonts.ExtraBold
+	badge.TextColor3 = style.TextColor
+	badge.TextSize = style.TextSize
+	badge.Visible = false
+	badge.ZIndex = 10
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = Theme.Corners.Pill
+	corner.Parent = badge
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0, style.Padding)
+	padding.PaddingRight = UDim.new(0, style.Padding)
+	padding.Parent = badge
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Theme.Colors.Cocoa
+	stroke.Thickness = 2
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Parent = badge
+	badge.Parent = row
+	return badge
+end
+
 --[[ Handling ]]--
 function RecipePickHandler.OnStart(self: RecipePickHandler): ()
 	local screen = UIHandler:GetPanel(SCREEN_NAME)
@@ -207,6 +242,7 @@ function RecipePickHandler.OnStart(self: RecipePickHandler): ()
 	self.Janitor = Janitor.new()
 	self.Content = content
 	self.Rows = {}
+	self.Badges = {}
 	self.Chips = {}
 	self.NeededChips = {}
 
@@ -239,7 +275,8 @@ function RecipePickHandler.OnStart(self: RecipePickHandler): ()
 	end
 
 	-- The tutorial's guest and progress decide whether the menu is limited to its dish.
-	for _, path in { { "Day", "Menu" }, { "Cooking" }, { "Stations" }, { "Tutorial" } } do
+	-- Guests' orders reorder the list and set the waiting badges.
+	for _, path in { { "Day", "Menu" }, { "Cooking" }, { "Stations" }, { "Tutorial" }, { "Customers" } } do
 		self.Janitor:Add(
 			DataClient:SubscribeToPath(path, function()
 				self:Refresh()
@@ -287,6 +324,8 @@ function RecipePickHandler.BuildRows(self: RecipePickHandler): ()
 		row.LayoutOrder = index
 		row.Visible = false
 		self.Rows[index] = row
+		self.Badges[row] = buildWaitingBadge(row)
+		self.Janitor:Add(self.Badges[row], "Destroy")
 		local foodIcon = resolve(row, { "IconAndName", "Icon" })
 		if foodIcon and foodIcon:IsA("ImageLabel") then
 			self.Janitor:Add(function(): ()
@@ -415,9 +454,28 @@ end
 function RecipePickHandler.RefreshRows(self: RecipePickHandler): ()
 	local selected = SelectedRecipe()
 	local menu = MixerMenu()
+	local waiting = GuestOrders.CountWaiting(DataClient:GetData({ "Customers" }, "Session"))
+	-- Dishes guests wait for come first, most wanted on top; the rest keep the menu's order.
+	local order: { [string]: number } = {}
+	for index, recipe in menu do
+		order[recipe.id] = index
+	end
+	table.sort(menu, function(left: Recipes.RecipeEntry, right: Recipes.RecipeEntry): boolean
+		local leftCount, rightCount = waiting[left.id] or 0, waiting[right.id] or 0
+		if leftCount ~= rightCount then
+			return leftCount > rightCount
+		end
+		return order[left.id] < order[right.id]
+	end)
 
 	for index, row in self.Rows do
 		local recipe = menu[index]
+		local badge = self.Badges[row]
+		local count = if recipe then waiting[recipe.id] or 0 else 0
+		if badge then
+			badge.Visible = count > 0
+			badge.Text = `{count} waiting`
+		end
 		if not recipe then
 			row:SetAttribute("RecipeId", nil)
 			row.Name = `Row{index}`
@@ -580,6 +638,8 @@ export type RecipePickHandler = typeof(RecipePickHandler) & {
 	Screen: ScreenGui,
 	Content: Instance,
 	Rows: { Frame },
+	-- Generated "N waiting" pill per row.
+	Badges: { [Frame]: TextLabel },
 	Card: ScrollingFrame?,
 	CardContent: Frame?,
 	Chips: { ChipPair },

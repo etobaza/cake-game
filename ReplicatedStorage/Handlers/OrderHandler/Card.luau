@@ -1,5 +1,7 @@
 --!strict
--- An authored guest card: hover/touch name, choosing dots and remaining patience over fixed art.
+-- An authored guest card: hover/touch name, choosing dots and remaining patience over fixed art,
+-- plus a generated status line over its top: what the guest needs next (Take order!, the dish to
+-- cook, Serve, Eating), red while their patience runs low.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -14,12 +16,33 @@ local FoodPreview = require(_Shared.UI.FoodPreview)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Press = require(_Shared.UI.Press)
 local Recipes = require(_Shared.Configs.Registries.Recipes)
+local Theme = require(_Shared.UI.Theme)
+
+--[[ Constants ]]--
+local STATUS = Config.CardStatus
 
 --[[ Types ]]--
 export type Tooltip = {
 	Root: Frame,
 	ItemName: TextLabel,
 	ActiveCard: Frame?,
+}
+
+-- One card's content, derived by OrderHandler from the replicated guest.
+export type View = {
+	CustomerId: string,
+	Recipe: Recipes.RecipeEntry?,
+	-- Seat number badge, e.g. "#3".
+	Label: string,
+	-- Full order name for the hover tooltip.
+	Name: string,
+	-- Patience left, 0-1, already stepped.
+	Ratio: number,
+	-- GuestOrders.Need: Choosing, Ready, Cook, Serve or Eating.
+	Need: string,
+	Status: string,
+	Low: boolean,
+	Now: number,
 }
 
 --[[ Tables ]]--
@@ -43,13 +66,43 @@ function Card.new(root: Frame, tooltip: Tooltip, onTap: (customerId: string) -> 
 	local bar = root:FindFirstChild("Bar") :: CanvasGroup
 	local clip = bar:FindFirstChild("Clip") :: Frame
 	local fill = clip:FindFirstChild("Fill") :: Frame
+	local background = slot:FindFirstChild("Background") :: ImageLabel
+	local ponder = slot:FindFirstChild("Ponder") :: TextLabel
+	-- The header's place (hidden; the tooltip shows the full name) carries the status line.
+	local status = Instance.new("TextLabel")
+	status.Name = "Status"
+	status.AnchorPoint = Vector2.new(0.5, 0)
+	status.Position = UDim2.fromScale(0.5, 0)
+	status.Size = UDim2.fromScale(1.1, STATUS.Height)
+	status.BackgroundTransparency = 1
+	status.FontFace = Theme.Fonts.ExtraBold
+	status.TextScaled = true
+	status.TextWrapped = true
+	status.TextYAlignment = Enum.TextYAlignment.Bottom
+	status.ZIndex = 10
+	local limit = Instance.new("UITextSizeConstraint")
+	limit.MinTextSize = STATUS.MinTextSize
+	limit.MaxTextSize = STATUS.MaxTextSize
+	limit.Parent = status
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = STATUS.StrokeColor
+	stroke.Thickness = STATUS.StrokeThickness
+	stroke.Parent = status
+	status.Parent = root
 	local self = setmetatable({
 		Root = root,
 		-- Centre-anchored card art: the part that punches when the order changes.
 		Slot = slot,
-		Background = slot:FindFirstChild("Background") :: ImageLabel,
+		Background = background,
 		Icon = slot:FindFirstChild("Icon") :: ImageLabel,
-		Ponder = slot:FindFirstChild("Ponder") :: TextLabel,
+		Ponder = ponder,
+		Status = status,
+		Bar = bar,
+		-- Authored looks the status states tint over and restore.
+		ArtColor = background.ImageColor3,
+		ArtTransparency = background.ImageTransparency,
+		PonderColor = ponder.TextColor3,
+		NextPulseAt = 0,
 		Button = slot:FindFirstChild("Btn") :: TextButton,
 		Number = slot:FindFirstChild("NumberOutside") :: TextLabel,
 		Tooltip = tooltip,
@@ -135,16 +188,9 @@ function Card.RefreshHeader(self: Card): ()
 	tooltip.Root.Position = UDim2.new(relative.X / parentSize.X, 0, relative.Y / parentSize.Y, -Config.TooltipGap)
 end
 
-function Card.Show(
-	self: Card,
-	customerId: string,
-	recipe: Recipes.RecipeEntry?,
-	label: string,
-	name: string,
-	ratio: number,
-	choosing: boolean,
-	now: number
-): ()
+function Card.Show(self: Card, view: View): ()
+	local customerId = view.CustomerId
+	local recipe = view.Recipe
 	local changed = self.CustomerId ~= customerId
 	if changed then
 		self.Hovered = false
@@ -164,15 +210,32 @@ function Card.Show(
 	self.Root:SetAttribute("RecipeId", recipeId)
 	self.Root.Visible = true
 	self.Icon.Visible = recipe ~= nil
-	self.Ponder.Visible = choosing
-	self.Ponder.Text = string.rep(".", math.floor(now / Config.PonderInterval) % 3 + 1)
-	self.Number.Text = label
+
+	local ready = view.Need == "Ready"
+	local eating = view.Need == "Eating"
+	self.Ponder.Visible = view.Need == "Choosing" or ready
+	self.Ponder.Text = if ready then "!" else string.rep(".", math.floor(view.Now / Config.PonderInterval) % 3 + 1)
+	self.Ponder.TextColor3 = if ready then STATUS.Colors.Ready else self.PonderColor
+	-- A guest waiting for their order to be taken keeps calling from the HUD as well.
+	if ready and view.Now >= self.NextPulseAt then
+		self.NextPulseAt = view.Now + STATUS.ReadyPulseSeconds
+		Animate.Pop(self.Slot, STATUS.ReadyPulseFrom)
+	end
+
+	self.Status.Text = view.Status
+	self.Status.TextColor3 = if view.Low then STATUS.Colors.Low else STATUS.Colors[view.Need] or STATUS.Colors.Cook
+	self.Background.ImageColor3 = if view.Low then STATUS.LowTint else self.ArtColor
+	self.Background.ImageTransparency = if eating then STATUS.EatingTransparency else self.ArtTransparency
+	self.Bar.Visible = not eating
+
+	self.Number.Text = view.Label
 	local inside = self.Number:FindFirstChild("NumberInside") :: TextLabel
-	inside.Text = label
-	self.Name = name
+	inside.Text = view.Label
+	self.Name = view.Name
 	self:RefreshHeader()
+	local ratio = view.Ratio
 	self.Motion:spring(ratio)
-	if changed or choosing then
+	if changed or view.Need == "Choosing" then
 		self.Motion:setPosition(ratio)
 		self.Motion:setVelocity(0)
 		drawFill(self.Clip, self.Fill, ratio)
@@ -190,6 +253,12 @@ function Card.Clear(self: Card): ()
 	self.Root:SetAttribute("CustomerId", nil)
 	self.Root:SetAttribute("RecipeId", nil)
 	self.Root.Visible = false
+	self.Status.Text = ""
+	self.Background.ImageColor3 = self.ArtColor
+	self.Background.ImageTransparency = self.ArtTransparency
+	self.Ponder.TextColor3 = self.PonderColor
+	self.Bar.Visible = true
+	self.NextPulseAt = 0
 	self:RefreshHeader()
 	self.Motion:spring(0)
 	self.Motion:setPosition(0)
@@ -209,6 +278,12 @@ export type Card = typeof(setmetatable(
 		Background: ImageLabel,
 		Icon: ImageLabel,
 		Ponder: TextLabel,
+		Status: TextLabel,
+		Bar: CanvasGroup,
+		ArtColor: Color3,
+		ArtTransparency: number,
+		PonderColor: Color3,
+		NextPulseAt: number,
 		Button: TextButton,
 		Number: TextLabel,
 		Tooltip: Tooltip,

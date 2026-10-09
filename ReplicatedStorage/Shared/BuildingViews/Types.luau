@@ -21,6 +21,8 @@ export type Context = {
 	PropId: string,
 	Kind: string,
 	AnimalAction: string?,
+	-- Dining place of a table's per-seat prompt target; nil on the table part itself.
+	Seat: number?,
 	-- Number at the end of the id: slot, plot or station number. 0 for one-off buildings.
 	Index: number,
 	-- Replicated session field by name, nil until the data arrives.

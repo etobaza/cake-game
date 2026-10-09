@@ -25,6 +25,8 @@ local VOICE = STYLE.Voice
 --[[ Types ]]--
 export type View = {
 	State: string,
+	-- Done choosing and waiting for the player's Take order.
+	Ready: boolean,
 	Orders: { string },
 	Seat: string?,
 	-- Share of patience left, 0-1.
@@ -55,6 +57,8 @@ export type Bubble = typeof(setmetatable(
 		State: string,
 		Low: boolean,
 		NextWobbleAt: number,
+		NextPulseAt: number,
+		PonderColor: Color3,
 		-- The caption being typed, the guest's voice and when it last spoke.
 		Said: string,
 		Voice: Sound,
@@ -237,6 +241,8 @@ function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup): Bub
 		State = "",
 		Low = false,
 		NextWobbleAt = 0,
+		NextPulseAt = 0,
+		PonderColor = ponder.TextColor3,
 		Said = "",
 		-- The guest's voice: one positional blip at the head, restarted per letter.
 		Voice = SoundPlayer.Create("NpcText", head),
@@ -314,11 +320,24 @@ function Bubble.Show(self: Bubble, view: View): ()
 		end
 	end
 
+	local ready = choosing and view.Ready
 	self.Ponder.Visible = not ordered
-	self.Ponder.Text = if choosing
+	self.Ponder.Text = if choosing and not ready
 		then string.rep(".", math.floor(view.Now / Config.PonderInterval) % 3 + 1)
 		else "!"
-	self:Say(if ordered then table.concat(names, " + ") elseif choosing then "Choosing..." else STYLE.QueuedText)
+	self.Ponder.TextColor3 = if ready then STYLE.ReadyMarkColor else self.PonderColor
+	-- Ready to order: the bubble keeps beating until the player comes over.
+	if ready and view.Now >= self.NextPulseAt then
+		self.NextPulseAt = view.Now + STYLE.ReadyPulseSeconds
+		Animate.Pop(self.Panel, STYLE.ReadyPulseFrom)
+	end
+	self:Say(
+		if ordered
+			then table.concat(names, " + ")
+			elseif ready then STYLE.ReadyText
+			elseif choosing then "Choosing..."
+			else STYLE.QueuedText
+	)
 	self.Badge.Visible = view.Seat ~= nil
 	self.BadgeText.Text = view.Seat or ""
 	self:SetRemaining(view.Remaining, view.Now)

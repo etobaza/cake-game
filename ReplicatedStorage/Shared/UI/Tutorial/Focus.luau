@@ -69,17 +69,21 @@ function Focus.Update(self: Focus, dim: boolean?): ()
 	end
 
 	-- Once the exact target is actionable nearby, point at its tappable plate.
-	-- Another station's prompt must never steal this lesson's finger.
+	-- Another station's prompt must never steal this lesson's finger. A seat goal's action lives on
+	-- that dining place's own prompt target; the table part keeps cleaning.
 	local prompt, billboard, root = PromptHandler:GetActiveView()
+	local promptPart = prompt and prompt.Parent
+	local seatTarget = if target.part and spec.seat then Interact:GetSeatProp(spec.id, spec.seat) else nil
 	if
-		target.part
-		and prompt
-		and prompt.Parent == target.part
+		prompt
+		and promptPart
+		and promptPart:IsA("BasePart")
+		and (promptPart == target.part or promptPart == seatTarget)
 		and prompt.Enabled
 		and billboard
 		and billboard.Enabled
 		and root
-		and Interact:Describe(target.part).Fire ~= nil
+		and Interact:Describe(promptPart).Fire ~= nil
 		and Geometry.Gui(root, camera.ViewportSize)
 	then
 		self.Hint:Gui(root, { Key = key .. ":prompt", Dim = false })

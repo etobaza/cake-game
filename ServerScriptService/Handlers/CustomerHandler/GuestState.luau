@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --[[ Modules ]]--
 local DayCycle = require(ReplicatedStorage.Shared.Configs.DayCycle)
+local GuestOrders = require(ReplicatedStorage.Shared.GuestOrders)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Orders = require(ReplicatedStorage.Shared.Configs.Orders)
 local StateMachine = require(ReplicatedStorage.Shared.Libs.StateMachine)
@@ -74,17 +75,33 @@ function GuestState.new(customer: any, onReady: () -> (), onFinish: (boolean) ->
 					enter("Choosing")
 				end,
 				onUpdate = function(): ()
+					if self.Now < customer.ChoosingEndsAt then
+						return
+					end
+					-- Ready to order: patience starts now, so an ignored guest costs time.
+					if customer.PatienceEndsAt <= 0 then
+						customer.PatienceEndsAt = customer.ChoosingEndsAt + customer.Patience
+					end
 					-- The tutorial guest waits for the player's Take order: the lesson is the action
 					-- itself, and an automatic order would close that step before it was read.
-					-- Releasing the tutorial clears TutorialProtected, so the timer resumes.
-					if not customer.TutorialProtected and self.Now >= customer.ChoosingEndsAt then
-						self:TakeOrder()
+					-- Releasing the tutorial clears TutorialProtected, so the fallback resumes.
+					if customer.TutorialProtected then
+						return
 					end
+					if self.Now >= GuestOrders.FallbackAt(customer) then
+						self:TakeOrder()
+						return
+					end
+					expire()
 				end,
 			},
 			Waiting = {
 				onEnter = function(): ()
-					customer.PatienceEndsAt = self.Now + customer.Patience
+					-- Patience already runs from the moment the guest was ready to order; an order
+					-- taken while they were still reading the menu starts it here.
+					if customer.PatienceEndsAt <= 0 then
+						customer.PatienceEndsAt = self.Now + customer.Patience
+					end
 					customer.OrderStartedAt = self.Now
 					customer.ChoosingEndsAt = 0
 					enter("Waiting")

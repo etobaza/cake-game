@@ -23,6 +23,7 @@ local GardenConfig = require(_Configs.Garden)
 local DataClient = require(_Handlers.DataHandlerClient)
 local Ingredients = require(_Configs.Registries.Ingredients)
 local Recipes = require(_Configs.Registries.Recipes)
+local TablesConfig = require(_Configs.TableMenus)
 local Types = require(_Views.Types)
 
 --[[ Constants ]]--
@@ -120,6 +121,7 @@ local function BuildContext(propId: string, kindName: string, part: BasePart): T
 		PropId = propId,
 		Kind = kindName,
 		AnimalAction = part:GetAttribute(GardenConfig.AnimalActionAttribute) :: string?,
+		Seat = part:GetAttribute(TablesConfig.SeatPromptAttribute) :: number?,
 		Index = BuildingsConfig.GetIndex(propId),
 		Session = Session,
 		Cloud = Cloud,
@@ -186,19 +188,48 @@ function InteractHandler.Track(self: InteractHandler, instance: Instance): ()
 	end
 end
 
--- Own building by id: this is how the tutorial guide finds where to point.
+-- Own building by id: this is how the tutorial guide finds where to point. A table's per-seat
+-- prompt targets share its id and are skipped; GetSeatProp finds one of them.
 function InteractHandler.GetProp(self: InteractHandler, propId: string): BasePart?
 	for part in self.Props do
 		if
 			part.Parent
 			and part:GetAttribute(BuildingsConfig.IdAttribute) == propId
 			and part:GetAttribute(GardenConfig.AnimalActionAttribute) ~= "Harvest"
+			and part:GetAttribute(TablesConfig.SeatPromptAttribute) == nil
 		then
 			return part :: BasePart
 		end
 	end
 
 	return nil
+end
+
+-- The prompt target of one dining place at an own table (Take order / Serve for that guest).
+function InteractHandler.GetSeatProp(self: InteractHandler, propId: string, seat: number): BasePart?
+	for part in self.Props do
+		if
+			part.Parent
+			and part:GetAttribute(BuildingsConfig.IdAttribute) == propId
+			and part:GetAttribute(TablesConfig.SeatPromptAttribute) == seat
+		then
+			return part :: BasePart
+		end
+	end
+
+	return nil
+end
+
+-- Every own prop part still in the world, as a fresh list: other handlers present per-prop state
+-- (the station status lines) without reaching into the tracking dictionary.
+function InteractHandler.GetParts(self: InteractHandler): { BasePart }
+	local parts: { BasePart } = {}
+	for part in self.Props do
+		if part.Parent and part:IsA("BasePart") then
+			parts[#parts + 1] = part
+		end
+	end
+	return parts
 end
 
 -- A read-only snapshot for guidance; callers never reach into the tracking dictionary.

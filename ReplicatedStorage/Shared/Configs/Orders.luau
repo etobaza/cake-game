@@ -6,6 +6,13 @@ return {
 	ChooseMinSeconds = 4,
 	ChooseMaxSeconds = 8,
 	FirstGuestChooseSeconds = 1,
+	-- After choosing, a seated guest is ready to order and waits for the player's Take order.
+	-- Patience starts at that moment, so leaving a guest unattended costs time. A guest nobody
+	-- serves (AFK, gamepad, a busy kitchen) orders on their own after this long; 0 restores the old
+	-- automatic order the moment choosing ends.
+	TakeOrderFallbackSeconds = 25,
+	-- A ready guest whistles again at this interval until the order is taken.
+	ReadyWhistleSeconds = 8,
 	Slots = 4,
 	ProgressSteps = 100,
 	RefreshInterval = 0.25,
@@ -50,9 +57,47 @@ return {
 		WobbleDegrees = 6,
 		LowGradient = ColorSequence.new(Color3.fromRGB(255, 120, 90), Color3.fromRGB(220, 30, 30)),
 		QueuedText = "Need a table!",
+		-- Ready to order: a large "!" in place of the choosing dots, a call and a steady pulse.
+		ReadyText = "Take my order!",
+		ReadyMarkColor = Color3.fromRGB(255, 170, 0),
+		ReadyPulseSeconds = 1.1,
+		ReadyPulseFrom = 1.12,
 		-- New bubble words type out with the guest's NpcText blip (BattlesOfEmpires' NPC voice):
 		-- seconds per letter, the minimum time before the blip may restart, and pitch spread.
 		Voice = { CharSeconds = 0.03, Restart = 0.07, Spread = 0.05 },
+	},
+	-- Status line drawn over the top of each order card (OrderHandler/Card): what the guest needs
+	-- next, coloured by urgency. Height is a share of the card; text sizes are pixels.
+	CardStatus = {
+		Height = 0.24,
+		MinTextSize = 9,
+		MaxTextSize = 15,
+		StrokeThickness = 1.5,
+		StrokeColor = Color3.fromRGB(58, 32, 22),
+		Colors = {
+			Choosing = Color3.fromRGB(255, 255, 255),
+			Ready = Color3.fromRGB(255, 196, 0),
+			Cook = Color3.fromRGB(255, 255, 255),
+			Serve = Color3.fromRGB(110, 255, 90),
+			Eating = Color3.fromRGB(200, 200, 200),
+			Low = Color3.fromRGB(255, 90, 70),
+		} :: { [string]: Color3 },
+		-- Card art tint while the guest's patience is below Bubble.LowPatience.
+		LowTint = Color3.fromRGB(255, 150, 140),
+		-- Eating guests keep their card, dimmed, until they leave the table.
+		EatingTransparency = 0.35,
+		ReadyPulseSeconds = 1.1,
+		ReadyPulseFrom = 1.08,
+	},
+	-- Pages the order panel stays up for: the recipe pick is where the player decides what to cook.
+	StaysOverPages = { RecipeToCook = true } :: { [string]: boolean },
+	-- The recipe pick marks dishes guests are waiting for and lists them first.
+	WaitingBadge = {
+		TextSize = 18,
+		Color = Color3.fromRGB(255, 120, 40),
+		TextColor = Color3.fromRGB(255, 255, 255),
+		Padding = 6,
+		Height = 24,
 	},
 	TooltipWidth = 280,
 	TooltipHeight = 76,

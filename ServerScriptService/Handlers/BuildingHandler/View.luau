@@ -102,6 +102,41 @@ function View.AttachSeats(part: BasePart, anchor: Instance, transform: CFrame): 
 	return complete
 end
 
+-- One invisible prompt target per place, in front of its chair, so Take order and Serve name one
+-- guest instead of the whole table. Each is dressed as the table itself (same id and kind), with
+-- the place index in `SeatPromptAttribute`; the server still validates against the table.
+function View.AttachSeatPrompts(
+	part: BasePart,
+	buildingId: string,
+	kindName: string,
+	kind: BuildingsConfig.Kind,
+	ownerUserId: number
+): ()
+	for index = 1, TableConfig.SeatCount do
+		local seat = part:FindFirstChild(`{TableConfig.SeatName}{index}`)
+		if not seat or not seat:IsA("BasePart") then
+			continue
+		end
+		local toCentre = (part.Position - seat.Position) * Vector3.new(1, 0, 1)
+		local target = Instance.new("Part")
+		target.Name = `{TableConfig.SeatPromptName}{index}`
+		target.Size = Vector3.one
+		target.Transparency = 1
+		target.Anchored = true
+		target.CanCollide, target.CanTouch, target.CanQuery = false, false, false
+		target.CFrame = CFrame.new(
+			seat.Position + toCentre * TableConfig.SeatPromptInset + Vector3.yAxis * TableConfig.SeatPromptLift
+		)
+		target:SetAttribute(TableConfig.SeatPromptAttribute, index)
+		target.Parent = part
+		View.Dress(target, buildingId, kindName, kind, ownerUserId)
+		local prompt = target:FindFirstChildOfClass("ProximityPrompt")
+		if prompt then
+			prompt.MaxActivationDistance = TableConfig.SeatPromptDistance
+		end
+	end
+end
+
 function View.Create(
 	buildingId: string,
 	kindName: string,

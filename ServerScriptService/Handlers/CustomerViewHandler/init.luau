@@ -32,12 +32,18 @@ local FoodModel = require(_Shared.FoodModel)
 local Recipes = require(_Configs.Registries.Recipes)
 local DayCycleConfig = require(_Configs.DayCycle)
 local GuestsConfig = require(_Configs.Guests)
+local GuestOrders = require(_Shared.GuestOrders)
+local OrdersConfig = require(_Configs.Orders)
 local SoundPlayer = require(_Shared.SoundPlayer)
 local SoundsConfig = require(_Configs.Sounds)
 local Spots = require(script.Spots)
 local Street = require(script.Street)
 local TickHandler = require(_Handlers.TickHandler)
 local VFX = require(_Configs.VFX)
+
+--[[ Constants ]]--
+-- Server time of a ready guest's last whistle, kept on the head beside the choosing flag.
+local CALLED_AT_ATTRIBUTE = "OrderCalledAt"
 
 --[[ Tables ]]--
 local CustomerViewHandler = {
@@ -495,12 +501,20 @@ function CustomerViewHandler.RefreshGuest(
 	if head then
 		local choosing = customer.State == "Choosing"
 		local wasChoosing = head:GetAttribute(VFX.ChoosingAttribute) == true
-		-- A newly seated guest whistles once to call the player over for their order, and confirms
-		-- it with a chime once the order is placed.
-		if choosing and not wasChoosing then
-			SoundPlayer.Play("WaiterWhistle", head)
+		-- A guest who has picked whistles to call the player over for their order, again every
+		-- ReadyWhistleSeconds until it is taken, and confirms it with a chime once it is placed.
+		local now = workspace:GetServerTimeNow()
+		if GuestOrders.IsReady(customer, now) then
+			local calledAt = head:GetAttribute(CALLED_AT_ATTRIBUTE)
+			if typeof(calledAt) ~= "number" or now - calledAt >= OrdersConfig.ReadyWhistleSeconds then
+				head:SetAttribute(CALLED_AT_ATTRIBUTE, now)
+				SoundPlayer.Play("WaiterWhistle", head)
+			end
 		elseif wasChoosing and customer.State == "Waiting" then
 			SoundPlayer.Play("OrderUp", head)
+		end
+		if not choosing then
+			head:SetAttribute(CALLED_AT_ATTRIBUTE, nil)
 		end
 		head:SetAttribute(VFX.ChoosingAttribute, choosing)
 	end

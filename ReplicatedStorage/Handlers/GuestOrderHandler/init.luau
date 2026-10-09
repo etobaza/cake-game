@@ -16,6 +16,7 @@ local Base = require(_Shared.Configs.Base)
 local Bubble = require(script.Bubble)
 local Config = require(_Shared.Configs.Orders)
 local DataClient = require(_Handlers.DataHandlerClient)
+local GuestOrders = require(_Shared.GuestOrders)
 local Guests = require(_Shared.Configs.Guests)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local OrderHandler = require(_Handlers.OrderHandler)
@@ -114,14 +115,12 @@ function GuestOrderHandler.Refresh(self: GuestOrderHandler): ()
 		end
 		shown[customerId] = true
 
-		local remaining = if customer.TutorialProtected
-			then 1
-			else math.clamp((customer.PatienceEndsAt - now) / math.max(customer.Patience, 1), 0, 1)
 		self.Bubbles[customerId]:Show({
 			State = customer.State,
+			Ready = GuestOrders.IsReady(customer, now),
 			Orders = customer.Orders or {},
 			Seat = if customer.TableId then OrderHandler.SeatLabel(customer.TableId, customer.SeatIndex) else nil,
-			Remaining = remaining,
+			Remaining = GuestOrders.Remaining(customer, now),
 			Now = now,
 		})
 	end

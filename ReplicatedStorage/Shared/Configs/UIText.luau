@@ -52,6 +52,7 @@ local UIText = {
 		nothing_to_serve = "No dish in your hands",
 		bake_before_serving = "Bake it in the oven before serving",
 		wrong_dish = "The guest ordered something else",
+		table_dirty = "Clean the table so guests can sit",
 		need_broom = "Pick up the broom first",
 		put_broom_back = "Put the tool back on its stand",
 
