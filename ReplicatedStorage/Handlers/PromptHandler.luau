@@ -56,11 +56,16 @@ local PRESS_POP = 0.86
 -- text with a small punch, instead of replaying the whole entrance.
 local SWAP_SECONDS = 0.3
 local SWAP_POP = 0.94
--- A status-only plate (a busy station) is a smaller card with its one line centred and larger.
+-- A status-only plate (a busy station) drops its card: one large outlined line, centred.
 local STATUS_CARD_SCALE = 0.7
 local STATUS_NAME_POSITION = UDim2.fromScale(0.5, 0.5)
 local STATUS_NAME_SIZE = UDim2.fromScale(0.9, 0.5)
-local STATUS_TEXT_SIZE = 30
+local STATUS_TEXT_SIZE = 36
+-- The status line's lettering: white face, dark cocoa outline and drop shadow.
+local STATUS_FACE = Color3.fromRGB(255, 255, 255)
+local STATUS_INK = Color3.fromRGB(58, 32, 22)
+local STATUS_OUTLINE = 2.5
+local STATUS_SHADOW_DROP = UDim2.fromScale(0, 0.09)
 
 --[[ Tables ]]--
 local PromptHandler = {
@@ -440,26 +445,52 @@ type Authored = {
 	Position: UDim2,
 	NameSize: UDim2,
 	Limits: { [UITextSizeConstraint]: number },
+	-- The card art (background, dashed lines) a status line floats without.
+	Card: { [GuiObject]: boolean },
+	-- Each name label's own position, colour and outline.
+	Labels: { [TextLabel]: { Position: UDim2, Color: Color3 } },
+	Strokes: { [UIStroke]: { Color: Color3, Thickness: number } },
 }
 
-local function remember(billboard: BillboardGui, name: GuiObject): Authored
+local function remember(billboard: BillboardGui, root: Frame, name: GuiObject): Authored
 	local limits = {}
-	for _, constraint in name:GetDescendants() do
-		if constraint:IsA("UITextSizeConstraint") then
-			limits[constraint] = constraint.MaxTextSize
+	local labels = {}
+	local strokes = {}
+	for _, child in name:GetDescendants() do
+		if child:IsA("UITextSizeConstraint") then
+			limits[child] = child.MaxTextSize
+		elseif child:IsA("TextLabel") then
+			labels[child] = { Position = child.Position, Color = child.TextColor3 }
+		elseif child:IsA("UIStroke") then
+			strokes[child] = { Color = child.Color, Thickness = child.Thickness }
 		end
 	end
-	return { Size = billboard.Size, Position = name.Position, NameSize = name.Size, Limits = limits }
+	local card = {}
+	for _, piece in { root:FindFirstChild("Bg"), root:FindFirstChild("InnerLines") } do
+		if piece and piece:IsA("GuiObject") then
+			card[piece] = piece.Visible
+		end
+	end
+	return {
+		Size = billboard.Size,
+		Position = name.Position,
+		NameSize = name.Size,
+		Limits = limits,
+		Card = card,
+		Labels = labels,
+		Strokes = strokes,
+	}
 end
 
--- Remembers the authored name plate, then switches between it and the compact status card.
+-- Remembers the authored name plate, then switches between it and the status line: no card, just
+-- large white lettering with a dark outline over its own drop shadow, floating at the station.
 function PromptHandler.StatusLayout(self: PromptHandler, root: Frame, status: boolean): ()
 	local billboard = self.Billboard
 	local name = root:FindFirstChild("Name")
 	if not billboard or not name or not name:IsA("GuiObject") then
 		return
 	end
-	local authored = self.Authored or remember(billboard, name)
+	local authored = self.Authored or remember(billboard, root, name)
 	self.Authored = authored
 	billboard.Size = if status
 		then UDim2.new(
@@ -473,6 +504,19 @@ function PromptHandler.StatusLayout(self: PromptHandler, root: Frame, status: bo
 	name.Size = if status then STATUS_NAME_SIZE else authored.NameSize
 	for constraint, size in authored.Limits do
 		constraint.MaxTextSize = if status then STATUS_TEXT_SIZE else size
+	end
+	for piece, visible in authored.Card do
+		piece.Visible = visible and not status
+	end
+	for label, original in authored.Labels do
+		-- The pair's dark half drops below the face and becomes its shadow.
+		local shadow = label.Name == "Shadow"
+		label.Position = if status and shadow then original.Position + STATUS_SHADOW_DROP else original.Position
+		label.TextColor3 = if not status then original.Color elseif shadow then STATUS_INK else STATUS_FACE
+	end
+	for stroke, original in authored.Strokes do
+		stroke.Color = if status then STATUS_INK else original.Color
+		stroke.Thickness = if status then STATUS_OUTLINE else original.Thickness
 	end
 end
 
