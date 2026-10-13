@@ -47,7 +47,9 @@ function GroupRewardHandler.OnStart(self: GroupRewardHandler): ()
 	end)
 
 	self:Refresh()
-	DataClient.CloudDataUpdated:Connect(function(): ()
+	-- DataUpdated fires after the ready flag is set; CloudDataUpdated fires before it, so the first
+	-- snapshot would read as not ready and hide the button until the next Cloud write.
+	DataClient:SubscribeToAll(function(): ()
 		self:Refresh()
 	end)
 end

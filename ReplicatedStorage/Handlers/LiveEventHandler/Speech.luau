@@ -13,9 +13,6 @@ local Theme = require(ReplicatedStorage.Shared.UI.Theme)
 
 --[[ Constants ]]--
 local BUBBLE_NAME = "LiveEventSpeech"
-local BUBBLE_COLOR = Color3.fromRGB(255, 255, 255)
-local TEXT_COLOR = Color3.fromRGB(40, 26, 22)
-local TEXT_PADDING = 0.06
 
 --[[ Tables ]]--
 local Speech = {}
@@ -47,25 +44,25 @@ function Speech.Say(self: Speech, castId: string, text: string): ()
 
 	local frame = Instance.new("Frame")
 	frame.Size = UDim2.fromScale(1, 1)
-	frame.BackgroundColor3 = BUBBLE_COLOR
+	frame.BackgroundColor3 = speech.BubbleColor
 	frame.Parent = bubble
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0.25, 0)
 	corner.Parent = frame
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Config.Hud.Accent
-	stroke.Thickness = 3
+	stroke.Thickness = speech.BubbleStrokeThickness
 	stroke.Parent = frame
 
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0.5, 0.5)
 	label.Position = UDim2.fromScale(0.5, 0.5)
-	label.Size = UDim2.fromScale(1 - TEXT_PADDING * 2, 1 - TEXT_PADDING * 4)
+	label.Size = UDim2.fromScale(1 - speech.BubbleTextPadding * 2, 1 - speech.BubbleTextPadding * 4)
 	label.BackgroundTransparency = 1
 	label.FontFace = Theme.Fonts.Bold
 	label.TextScaled = true
 	label.TextWrapped = true
-	label.TextColor3 = TEXT_COLOR
+	label.TextColor3 = speech.BubbleTextColor
 	label.Text = text
 	label.Parent = frame
 

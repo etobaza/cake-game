@@ -173,8 +173,7 @@ function StatusLayout.Bind(
 
 		local constraint = message:FindFirstChildOfClass("UITextSizeConstraint")
 		if constraint then
-			constraint.MinTextSize = math.floor(layout.MinTextSize * scale + 0.5)
-			constraint.MaxTextSize = math.floor(layout.TextSize * scale + 0.5)
+			TextScale.Bound(constraint, layout.MinTextSize, layout.TextSize, scale)
 		end
 	end
 

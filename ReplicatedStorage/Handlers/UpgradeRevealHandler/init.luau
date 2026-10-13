@@ -27,11 +27,18 @@ local INPUT_ACTION = "CakeUpgradeRevealInput"
 local SKIP_ACTION = "CakeUpgradeRevealSkip"
 local PRIORITY = Enum.ContextActionPriority.High.Value + 100
 type Notice = { Id: string, Level: number, ExpiresAt: number, Appearance: Appearance.Appearance? }
-type Armed = { Id: string, Level: number, ExpiresAt: number, Appearance: Appearance.Appearance }
+type Armed = {
+	Id: string,
+	Level: number,
+	ExpiresAt: number,
+	NextCapture: number,
+	Appearance: Appearance.Appearance,
+}
 type Run = {
 	Notice: Notice,
 	Phase: string,
 	Age: number,
+	NextCapture: number,
 	Page: string,
 	DayPhase: string,
 	Character: Model?,
@@ -121,11 +128,13 @@ function UpgradeRevealHandler.OnStart(self: UpgradeRevealHandler): ()
 		end),
 		"Destroy"
 	)
+	-- Losing the Upgrades panel only drops what it started (masks armed by its Purchase press and a
+	-- reveal over it); world reveals for later purchases keep working.
 	local panel = UIHandler:GetPanel("Upgrades")
 	if panel then
 		self.Janitor:Add(
 			panel.Destroying:Connect(function(): ()
-				self:Destroy()
+				self:Cancel()
 			end),
 			"Disconnect"
 		)
@@ -154,6 +163,9 @@ end
 
 -- Before the request, mask only currently hidden geometry. Rejections/timeouts restore it.
 function UpgradeRevealHandler.Prepare(self: UpgradeRevealHandler, id: string, level: number): ()
+	if self.Destroyed then
+		return
+	end
 	local spec = Config.Targets[id]
 	local bakery = Target.Bakery()
 	if self.Current or not bakery or not spec or not spec.Fade then
@@ -162,8 +174,14 @@ function UpgradeRevealHandler.Prepare(self: UpgradeRevealHandler, id: string, le
 	self:ClearArmed()
 	local appearance = Appearance.new()
 	appearance:Capture(Target.Roots(bakery, id, level), true)
-	self.Armed[key(id, level)] =
-		{ Id = id, Level = level, ExpiresAt = os.clock() + Config.ArmLifetime, Appearance = appearance }
+	local now = os.clock()
+	self.Armed[key(id, level)] = {
+		Id = id,
+		Level = level,
+		ExpiresAt = now + Config.ArmLifetime,
+		NextCapture = now + Config.CaptureInterval,
+		Appearance = appearance,
+	}
 	self:EnsureFrame()
 end
 
@@ -221,6 +239,7 @@ function UpgradeRevealHandler.Next(self: UpgradeRevealHandler): ()
 		Notice = notice,
 		Phase = "Waiting",
 		Age = 0,
+		NextCapture = 0,
 		Page = Pages.Current:peek(),
 		DayPhase = DataClient:GetData({ "Day", "Phase" }, "Session") or "Prep",
 		Character = Players.LocalPlayer.Character,
@@ -318,6 +337,7 @@ function UpgradeRevealHandler.Reveal(self: UpgradeRevealHandler, target: Target.
 		local appearance = run.Notice.Appearance or Appearance.new()
 		run.Notice.Appearance = appearance
 		appearance:Capture(target.Roots, false)
+		run.NextCapture = os.clock() + Config.CaptureInterval
 	end
 	run.Camera = Camera.new(target)
 	local part = Instance.new("Part")
@@ -344,7 +364,7 @@ function UpgradeRevealHandler.Reveal(self: UpgradeRevealHandler, target: Target.
 		glints.Parent = part
 		glints:Emit(Config.VFX.Count)
 	end
-	run.Lifetime:Add(SoundPlayer.Play(Config.Flourish, nil, 1.05), "Destroy")
+	run.Lifetime:Add(SoundPlayer.Play(Config.Flourish, nil, Config.FlourishPitch), "Destroy")
 end
 
 function UpgradeRevealHandler.BeginReturn(self: UpgradeRevealHandler): ()
@@ -366,7 +386,9 @@ function UpgradeRevealHandler.Step(self: UpgradeRevealHandler, deltaTime: number
 		if now >= armed.ExpiresAt then
 			armed.Appearance:Destroy()
 			self.Armed[id] = nil
-		else
+		elseif now >= armed.NextCapture then
+			-- Catch hidden parts that replicated after the press, without a per-frame descendant walk.
+			armed.NextCapture = now + Config.CaptureInterval
 			local bakery = Target.Bakery()
 			if bakery then
 				armed.Appearance:Capture(Target.Roots(bakery, armed.Id, armed.Level), true)
@@ -400,8 +422,12 @@ function UpgradeRevealHandler.Step(self: UpgradeRevealHandler, deltaTime: number
 	elseif run.Phase == "Showing" then
 		local appearance = run.Notice.Appearance
 		if appearance and run.Target then
-			appearance:Capture(run.Target.Roots, false)
-			appearance:Set(Ease.OutCubic(math.max(0, run.Age - Config.ApproachSeconds * 0.45) / Config.FadeSeconds))
+			if now >= run.NextCapture then
+				run.NextCapture = now + Config.CaptureInterval
+				appearance:Capture(run.Target.Roots, false)
+			end
+			local fadeAge = run.Age - Config.ApproachSeconds * Config.FadeStartShare
+			appearance:Set(Ease.OutCubic(math.max(0, fadeAge) / Config.FadeSeconds))
 		end
 		if run.Camera then
 			if run.Age < Config.ApproachSeconds then
@@ -431,6 +457,11 @@ function UpgradeRevealHandler.Finish(self: UpgradeRevealHandler): ()
 		return
 	end
 	self.Current = nil
+	-- Release the page presentation first: a teardown error below must not leave Pages suspended,
+	-- which would block purchases and every later reveal for the session.
+	if run.Token then
+		Pages.EndPresentation(run.Token)
+	end
 	release(run.Notice)
 	if run.Camera then
 		run.Camera:Destroy()
@@ -447,9 +478,6 @@ function UpgradeRevealHandler.Finish(self: UpgradeRevealHandler): ()
 		GuiService.SelectedObject = if selection and selection.Parent then selection else nil
 	end
 	self.Card:Hide()
-	if run.Token then
-		Pages.EndPresentation(run.Token)
-	end
 end
 
 function UpgradeRevealHandler.Skip(self: UpgradeRevealHandler): ()

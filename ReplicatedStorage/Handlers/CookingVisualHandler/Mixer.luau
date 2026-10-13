@@ -33,7 +33,7 @@ export type MixerVisual = Util.VisualEntry
 
 --[[ Constants ]]
 --
-local TAU = math.pi * 2
+local TAU = Util.TAU
 local TUNING = CookingMotion.Mixer
 local SURFACE = CookingMotion.Surface
 local INGREDIENT = CookingMotion.Ingredient
@@ -83,6 +83,21 @@ local function buildClone(source: Instance, color: Color3, parent: Instance, hom
 	return parts
 end
 
+-- The parts of a server portion that actually render. Invisible helpers need no mask, and recording
+-- them would make an unchanged batch look changed.
+local function visibleParts(source: Instance): { BasePart }
+	local parts: { BasePart } = {}
+	if source:IsA("BasePart") and source.Transparency < 1 then
+		parts[#parts + 1] = source
+	end
+	for _, descendant in source:GetDescendants() do
+		if descendant:IsA("BasePart") and descendant.Transparency < 1 then
+			parts[#parts + 1] = descendant
+		end
+	end
+	return parts
+end
+
 --[[ Factory ]]
 --
 local function new(surface: Folder): MixerVisual
@@ -94,6 +109,18 @@ local function new(surface: Folder): MixerVisual
 	local masked: { MaskedPart } = {}
 	local sources: { Instance } = {}
 	local batterColor = TUNING.DefaultBatterColor
+	-- Surface ingredients, recollected only after the folder's children change.
+	local ingredients: { Instance } = {}
+	local dirty = true
+	-- A batch that cannot swirl (no dough model, or more portions than slots) stays latched here
+	-- until the batch changes, so the failure is not rebuilt every frame.
+	local failedBatch: string? = nil
+
+	local function markDirty(): ()
+		dirty = true
+	end
+	janitor:Add(surface.ChildAdded:Connect(markDirty), "Disconnect")
+	janitor:Add(surface.ChildRemoved:Connect(markDirty), "Disconnect")
 
 	local function restoreMasks(): ()
 		for _, record in masked do
@@ -116,7 +143,7 @@ local function new(surface: Folder): MixerVisual
 		janitor:Remove("Container")
 		table.clear(doughParts)
 		table.clear(clones)
-		table.clear(sources)
+		sources = {}
 	end
 
 	local function collectIngredients(): { Instance }
@@ -134,13 +161,30 @@ local function new(surface: Folder): MixerVisual
 		return found
 	end
 
-	local function activate(surfaceFrame: CFrame, recipeId: string): boolean
-		local ingredients = collectIngredients()
+	-- The swirl stands in for one exact batch: a changed child set or a removed masked piece ends it.
+	local function batchChanged(): boolean
+		if #ingredients ~= #sources then
+			return true
+		end
+		for index, source in sources do
+			if ingredients[index] ~= source then
+				return true
+			end
+		end
+		for _, record in masked do
+			if record.Part.Parent == nil then
+				return true
+			end
+		end
+		return false
+	end
+
+	local function activate(surfaceFrame: CFrame, recipeId: string, batch: string): boolean
 		local recipe = Recipes:Get(recipeId)
-		local expected = 0
 		if not recipe then
 			return false
 		end
+		local expected = 0
 		for _, amount in recipe.ingredients do
 			expected += amount
 		end
@@ -148,21 +192,47 @@ local function new(surface: Folder): MixerVisual
 		if #ingredients < expected then
 			return false
 		end
-		for _, source in ingredients do
-			local part = source:FindFirstChildWhichIsA("BasePart", true)
-			if not part or part.Transparency >= 1 or part.LocalTransparencyModifier >= 1 then
+		-- Every portion needs its own orbit slot; a larger batch keeps the static server pieces.
+		if #ingredients > TUNING.SlotCount then
+			failedBatch = batch
+			return false
+		end
+		local portions: { { BasePart } } = {}
+		for index, source in ingredients do
+			local parts = visibleParts(source)
+			if #parts == 0 then
 				return false
 			end
+			for _, part in parts do
+				-- Another local owner is hiding this piece; wait until it hands the piece back.
+				if part.LocalTransparencyModifier >= 1 then
+					return false
+				end
+			end
+			portions[index] = parts
 		end
+
+		-- Build the dough before cloning or masking anything, so a missing dough model costs one
+		-- failed build per batch rather than a full clone-and-restore every frame.
 		local holder = Instance.new("Folder")
 		holder.Name = "MixerVisual"
+		local built = FoodModel.ForItem(recipeId, "Dough", holder, TUNING.DoughMaxSize)
+		if not built then
+			holder:Destroy()
+			failedBatch = batch
+			print(`[CookingVisualHandler] no dough model for '{recipeId}'; the mixer keeps its static pieces`)
+			return false
+		end
 		holder.Parent = Workspace
 		janitor:Add(holder, "Destroy", "Container")
+		janitor:Add(built, "Destroy", "Dough")
+		for _, entry in built.Parts do
+			doughParts[#doughParts + 1] = { Part = entry.Part, Offset = entry.Offset, Size = entry.Part.Size }
+		end
 
-		sources = ingredients
+		sources = table.clone(ingredients)
 		local slotStep = TAU / TUNING.SlotCount
-		for index = 1, math.min(#ingredients, TUNING.SlotCount) do
-			local source = ingredients[index]
+		for index, source in ingredients do
 			local ingredientId = Util.GetString(source, INGREDIENT.IngredientId)
 			local portion = Util.GetNumber(source, INGREDIENT.PortionIndex) or index
 			local color = colorFor(ingredientId, batterColor)
@@ -178,30 +248,10 @@ local function new(surface: Folder): MixerVisual
 			clones[#clones + 1] = { Parts = parts, BaseColor = color, Angle = angle }
 
 			-- Hide the authoritative server pieces while the local swirl stands in for them.
-			for _, descendant in source:GetDescendants() do
-				if descendant:IsA("BasePart") then
-					masked[#masked + 1] =
-						{ Part = descendant, Masked = 1, Original = descendant.LocalTransparencyModifier }
-					descendant.LocalTransparencyModifier = 1
-				end
+			for _, part in portions[index] do
+				masked[#masked + 1] = { Part = part, Masked = 1, Original = part.LocalTransparencyModifier }
+				part.LocalTransparencyModifier = 1
 			end
-			if source:IsA("BasePart") then
-				masked[#masked + 1] = { Part = source, Masked = 1, Original = source.LocalTransparencyModifier }
-				source.LocalTransparencyModifier = 1
-			end
-		end
-
-		local built = FoodModel.ForItem(recipeId, "Dough", holder, TUNING.DoughMaxSize)
-		if not built then
-			-- Missing asset: drop the holder and retry next frame rather than leave a bare bowl.
-			janitor:Remove("Container")
-			table.clear(clones)
-			restoreMasks()
-			return false
-		end
-		janitor:Add(built, "Destroy", "Dough")
-		for _, entry in built.Parts do
-			doughParts[#doughParts + 1] = { Part = entry.Part, Offset = entry.Offset, Size = entry.Part.Size }
 		end
 
 		active = true
@@ -221,10 +271,10 @@ local function new(surface: Folder): MixerVisual
 			local pivot = surfaceFrame * offset * CFrame.Angles(0, -angle, 0)
 			local blended = clone.BaseColor:Lerp(batterColor, converge)
 			local portionScale = 1 - converge * (1 - TUNING.ConvergedScale)
+			local scale = Vector3.one * portionScale
 			for _, record in clone.Parts do
 				local part = record.Part
-				part.Size = record.Size * portionScale
-				part.CFrame = Util.ScaleAboutFrame(pivot, record.Offset, Vector3.one * portionScale)
+				Util.ScalePartAboutFrame(part, record.Size, record.Offset, pivot, scale)
 				part.Color = blended
 				part.Transparency = fade
 			end
@@ -235,8 +285,7 @@ local function new(surface: Folder): MixerVisual
 		local growth = TUNING.DoughMinScale + (1 - TUNING.DoughMinScale) * Util.Smoothstep(progress)
 		local scale = Vector3.new(growth, growth, growth)
 		for _, record in doughParts do
-			record.Part.Size = record.Size * growth
-			record.Part.CFrame = Util.ScaleAboutFrame(surfaceFrame, record.Offset, scale)
+			Util.ScalePartAboutFrame(record.Part, record.Size, record.Offset, surfaceFrame, scale)
 		end
 	end
 
@@ -282,25 +331,22 @@ local function new(surface: Folder): MixerVisual
 		if not mixStarted or not mixReady or mixStarted <= 0 or mixReady <= mixStarted then
 			return
 		end
-		if active then
-			local ingredients = collectIngredients()
-			local changed = #ingredients ~= #sources
-			for index, source in sources do
-				if ingredients[index] ~= source then
-					changed = true
-				end
-			end
-			for _, record in masked do
-				if record.Part.Transparency >= 1 or record.Part.Parent == nil then
-					changed = true
-				end
-			end
-			if changed then
-				deactivate()
-			end
+
+		-- Children replicate with their attributes, so the folder's child events are the only
+		-- moments the batch can change; a new child set also clears a latched failure.
+		if dirty then
+			dirty = false
+			ingredients = collectIngredients()
+			failedBatch = nil
 		end
-		if not active and not activate(surfaceFrame, recipeId) then
-			return
+		if active and batchChanged() then
+			deactivate()
+		end
+		if not active then
+			local batch = `{recipeId}:{mixStarted}`
+			if failedBatch == batch or not activate(surfaceFrame, recipeId, batch) then
+				return
+			end
 		end
 
 		local pausedAt = Util.GetNumber(surface, SURFACE.PausedAt) or 0

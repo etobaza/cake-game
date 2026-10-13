@@ -220,7 +220,7 @@ end
 function FoodPreview.Show(icon: ImageLabel, recipe: Recipes.RecipeEntry, kind: string?): ()
 	local foodKind = kind or "Dish"
 	show(icon, `{recipe.id}:{foodKind}`, Recipes:GetIcon(recipe), function(world: WorldModel): FoodModel.FoodModel?
-		return FoodModel.ForItem(recipe.id, foodKind, world, Vector3.new(3, 3, 3))
+		return FoodModel.ForItem(recipe.id, foodKind, world, Config.PreviewSize)
 	end)
 end
 
@@ -241,7 +241,7 @@ function FoodPreview.ShowTool(icon: ImageLabel, toolId: string): ()
 	show(icon, `{toolId}:Tool`, if kind then kind.Icon or "" else "", function(world: WorldModel): FoodModel.FoodModel?
 		local asset = kind and (kind.HeldAsset or (kind.Furniture and kind.Furniture.Asset))
 		local source = asset and Buildings.FindAsset(asset)
-		return if source then FoodModel.FromSource(source, world, Vector3.new(3, 3, 3)) else nil
+		return if source then FoodModel.FromSource(source, world, Config.PreviewSize) else nil
 	end)
 end
 
@@ -265,7 +265,7 @@ function FoodPreview.ShowItem(icon: ImageLabel, item: GameTypes.ItemStack?): ()
 			`{item.Id}:{item.Kind}`,
 			if recipe then Recipes:GetIcon(recipe) else "",
 			function(world: WorldModel): FoodModel.FoodModel?
-				return FoodModel.ForItem(item.Id, item.Kind, world, Vector3.new(3, 3, 3))
+				return FoodModel.ForItem(item.Id, item.Kind, world, Config.PreviewSize)
 			end
 		)
 	end

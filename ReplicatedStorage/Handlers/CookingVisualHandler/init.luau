@@ -55,7 +55,6 @@ local FACTORIES: { [string]: (Instance) -> Entry? } = {
 local CookingVisualHandler = {
 	dependencies = {},
 	priority = 0,
-	presenting = false,
 	entries = {} :: { [Instance]: Entry },
 	janitor = nil :: any,
 }
@@ -82,15 +81,6 @@ function CookingVisualHandler.Untrack(self: CookingVisualHandler, instance: Inst
 	end
 end
 
---[[ Presentation ]]
---
--- Integration seam: the Pages presenting owner (upgrade reveal) sets this so short celebrations and
--- mixing release their source masks while the camera presents; the entrance and clock keep their
--- authoritative pose regardless. No networking or schema state is introduced.
-function CookingVisualHandler.SetPresenting(self: CookingVisualHandler, value: boolean): ()
-	self.presenting = value
-end
-
 --[[ Scheduler ]]
 --
 function CookingVisualHandler.Step(self: CookingVisualHandler, dt: number): ()
@@ -103,7 +93,9 @@ function CookingVisualHandler.Step(self: CookingVisualHandler, dt: number): ()
 	local now = Util.ServerNow()
 	local character = Players.LocalPlayer.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local presenting = self.presenting or Pages.Presenting:peek() or humanoid == nil or humanoid.Health <= 0
+	-- While Pages presents (the upgrade reveal) or the character is gone, short celebrations and
+	-- mixing release their source masks; the entrance and clock keep their authoritative pose.
+	local presenting = Pages.Presenting:peek() or humanoid == nil or humanoid.Health <= 0
 
 	-- Removing the current key during traversal is safe, but defer it to keep the loop obvious.
 	local dead: { Instance } = {}

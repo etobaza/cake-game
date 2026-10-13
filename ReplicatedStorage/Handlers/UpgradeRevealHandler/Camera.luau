@@ -2,21 +2,16 @@
 -- Finds an interior-safe view and validates every movement segment, including the return.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RevealConfig = require(ReplicatedStorage.Shared.Configs.UpgradeReveal)
-local Config = RevealConfig.Camera
+local Config = require(ReplicatedStorage.Shared.Configs.UpgradeReveal).Camera
+local Metrics = require(script.Parent.Metrics)
 local Target = require(script.Parent.Target)
 type CameraObject = typeof(Instance.new("Camera"))
 type Framing = { Horizontal: number, Top: number, Bottom: number, Pitch: number }
-local CORNERS = {
-	Vector3.new(-1, -1, -1),
-	Vector3.new(-1, -1, 1),
-	Vector3.new(-1, 1, -1),
-	Vector3.new(-1, 1, 1),
-	Vector3.new(1, -1, -1),
-	Vector3.new(1, -1, 1),
-	Vector3.new(1, 1, -1),
-	Vector3.new(1, 1, 1),
-}
+local CORNERS = Target.Corners
+-- Moves shorter than this need no sweep test.
+local MIN_SEGMENT = 1e-3
+-- The veil peaks at the midpoint of sin(pi * alpha), so a blocked path cuts there.
+local CUT_ALPHA = 0.5
 
 local Camera = {}
 Camera.__index = Camera
@@ -48,21 +43,23 @@ end
 
 local function segment(from: Vector3, to: Vector3, params: RaycastParams): boolean
 	local delta = to - from
-	return delta.Magnitude < 1e-3 or workspace:Spherecast(from, Config.Radius, delta, params) == nil
+	return delta.Magnitude < MIN_SEGMENT or workspace:Spherecast(from, Config.Radius, delta, params) == nil
 end
 
 local function screenFraming(camera: CameraObject): Framing
 	local viewport = camera.ViewportSize
-	local card = RevealConfig.Card
-	local density = math.clamp(viewport.Y / 900, 0.85, 1.2)
-	local width = math.min(card.Width * density, viewport.X - card.Margin * 2)
-	local height = if width < 400 then card.NarrowHeight else math.max(card.MinHeight, card.Height * density)
-	local bottom =
-		math.clamp((viewport.Y - height - card.Bottom * density) / math.max(viewport.Y, 1) - Config.CardGap, 0.35, 0.9)
+	local card = Metrics.Card(viewport)
+	local bottom = math.clamp(
+		(viewport.Y - card.Height - card.Bottom) / math.max(viewport.Y, 1) - Config.CardGap,
+		Config.MinCardEdge,
+		Config.MaxCardEdge
+	)
 	local center = (Config.ScreenMargin + bottom) / 2
 	local tangent = math.tan(math.rad(Config.FieldOfView / 2))
 	return {
-		Horizontal = tangent * math.max(viewport.X / math.max(viewport.Y, 1), 0.3) * (1 - 2 * Config.ScreenMargin),
+		Horizontal = tangent
+			* math.max(viewport.X / math.max(viewport.Y, 1), Config.MinAspect)
+			* (1 - 2 * Config.ScreenMargin),
 		Top = tangent * (1 - 2 * Config.ScreenMargin),
 		Bottom = tangent * (2 * bottom - 1),
 		Pitch = -math.atan((1 - 2 * center) * tangent),
@@ -134,7 +131,9 @@ local function framing(
 			if not clear(position, overlap) then
 				continue
 			end
-			local score = available / distance - math.abs(angle) / 180 * 0.12 - elevation * 0.08
+			local score = available / distance
+				- math.abs(angle) / 180 * Config.AngleWeight
+				- elevation * Config.ElevationWeight
 			if score > bestScore then
 				bestScore = score
 				best = view(position, center, fit)
@@ -205,21 +204,26 @@ function Camera.Write(self: Camera, frame: CFrame): boolean
 	return true
 end
 
-function Camera.Approach(self: Camera, alpha: number): number
-	self.Object.FieldOfView = self.Fov + (Config.FieldOfView - self.Fov) * alpha
+-- Glides while every step stays clear; otherwise a brief veil covers a cut between rooms, so no
+-- interpolation can cross a wall or roof. Returns the veil opacity.
+function Camera.Travel(self: Camera, from: CFrame, to: CFrame, alpha: number): number
 	if self.Direct then
-		local frame = self.Home:Lerp(self.Finish, alpha)
+		local frame = from:Lerp(to, alpha)
 		if clear(frame.Position, self.Overlap) and segment(self.Last.Position, frame.Position, self.Params) then
 			self:Write(frame)
 			return 0
 		end
 		self.Direct = false
 	end
-	-- A brief veil covers a cut between rooms. No interpolation can cross a wall or roof.
-	if alpha >= 0.5 then
-		self:Write(self.Finish)
+	if alpha >= CUT_ALPHA then
+		self:Write(to)
 	end
 	return math.sin(math.pi * alpha)
+end
+
+function Camera.Approach(self: Camera, alpha: number): number
+	self.Object.FieldOfView = self.Fov + (Config.FieldOfView - self.Fov) * alpha
+	return self:Travel(self.Home, self.Finish, alpha)
 end
 
 function Camera.Orbit(self: Camera, alpha: number): ()
@@ -245,27 +249,18 @@ end
 
 function Camera.Return(self: Camera, alpha: number): number
 	self.Object.FieldOfView = Config.FieldOfView + (self.Fov - Config.FieldOfView) * alpha
-	if self.Direct then
-		local frame = self.Start:Lerp(self.Home, alpha)
-		if clear(frame.Position, self.Overlap) and segment(self.Last.Position, frame.Position, self.Params) then
-			self:Write(frame)
-			return 0
-		end
-		self.Direct = false
-	end
-	if alpha >= 0.5 then
-		self:Write(self.Home)
-	end
-	return math.sin(math.pi * alpha)
+	return self:Travel(self.Start, self.Home, alpha)
 end
 
+-- FOV, subject and type always go back while this camera is current, even after another writer
+-- moved it; only the pose is left alone once ownership was lost.
 function Camera.Destroy(self: Camera): ()
-	if not self:Owned() then
+	local object = self.Object
+	if workspace.CurrentCamera ~= object then
 		return
 	end
-	local object = self.Object
 	local sameCharacter = Players.LocalPlayer.Character == self.Character
-	if sameCharacter then
+	if sameCharacter and self:Owned() then
 		object.CFrame = self.Home
 		object.Focus = self.Focus
 	end

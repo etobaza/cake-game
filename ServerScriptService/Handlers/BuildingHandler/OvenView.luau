@@ -19,6 +19,7 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local LoggerUtil = require(_Shared.Libs.Logger)
 local Motion = require(_Configs.OvenMotion)
 local CookingMotion = require(_Configs.CookingMotion)
+local CookingMotionUtil = require(_Shared.CookingMotionUtil)
 local CookingMetadata = require(script.Parent.CookingMetadata)
 local OvenFuel = require(_Configs.OvenFuel)
 local OvenDial = require(script.Parent.OvenDial)
@@ -29,6 +30,18 @@ local LEFT_DOOR_NAME = "OvenDoorLeft"
 local RIGHT_DOOR_NAME = "OvenDoorRight"
 local CLOCK_HAND_NAME = "ClockHand"
 local BODY_NAME = "Oven"
+local CLOCK = CookingMotion.Clock
+-- Every motion attribute the clock hand carries, cleared when the bakery is released.
+local CLOCK_ATTRIBUTES = {
+	CLOCK.RestPivot,
+	CLOCK.Axis,
+	CLOCK.StationState,
+	CLOCK.PhaseStartedAt,
+	CLOCK.ReadyAt,
+	CLOCK.BurnAt,
+	CLOCK.HeatPausedAt,
+	CLOCK.PausedAt,
+}
 
 -- Purchase order and artist slot order differ: Upgrade2 is oven_2 and Upgrade1 is oven_3.
 local MODEL_PATHS = {
@@ -77,11 +90,6 @@ local function resolvePart(model: Instance, name: string): BasePart?
 	return if part and part:IsA("BasePart") then part else nil
 end
 
--- Rotates an authored pivot around a world-space axis while keeping the hinge point fixed.
-local function rotatePivot(pivot: CFrame, axis: Vector3, angle: number): CFrame
-	return CFrame.new(pivot.Position) * CFrame.fromAxisAngle(axis, angle) * pivot.Rotation
-end
-
 local function closedDoorPivot(openPivot: CFrame, part: BasePart, centre: Vector3): CFrame
 	-- Imported leaves are thin on local X, tall on Y, and span the opening on Z.
 	-- The hinge is offset through their thickness: aiming the bounding-box centre at the
@@ -93,7 +101,8 @@ local function closedDoorPivot(openPivot: CFrame, part: BasePart, centre: Vector
 	local angle =
 		math.atan2(currentDirection:Cross(targetDirection):Dot(Vector3.yAxis), currentDirection:Dot(targetDirection))
 
-	return rotatePivot(openPivot, Vector3.yAxis, angle)
+	-- Rotate the authored pivot about the world up axis, keeping the hinge point fixed.
+	return CookingMotionUtil.RotateAboutAxis(openPivot, Vector3.yAxis, angle)
 end
 
 local function doorsAreClosed(state: string?): boolean
@@ -135,13 +144,13 @@ function OvenView.new(root: Instance, building: any): OvenView?
 	-- The imported mesh's thin local X axis is the clock-face normal; the oven body's LookVector
 	-- follows its Blender axes and does not point out of the visible front.
 	self.ClockAxis = clockHand.CFrame.RightVector
-	clockHand:SetAttribute("ClockRestPivot", self.ClockStart)
-	clockHand:SetAttribute("ClockAxis", self.ClockAxis)
+	clockHand:SetAttribute(CLOCK.RestPivot, self.ClockStart)
+	clockHand:SetAttribute(CLOCK.Axis, self.ClockAxis)
 	CookingMetadata.Apply(clockHand, building.State, building.Player)
 	clockHand:AddTag(CookingMotion.ClockTag)
 	self.Janitor:Add(function(): ()
 		clockHand:RemoveTag(CookingMotion.ClockTag)
-		for _, attribute in { "ClockRestPivot", "ClockAxis", "StationState", "PhaseStartedAt", "ReadyAt", "BurnAt", "HeatPausedAt", "PausedAt" } do
+		for _, attribute in CLOCK_ATTRIBUTES do
 			clockHand:SetAttribute(attribute, nil)
 		end
 	end, true)

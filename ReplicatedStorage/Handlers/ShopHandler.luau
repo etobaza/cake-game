@@ -32,6 +32,7 @@ local UIHandler = require(_Handlers.UIHandler)
 local UpgradeRevealHandler = require(_Handlers.UpgradeRevealHandler)
 local Upgrades = require(_Configs.Registries.Upgrades)
 local TreeConfig = require(_Configs.UpgradeTree)
+local UpgradeTabs = require(_Configs.UpgradeTabs)
 
 --[[ Constants ]]--
 local SCREEN_NAME = "Upgrades"
@@ -40,11 +41,7 @@ local MAIN_PATH = { "MainFrame", "Main" }
 local TREE_SCROLL_PADDING = 12
 
 -- Category tabs, in the order they are drawn.
-local TABS: { { Name: string, Category: GameTypes.UpgradeCategory } } = {
-	{ Name = "Store", Category = "Cafe" },
-	{ Name = "Kitchen", Category = "Kitchen" },
-	{ Name = "GreenHouse", Category = "Garden" },
-}
+local TABS = UpgradeTabs.Tabs
 
 -- Original ItemNumber -> authored cell. A saved upgrade can occupy several purchase-level cells.
 local SLOTS = TreeConfig.Slots
@@ -273,11 +270,7 @@ function ShopHandler.OnStart(self: ShopHandler): ()
 end
 
 function ShopHandler.SelectRecommended(self: ShopHandler): ()
-	local progress = Upgrades:GetProgress(
-		DataClient:GetData({ "Base", "Upgrades" }) or {},
-		DataClient:GetData({ "Level" }) or 1,
-		DataClient:GetData({ "Cash" }) or 0
-	)
+	local progress = Upgrades:ReadProgress(DataClient)
 	local goal = progress.Recommended
 	local entry = goal and Upgrades:Get(goal.Id)
 	if not goal or not entry then
@@ -448,9 +441,8 @@ function ShopHandler.Select(self: ShopHandler, slotKey: string): ()
 end
 
 function ShopHandler.Refresh(self: ShopHandler): ()
-	local levels = DataClient:GetData({ "Base", "Upgrades" }) or {}
-	local playerLevel = DataClient:GetData({ "Level" }) or 1
-	local cash = DataClient:GetData({ "Cash" }) or 0
+	local inputs = Upgrades:ReadInputs(DataClient)
+	local levels, playerLevel, cash = inputs.Levels, inputs.PlayerLevel, inputs.Cash
 	local selected = self.Selected[self.Category]
 	local selectedNode = selected and self.Slots[selected]
 	-- Client-only presentation facts for the first-purchase lesson; never purchase authorization.

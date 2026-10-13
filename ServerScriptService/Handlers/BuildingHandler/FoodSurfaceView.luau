@@ -25,6 +25,10 @@ local Recipes = require(_Shared.Configs.Registries.Recipes)
 local TableConfig = require(_Shared.Configs.TableMenus)
 local VFX = require(_Shared.Configs.VFX)
 
+--[[ Constants ]]--
+local SURFACE = Motion.Surface
+local FRESH = Motion.Fresh
+
 --[[ Tables ]]--
 local FoodSurfaceView = {}
 FoodSurfaceView.__index = FoodSurfaceView
@@ -44,6 +48,8 @@ export type FoodSurfaceView = typeof(setmetatable(
 	},
 	FoodSurfaceView
 ))
+
+type SurfaceItem = { Id: string, Kind: string, SeatIndex: number? }
 
 --[[ Private Functions ]]--
 local function tableItems(building: any): { { Id: string, Kind: string, SeatIndex: number? } }
@@ -146,8 +152,8 @@ function FoodSurfaceView.new(root: Instance, building: any): FoodSurfaceView?
 	self.Janitor:Add(folder, "Destroy")
 	self.Janitor:Add(self.Contents, "Destroy")
 	if building.Kind == "Mixer" then
-		folder:SetAttribute("StationKind", building.Kind)
-		folder:SetAttribute("SurfaceFrame", self.Frame)
+		folder:SetAttribute(SURFACE.StationKind, building.Kind)
+		folder:SetAttribute(SURFACE.SurfaceFrame, self.Frame)
 		folder:AddTag(Motion.SurfaceTag)
 	end
 	return self
@@ -158,9 +164,111 @@ function FoodSurfaceView.SetFrame(self: FoodSurfaceView, frame: CFrame): ()
 		return
 	end
 	self.Frame = frame
-	self.Root:SetAttribute("SurfaceFrame", frame)
+	self.Root:SetAttribute(SURFACE.SurfaceFrame, frame)
 	self.Frames = { frame }
 	self.Key = "Reposition"
+end
+
+-- Mixer surfaces replicate the authoritative mixing window and batter color for the client swirl.
+-- The window survives Ready so the local dough can hand over to the server result.
+local function applyMixerMetadata(self: FoodSurfaceView, state: any): ()
+	CookingMetadata.Apply(self.Root, state, self.Building.Player)
+	self.Root:SetAttribute(SURFACE.RecipeId, state.RecipeId)
+	local recipe = state.RecipeId and Recipes:Get(state.RecipeId)
+	self.Root:SetAttribute(SURFACE.BatterColor, if recipe then Recipes:GetDoughColor(recipe) else nil)
+	if state.State == "Mixing" then
+		self.Root:SetAttribute(SURFACE.MixStartedAt, state.PhaseStartedAt)
+		self.Root:SetAttribute(SURFACE.MixReadyAt, state.ReadyAt)
+	elseif state.State ~= "Ready" then
+		self.Root:SetAttribute(SURFACE.MixStartedAt, 0)
+		self.Root:SetAttribute(SURFACE.MixReadyAt, 0)
+	end
+end
+
+local function applyOvenBurn(self: FoodSurfaceView, now: number): ()
+	local ovenFood = self.OvenFood
+	if not ovenFood then
+		return
+	end
+	ovenFood:SetBurn(FoodBurn.Fade(self.Building.State, now))
+	if self.Building.State.State ~= "Burnt" then
+		return
+	end
+	ovenFood.Model:RemoveTag(Motion.FreshTag)
+	ovenFood.Model:SetAttribute(FRESH.FoodKind, "Burnt")
+	for _, entry in ovenFood.Parts do
+		entry.Part:RemoveTag(VFX.Tag)
+	end
+end
+
+local function contentKey(building: any, items: { SurfaceItem }): string
+	local keys = {}
+	for _, item in items do
+		-- Keep the same texture copy at the burn deadline; rebuilding would flash a fresh dish.
+		local kind = if building.Kind == "Oven" and item.Kind == "Burnt" then "Dish" else item.Kind
+		keys[#keys + 1] = `{item.SeatIndex or 0}:{kind}:{item.Id}`
+	end
+	return table.concat(keys, "|")
+end
+
+-- A served dish stands on a clean plate; returns the frame the dish sits at above the plate.
+local function placePlate(self: FoodSurfaceView, item: SurfaceItem, frame: CFrame): CFrame
+	local plate = FoodModel.new(TableConfig.CleanPlateAsset, self.Root, TableConfig.CleanPlateSize)
+	if not plate then
+		return frame
+	end
+	self.Contents:Add(plate, "Destroy")
+	plate.Model:SetAttribute("SeatIndex", item.SeatIndex)
+	plate:SetCFrame(frame)
+	return frame * CFrame.new(0, TableConfig.CleanPlateFoodHeight, 0)
+end
+
+local function buildItemVisual(
+	self: FoodSurfaceView,
+	item: SurfaceItem,
+	index: number,
+	slots: { number },
+	fresh: boolean,
+	now: number
+): ()
+	if item.Kind == "Ingredient" then
+		local ingredient = MixerIngredients.Create(item.Id, slots[index], self.Root, self.Frame)
+		if ingredient then
+			self.Contents:Add(ingredient, "Destroy")
+		end
+		return
+	end
+	local isTable = self.Building.Kind == "Table"
+	local isOven = self.Building.Kind == "Oven"
+	local size = if isTable then Config.TableFoodSize elseif isOven then Config.FoodSize else Config.SurfaceFoodSize
+	local visual = if item.Kind == "DirtyPlate"
+		then FoodModel.new(item.Id, self.Root, TableConfig.DirtyPlateSize)
+		elseif item.Kind == "EmptyPlate" then FoodModel.new(item.Id, self.Root, TableConfig.CleanPlateSize)
+		else FoodModel.ForItem(item.Id, item.Kind, self.Root, size)
+	if not visual then
+		return
+	end
+	self.Contents:Add(visual, "Destroy")
+	if isOven and (item.Kind == "Dish" or item.Kind == "Burnt") then
+		self.OvenFood = visual
+		visual:SetBurn(FoodBurn.Fade(self.Building.State, now))
+	end
+	if item.SeatIndex then
+		visual.Model:SetAttribute("SeatIndex", item.SeatIndex)
+	end
+	local frame = self.Frames[item.SeatIndex or index] or self.Frame
+	if isOven then
+		frame *= Config.OvenFoodOffset
+	end
+	if isTable and item.Kind == "Dish" then
+		frame = placePlate(self, item, frame)
+	end
+	visual:SetCFrame(frame)
+	if fresh and (item.Kind == "Dish" or item.Kind == "Dough") then
+		visual.Model:SetAttribute(FRESH.CompletedAt, now)
+		visual.Model:SetAttribute(FRESH.CompletionFrame, frame)
+		visual.Model:AddTag(Motion.FreshTag)
+	end
 end
 
 function FoodSurfaceView.Update(self: FoodSurfaceView, _deltaTime: number, now: number): ()
@@ -169,36 +277,12 @@ function FoodSurfaceView.Update(self: FoodSurfaceView, _deltaTime: number, now: 
 	local fresh = stationState == "Ready" and (self.LastState == "Mixing" or self.LastState == "Cooking")
 	self.LastState = stationState
 	if self.Building.Kind == "Mixer" and state then
-		CookingMetadata.Apply(self.Root, state, self.Building.Player)
-		self.Root:SetAttribute("RecipeId", state.RecipeId)
-		local recipe = state.RecipeId and Recipes:Get(state.RecipeId)
-		self.Root:SetAttribute("BatterColor", if recipe then Recipes:GetDoughColor(recipe) else nil)
-		if stationState == "Mixing" then
-			self.Root:SetAttribute("MixStartedAt", state.PhaseStartedAt)
-			self.Root:SetAttribute("MixReadyAt", state.ReadyAt)
-		elseif stationState ~= "Ready" then
-			self.Root:SetAttribute("MixStartedAt", 0)
-			self.Root:SetAttribute("MixReadyAt", 0)
-		end
+		applyMixerMetadata(self, state)
 	end
-	if self.OvenFood then
-		self.OvenFood:SetBurn(FoodBurn.Fade(self.Building.State, now))
-		if self.Building.State.State == "Burnt" then
-			self.OvenFood.Model:RemoveTag(Motion.FreshTag)
-			self.OvenFood.Model:SetAttribute("FoodKind", "Burnt")
-			for _, entry in self.OvenFood.Parts do
-				entry.Part:RemoveTag(VFX.Tag)
-			end
-		end
-	end
+	applyOvenBurn(self, now)
+
 	local items = itemsFor(self.Building)
-	local keys = {}
-	for _, item in items do
-		-- Keep the same texture copy at the burn deadline; rebuilding would flash a fresh dish.
-		local kind = if self.Building.Kind == "Oven" and item.Kind == "Burnt" then "Dish" else item.Kind
-		keys[#keys + 1] = `{item.SeatIndex or 0}:{kind}:{item.Id}`
-	end
-	local key = table.concat(keys, "|")
+	local key = contentKey(self.Building, items)
 	if key == self.Key and not fresh then
 		return
 	end
@@ -208,50 +292,7 @@ function FoodSurfaceView.Update(self: FoodSurfaceView, _deltaTime: number, now: 
 	self.Contents:Cleanup()
 	self.OvenFood = nil
 	for index, item in items do
-		if item.Kind == "Ingredient" then
-			local visual = MixerIngredients.Create(item.Id, slots[index], self.Root, self.Frame)
-			if visual then
-				self.Contents:Add(visual, "Destroy")
-			end
-			continue
-		end
-		local isTable = self.Building.Kind == "Table"
-		local isOven = self.Building.Kind == "Oven"
-		local size = if isTable then Config.TableFoodSize elseif isOven then Config.FoodSize else Config.SurfaceFoodSize
-		local visual = if item.Kind == "DirtyPlate"
-			then FoodModel.new(item.Id, self.Root, TableConfig.DirtyPlateSize)
-			elseif item.Kind == "EmptyPlate" then FoodModel.new(item.Id, self.Root, TableConfig.CleanPlateSize)
-			else FoodModel.ForItem(item.Id, item.Kind, self.Root, size)
-		if not visual then
-			continue
-		end
-		self.Contents:Add(visual, "Destroy")
-		if isOven and (item.Kind == "Dish" or item.Kind == "Burnt") then
-			self.OvenFood = visual
-			visual:SetBurn(FoodBurn.Fade(self.Building.State, now))
-		end
-		if item.SeatIndex then
-			visual.Model:SetAttribute("SeatIndex", item.SeatIndex)
-		end
-		local frame = self.Frames[item.SeatIndex or index] or self.Frame
-		if isOven then
-			frame *= Config.OvenFoodOffset
-		end
-		if isTable and item.Kind == "Dish" then
-			local plate = FoodModel.new(TableConfig.CleanPlateAsset, self.Root, TableConfig.CleanPlateSize)
-			if plate then
-				self.Contents:Add(plate, "Destroy")
-				plate.Model:SetAttribute("SeatIndex", item.SeatIndex)
-				plate:SetCFrame(frame)
-				frame *= CFrame.new(0, TableConfig.CleanPlateFoodHeight, 0)
-			end
-		end
-		visual:SetCFrame(frame)
-		if fresh and (item.Kind == "Dish" or item.Kind == "Dough") then
-			visual.Model:SetAttribute("CompletedAt", now)
-			visual.Model:SetAttribute("CompletionFrame", frame)
-			visual.Model:AddTag(Motion.FreshTag)
-		end
+		buildItemVisual(self, item, index, slots, fresh, now)
 	end
 end
 

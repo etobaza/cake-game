@@ -3,10 +3,10 @@
 local State = require(script.Parent.State)
 local Types = require(script.Parent.Parent.GameTypes)
 local Tree = require(script.Parent.Parent.Configs.UpgradeTree)
+local UpgradeTabs = require(script.Parent.Parent.Configs.UpgradeTabs)
 local Upgrades = require(script.Parent.Parent.Configs.Registries.Upgrades)
 
 local UpgradeLesson = {}
-local TABS = { Cafe = "Store", Kitchen = "Kitchen", Garden = "GreenHouse" }
 
 function UpgradeLesson.Resolve(
 	cloud: any,
@@ -49,7 +49,7 @@ function UpgradeLesson.Resolve(
 			"upgrade_category",
 			`Find {title}`,
 			"Choose this category to see your next upgrade.",
-			`Upgrades.MainFrame.Main.Top.{TABS[entry.category]}`
+			`Upgrades.MainFrame.Main.Top.{UpgradeTabs.NameByCategory[entry.category]}`
 		)
 	elseif facts.upgradeSelectedId == entry.id and facts.upgradeSelectedLevel == purchase.Level then
 		-- ShopHandler already selects the recommended node on open, so asking for that tap again

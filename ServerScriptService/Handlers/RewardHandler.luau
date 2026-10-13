@@ -46,6 +46,13 @@ local REASONS: { [string]: EconomyHandler.CashReason } = {
 	PlaytimeSkip = "IAP",
 }
 
+--[[ Types ]]--
+type CodeAttempts = {
+	-- os.clock when the window opened.
+	WindowStart: number,
+	Failures: number,
+}
+
 --[[ Tables ]]--
 local RewardHandler = {
 	-- PurchaseHandler because the two Robux buttons on these screens skip a track forward, and the
@@ -55,6 +62,8 @@ local RewardHandler = {
 	-- os.clock of each player's last group membership check, so repeated clicks cannot queue web
 	-- requests or race a second payout while the first check yields.
 	GroupChecks = {} :: { [Player]: number },
+	-- Failed code attempts in each player's current window, so codes cannot be guessed by brute force.
+	CodeAttempts = {} :: { [Player]: CodeAttempts },
 }
 
 --[[ Private Functions ]]--
@@ -62,9 +71,10 @@ local function Refuse(player: Player, reason: string): ()
 	Bus.Progress.ActionFailed:FireClient(player, reason)
 end
 
--- Membership straight from the web: true or false, or nil when neither lookup answered.
+-- Membership straight from the web: true or false, or nil when the answer is not certain.
 -- IsInGroupAsync can answer from a per-server cache, so a "no" is confirmed against the player's
--- group list before refusing someone who joined during this session.
+-- group list before refusing someone who joined during this session; without that list the cached
+-- "no" proves nothing, and the check counts as failed.
 local function IsGroupMember(player: Player, groupId: number): boolean?
 	local cachedOk, cached = pcall(player.IsInGroupAsync, player, groupId)
 	if cachedOk and cached == true then
@@ -73,7 +83,7 @@ local function IsGroupMember(player: Player, groupId: number): boolean?
 
 	local listOk, groups = pcall(GroupService.GetGroupsAsync, GroupService, player.UserId)
 	if not listOk or typeof(groups) ~= "table" then
-		return if cachedOk then false else nil
+		return nil
 	end
 
 	for _, group in groups do
@@ -111,6 +121,7 @@ function RewardHandler.OnStart(self: RewardHandler): ()
 
 	Players.PlayerRemoving:Connect(function(player: Player)
 		self.GroupChecks[player] = nil
+		self.CodeAttempts[player] = nil
 	end)
 
 	PurchaseHandler.PurchaseCompleted:Connect(function(player: Player, productId: number)
@@ -217,11 +228,36 @@ function RewardHandler.Pay(
 	Logger:Info(`{player.Name} took {source} for {reward.Cash} coins and {reward.XP} XP`)
 end
 
+--- The player's attempt window, reopened once the previous one has run out.
+function RewardHandler.GetCodeAttempts(self: RewardHandler, player: Player, now: number): CodeAttempts
+	local attempts = self.CodeAttempts[player]
+	if attempts and now - attempts.WindowStart < Rewards.CodeAttempts.WindowSeconds then
+		return attempts
+	end
+
+	local fresh: CodeAttempts = { WindowStart = now, Failures = 0 }
+	self.CodeAttempts[player] = fresh
+	return fresh
+end
+
+--- Refuses a code and counts it against the player's attempt window.
+function RewardHandler.FailCode(self: RewardHandler, player: Player, reason: string): boolean
+	local attempts = self:GetCodeAttempts(player, os.clock())
+	attempts.Failures += 1
+	Refuse(player, reason)
+	return false
+end
+
 function RewardHandler.Redeem(self: RewardHandler, player: Player, code: string): boolean
+	-- Only failures count, so a player with several real codes is never held back by them.
+	if self:GetCodeAttempts(player, os.clock()).Failures >= Rewards.CodeAttempts.MaxFailures then
+		Refuse(player, "code_cooldown")
+		return false
+	end
+
 	local reward = Rewards.GetCode(code)
 	if not reward then
-		Refuse(player, "unknown_code")
-		return false
+		return self:FailCode(player, "unknown_code")
 	end
 
 	local data = DataHandler:GetData(player)
@@ -234,8 +270,7 @@ function RewardHandler.Redeem(self: RewardHandler, player: Player, code: string)
 	local used = data.Cloud.Rewards.Codes
 
 	if DataList.Contains(used, stored) then
-		Refuse(player, "code_used")
-		return false
+		return self:FailCode(player, "code_used")
 	end
 
 	DataList.Append(used, stored)

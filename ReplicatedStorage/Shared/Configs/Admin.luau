@@ -13,6 +13,8 @@ export type Action = {
 	max: number?,
 	allowZero: boolean?,
 	warning: string?,
+	-- Accept button text on the confirmation step; the panel defaults to "CONFIRM".
+	confirmLabel: string?,
 	-- Acts on every server instead of the selected player; no profile is needed.
 	global: boolean?,
 }
@@ -58,6 +60,7 @@ local actions: { Action } = {
 		id = "resetProgress",
 		label = "RESET PROGRESS",
 		section = "Danger zone",
+		confirmLabel = "RESET PROGRESS",
 		warning = "This deletes gameplay progress and disconnects the player. They must rejoin. Purchases, skins, and receipt history are preserved. This cannot be undone.",
 	},
 }

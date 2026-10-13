@@ -13,7 +13,9 @@ local ServerScriptService = game:GetService("ServerScriptService")
 --[[ Modules ]]--
 local Bus = require(ReplicatedStorage.Shared.Bus)
 local Config = require(ReplicatedStorage.Shared.Configs.AdminAbuse)
+local DataHandler = require(ServerScriptService.Handlers.DataHandler)
 local EconomyHandler = require(ServerScriptService.Handlers.EconomyHandler)
+local Physics = require(script.Parent.Physics)
 local Timeline = require(ReplicatedStorage.Shared.LiveEventTimeline)
 local Logger = require(ReplicatedStorage.Shared.Libs.Logger).new({ name = "CupcakeRain" })
 
@@ -58,9 +60,7 @@ end
 -- A floor point in a ring around the root part, reachable in a straight line from it.
 local function findLanding(root: BasePart, ignore: { Instance }): Vector3?
 	local tuning = Config.Rain
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = ignore
+	local params = Physics.ExcludeParams(ignore)
 
 	local angle = math.random() * math.pi * 2
 	local distance = tuning.MinRadius + math.random() * (tuning.MaxRadius - tuning.MinRadius)
@@ -96,8 +96,15 @@ function CupcakeRain.new(state: Timeline.State, parent: Instance): CupcakeRain
 		return self
 	end
 	self.Loop = task.spawn(function(): ()
+		-- One failing step must not end the rain for the rest of the event. The same error repeats
+		-- every step, so only a new message is logged.
+		local lastError: string? = nil
 		while true do
-			self:Step(workspace:GetServerTimeNow())
+			local ok, result: unknown = pcall(self.Step, self, workspace:GetServerTimeNow())
+			if not ok and tostring(result) ~= lastError then
+				lastError = tostring(result)
+				Logger:Warn(`Rain step failed, still running; check Configs/AdminAbuse.Rain and the model: {lastError}`)
+			end
 			task.wait(STEP_SECONDS)
 		end
 	end)
@@ -143,6 +150,11 @@ function CupcakeRain.Update(self: CupcakeRain, now: number): ()
 		local delta = root.Position - drop.Position
 		local flat = Vector3.new(delta.X, 0, delta.Z).Magnitude
 		if flat > tuning.PickupRadius or math.abs(delta.Y) > tuning.PickupRadius + PICKUP_HEIGHT_SLACK then
+			continue
+		end
+		-- Coins need loaded cloud data. Until the profile attaches the cupcake stays where it is, so a
+		-- pickup never pays nothing or uses up the per-event cap.
+		if not DataHandler:GetData(owner) then
 			continue
 		end
 
@@ -194,14 +206,7 @@ function CupcakeRain.Drop(self: CupcakeRain, player: Player, now: number): ()
 	local tuning = Config.Rain
 	local model = template:Clone()
 	model:ScaleTo(tuning.ModelScale)
-	for _, descendant in model:GetDescendants() do
-		if descendant:IsA("BasePart") then
-			descendant.Anchored = true
-			descendant.CanCollide = false
-			descendant.CanTouch = false
-			descendant.CanQuery = false
-		end
-	end
+	Physics.MakeInert(model)
 	local _, size = model:GetBoundingBox()
 	model:PivotTo(CFrame.new(landing + Vector3.new(0, size.Y / 2, 0)) * CFrame.Angles(0, math.random() * math.pi * 2, 0))
 	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic

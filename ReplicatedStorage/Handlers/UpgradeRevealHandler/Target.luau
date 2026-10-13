@@ -10,7 +10,8 @@ local Garden = require(Shared.Configs.Garden)
 local World = require(Shared.World)
 
 local Target = {}
-local CORNERS = {
+-- The eight corners of a unit box centred on the origin; scale by size / 2 for real bounds.
+Target.Corners = {
 	Vector3.new(-1, -1, -1),
 	Vector3.new(-1, -1, 1),
 	Vector3.new(-1, 1, -1),
@@ -19,7 +20,7 @@ local CORNERS = {
 	Vector3.new(1, -1, 1),
 	Vector3.new(1, 1, -1),
 	Vector3.new(1, 1, 1),
-}
+} :: { Vector3 }
 export type Target = { Bakery: Instance, Roots: { Instance }, Parts: { BasePart }, Frame: CFrame, Size: Vector3 }
 
 function Target.Bakery(): Instance?
@@ -123,7 +124,7 @@ function Target.Find(id: string, level: number): Target?
 			continue
 		end
 		count += 1
-		for _, corner in CORNERS do
+		for _, corner in Target.Corners do
 			local point = part.CFrame:PointToWorldSpace(part.Size * corner / 2)
 			low = low:Min(point)
 			high = high:Max(point)

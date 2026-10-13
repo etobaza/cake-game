@@ -10,6 +10,7 @@ local ButtonRow = require(script.Parent.ButtonRow)
 local Flux = require(ReplicatedStorage.Packages.flux)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Pages = require(script.Parent.Stores.Pages)
+local Theme = require(script.Parent.Theme)
 local UseData = require(script.Parent.Hooks.UseData)
 
 --[[ Constants ]]--
@@ -27,15 +28,8 @@ local RIBBON_OVERHANG = 64
 local SELECTED = Color3.fromRGB(247, 233, 205)
 local IDLE = Color3.fromRGB(205, 191, 161)
 local DISABLED = Color3.fromRGB(150, 143, 127)
--- Next Day is the evening's one forward action, so it is drawn as the primary button in the game's
--- own warm palette: an orange-gold plate (the pop-up edge colour) with a cream dashed inset and a
--- cocoa caption shadow, against the cream tabs.
-local NEXT_DAY_STYLE = {
-	Fill = Color3.fromRGB(255, 255, 255),
-	Gradient = ColorSequence.new(Color3.fromRGB(255, 194, 94), Color3.fromRGB(232, 136, 44)),
-	Lines = Color3.fromRGB(255, 241, 210),
-	TextShadow = Color3.fromRGB(95, 51, 51),
-}
+-- Next Day is the evening's one forward action, so it is drawn as the primary button (Theme.NextDay).
+local NEXT_DAY_STYLE = Theme.NextDay
 
 --[[ Tables ]]--
 local BakeryMenu = {}
@@ -164,7 +158,8 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 end
 
 -- Restyles the authored Next Day tab in place (ButtonRow has already wrapped its artwork); the
--- added gradient belongs to the header's janitor.
+-- added gradient belongs to the header's janitor. Styled at runtime because the header is authored
+-- in place-only StarterGui, which source changes cannot redraw.
 function BakeryMenu.StyleNextDay(button: GuiButton, janitor: any): ()
 	local style = NEXT_DAY_STYLE
 	local fill = button:FindFirstChild("Bg", true)

@@ -71,12 +71,7 @@ return function(hud: Instance, deps: Deps): ()
 	local xp = UseData.Path(data, { "XP" }, "Cloud", 0)
 	local upgradeCount = Flux(0)
 	local function refreshUpgradeCount(): ()
-		local progress = Upgrades:GetProgress(
-			data:GetData({ "Base", "Upgrades" }) or {},
-			data:GetData({ "Level" }) or 1,
-			data:GetData({ "Cash" }) or 0
-		)
-		upgradeCount:set(progress.AffordableCount)
+		upgradeCount:set(Upgrades:ReadProgress(data).AffordableCount)
 	end
 	refreshUpgradeCount()
 	Flux.cleanup(data:SubscribeToDataType("Cloud", refreshUpgradeCount))

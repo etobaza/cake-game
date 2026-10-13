@@ -60,6 +60,9 @@ local SNUG_SLACK = 6
 local DONE_POP_SHARE = 0.6
 local SENTENCE_MARKS = { ["."] = true, ["!"] = true, ["?"] = true, ["…"] = true }
 local CLAUSE_MARKS = { [","] = true, [";"] = true, [":"] = true }
+-- Descendant properties that can move drawn art relative to the hotbar frame. The frame's own
+-- Position is left out: sliding the whole group does not change how far its art reaches above it.
+local OVERHANG_PROPERTIES = { "AbsoluteSize", "Visible", "Position", "AnchorPoint" }
 
 --[[ Types ]]--
 type Content = {
@@ -101,6 +104,16 @@ type View = {
 	Voice: Sound?,
 }
 
+-- Cached reach of a HUD group's art above its frame, recomputed only after a watched change.
+type EdgeWatch = {
+	Janitor: any,
+	Element: GuiObject?,
+	Overhang: number,
+	Dirty: boolean,
+	-- Descendants were added or removed: reconnect before the next read.
+	Rebind: boolean,
+}
+
 --[[ Tables ]]--
 local Dialog = {}
 Dialog.__index = Dialog
@@ -132,6 +145,7 @@ export type Dialog = typeof(setmetatable(
 		ChangedAt: number,
 		Y: number?,
 		Avoid: Rect?,
+		HotbarEdge: EdgeWatch,
 	},
 	Dialog
 ))
@@ -501,28 +515,82 @@ local function dialogWidth(viewport: Vector2, scale: number): number
 	return math.floor(math.clamp(viewport.X / scale * STYLE.WidthRatio, STYLE.MinWidth, STYLE.Width))
 end
 
--- Screen Y of a HUD element's top or bottom edge, in this overlay's (inset-ignoring) space.
-local function hudEdge(path: string, bottom: boolean): number?
+local function hudElement(path: string): GuiObject?
 	local found, element = pcall(function(): Instance
 		return UIHandler:GetHud(path)
 	end)
 	if not found or not element:IsA("GuiObject") or not element.Visible then
 		return nil
 	end
+	return element
+end
+
+-- Converts a HUD element's absolute Y into this overlay's (inset-ignoring) space.
+local function hudInset(element: GuiObject): number
 	local screen = element:FindFirstAncestorWhichIsA("ScreenGui")
-	local inset = if screen and not screen.IgnoreGuiInset then GuiService:GetGuiInset().Y else 0
-	if bottom then
-		return element.AbsolutePosition.Y + element.AbsoluteSize.Y + inset
+	return if screen and not screen.IgnoreGuiInset then GuiService:GetGuiInset().Y else 0
+end
+
+-- Screen Y of a HUD element's bottom edge, in this overlay's space.
+local function hudBottom(path: string): number?
+	local element = hudElement(path)
+	if not element then
+		return nil
 	end
-	-- The hotbar's slot numbers and item art reach above its frame; the bubble keeps clear of the
-	-- highest thing actually drawn, not just the frame.
+	return element.AbsolutePosition.Y + element.AbsoluteSize.Y + hudInset(element)
+end
+
+-- How far the highest visible descendant reaches above `element`'s frame, in pixels.
+local function overhang(element: GuiObject): number
 	local top = element.AbsolutePosition.Y
 	for _, child in element:GetDescendants() do
 		if child:IsA("GuiObject") and child.Visible and child.AbsoluteSize.Y > 1 then
 			top = math.min(top, child.AbsolutePosition.Y)
 		end
 	end
-	return top + inset
+	return element.AbsolutePosition.Y - top
+end
+
+local function watchEdge(watch: EdgeWatch, element: GuiObject): ()
+	local owner = watch.Janitor
+	owner:Cleanup()
+	watch.Element = element
+	watch.Dirty = true
+	watch.Rebind = false
+	local function dirty(): ()
+		watch.Dirty = true
+	end
+	local function rebind(): ()
+		watch.Rebind = true
+	end
+	owner:Add(element:GetPropertyChangedSignal("AbsoluteSize"):Connect(dirty), "Disconnect")
+	owner:Add(element.DescendantAdded:Connect(rebind), "Disconnect")
+	owner:Add(element.DescendantRemoving:Connect(rebind), "Disconnect")
+	for _, child in element:GetDescendants() do
+		if child:IsA("GuiObject") then
+			for _, property in OVERHANG_PROPERTIES do
+				owner:Add(child:GetPropertyChangedSignal(property):Connect(dirty), "Disconnect")
+			end
+		end
+	end
+end
+
+-- Screen Y of the highest thing drawn in a HUD group, in this overlay's space. The hotbar's slot
+-- numbers and item art reach above its frame; the bubble keeps clear of what is actually drawn.
+-- The descendant walk is cached in `watch`, so the per-frame read stays cheap.
+local function hudTop(path: string, watch: EdgeWatch): number?
+	local element = hudElement(path)
+	if not element then
+		return nil
+	end
+	if watch.Element ~= element or watch.Rebind then
+		watchEdge(watch, element)
+	end
+	if watch.Dirty then
+		watch.Overhang = overhang(element)
+		watch.Dirty = false
+	end
+	return element.AbsolutePosition.Y - watch.Overhang + hudInset(element)
 end
 
 -- Bottom edge of the evening/page header while it is drawn on screen, else nil.
@@ -628,6 +696,8 @@ end
 function Dialog.new(acknowledge: (string) -> ()): Dialog
 	local janitor = Janitor.new()
 	local view = build(janitor)
+	local edgeOwner = Janitor.new()
+	janitor:Add(edgeOwner, "Destroy")
 	local self = setmetatable({
 		Janitor = janitor,
 		View = view,
@@ -650,6 +720,7 @@ function Dialog.new(acknowledge: (string) -> ()): Dialog
 		ChangedAt = -math.huge,
 		Y = nil,
 		Avoid = nil,
+		HotbarEdge = { Janitor = edgeOwner, Element = nil, Overhang = 0, Dirty = true, Rebind = false },
 	}, Dialog) :: Dialog
 
 	janitor:Add(
@@ -974,7 +1045,7 @@ function Dialog.Place(self: Dialog, deltaTime: number, viewport: Vector2, scale:
 	local size = view.Root.Size
 	local width, height = size.X.Offset * scale, size.Y.Offset * scale
 	-- The HUD slides off screen while a page is open; then the plain bottom margin applies.
-	local hotbar = hudEdge(HOTBAR_PATH, false)
+	local hotbar = hudTop(HOTBAR_PATH, self.HotbarEdge)
 	local onScreen = hotbar ~= nil and hotbar < viewport.Y
 	local bottom = if hotbar and onScreen
 		then hotbar - STYLE.HotbarGap * scale
@@ -991,7 +1062,7 @@ function Dialog.Place(self: Dialog, deltaTime: number, viewport: Vector2, scale:
 	local goal = bottom
 	if covers(bottom) then
 		-- The clock slides off screen while a page is open; its off-screen edge must not count.
-		local clock = hudEdge(CLOCK_PATH, true)
+		local clock = hudBottom(CLOCK_PATH)
 		local top = if clock and clock > 0 then clock else STYLE.TopFallback * scale
 		top = math.max(top, menuHeaderEdge() or 0)
 		local raised = top + STYLE.TopGap * scale + height

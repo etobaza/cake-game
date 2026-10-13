@@ -21,6 +21,7 @@ local _Handlers = ReplicatedStorage.Handlers
 
 --[[ Modules ]]--
 local FoodPreview = require(_Shared.UI.FoodPreview)
+local IngredientCard = require(_Shared.UI.IngredientCard)
 local IngredientChip = require(_Shared.UI.IngredientChip)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Animate = require(_Shared.UI.Animate)
@@ -30,7 +31,6 @@ local Bus = require(_Shared.Bus)
 local DataClient = require(_Handlers.DataHandlerClient)
 local DayCycleConfig = require(_Configs.DayCycle)
 local Ingredients = require(_Configs.Registries.Ingredients)
-local GardenSource = require(_Shared.GardenSource)
 local GuestOrders = require(_Shared.GuestOrders)
 local OrdersConfig = require(_Configs.Orders)
 local Pages = require(_Shared.UI.Stores.Pages)
@@ -105,42 +105,8 @@ local function PrepareList(content: ScrollingFrame, janitor: any): ()
 	refreshCanvas()
 end
 
-local function IngredientName(ingredientId: string): string
-	local ingredient = Ingredients:Get(ingredientId)
-
-	return if ingredient then ingredient.name else ingredientId
-end
-
--- Ingredients of a recipe in a fixed order: the table is a dictionary, and a row that reshuffles its
--- text on every refresh reads as broken.
-local function SortedIngredients(recipe: Recipes.RecipeEntry): { { Id: string, Amount: number } }
-	local sorted = {}
-
-	for ingredientId, amount in recipe.ingredients do
-		sorted[#sorted + 1] = { Id = ingredientId, Amount = amount }
-	end
-
-	table.sort(sorted, function(left, right): boolean
-		return IngredientName(left.Id) < IngredientName(right.Id)
-	end)
-
-	return sorted
-end
-
--- The most ingredients any recipe asks for: that many chips are kept on the card.
-local function MaxIngredientCount(): number
-	local most = 0
-
-	for _, recipe in Recipes:Values() do
-		local count = 0
-		for _ in recipe.ingredients do
-			count += 1
-		end
-
-		most = math.max(most, count)
-	end
-
-	return most
+local function PantryCount(ingredientId: string): number
+	return DataClient:GetData({ "Pantry", ingredientId }) or 0
 end
 
 local function buildNeeded(row: Frame, template: Frame, janitor: any): { Frame }
@@ -154,7 +120,7 @@ local function buildNeeded(row: Frame, template: Frame, janitor: any): { Frame }
 			label.Visible = false
 		end
 	end
-	for index = 1, MaxIngredientCount() do
+	for index = 1, IngredientCard.MostIngredients() do
 		local chip = template:Clone()
 		chip.Name = `Ingredient{index}`
 		chip.Visible = false
@@ -165,18 +131,6 @@ local function buildNeeded(row: Frame, template: Frame, janitor: any): { Frame }
 		chips[index] = chip
 	end
 	return chips
-end
-
-local function MixerState(): any?
-	local stations = DataClient:GetData({ "Stations" }, "Session") or {}
-
-	for _, station in stations do
-		if station.Kind == STATION_KIND then
-			return station
-		end
-	end
-
-	return nil
 end
 
 local function SelectedRecipe(): Recipes.RecipeEntry?
@@ -454,17 +408,9 @@ function RecipePickHandler.BuildCard(self: RecipePickHandler): ()
 		return
 	end
 
-	local done = holder:FindFirstChild("Done")
-	local notDone = holder:FindFirstChild("NotDone")
-	local chipIcon = done and done:FindFirstChild("Icon")
-	if
-		not done
-		or not done:IsA("Frame")
-		or not notDone
-		or not notDone:IsA("Frame")
-		or not chipIcon
-		or not chipIcon:IsA("ImageLabel")
-	then
+	-- Detached copies first: the drawn chips themselves are cleared away when the pairs are built.
+	local doneTemplate, notDoneTemplate = IngredientCard.Templates(holder)
+	if not doneTemplate or not notDoneTemplate then
 		print("[RecipePickHandler] the cooking card has no chips to reuse")
 		return
 	end
@@ -478,51 +424,19 @@ function RecipePickHandler.BuildCard(self: RecipePickHandler): ()
 		end)
 	end
 
-	-- Detached copies first: the drawn chips themselves are cleared away right after.
-	local doneTemplate = done:Clone()
-	local notDoneTemplate = notDone:Clone()
-	IngredientChip.Prepare(notDoneTemplate, chipIcon)
-	IngredientChip.Prepare(doneTemplate, chipIcon)
+	-- The unlit template also draws the per-row "needed" chips.
 	self.NeededTemplate = notDoneTemplate
 	self.Janitor:Add(notDoneTemplate, "Destroy")
 
-	for _, chip in holder:GetChildren() do
-		if chip:IsA("Frame") then
-			chip:Destroy()
-		end
-	end
-
-	for index = 1, MaxIngredientCount() do
-		local doneClone = doneTemplate:Clone()
-		doneClone.Name = `Done{index}`
-		doneClone.LayoutOrder = index
-		doneClone.Visible = false
-		doneClone.Parent = holder
-		self.Janitor:Add(doneClone, "Destroy")
-		self.Janitor:Add(Animate.Scale(doneClone), "destroy")
-
-		local notDoneClone = notDoneTemplate:Clone()
-		notDoneClone.Name = `NotDone{index}`
-		notDoneClone.LayoutOrder = index
-		notDoneClone.Visible = false
-		notDoneClone.Parent = holder
-		self.Janitor:Add(notDoneClone, "Destroy")
-		self.Janitor:Add(
-			Press.BindTap(notDoneClone, function(): ()
-				local id = notDoneClone:GetAttribute("IngredientId")
-				if typeof(id) ~= "string" or Ingredients:IsInfinite(id) then
-					return
-				end
-				if (DataClient:GetData({ "Pantry", id }) or 0) <= 0 then
-					return
-				end
-				Bus.Kitchen.TakePantry:Fire(MIXER_ID, id)
-			end),
-			"Destroy"
-		)
-
-		self.Chips[index] = { Done = doneClone :: Frame, NotDone = notDoneClone :: Frame }
-	end
+	-- The card scrolls, so its chips commit only on a tap that stayed in place.
+	self.Chips = IngredientCard.BuildChips(
+		holder,
+		doneTemplate,
+		notDoneTemplate,
+		IngredientCard.MostIngredients(),
+		self.Janitor,
+		{ StationId = MIXER_ID, PantryCount = PantryCount, Floating = false }
+	)
 	doneTemplate:Destroy()
 end
 
@@ -628,14 +542,14 @@ function RecipePickHandler.PaintRow(
 		self.RequirementLabels[row],
 		RecipeRequirements.GetMissing(recipe, DataClient:GetData({ "Base", "Upgrades" }) or {})
 	)
-	local needed = SortedIngredients(recipe)
+	local needed = IngredientCard.Sorted(recipe)
 	for index, chip in (self.NeededChips[row] or {}) :: { Frame } do
 		local entry = needed[index]
 		chip.Visible = entry ~= nil
 		if not entry then
 			continue
 		end
-		local name = IngredientName(entry.Id)
+		local name = IngredientCard.Name(entry.Id)
 		IngredientChip.Show(chip, entry.Id, if entry.Amount > 1 then `{name} x{entry.Amount}` else name)
 	end
 	SetPair(resolve(row, { "Reward", "Txt" }), `Reward: {UIHandler:FormatNumber(recipe.price)}`)
@@ -693,51 +607,40 @@ function RecipePickHandler.RefreshCard(self: RecipePickHandler): ()
 		FoodPreview.Show(icon, recipe)
 	end
 
-	local mixer = MixerState()
-	local loaded = (mixer and mixer.Loaded) or {}
-	local needed = SortedIngredients(recipe)
+	local loaded = IngredientCard.Loaded(DataClient:GetData({ "Stations" }, "Session"), STATION_KIND)
+	local needed = IngredientCard.Sorted(recipe)
 	local hints = {}
 	local cloud = DataClient:GetData({})
 
 	for index, chip in self.Chips do
 		local entry = needed[index]
 		if not entry then
-			chip.Done.Visible = false
-			chip.NotDone.Visible = false
+			IngredientCard.HideChip(chip)
 			continue
 		end
 
 		local have = loaded[entry.Id] or 0
-		chip.NotDone:SetAttribute("IngredientId", entry.Id)
 		local complete = have >= entry.Amount
 		if not complete and not Ingredients:IsInfinite(entry.Id) then
-			hints[#hints + 1] = `{IngredientName(entry.Id)}: {GardenSource.Describe(entry.Id, cloud)}`
+			hints[#hints + 1] = IngredientCard.SourceHint(entry.Id, cloud)
 		end
-		local text = `{IngredientName(entry.Id)} {math.min(have, entry.Amount)}/{entry.Amount}`
-
-		IngredientChip.Show(chip.Done, entry.Id, text)
-		IngredientChip.Show(chip.NotDone, entry.Id, text)
-
-		-- Lit chips spring in only as they light up, not on every refresh.
-		if complete and not chip.Done.Visible then
-			Animate.Pop(chip.Done)
-		end
-
-		chip.Done.Visible = complete
-		chip.NotDone.Visible = not complete
+		local text = `{IngredientCard.Name(entry.Id)} {math.min(have, entry.Amount)}/{entry.Amount}`
+		IngredientCard.ShowChip(chip, entry.Id, text, complete)
 	end
-	local hint = content:FindFirstChild("SourceHint")
-	if hint and hint:IsA("TextLabel") then
-		hint.Text = table.concat(hints, "\n")
-		hint.Visible = #hints > 0
-	end
+	IngredientCard.ShowHints(content:FindFirstChild("SourceHint"), hints)
 end
 
 function RecipePickHandler.Destroy(self: RecipePickHandler): ()
-	self.Janitor:Destroy()
+	local janitor = self.Janitor
+	if janitor == nil then
+		return
+	end
+	-- Janitor removes its metatable on destruction; release the owner before repeated cleanup.
+	self.Janitor = nil
+	janitor:Destroy()
 end
 
-export type ChipPair = { Done: Frame, NotDone: Frame }
+export type ChipPair = IngredientCard.ChipPair
 
 export type RecipePickHandler = typeof(RecipePickHandler) & {
 	-- The Start press waiting for the server to select its recipe.

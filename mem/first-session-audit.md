@@ -1,4 +1,6 @@
-# First-session audit (TaskList 3.1)
+# First-session audit (2026-10-12)
+
+A point-in-time QA log of the first play session. Several findings were addressed afterwards (the order-taking rework, mixer prompt distance, `Shared/Tutorial/UpgradeLesson`); ARCHITECTURE.md describes the current behavior.
 
 Date: 2026-10-12. Place: Cake Funset Dev (85619104317376), Studio Play, one client, desktop viewport 1891 by 1113, keyboard and mouse.
 

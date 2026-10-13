@@ -14,13 +14,6 @@ local Theme = require(ReplicatedStorage.Shared.UI.Theme)
 
 --[[ Constants ]]--
 local GUI_NAME = "LiveEventBanner"
-local HEADSHOT_SIZE = 64
-local PADDING = 10
-local CORNER = UDim.new(0, 14)
-local CARD_COLOR = Color3.fromRGB(40, 26, 22)
-local CARD_TRANSPARENCY = 0.15
-local MUTED_TEXT = Color3.fromRGB(230, 214, 196)
-local LINE_POP_FROM = 0.92
 
 --[[ Tables ]]--
 local Banner = {}
@@ -75,28 +68,28 @@ function Banner.new(): Banner
 	card.Position = hud.Position
 	card.Size = UDim2.new(1, -32, 0, 0)
 	card.AutomaticSize = Enum.AutomaticSize.Y
-	card.BackgroundColor3 = CARD_COLOR
-	card.BackgroundTransparency = CARD_TRANSPARENCY
+	card.BackgroundColor3 = hud.CardColor
+	card.BackgroundTransparency = hud.CardTransparency
 	card.Parent = gui
 	local constraint = Instance.new("UISizeConstraint")
 	constraint.MaxSize = Vector2.new(hud.Width, math.huge)
 	constraint.Parent = card
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = CORNER
+	corner.CornerRadius = UDim.new(0, hud.CornerRadius)
 	corner.Parent = card
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = hud.Accent
-	stroke.Thickness = 2
+	stroke.Thickness = hud.StrokeThickness
 	stroke.Parent = card
 	local padding = Instance.new("UIPadding")
-	padding.PaddingTop = UDim.new(0, PADDING)
-	padding.PaddingBottom = UDim.new(0, PADDING)
-	padding.PaddingLeft = UDim.new(0, PADDING)
-	padding.PaddingRight = UDim.new(0, PADDING)
+	padding.PaddingTop = UDim.new(0, hud.Padding)
+	padding.PaddingBottom = UDim.new(0, hud.Padding)
+	padding.PaddingLeft = UDim.new(0, hud.Padding)
+	padding.PaddingRight = UDim.new(0, hud.Padding)
 	padding.Parent = card
 	list(card, Enum.FillDirection.Vertical, 8)
 
-	local status = label(card, "Status", Theme.Fonts.Bold, 16, 1)
+	local status = label(card, "Status", Theme.Fonts.Bold, hud.TextSizes.Status, 1)
 	status.TextColor3 = hud.Accent
 
 	local row = Instance.new("Frame")
@@ -107,11 +100,11 @@ function Banner.new(): Banner
 	row.LayoutOrder = 2
 	row.Visible = false
 	row.Parent = card
-	list(row, Enum.FillDirection.Horizontal, PADDING)
+	list(row, Enum.FillDirection.Horizontal, hud.Padding)
 
 	local headshot = Instance.new("ImageLabel")
 	headshot.Name = "Headshot"
-	headshot.Size = UDim2.fromOffset(HEADSHOT_SIZE, HEADSHOT_SIZE)
+	headshot.Size = UDim2.fromOffset(hud.HeadshotSize, hud.HeadshotSize)
 	headshot.BackgroundColor3 = hud.Accent
 	headshot.LayoutOrder = 1
 	headshot.Parent = row
@@ -122,16 +115,16 @@ function Banner.new(): Banner
 	local column = Instance.new("Frame")
 	column.Name = "Words"
 	column.BackgroundTransparency = 1
-	column.Size = UDim2.new(1, -(HEADSHOT_SIZE + PADDING), 0, 0)
+	column.Size = UDim2.new(1, -(hud.HeadshotSize + hud.Padding), 0, 0)
 	column.AutomaticSize = Enum.AutomaticSize.Y
 	column.LayoutOrder = 2
 	column.Parent = row
 	list(column, Enum.FillDirection.Vertical, 2)
 
-	local name = label(column, "Name", Theme.Fonts.ExtraBold, 20, 1)
-	local role = label(column, "Role", Theme.Fonts.SemiBold, 14, 2)
-	role.TextColor3 = MUTED_TEXT
-	local text = label(column, "Text", Theme.Fonts.Bold, 18, 3)
+	local name = label(column, "Name", Theme.Fonts.ExtraBold, hud.TextSizes.Name, 1)
+	local role = label(column, "Role", Theme.Fonts.SemiBold, hud.TextSizes.Role, 2)
+	role.TextColor3 = hud.RoleColor
+	local text = label(column, "Text", Theme.Fonts.Bold, hud.TextSizes.Line, 3)
 
 	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
@@ -165,7 +158,7 @@ function Banner.ShowLine(self: Banner, castId: string, name: string, text: strin
 	self.Role.Text = member.Role
 	self.Text.Text = text
 	self.Row.Visible = true
-	Animate.Pop(self.Card, LINE_POP_FROM)
+	Animate.Pop(self.Card, Config.Hud.LinePopFrom)
 end
 
 function Banner.ClearLine(self: Banner): ()

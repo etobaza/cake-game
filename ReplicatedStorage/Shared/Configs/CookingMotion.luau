@@ -3,6 +3,11 @@
 -- server-authored metadata attribute names, and all client-side visual tuning. The server handlers
 -- author the metadata; this config keeps both sides agreeing on names so nothing is duplicated.
 
+--[[ Modules ]]
+--
+local FoodPresentation = require(script.Parent.FoodPresentation)
+local Sounds = require(script.Parent.Sounds)
+
 --[[ Constants ]]
 --
 -- Fixed tag contract. A cooking surface is a server Folder named Food_<buildingId> holding server
@@ -24,23 +29,34 @@ local CookingMotion = {
 		Burnt = "Burnt",
 	},
 
-	-- The dedicated door chime reuses the StationReady source through a SoundPlayer config named
-	-- DoorBell (added by the server integration). No unverified id is introduced here.
-	ChimeSound = "DoorBell",
+	-- The entrance chime plays the DoorBell entry of Configs/Sounds.
+	ChimeSound = "DoorBell" :: Sounds.SoundName,
 }
+
+-- Station timing attributes the server's CookingMetadata replicates onto both the oven clock hand
+-- and a mixer surface folder. The per-target tables below reuse these names.
+local Station = {
+	StationState = "StationState",
+	PhaseStartedAt = "PhaseStartedAt",
+	ReadyAt = "ReadyAt",
+	BurnAt = "BurnAt",
+	HeatPausedAt = "HeatPausedAt",
+	PausedAt = "PausedAt",
+}
+CookingMotion.Station = Station
 
 -- Cooking surface (Food_<buildingId>) folder attributes.
 CookingMotion.Surface = {
 	StationKind = "StationKind",
-	StationState = "StationState",
+	StationState = Station.StationState,
 	RecipeId = "RecipeId",
 	SurfaceFrame = "SurfaceFrame",
 	BatterColor = "BatterColor",
 	-- Authoritative mixing window, retained through Ready; summary resume shifts both together.
 	MixStartedAt = "MixStartedAt",
 	MixReadyAt = "MixReadyAt",
-	PausedAt = "PausedAt",
-	HeatPausedAt = "HeatPausedAt",
+	PausedAt = Station.PausedAt,
+	HeatPausedAt = Station.HeatPausedAt,
 }
 
 -- Ingredient Model attributes inside a surface folder.
@@ -61,12 +77,12 @@ CookingMotion.Fresh = {
 CookingMotion.Clock = {
 	RestPivot = "ClockRestPivot",
 	Axis = "ClockAxis",
-	StationState = "StationState",
-	PhaseStartedAt = "PhaseStartedAt",
-	ReadyAt = "ReadyAt",
-	BurnAt = "BurnAt",
-	HeatPausedAt = "HeatPausedAt",
-	PausedAt = "PausedAt",
+	StationState = Station.StationState,
+	PhaseStartedAt = Station.PhaseStartedAt,
+	ReadyAt = Station.ReadyAt,
+	BurnAt = Station.BurnAt,
+	HeatPausedAt = Station.HeatPausedAt,
+	PausedAt = Station.PausedAt,
 }
 
 -- Entrance leaf Model metadata. Sign attributes are present only on the leaf that owns the sign.
@@ -82,14 +98,16 @@ CookingMotion.Entrance = {
 --[[ Mixer tuning ]]
 --
 -- Matches the authored bowl slots: radius 0.8, slot lift 0.12, max portion 1.1 x 0.9 x 1.1, four
--- portions. The dough is one pastry mesh that grows as the batter blends.
+-- portions. The dough is one pastry mesh that grows as the batter blends. A batch with more portions
+-- than slots keeps the static server pieces instead of swirling.
 CookingMotion.Mixer = {
 	SlotCount = 4,
 	SlotRadius = 0.8,
 	SlotHeight = 0.12,
 	PortionSize = Vector3.new(1.1, 0.9, 1.1),
-	-- Full dough footprint; slightly under the authored pastry mesh so it never fights the rim.
-	DoughMaxSize = Vector3.new(1.4, 0.85, 1.4),
+	-- Full dough footprint. It is the server's Ready dough size on a station surface, so the server
+	-- result takes over from the local dough without a size pop.
+	DoughMaxSize = FoodPresentation.SurfaceFoodSize,
 	DoughMinScale = 0.12,
 	-- Continuous swirl: the orbit angle follows mixing progress so Summary freezes it exactly.
 	SwirlRevolutions = 2.25,

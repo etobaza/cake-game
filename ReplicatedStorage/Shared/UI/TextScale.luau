@@ -24,4 +24,15 @@ function TextScale.Fit(constraint: UITextSizeConstraint, scale: number): ()
 	constraint.MaxTextSize = math.max(1, math.floor(maximum * scale + 0.5))
 end
 
+--- A logical text size in rendered pixels at `scale`, rounded and never below 1.
+function TextScale.Size(size: number, scale: number): number
+	return math.max(1, math.floor(size * scale + 0.5))
+end
+
+--- Writes an explicit configured range at `scale`. Use Fit instead to keep an authored maximum.
+function TextScale.Bound(constraint: UITextSizeConstraint, minimum: number, maximum: number, scale: number): ()
+	constraint.MinTextSize = TextScale.Size(minimum, scale)
+	constraint.MaxTextSize = TextScale.Size(maximum, scale)
+end
+
 return TextScale

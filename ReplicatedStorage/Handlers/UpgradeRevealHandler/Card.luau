@@ -6,6 +6,7 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Configs.UpgradeReveal)
 local Ease = require(Shared.UI.Ease)
+local Metrics = require(script.Parent.Metrics)
 local Sparks = require(Shared.UI.Sparks)
 local Theme = require(Shared.UI.Theme)
 local Upgrades = require(Shared.Configs.Registries.Upgrades)
@@ -26,7 +27,10 @@ export type Card = typeof(setmetatable(
 		Progress: Frame,
 		Veil: Frame,
 		Sparks: Sparks.Sparks,
-		Connection: RBXScriptConnection,
+		Connections: { RBXScriptConnection },
+		-- Receipt top-left inside Root, from the last layout rather than a possibly stale AbsolutePosition.
+		Corner: Vector2,
+		TwinklePending: boolean,
 	},
 	Card
 ))
@@ -63,27 +67,28 @@ function Card.new(skip: () -> ()): Card
 	root.BackgroundTransparency = 1
 	root.Size = UDim2.fromScale(1, 1)
 	root.Parent = screen
+	local tuning = Config.Card
 	local veil = Instance.new("Frame")
 	veil.Name = "Transition"
 	veil.Size = UDim2.fromScale(1, 1)
-	veil.BackgroundColor3 = Config.Card.Veil
+	veil.BackgroundColor3 = tuning.Veil
 	veil.BackgroundTransparency = 1
 	veil.BorderSizePixel = 0
 	veil.Parent = root
 	local plate = Instance.new("CanvasGroup")
 	plate.Name = "Receipt"
 	plate.AnchorPoint = Vector2.new(0.5, 1)
-	plate.BackgroundColor3 = Config.Card.Cream
+	plate.BackgroundColor3 = tuning.Cream
 	plate.BorderSizePixel = 0
 	plate.GroupTransparency = 1
 	plate.ZIndex = 2
-	round(plate, 20)
+	round(plate, tuning.Corner)
 	local stroke = Instance.new("UIStroke")
-	stroke.Color = Config.Card.Edge
-	stroke.Thickness = 3
+	stroke.Color = tuning.Edge
+	stroke.Thickness = tuning.EdgeThickness
 	stroke.Parent = plate
 	local gradient = Instance.new("UIGradient")
-	gradient.Color = ColorSequence.new(Color3.fromRGB(255, 250, 235), Config.Card.Cream)
+	gradient.Color = ColorSequence.new(tuning.Shine, tuning.Cream)
 	gradient.Rotation = 90
 	gradient.Parent = plate
 	plate.Parent = root
@@ -94,49 +99,48 @@ function Card.new(skip: () -> ()): Card
 	icon.BackgroundTransparency = 1
 	icon.ScaleType = Enum.ScaleType.Fit
 	icon.Parent = plate
-	local tag = label(plate, "Tag", 13, true)
-	tag.TextColor3 = Config.Card.Edge
-	local title = label(plate, "Name", Config.Card.TitleSize, true)
+	local tag = label(plate, "Tag", tuning.TagSize, true)
+	tag.TextColor3 = tuning.Edge
+	local title = label(plate, "Name", tuning.TitleSize, true)
 	title.TextScaled = true
 	local constraint = Instance.new("UITextSizeConstraint")
-	constraint.MinTextSize = 16
-	constraint.MaxTextSize = Config.Card.TitleSize
+	constraint.MinTextSize = tuning.MinTitleSize
+	constraint.MaxTextSize = tuning.TitleSize
 	constraint.Parent = title
-	local benefit = label(plate, "Benefit", Config.Card.BenefitSize, false)
+	local benefit = label(plate, "Benefit", tuning.BenefitSize, false)
 	benefit.TextWrapped = true
 	local track = Instance.new("Frame")
 	track.Name = "ProgressTrack"
-	track.BackgroundColor3 = Config.Card.Accent
-	track.BackgroundTransparency = 0.75
+	track.BackgroundColor3 = tuning.Accent
+	track.BackgroundTransparency = tuning.TrackTransparency
 	track.BorderSizePixel = 0
 	track.AnchorPoint = Vector2.new(0.5, 1)
-	track.Position = UDim2.new(0.5, 0, 1, -10)
-	track.Size = UDim2.new(1, -32, 0, 3)
+	track.Position = UDim2.new(0.5, 0, 1, -tuning.TrackInset)
+	track.Size = UDim2.new(1, -tuning.TrackSidePadding * 2, 0, tuning.TrackHeight)
 	track.Parent = plate
-	round(track, 3)
+	round(track, tuning.TrackHeight)
 	local progress = Instance.new("Frame")
 	progress.Name = "Remaining"
 	progress.Size = UDim2.fromScale(1, 1)
 	progress.BorderSizePixel = 0
-	progress.BackgroundColor3 = Config.Card.Accent
+	progress.BackgroundColor3 = tuning.Accent
 	progress.Parent = track
-	round(progress, 3)
+	round(progress, tuning.TrackHeight)
 	local skipButton = Instance.new("TextButton")
 	skipButton.Name = "Skip"
 	skipButton.AnchorPoint = Vector2.new(1, 0)
-	skipButton.BackgroundColor3 = Config.Card.Cream
-	skipButton.BackgroundTransparency = 0.05
+	skipButton.BackgroundColor3 = tuning.Cream
+	skipButton.BackgroundTransparency = tuning.SkipTransparency
 	skipButton.TextColor3 = Theme.Colors.Cocoa
 	skipButton.FontFace = Theme.Fonts.ExtraBold
-	skipButton.TextSize = 18
+	skipButton.TextSize = tuning.SkipTextSize
 	skipButton.AutoButtonColor = true
-	skipButton.Size = UDim2.fromOffset(Config.Card.SkipWidth, Config.Card.SkipHeight)
+	skipButton.Size = UDim2.fromOffset(tuning.SkipWidth, tuning.SkipHeight)
 	skipButton.ZIndex = 4
-	round(skipButton, 14)
+	round(skipButton, tuning.SkipCorner)
 	skipButton.Parent = plate
-	local connection = skipButton.Activated:Connect(skip)
 	screen.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
-	return setmetatable({
+	local self: Card = setmetatable({
 		Screen = screen,
 		Root = root,
 		Plate = plate,
@@ -149,49 +153,75 @@ function Card.new(skip: () -> ()): Card
 		Progress = progress,
 		Veil = veil,
 		Sparks = Sparks.new(root),
-		Connection = connection,
+		Connections = {},
+		Corner = Vector2.zero,
+		TwinklePending = false,
 	}, Card)
+	-- Layout follows the viewport and the skip hint follows the input device; neither runs per frame.
+	table.insert(self.Connections, skipButton.Activated:Connect(skip))
+	table.insert(
+		self.Connections,
+		root:GetPropertyChangedSignal("AbsoluteSize"):Connect(function(): ()
+			self:Layout()
+		end)
+	)
+	table.insert(
+		self.Connections,
+		UserInputService:GetPropertyChangedSignal("PreferredInput"):Connect(function(): ()
+			self:RefreshSkip()
+		end)
+	)
+	self:RefreshSkip()
+	return self
 end
 
 function Card.Show(self: Card, id: string, level: number): ()
 	local entry = Upgrades:Get(id)
 	local spec = Config.Targets[id]
+	local tuning = Config.Card
+	local levelBenefit = spec and spec.LevelBenefits and spec.LevelBenefits[level]
 	self.Title.Text = Upgrades:GetDisplayName(id, level - 1)
-	self.Benefit.Text = if id == "kitchen_oven" and level == 2
-		then "Your third oven. Bake three batches at once."
-		else if spec then spec.Benefit else if entry then entry.blurb else "Your bakery just got better."
-	local category = if entry and entry.category == "Garden"
-		then "GREENHOUSE"
-		else if entry then string.upper(entry.category) else "BAKERY"
+	self.Benefit.Text = if levelBenefit
+		then levelBenefit
+		elseif spec then spec.Benefit
+		elseif entry then entry.blurb
+		else tuning.FallbackBenefit
+	local category = if entry
+		then tuning.CategoryLabels[entry.category] or string.upper(entry.category)
+		else tuning.FallbackCategory
 	self.Tag.Text = `NEW · {category}` .. (if entry and entry.maxLevel > 1 then ` · {level}/{entry.maxLevel}` else "")
 	self.Icon.Image = if entry then entry.icon or "" else ""
 	self.Screen.Enabled = true
 	self.Plate.GroupTransparency = 1
 	self:Layout()
-	self.Sparks:Twinkle(self.Plate.AbsolutePosition + Vector2.new(45, 20), 5)
+	-- The plate's AbsolutePosition is stale until the engine lays it out; burst on the next Step.
+	self.TwinklePending = true
 end
 
 function Card.Layout(self: Card): ()
 	local viewport = self.Root.AbsoluteSize
 	local tuning = Config.Card
-	local density = math.clamp(viewport.Y / 900, 0.85, 1.2)
-	local width = math.min(tuning.Width * density, viewport.X - tuning.Margin * 2)
-	local narrow = width < 400
-	local iconSize = if narrow then 64 else tuning.IconSize * density
-	local left = iconSize + 32
-	local height = if narrow then tuning.NarrowHeight else math.max(tuning.MinHeight, tuning.Height * density)
+	local metrics = Metrics.Card(viewport)
+	local width, height = metrics.Width, metrics.Height
+	local iconSize = if metrics.Narrow then tuning.NarrowIconSize else tuning.IconSize * metrics.Density
+	local left = iconSize + tuning.TextColumnGap
+	local textInset = -left - tuning.RightPadding
 	self.Plate.Size = UDim2.fromOffset(width, height)
-	self.Plate.Position = UDim2.new(0.5, 0, 1, -math.max(18, tuning.Bottom * density))
+	self.Plate.Position = UDim2.new(0.5, 0, 1, -metrics.Bottom)
+	self.Corner = Vector2.new((viewport.X - width) / 2, viewport.Y - metrics.Bottom - height)
 	self.Icon.Size = UDim2.fromOffset(iconSize, iconSize)
-	self.Icon.Position = UDim2.fromOffset(14, (height - iconSize) / 2 - 3)
-	self.Tag.Position = UDim2.fromOffset(14, 16)
-	self.Tag.Size = UDim2.new(1, -tuning.SkipWidth - 40, 0, 18)
-	self.Title.Position = UDim2.fromOffset(left, 55)
-	self.Title.Size = UDim2.new(1, -left - 16, 0, 32)
-	self.Benefit.Position = UDim2.fromOffset(left, 91)
-	self.Benefit.Size = UDim2.new(1, -left - 16, 1, -113)
-	self.Benefit.TextSize = math.max(16, tuning.BenefitSize * density)
-	self.Skip.Position = UDim2.new(1, -12, 0, 8)
+	self.Icon.Position = UDim2.fromOffset(tuning.Padding, (height - iconSize) / 2 - tuning.IconLift)
+	self.Tag.Position = UDim2.fromOffset(tuning.Padding, tuning.TagTop)
+	self.Tag.Size = UDim2.new(1, -tuning.SkipWidth - tuning.TagSkipGap, 0, tuning.TagHeight)
+	self.Title.Position = UDim2.fromOffset(left, tuning.TitleTop)
+	self.Title.Size = UDim2.new(1, textInset, 0, tuning.TitleHeight)
+	self.Benefit.Position = UDim2.fromOffset(left, tuning.BenefitTop)
+	self.Benefit.Size = UDim2.new(1, textInset, 1, -tuning.BenefitTop - tuning.BenefitBottom)
+	self.Benefit.TextSize = math.max(tuning.MinBenefitSize, tuning.BenefitSize * metrics.Density)
+	self.Skip.Position = UDim2.new(1, -tuning.SkipInset.X, 0, tuning.SkipInset.Y)
+end
+
+function Card.RefreshSkip(self: Card): ()
 	local input = UserInputService.PreferredInput
 	self.Skip.Text = if input == Enum.PreferredInput.Gamepad
 		then "Skip  ·  B"
@@ -200,23 +230,32 @@ function Card.Layout(self: Card): ()
 end
 
 function Card.Step(self: Card, deltaTime: number, age: number, duration: number, returning: boolean, veil: number): ()
-	self:Layout()
-	local arrive = Ease.OutCubic(age / Config.Card.EnterSeconds)
-	self.Scale.Scale = 0.94 + 0.06 * Ease.OutBack(age / Config.Card.EnterSeconds, 0.4)
-	self.Plate.GroupTransparency = if returning then math.min(age / Config.Card.ExitSeconds, 1) else 1 - arrive
+	local tuning = Config.Card
+	if self.TwinklePending then
+		self.TwinklePending = false
+		self.Sparks:Twinkle(self.Root.AbsolutePosition + self.Corner + tuning.TwinkleOffset, tuning.TwinkleCount)
+	end
+	local arrive = Ease.OutCubic(age / tuning.EnterSeconds)
+	self.Scale.Scale = tuning.EnterScale
+		+ (1 - tuning.EnterScale) * Ease.OutBack(age / tuning.EnterSeconds, tuning.EnterOvershoot)
+	self.Plate.GroupTransparency = if returning then math.min(age / tuning.ExitSeconds, 1) else 1 - arrive
 	self.Progress.Size = UDim2.fromScale(math.clamp(1 - age / math.max(duration, 0.01), 0, 1), 1)
 	self.Veil.BackgroundTransparency = 1 - math.clamp(veil, 0, 1)
 	self.Sparks:Step(deltaTime)
 end
 
 function Card.Hide(self: Card): ()
+	self.TwinklePending = false
 	self.Sparks:Clear()
 	self.Screen.Enabled = false
 	self.Veil.BackgroundTransparency = 1
 end
 
 function Card.Destroy(self: Card): ()
-	self.Connection:Disconnect()
+	for _, connection in self.Connections do
+		connection:Disconnect()
+	end
+	table.clear(self.Connections)
 	self.Sparks:Destroy()
 	self.Screen:Destroy()
 end

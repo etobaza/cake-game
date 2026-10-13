@@ -4,6 +4,8 @@ local FoodPresentation = {
 	SurfaceAttachment = "FoodSurface",
 	HandAttribute = "CarriedFood",
 	PreviewFieldOfView = 35,
+	-- Largest extent of a food or item model staged in a UI viewport preview.
+	PreviewSize = Vector3.new(3, 3, 3),
 	TraySize = Vector3.new(2.6, 0.2, 2.6),
 	FoodSize = Vector3.new(2.1, 1.9, 2.1),
 	SurfaceFoodSize = Vector3.new(2.1, 2.2, 2.1),

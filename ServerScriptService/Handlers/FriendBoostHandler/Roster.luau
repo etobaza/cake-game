@@ -97,7 +97,11 @@ local function startCheck(self: Roster, pair: Pair): ()
 		self.InFlight -= 1
 		pair.Pending = false
 		if current(self, pair) then
-			pair.Friend = success and result == true
+			-- Only a definite answer changes the relationship; a failed or timed-out check keeps the last
+			-- confirmed value until the retry answers.
+			if success and typeof(result) == "boolean" then
+				pair.Friend = result
+			end
 			pair.NextCheck = os.clock() + (if success then Friends.RefreshSeconds else Friends.RetrySeconds)
 			if not success and not pair.LoggedFailure then
 				pair.LoggedFailure = true
@@ -196,8 +200,8 @@ function Roster.Tick(self: Roster): ()
 		if pair.Pending or pair.Queued or pair.NextCheck > now then
 			continue
 		end
-		-- A refresh must confirm the relationship again before it pays more money.
-		pair.Friend = false
+		-- The last confirmed value stays in force while the refresh waits in the queue, so the boost does
+		-- not drop for every pair at each interval.
 		pair.Queued = true
 		self.Queue[#self.Queue + 1] = pair
 	end

@@ -12,17 +12,13 @@ local _Handlers = ReplicatedStorage.Handlers
 
 --[[ Modules ]]--
 local FoodPreview = require(_Shared.UI.FoodPreview)
-local IngredientChip = require(_Shared.UI.IngredientChip)
-local Animate = require(_Shared.UI.Animate)
+local IngredientCard = require(_Shared.UI.IngredientCard)
 local Authored = require(_Shared.UI.Authored)
 local Buildings = require(_Configs.Buildings)
-local Bus = require(_Shared.Bus)
 local DataClient = require(_Handlers.DataHandlerClient)
 local Ingredients = require(_Configs.Registries.Ingredients)
-local GardenSource = require(_Shared.GardenSource)
 local InteractHandler = require(_Handlers.InteractHandler)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
-local Press = require(_Shared.UI.Press)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Recipes = require(_Configs.Registries.Recipes)
 local UIHandler = require(_Handlers.UIHandler)
@@ -43,57 +39,8 @@ local MixHandler = {
 --[[ Private Functions ]]--
 local SetPair = Authored.SetPair
 
-local function GetMixerState(): any?
-	local stations = DataClient:GetData({ "Stations" }, "Session") or {}
-	for _, station in stations do
-		if station.Kind == STATION_KIND then
-			return station
-		end
-	end
-	return nil
-end
-
-local function IngredientName(ingredientId: string): string
-	local ingredient = Ingredients:Get(ingredientId)
-
-	return if ingredient then ingredient.name else ingredientId
-end
-
--- One slot per required unit mirrors the reference: flour x4 becomes four separate flour chips.
-local function IngredientUnits(recipe: Recipes.RecipeEntry): { { Id: string, Required: number } }
-	local ingredients = {}
-	for ingredientId, amount in recipe.ingredients do
-		ingredients[#ingredients + 1] = {
-			Id = ingredientId,
-			Name = IngredientName(ingredientId),
-			Amount = amount,
-		}
-	end
-	table.sort(ingredients, function(left, right): boolean
-		return left.Name < right.Name
-	end)
-
-	local units = {}
-	for _, ingredient in ingredients do
-		for required = 1, ingredient.Amount do
-			units[#units + 1] = { Id = ingredient.Id, Required = required }
-		end
-	end
-
-	return units
-end
-
-local function MaxIngredientUnits(): number
-	local most = 0
-	for _, recipe in Recipes:Values() do
-		local count = 0
-		for _, amount in recipe.ingredients do
-			count += amount
-		end
-		most = math.max(most, count)
-	end
-
-	return most
+local function PantryCount(ingredientId: string): number
+	return DataClient:GetData({ "Pantry", ingredientId }) or 0
 end
 
 --[[ Handling ]]--
@@ -146,20 +93,17 @@ function MixHandler.BuildBillboard(self: MixHandler): ()
 
 	local card = billboard:FindFirstChild("Card")
 	local holder = card and card:FindFirstChild("Items")
-	local done = holder and holder:FindFirstChild("Done")
-	local notDone = holder and holder:FindFirstChild("NotDone")
-	local chipIcon = done and done:FindFirstChild("Icon")
-	if
-		not card
-		or not card:IsA("Frame")
-		or not holder
-		or not done
-		or not done:IsA("Frame")
-		or not notDone
-		or not notDone:IsA("Frame")
-		or not chipIcon
-		or not chipIcon:IsA("ImageLabel")
-	then
+	local doneTemplate: Frame?, notDoneTemplate: Frame? = nil, nil
+	if holder then
+		doneTemplate, notDoneTemplate = IngredientCard.Templates(holder)
+	end
+	if not card or not card:IsA("Frame") or not holder or not doneTemplate or not notDoneTemplate then
+		if doneTemplate then
+			doneTemplate:Destroy()
+		end
+		if notDoneTemplate then
+			notDoneTemplate:Destroy()
+		end
 		billboard:Destroy()
 		print("[MixHandler] the authored mixer Billboard has no reusable ingredient chips")
 		return
@@ -168,48 +112,16 @@ function MixHandler.BuildBillboard(self: MixHandler): ()
 	self.Billboard = billboard
 	self.Janitor:Add(billboard, "Destroy")
 	self.BillboardCard = card
-	self.BillboardChips = {}
-	local doneTemplate = done:Clone()
-	local notDoneTemplate = notDone:Clone()
-	IngredientChip.Prepare(notDoneTemplate, chipIcon)
-	IngredientChip.Prepare(doneTemplate, chipIcon)
-	for _, chip in holder:GetChildren() do
-		if chip:IsA("Frame") then
-			chip:Destroy()
-		end
-	end
-
-	for index = 1, MaxIngredientUnits() do
-		local doneClone = doneTemplate:Clone()
-		doneClone.Name = `Done{index}`
-		doneClone.LayoutOrder = index
-		doneClone.Visible = false
-		doneClone.Parent = holder
-		self.Janitor:Add(Animate.Scale(doneClone), "destroy")
-
-		local notDoneClone = notDoneTemplate:Clone()
-		notDoneClone.Name = `NotDone{index}`
-		notDoneClone.LayoutOrder = index
-		notDoneClone.Visible = false
-		notDoneClone.Parent = holder
-		self.Janitor:Add(
-			Press.Bind(notDoneClone, function()
-				local ingredientId = notDoneClone:GetAttribute("IngredientId")
-				if
-					typeof(ingredientId) == "string"
-					and not Ingredients:IsInfinite(ingredientId)
-					and (DataClient:GetData({ "Pantry", ingredientId }) or 0) > 0
-				then
-					Bus.Kitchen.TakePantry:Fire(MIXER_ID, ingredientId)
-				end
-			end),
-			"Destroy"
-		)
-		-- Right-drag and the wheel over the floating card still turn and zoom the camera on PC.
-		self.Janitor:Add(Press.SinkUnlessMouse(notDoneClone), "Destroy")
-
-		self.BillboardChips[index] = { Done = doneClone, NotDone = notDoneClone }
-	end
+	-- One chip per required unit mirrors the reference: flour x4 becomes four separate flour chips.
+	-- The billboard floats in the world, so its chips press on contact and leave the camera alone.
+	self.BillboardChips = IngredientCard.BuildChips(
+		holder,
+		doneTemplate,
+		notDoneTemplate,
+		IngredientCard.MostUnits(),
+		self.Janitor,
+		{ StationId = MIXER_ID, PantryCount = PantryCount, Floating = true }
+	)
 	doneTemplate:Destroy()
 	notDoneTemplate:Destroy()
 end
@@ -249,50 +161,43 @@ function MixHandler.RefreshBillboard(self: MixHandler): ()
 		FoodPreview.Show(icon, recipe)
 	end
 
-	local mixer = GetMixerState()
-	local loaded = (mixer and mixer.Loaded) or {}
-	local units = IngredientUnits(recipe)
+	local loaded = IngredientCard.Loaded(DataClient:GetData({ "Stations" }, "Session"), STATION_KIND)
+	local units = IngredientCard.Units(recipe)
 	local hints = {}
 	local seen = {}
 	local cloud = DataClient:GetData({})
 	for index, chip in self.BillboardChips do
 		local unit = units[index]
 		if not unit then
-			chip.Done.Visible = false
-			chip.NotDone.Visible = false
-			chip.NotDone:SetAttribute("IngredientId", nil)
+			IngredientCard.HideChip(chip)
 			continue
 		end
 
 		local complete = (loaded[unit.Id] or 0) >= unit.Required
-		IngredientChip.Show(chip.Done, unit.Id, IngredientName(unit.Id))
-		IngredientChip.Show(chip.NotDone, unit.Id, IngredientName(unit.Id))
+		IngredientCard.ShowChip(chip, unit.Id, IngredientCard.Name(unit.Id), complete)
 		if not complete and not Ingredients:IsInfinite(unit.Id) and not seen[unit.Id] then
-			hints[#hints + 1] = `{IngredientName(unit.Id)}: {GardenSource.Describe(unit.Id, cloud)}`
+			hints[#hints + 1] = IngredientCard.SourceHint(unit.Id, cloud)
 			seen[unit.Id] = true
 		end
-		if complete and not chip.Done.Visible then
-			Animate.Pop(chip.Done)
-		end
-		chip.Done.Visible = complete
-		chip.NotDone.Visible = not complete
 	end
-	local hint = card:FindFirstChild("SourceHint")
-	if hint and hint:IsA("TextLabel") then
-		hint.Text = table.concat(hints, "\n")
-		hint.Visible = #hints > 0
-	end
+	IngredientCard.ShowHints(card:FindFirstChild("SourceHint"), hints)
 end
 
 function MixHandler.Destroy(self: MixHandler): ()
-	self.Janitor:Destroy()
+	local janitor = self.Janitor
+	if janitor == nil then
+		return
+	end
+	-- Janitor removes its metatable on destruction; release the owner before repeated cleanup.
+	self.Janitor = nil
+	janitor:Destroy()
 end
 
 export type MixHandler = typeof(MixHandler) & {
 	Janitor: any,
 	Billboard: BillboardGui?,
 	BillboardCard: Frame?,
-	BillboardChips: { [number]: { Done: Frame, NotDone: Frame } },
+	BillboardChips: { IngredientCard.ChipPair },
 	Accumulator: number,
 }
 

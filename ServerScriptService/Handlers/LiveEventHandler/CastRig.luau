@@ -19,6 +19,7 @@ local UserService = game:GetService("UserService")
 local Appearance = require(ServerScriptService.Handlers.CustomerViewHandler.Appearance)
 local Config = require(ReplicatedStorage.Shared.Configs.AdminAbuse)
 local Logger = require(ReplicatedStorage.Shared.Libs.Logger).new({ name = "CastRig" })
+local Physics = require(script.Parent.Physics)
 
 --[[ Constants ]]--
 -- The ground under a slot is found by a ray from this high above the stage origin, this long.
@@ -56,9 +57,7 @@ local function slotFrame(index: number, count: number, ignore: Instance): CFrame
 	local facing = CFrame.lookAt(stage.Origin, Vector3.new(stage.LookAt.X, stage.Origin.Y, stage.LookAt.Z))
 	local frame = facing * CFrame.new((index - (count + 1) / 2) * stage.Spacing, 0, 0)
 
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { ignore }
+	local params = Physics.ExcludeParams({ ignore })
 	local start = frame.Position + Vector3.new(0, GROUND_RAY_LIFT, 0)
 	local hit = workspace:Raycast(start, Vector3.new(0, -GROUND_RAY_LENGTH, 0), params)
 	return if hit then frame + Vector3.new(0, hit.Position.Y - frame.Position.Y, 0) else frame
@@ -72,14 +71,7 @@ local function prepare(model: Model): Humanoid?
 	end
 	model.PrimaryPart = root
 
-	for _, descendant in model:GetDescendants() do
-		if descendant:IsA("BasePart") then
-			descendant.Anchored = true
-			descendant.CanCollide = false
-			descendant.CanTouch = false
-			descendant.CanQuery = false
-		end
-	end
+	Physics.MakeInert(model)
 	humanoid.EvaluateStateMachine = false
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff

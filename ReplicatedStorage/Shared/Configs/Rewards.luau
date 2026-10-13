@@ -32,6 +32,12 @@ local Rewards = {
 	Codes = {
 		welcome = { Cash = 25, XP = 10 },
 	} :: { [string]: Reward },
+	-- Per-player cap on failed code attempts (unknown or already used): after MaxFailures in one
+	-- window, further codes are refused until WindowSeconds have passed since the window opened.
+	CodeAttempts = {
+		MaxFailures = 5,
+		WindowSeconds = 60,
+	},
 
 	-- One-off reward for joining the experience's Roblox group, paid once per account: about half a
 	-- shift.

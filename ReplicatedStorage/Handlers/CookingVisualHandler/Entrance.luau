@@ -90,7 +90,7 @@ local function new(leaf: Model): EntranceVisual
 	local function playChime(): ()
 		local parent = chimeParent(sign, leaf)
 		if alive and parent then
-			local sound = SoundPlayer.Play("DoorBell", parent, TUNING.ChimePlaybackSpeed)
+			local sound = SoundPlayer.Play(CookingMotion.ChimeSound, parent, TUNING.ChimePlaybackSpeed)
 			janitor:Add(sound, "Destroy", "Chime")
 		end
 	end
@@ -146,7 +146,7 @@ local function new(leaf: Model): EntranceVisual
 		local dt = math.min(context.Dt, TUNING.MaxStepSeconds)
 		springPosition, springVelocity =
 			Util.StepSpring(springPosition, springVelocity, target, TUNING.SpringStiffness, TUNING.SpringDamping, dt)
-		if math.abs(springPosition - target) < 1e-4 and math.abs(springVelocity) < 1e-4 then
+		if Util.IsSpringSettled(springPosition, springVelocity, target) then
 			springPosition, springVelocity = target, 0
 		end
 		applyPose(closed, open, springPosition)

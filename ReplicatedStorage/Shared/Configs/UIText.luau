@@ -60,6 +60,7 @@ local UIText = {
 		-- Rewards
 		unknown_code = "No such code",
 		code_used = "You have already used that code",
+		code_cooldown = "Too many tries. Wait a moment before entering another code",
 		daily_not_ready = "Come back tomorrow for the next day",
 		daily_done = "The whole streak is claimed",
 		playtime_not_ready = "Not played long enough for that one",

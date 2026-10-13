@@ -29,8 +29,9 @@ local IDLE: Timeline.State = { Id = "", ScriptId = "", StartsAt = 0 }
 
 --[[ Tables ]]--
 local LiveEventHandler = {
-	-- Cupcake income goes through EconomyHandler.
-	dependencies = { "EconomyHandler" },
+	-- Cupcake income goes through EconomyHandler, and is only collected once DataHandler has loaded
+	-- the owner's profile.
+	dependencies = { "DataHandler", "EconomyHandler" },
 }
 
 --[[ Handling ]]--

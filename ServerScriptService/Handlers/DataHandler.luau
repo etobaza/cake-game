@@ -382,6 +382,22 @@ local function sendInitialSnapshot(handler: any, player: Player)
 	end)
 end
 
+-- Runs every OnLeaving callback while the profile can still save. A failing callback is logged and
+-- does not stop the others.
+local function runLeavingCallbacks(player: Player, data: PlayerData?): ()
+	if not data then
+		return
+	end
+
+	for _, callback in LeavingCallbacks do
+		-- Annotated so the error message is typed although the callbacks return nothing.
+		local ok, message: unknown = pcall(callback, player, data)
+		if not ok then
+			Logger:Warn(`Leaving callback failed for {player.Name}: {message}`)
+		end
+	end
+end
+
 function DataHandler.OnInit(self: DataHandler)
 	DataUpdateRemote = Bus.Data.Update
 
@@ -465,19 +481,7 @@ function DataHandler.OnInit(self: DataHandler)
 		local profile = Profiles[player]
 		if profile ~= nil then
 			GardenSave.Recover(self.Data[player])
-			local data = self.Data[player]
-			if data then
-				for _, callback in LeavingCallbacks do
-					-- Typed as string? so pcall's second return carries the error message.
-					local ok, message = pcall(function(): string?
-						callback(player, data)
-						return nil
-					end)
-					if not ok then
-						Logger:Warn(`Leaving callback failed for {player.Name}: {message}`)
-					end
-				end
-			end
+			runLeavingCallbacks(player, self.Data[player])
 			profile:EndSession()
 		end
 		PENDING_UPDATES[player] = nil

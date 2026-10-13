@@ -4,8 +4,10 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local Animate = require(Shared.UI.Animate)
+local HudConfig = require(Shared.Configs.HudLayout)
 local Invite = require(Shared.Configs.Friends).Invite
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local TextScale = require(Shared.UI.TextScale)
 
 local Control = {}
 
@@ -97,8 +99,9 @@ function Control.Bind(currency: GuiObject, hud: GuiObject): (TextButton, any)
 	)
 
 	local function layout(): ()
-		local compact = hud.AbsoluteSize.X < 700 or hud.AbsoluteSize.Y < 500
-		local scale = if compact then 1 else math.max(1, currency.Size.X.Offset / 250)
+		-- Match HudLayout's switch, which also decides the Currency group's compact size.
+		local compact = hud.AbsoluteSize.X < HudConfig.CompactWidth or hud.AbsoluteSize.Y < HudConfig.CompactHeight
+		local scale = if compact then 1 else math.max(1, currency.Size.X.Offset / Invite.DesktopCurrencyWidth)
 		local width = currency.Size.X.Offset
 		local height = currency.Size.Y.Offset
 		local textLeft = width * original.Position.X.Scale + original.Position.X.Offset
@@ -123,8 +126,7 @@ function Control.Bind(currency: GuiObject, hud: GuiObject): (TextButton, any)
 		icon.Position = UDim2.new(0, padding, 0.5, 0)
 		icon.Size = UDim2.fromOffset(Invite.IconSize, Invite.IconSize)
 		for _, constraint in constraints do
-			constraint.MinTextSize = math.floor(14 * scale)
-			constraint.MaxTextSize = math.floor(Invite.TextSize * scale)
+			TextScale.Bound(constraint, Invite.MinTextSize, Invite.TextSize, scale)
 		end
 	end
 	owner:Add(currency:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout), "Disconnect")

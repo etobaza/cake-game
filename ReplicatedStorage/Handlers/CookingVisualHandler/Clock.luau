@@ -19,7 +19,7 @@ local Util = require(_Shared.CookingMotionUtil)
 
 --[[ Constants ]]
 --
-local TAU = math.pi * 2
+local TAU = Util.TAU
 local CLOCK = CookingMotion.Clock
 local STATE = CookingMotion.State
 -- Below this change the rotation is not worth a PivotTo; also used to tell "moved" from "at rest".
@@ -85,7 +85,7 @@ local function new(hand: BasePart): ClockVisual
 			return
 		end
 
-		hand:PivotTo(CFrame.new(rest.Position) * CFrame.fromAxisAngle(axis, angle) * rest.Rotation)
+		hand:PivotTo(Util.RotateAboutAxis(rest, axis, angle))
 		lastAngle = angle
 	end
 

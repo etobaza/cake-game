@@ -47,12 +47,12 @@ function HudHandler.Refresh(self: HudHandler): ()
 	local xp = DataClient:GetData({ "XP" }) or 0
 
 	self:RefreshXP(level, xp)
-	self:RefreshGoal(level)
+	self:RefreshGoal()
 end
 
-function HudHandler.RefreshGoal(_self: HudHandler, playerLevel: number): ()
-	local levels = DataClient:GetData({ "Base", "Upgrades" }) or {}
-	local cash = DataClient:GetData({ "Cash" }) or 0
+function HudHandler.RefreshGoal(_self: HudHandler): ()
+	local inputs = Upgrades:ReadInputs(DataClient)
+	local levels, playerLevel, cash = inputs.Levels, inputs.PlayerLevel, inputs.Cash
 	local progress = Upgrades:GetProgress(levels, playerLevel, cash)
 	local goal = progress.Goal
 	UIHandler.HasQuest:set(true)

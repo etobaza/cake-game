@@ -9,16 +9,11 @@ local Config = require(Shared.Configs.Feedback).RareGuest
 local CustomerTypes = require(Shared.Configs.Registries.CustomerTypes)
 local Ease = require(Shared.UI.Ease)
 local SoundPlayer = require(Shared.SoundPlayer)
+local TextScale = require(Shared.UI.TextScale)
 local Theme = require(Shared.UI.Theme)
 
 type Notice = { GuestId: string, TypeId: string, ExpiresAt: number }
 type Chip = { Frame: Frame, Label: TextLabel, Stroke: UIStroke, Scale: UIScale }
-
-local CORNER = 18
-local CHIP_POP_SECONDS = 0.25
-local STAR_SWAY = 14
-local STAR_SWAY_SPEED = 3
-local STAR_INSET = 38
 
 local RareGuestBanner = {}
 RareGuestBanner.__index = RareGuestBanner
@@ -144,11 +139,11 @@ function RareGuestBanner.new(parent: GuiObject): RareGuestBanner
 	shadow.Position = UDim2.fromOffset(0, 6)
 	shadow.BackgroundColor3 = Config.ShadowColor
 	shadow.BackgroundTransparency = 0.55
-	corner(shadow, UDim.new(0, CORNER))
+	corner(shadow, UDim.new(0, Config.Corner))
 
 	local card = plate(root, "Card", 2)
 	card.BackgroundColor3 = Color3.new(1, 1, 1)
-	corner(card, UDim.new(0, CORNER))
+	corner(card, UDim.new(0, Config.Corner))
 	gradient(card, Config.FillTop, Config.FillBottom)
 	stroke(card, Theme.Colors.PanelEdge, 4)
 
@@ -158,13 +153,13 @@ function RareGuestBanner.new(parent: GuiObject): RareGuestBanner
 	rim.Position = UDim2.fromScale(0.5, 0.5)
 	rim.Size = UDim2.new(1, -12, 1, -12)
 	rim.BackgroundTransparency = 1
-	corner(rim, UDim.new(0, CORNER - 6))
+	corner(rim, UDim.new(0, Config.Corner - 6))
 	stroke(rim, Color3.new(1, 1, 1), 2).Transparency = 0.3
 
 	-- A narrow white band that the step slides across the card once it lands.
 	local gloss = plate(card, "Shine", 4)
 	gloss.BackgroundColor3 = Color3.new(1, 1, 1)
-	corner(gloss, UDim.new(0, CORNER))
+	corner(gloss, UDim.new(0, Config.Corner))
 	local shine = Instance.new("UIGradient")
 	shine.Rotation = 20
 	shine.Transparency = NumberSequence.new({
@@ -179,8 +174,8 @@ function RareGuestBanner.new(parent: GuiObject): RareGuestBanner
 
 	local title = Instance.new("TextLabel")
 	title.Name = "Title"
-	title.Position = UDim2.fromOffset(STAR_INSET * 2, 20)
-	title.Size = UDim2.new(1, -STAR_INSET * 4, 0, 46)
+	title.Position = UDim2.fromOffset(Config.StarInset * 2, 20)
+	title.Size = UDim2.new(1, -Config.StarInset * 4, 0, 46)
 	title.BackgroundTransparency = 1
 	title.FontFace = Theme.Fonts.Title
 	title.TextColor3 = Color3.new(1, 1, 1)
@@ -189,8 +184,8 @@ function RareGuestBanner.new(parent: GuiObject): RareGuestBanner
 	gradient(title, Config.TitleTop, Config.TitleBottom)
 	stroke(title, Config.TitleStroke, 3)
 	local limit = Instance.new("UITextSizeConstraint")
-	limit.MinTextSize = 16
-	limit.MaxTextSize = Config.TitleTextSize
+	-- The card's UIScale handles density, so the logical sizes apply unscaled.
+	TextScale.Bound(limit, Config.TitleMinTextSize, Config.TitleTextSize, 1)
 	limit.Parent = title
 	title.Parent = card
 
@@ -225,7 +220,7 @@ function RareGuestBanner.new(parent: GuiObject): RareGuestBanner
 		Scale = scale,
 		Title = title,
 		Tag = tag,
-		Stars = { star(card, UDim.new(0, STAR_INSET)), star(card, UDim.new(1, -STAR_INSET)) },
+		Stars = { star(card, UDim.new(0, Config.StarInset)), star(card, UDim.new(1, -Config.StarInset)) },
 		TipChip = tipChip,
 		DishChip = chip(row, "Dishes", 2),
 		Shine = shine,
@@ -318,9 +313,9 @@ function RareGuestBanner.Step(
 		* (1 - Ease.Clamp((age - Config.Seconds) / Config.ExitSeconds))
 	for index, item in { self.TipChip, self.DishChip } do
 		local delay = Config.PopSeconds * 0.6 + (index - 1) * Config.ChipStagger
-		item.Scale.Scale = Ease.OutBack((age - delay) / CHIP_POP_SECONDS, 1.5)
+		item.Scale.Scale = Ease.OutBack((age - delay) / Config.ChipPopSeconds, 1.5)
 	end
-	local sway = math.sin(age * STAR_SWAY_SPEED) * STAR_SWAY
+	local sway = math.sin(age * Config.StarSwaySpeed) * Config.StarSway
 	self.Stars[1].Rotation = -sway
 	self.Stars[2].Rotation = sway
 	local sweep = Ease.OutCubic((age - Config.PopSeconds) / Config.ShineSeconds)

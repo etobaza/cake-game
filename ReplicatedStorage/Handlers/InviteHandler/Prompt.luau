@@ -91,6 +91,9 @@ function Prompt.Request(self: Prompt): boolean
 	self:SetState("Checking")
 	self.Timeout = task.delay(Invite.CheckTimeoutSeconds, function(): ()
 		self.Timeout = nil
+		print(
+			`[InviteHandler] Invite capability check timed out after {Invite.CheckTimeoutSeconds}s; SocialService:CanSendGameInviteAsync did not return`
+		)
 		self:Finish(if self.Backend.IsStudio() then Invite.StudioMessage else Invite.ErrorMessage)
 	end)
 	self.Task = task.defer(function(): ()
@@ -102,6 +105,9 @@ function Prompt.Request(self: Prompt): boolean
 		if not self.Available() then
 			self:Finish()
 			return
+		end
+		if not success then
+			print(`[InviteHandler] Invite capability check failed: {tostring(canInvite)}`)
 		end
 		if not success or canInvite ~= true then
 			self:Finish(

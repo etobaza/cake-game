@@ -151,7 +151,7 @@ local function build(parent: GuiObject): View
 	subtitle.TextWrapped = true
 	subtitle.TextScaled = true
 	local subtitleLimit = Instance.new("UITextSizeConstraint")
-	subtitleLimit.MinTextSize = 18
+	subtitleLimit.MinTextSize = TUNING.SubtitleMinTextSize
 	subtitleLimit.MaxTextSize = TUNING.SubtitleTextSize
 	subtitleLimit.Parent = subtitle
 

@@ -135,6 +135,13 @@ local AdminAbuse = {
 		-- Tag and colour of the mirrored system chat line.
 		ChatTag = "LIVE",
 		ChatColor = Color3.fromRGB(255, 196, 64),
+		-- Bubble look; the outline uses Hud.Accent.
+		BubbleColor = Color3.fromRGB(255, 255, 255),
+		BubbleTextColor = Color3.fromRGB(40, 26, 22),
+		BubbleStrokeThickness = 3,
+		-- Text inset on each side, as a fraction of the bubble: this much of the width and twice this
+		-- much of the height.
+		BubbleTextPadding = 0.06,
 	},
 
 	-- HUD banner with the speaker's headshot.
@@ -147,6 +154,23 @@ local AdminAbuse = {
 		Width = 560,
 		DisplayOrder = 30,
 		Accent = Color3.fromRGB(255, 196, 64),
+		-- Card look, in pixels where it is a size.
+		CardColor = Color3.fromRGB(40, 26, 22),
+		CardTransparency = 0.15,
+		CornerRadius = 14,
+		StrokeThickness = 2,
+		Padding = 10,
+		HeadshotSize = 64,
+		-- Colour of the role line under the speaker's name.
+		RoleColor = Color3.fromRGB(230, 214, 196),
+		TextSizes = {
+			Status = 16,
+			Name = 20,
+			Role = 14,
+			Line = 18,
+		},
+		-- Scale the card pops from when a new line appears.
+		LinePopFrom = 0.92,
 	},
 
 	-- Golden event guests. Their look, patience and payout multiplier are the customer type
@@ -184,6 +208,11 @@ local AdminAbuse = {
 		LifeSeconds = 30,
 		-- Analytics item id of the cupcake income.
 		AnalyticsItem = "LiveEventCupcake",
+		-- Client idle motion of a landed cupcake: spin in radians per second; the bob's angular speed
+		-- in radians per second, and half its travel in studs.
+		SpinSpeed = 2,
+		BobSpeed = 3,
+		BobHeight = 0.4,
 	},
 
 	-- Cross-server relay through MessagingService. Delivery is best effort, so the server that
@@ -193,6 +222,11 @@ local AdminAbuse = {
 		-- Seconds between the start command and the first line, so every server catches up.
 		LeadSeconds = 4,
 		RebroadcastSeconds = 30,
+		-- A relayed start may lie at most LeadSeconds plus this far in the future (server clocks
+		-- drift apart a little); later or already-finished start times are dropped as forged or stale.
+		StartSlackSeconds = 10,
+		-- Seconds between attempts while subscribing to the topic fails.
+		SubscribeRetrySeconds = 30,
 	},
 
 	-- Automatic starts. Every server computes the same slots from the UTC clock, so a scheduled

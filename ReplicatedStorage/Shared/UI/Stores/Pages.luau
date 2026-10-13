@@ -55,6 +55,12 @@ Pages.Locked = locked
 Pages.Presenting = presenting
 
 --[[ Handling ]]--
+--- Subscribes the running Flux effect or computed to Presenting without using its value, so the
+--- effect reruns when a world reveal starts or ends and reads the state itself with :peek().
+function Pages.TrackPresenting(): ()
+	presenting()
+end
+
 --- A node that is true exactly while `page` is the open one. Bind it to Enabled or Visible.
 function Pages.IsOpen(page: Page): Flux.Node<boolean>
 	return Flux.computed(function(): boolean

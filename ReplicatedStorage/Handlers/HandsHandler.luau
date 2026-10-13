@@ -118,20 +118,27 @@ local function FitNameLabel(label: TextLabel, scale: number): ()
 	constraint.MaxTextSize = math.floor(NAME_MAX_TEXT_SIZE * scale + 0.5)
 end
 
-local function FindNameLabel(slot: Frame): TextLabel
-	local label = slot:FindFirstChild(NAME_LABEL) :: TextLabel?
-	if label then
+local function FindNameLabel(slot: Frame): TextLabel?
+	local label = slot:FindFirstChild(NAME_LABEL)
+	if label and label:IsA("TextLabel") then
 		return label
 	end
 
-	local clone = (slot:FindFirstChild(NAME_SOURCE) :: TextLabel):Clone()
+	local source = slot:FindFirstChild(NAME_SOURCE)
+	if not source or not source:IsA("TextLabel") then
+		return nil
+	end
+	local clone = source:Clone()
 	clone.Name = NAME_LABEL
 	clone.Parent = slot
 	return clone
 end
 
-local function BuildName(slot: Frame): TextLabel
+local function BuildName(slot: Frame): TextLabel?
 	local label = FindNameLabel(slot)
+	if not label then
+		return nil
+	end
 	-- Authored ItemName instances need the same normalization as freshly cloned numbers.
 	label.AnchorPoint = NAME_ANCHOR
 	label.Position = UDim2.new(0.5, 0, 1, -NAME_BOTTOM)
@@ -185,16 +192,27 @@ function HandsHandler.ResolveSlots(self: HandsHandler): { Slot }
 			continue
 		end
 
+		local background = child:FindFirstChild("Background")
+		local icon = child:FindFirstChild(ICON_LABEL)
+		if not background or not background:IsA("ImageLabel") or not icon or not icon:IsA("ImageLabel") then
+			print(`[HandsHandler] hotbar slot {index} has no Background or {ICON_LABEL}; it is skipped`)
+			continue
+		end
+		local name = BuildName(child)
+		if not name then
+			print(`[HandsHandler] hotbar slot {index} has no {NAME_LABEL} or {NAME_SOURCE} label; it is skipped`)
+			continue
+		end
+
 		slots[index] = {
 			Frame = child,
-			Background = child:FindFirstChild("Background") :: ImageLabel,
-			Icon = child:FindFirstChild(ICON_LABEL) :: ImageLabel,
-			Name = BuildName(child),
+			Background = background,
+			Icon = icon,
+			Name = name,
 			Filled = false,
 		}
 		-- Reserve the lower half for wrapped names instead of drawing them over the preview.
-		slots[index].Icon.Size = UDim2.fromScale(0.72, 0.44)
-		local icon = slots[index].Icon
+		icon.Size = UDim2.fromScale(0.72, 0.44)
 		self.Janitor:Add(function(): ()
 			FoodPreview.Clear(icon)
 		end)
@@ -250,7 +268,13 @@ function HandsHandler.Refresh(self: HandsHandler): ()
 end
 
 function HandsHandler.Destroy(self: HandsHandler): ()
-	self.Janitor:Destroy()
+	local janitor = self.Janitor
+	if janitor == nil then
+		return
+	end
+	-- Janitor removes its metatable on destruction; release the owner before repeated cleanup.
+	self.Janitor = nil
+	janitor:Destroy()
 end
 
 export type HandsHandler = typeof(HandsHandler) & {

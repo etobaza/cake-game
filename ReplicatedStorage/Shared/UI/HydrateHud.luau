@@ -19,6 +19,7 @@ local _Packages = ReplicatedStorage.Packages
 local Animate = require(_Shared.UI.Animate)
 local Authored = require(_Shared.UI.Authored)
 local Flux = require(_Packages.flux)
+local HudConfig = require(_Shared.Configs.HudLayout)
 local HudLayout = require(_Shared.UI.HudLayout)
 local HudReveal = require(_Shared.UI.Stores.HudReveal)
 local OrdersConfig = require(_Shared.Configs.Orders)
@@ -46,6 +47,7 @@ local ICON_NAMES = { "Day", "Evening", "Night", "Closed" }
 local POP_FROM_GAIN = 1.12
 -- Delay between one HUD group arriving and the next: a small parade instead of one block.
 local INTRO_STAGGER = 0.08
+local QUEST_PRICE = HudConfig.QuestPrice
 
 -- HUD groups that ride in from the screen edges on spawn and leave while a page is open, each
 -- through the edge it lives against. XP is a notification with its own slide, and Quests folds
@@ -237,13 +239,13 @@ return function(hud: Instance, props: Props): ()
 	local questCost = resolve(hud, "Quests.Container.Quest.Main.Reward")
 	local currencyCost = resolve(hud, "Currency.Main.CoinBalance")
 	if questMain and questMain:IsA("GuiObject") then
-		-- This authored reward badge now shows the goal's price, with space between icon and text.
-		questMain.AnchorPoint = Vector2.new(1, 0.5)
-		questMain.Position = UDim2.fromScale(1, 0.19)
-		questMain.Size = UDim2.fromScale(0.39, 0.385)
+		-- This authored reward badge now shows the goal's price; Configs/HudLayout adapts its geometry.
+		questMain.AnchorPoint = QUEST_PRICE.AnchorPoint
+		questMain.Position = QUEST_PRICE.Position
+		questMain.Size = QUEST_PRICE.Size
 		local layout = questMain:FindFirstChildOfClass("UIListLayout")
 		if layout then
-			layout.Padding = UDim.new(0.04, 0)
+			layout.Padding = QUEST_PRICE.Padding
 		end
 	end
 	if questIcon and questIcon:IsA("ImageLabel") and currencyIcon and currencyIcon:IsA("ImageLabel") then
@@ -252,15 +254,15 @@ return function(hud: Instance, props: Props): ()
 		questIcon.ImageRectOffset = currencyIcon.ImageRectOffset
 		questIcon.ImageRectSize = currencyIcon.ImageRectSize
 		questIcon.ScaleType = Enum.ScaleType.Fit
-		questIcon.Size = UDim2.fromScale(0.25, 0.9)
+		questIcon.Size = QUEST_PRICE.IconSize
 	end
 	if questCost and questCost:IsA("TextLabel") then
 		questCost.AutomaticSize = Enum.AutomaticSize.None
-		questCost.Size = UDim2.fromScale(0.7, 0.9)
-		questCost.TextColor3 = Color3.new(0, 0, 0)
+		questCost.Size = QUEST_PRICE.LabelSize
+		questCost.TextColor3 = QUEST_PRICE.TextColor
 		for _, child in questCost:GetDescendants() do
 			if child:IsA("UIStroke") then
-				child.Color = Color3.new(0, 0, 0)
+				child.Color = QUEST_PRICE.TextColor
 				local donor = if child.Parent == questCost then currencyCost
 					else currencyCost and currencyCost:FindFirstChild("Inside")
 				local stroke = donor and donor:FindFirstChildOfClass("UIStroke")
@@ -275,7 +277,8 @@ return function(hud: Instance, props: Props): ()
 	local rewardMark = resolve(hud, "SideBtns.Rewards.Mark")
 	local mark = upgrades and upgrades:FindFirstChild("Mark")
 	if not mark and upgrades and rewardMark and rewardMark:IsA("GuiObject") then
-		-- Reuse the authored reward alert artwork; the mounted HUD scope owns this copy.
+		-- Generated because the authored Upgrades button has no alert badge and StarterGui is
+		-- place-only: reuse the reward alert artwork; the mounted HUD scope owns this copy.
 		local copy = rewardMark:Clone()
 		copy.Active = false
 		copy.Selectable = false
@@ -357,6 +360,7 @@ return function(hud: Instance, props: Props): ()
 		quests.Visible = true
 		for _, descendant in quests:GetDescendants() do
 			if descendant:IsA("TextLabel") and descendant.Text == "Quests" then
+				-- SetPair only writes the child text layers; this line writes the matched label itself.
 				descendant.Text = "Next Upgrade"
 				Authored.SetPair(descendant, "Next Upgrade")
 			end

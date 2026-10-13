@@ -126,8 +126,7 @@ local function new(model: Model): FreshFoodVisual
 		local pose = (frame :: CFrame) + Vector3.yAxis * (math.sin(math.pi * alpha) ^ 2 * TUNING.HopHeight)
 		for _, record in records do
 			if record.Part.Parent ~= nil then
-				record.Part.Size = record.OriginalSize * scale
-				record.Part.CFrame = Util.ScaleAboutFrame(pose, record.Offset, scale)
+				Util.ScalePartAboutFrame(record.Part, record.OriginalSize, record.Offset, pose, scale)
 				record.LastCFrame, record.LastSize = record.Part.CFrame, record.Part.Size
 			end
 		end

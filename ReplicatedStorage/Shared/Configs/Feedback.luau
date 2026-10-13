@@ -249,7 +249,11 @@ return {
 		Width = 560,
 		Height = 112,
 		TitleTextSize = 34,
+		-- Long arrival titles shrink to fit the card, never below this.
+		TitleMinTextSize = 16,
 		ChipTextSize = 18,
+		-- Card corner radius in pixels; the inner rim sits 6 pixels inside it.
+		Corner = 18,
 		Seconds = 3.5,
 		ExitSeconds = 0.3,
 		PopSeconds = 0.3,
@@ -267,6 +271,11 @@ return {
 		TitleStroke = Color3.fromRGB(92, 40, 8),
 		Star = "rbxassetid://86577432302115",
 		StarSize = 44,
+		-- Star centres sit this many pixels in from each card edge; the title keeps clear of both.
+		StarInset = 38,
+		-- Stars rock in opposite directions: peak rotation in degrees and angular speed (rad/s).
+		StarSway = 14,
+		StarSwaySpeed = 3,
 		-- The tip chip is gold like coins; the dish chip takes the guest type's colour.
 		TipChip = Color3.fromRGB(255, 214, 92),
 		TipFormat = "x%s TIPS",
@@ -274,6 +283,7 @@ return {
 		CoinFormat = "x%s COINS",
 		DishFormat = "%d %s",
 		ChipStagger = 0.08,
+		ChipPopSeconds = 0.25,
 		ShineSeconds = 0.7,
 		Sound = "OrderUp" :: Sounds.SoundName,
 	},
@@ -301,6 +311,8 @@ return {
 		NumberTextSize = 78,
 		TitleTextSize = 60,
 		SubtitleTextSize = 26,
+		-- Long unlock lists shrink to fit the subtitle box, never below this.
+		SubtitleMinTextSize = 18,
 		SubtitleHeight = 96,
 		MaxRequirementNames = 2,
 		Confetti = 48,

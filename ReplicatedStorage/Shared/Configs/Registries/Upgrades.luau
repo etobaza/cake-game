@@ -52,6 +52,8 @@ export type UpgradeProgress = {
 	Goal: UpgradeGoal?,
 	Complete: boolean,
 }
+-- The three replicated Cloud values every progress read needs, with the shared defaults applied.
+export type UpgradeInputs = { Levels: { [string]: number }, PlayerLevel: number, Cash: number }
 
 local list: { [string]: UpgradeDefinition } = {
 	--[[ Cafe (the "Store" tab) ]]--
@@ -487,6 +489,8 @@ type UpgradesMethods = {
 		playerLevel: number
 	) -> number?,
 	GetProgress: (self: UpgradesRegistry, levels: { [string]: number }, playerLevel: number, cash: number) -> UpgradeProgress,
+	ReadInputs: (self: UpgradesRegistry, data: any) -> UpgradeInputs,
+	ReadProgress: (self: UpgradesRegistry, data: any) -> UpgradeProgress,
 	GetRemainingCost: (self: UpgradesRegistry, levels: { [string]: number }) -> number,
 	GetMissingRequirement: (self: UpgradesRegistry, entry: UpgradeEntry, levels: { [string]: number }) -> string?,
 	GetBranch: (self: UpgradesRegistry, category: GameTypes.UpgradeCategory) -> { UpgradeEntry },
@@ -549,6 +553,21 @@ local methods: UpgradesMethods = {
 			Goal = recommended or lockedGoal,
 			Complete = complete,
 		}
+	end,
+
+	-- `data` is the client DataClient handler (or the HUD's injected copy of it). It is passed in
+	-- because Shared must not require client handlers; only its GetData(path) is used.
+	ReadInputs = function(_self: UpgradesRegistry, data: any): UpgradeInputs
+		return {
+			Levels = data:GetData({ "Base", "Upgrades" }) or {},
+			PlayerLevel = data:GetData({ "Level" }) or 1,
+			Cash = data:GetData({ "Cash" }) or 0,
+		}
+	end,
+
+	ReadProgress = function(self: UpgradesRegistry, data: any): UpgradeProgress
+		local inputs = self:ReadInputs(data)
+		return self:GetProgress(inputs.Levels, inputs.PlayerLevel, inputs.Cash)
 	end,
 
 	-- Sum in cents so an admin budget covers every remaining level without float drift.

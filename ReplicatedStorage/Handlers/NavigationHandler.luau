@@ -104,7 +104,7 @@ function NavigationHandler.OnStart(self: NavigationHandler): ()
 	local scope = Scope.Run(function(): ()
 		Flux(function(): ()
 			local page = Pages.Current()
-			local _presenting = Pages.Presenting()
+			Pages.TrackPresenting()
 			self.Browsing = page ~= Pages.Names.None
 			task.defer(refresh)
 		end, true)

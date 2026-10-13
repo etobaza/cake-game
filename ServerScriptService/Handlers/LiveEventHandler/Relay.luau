@@ -19,7 +19,6 @@ local Logger = require(ReplicatedStorage.Shared.Libs.Logger).new({ name = "LiveE
 local KIND_START = "s"
 local KIND_STOP = "x"
 local MAX_ID_LENGTH = 64
-local SUBSCRIBE_RETRY_SECONDS = 30
 
 --[[ Tables ]]--
 local Relay = {}
@@ -36,6 +35,20 @@ end
 
 local function readId(value: any): string?
 	return if typeof(value) == "string" and #value > 0 and #value <= MAX_ID_LENGTH then value else nil
+end
+
+-- A start time a real start could carry: not past the end of the script, and no further ahead than
+-- the start lead plus clock slack between servers. Anything else is stale or forged.
+local function readStartsAt(value: any, duration: number): number?
+	if typeof(value) ~= "number" or value ~= value then
+		return nil
+	end
+	local now = workspace:GetServerTimeNow()
+	local relay = Config.Relay
+	if value < now - duration or value > now + relay.LeadSeconds + relay.StartSlackSeconds then
+		return nil
+	end
+	return value
 end
 
 --[[ Handling ]]--
@@ -64,15 +77,12 @@ function Relay.Listen(onStart: (state: Timeline.State) -> (), onStop: (id: strin
 			return
 		end
 		local scriptId = readId(data.s)
-		local startsAt = data.t
-		if
-			data.k ~= KIND_START
-			or not scriptId
-			or not Timeline.GetScript(scriptId)
-			or typeof(startsAt) ~= "number"
-			or startsAt ~= startsAt
-			or math.abs(startsAt) == math.huge
-		then
+		local definition = if data.k == KIND_START and scriptId then Timeline.GetScript(scriptId) else nil
+		if not scriptId or not definition then
+			return
+		end
+		local startsAt = readStartsAt(data.t, definition.Duration)
+		if not startsAt then
 			return
 		end
 		onStart({ Id = id, ScriptId = scriptId, StartsAt = startsAt })
@@ -84,8 +94,8 @@ function Relay.Listen(onStart: (state: Timeline.State) -> (), onStop: (id: strin
 			if ok then
 				return
 			end
-			Logger:Warn(`Subscribe failed, retrying in {SUBSCRIBE_RETRY_SECONDS} s: {result}`)
-			task.wait(SUBSCRIBE_RETRY_SECONDS)
+			Logger:Warn(`Subscribe failed, retrying in {Config.Relay.SubscribeRetrySeconds} s: {result}`)
+			task.wait(Config.Relay.SubscribeRetrySeconds)
 		end
 	end)
 end

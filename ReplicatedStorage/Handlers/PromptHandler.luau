@@ -126,8 +126,7 @@ local function bindLayout(billboard: BillboardGui, root: Frame): any
 			label.TextWrapped = true
 			label.TextScaled = true
 			local constraint = label:FindFirstChildOfClass("UITextSizeConstraint") or Instance.new("UITextSizeConstraint")
-			constraint.MinTextSize = math.floor(PromptConfig.MinTextSize * scale + 0.5)
-			constraint.MaxTextSize = math.floor(maximum * scale + 0.5)
+			TextScale.Bound(constraint, PromptConfig.MinTextSize, maximum, scale)
 			constraint.Parent = label
 		end
 	end

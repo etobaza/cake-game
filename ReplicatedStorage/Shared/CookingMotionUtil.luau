@@ -2,7 +2,8 @@
 -- Shared math and attribute helpers for the cooking/entrance motion handler. It owns the one
 -- authoritative time source, the pause-aware phase progress used by mixing and the oven clock, and
 -- the bottom-anchored pose deformation reused by the mixer dough and the fresh-food squash. Keeping
--- these in one place avoids every private module re-deriving the same server-synced timing.
+-- these in one place avoids every private module re-deriving the same server-synced timing. It is
+-- context-free, so the server OvenView reuses its pivot rotation too.
 
 --[[ Services ]]
 --
@@ -35,7 +36,12 @@ export type VisualEntry = {
 
 --[[ Constants ]]
 --
-local TAU = math.pi * 2
+-- One full turn in radians, shared by the mixer orbit, the oven clock and the pop bounce.
+CookingMotionUtil.TAU = math.pi * 2
+-- A spring this close to its target, moving this slowly, has visibly settled and snaps to rest.
+CookingMotionUtil.SPRING_SETTLE_EPSILON = 1e-4
+
+local TAU = CookingMotionUtil.TAU
 
 --[[ Time and progress ]]
 --
@@ -101,6 +107,25 @@ function CookingMotionUtil.ScaleAboutFrame(frame: CFrame, offset: CFrame, scale:
 	return frame * (CFrame.new(scaled) * (offset - position))
 end
 
+-- Resize one recorded part by `scale` and place it at its recorded offset scaled about `frame`.
+-- `size` and `offset` are the part's unscaled size and its pose relative to the frame.
+function CookingMotionUtil.ScalePartAboutFrame(
+	part: BasePart,
+	size: Vector3,
+	offset: CFrame,
+	frame: CFrame,
+	scale: Vector3
+): ()
+	part.Size = size * scale
+	part.CFrame = CookingMotionUtil.ScaleAboutFrame(frame, offset, scale)
+end
+
+-- Rotate a pivot about a world-space axis through its own position, keeping that point fixed. The
+-- oven doors and the clock hand turn about their authored pivots this way.
+function CookingMotionUtil.RotateAboutAxis(pivot: CFrame, axis: Vector3, angle: number): CFrame
+	return CFrame.new(pivot.Position) * CFrame.fromAxisAngle(axis, angle) * pivot.Rotation
+end
+
 -- Semi-implicit damped spring step on a scalar. Returns the new position and velocity. Stiffness and
 -- damping are chosen by the caller for the desired settle time and overshoot; the handler clamps dt
 -- before calling so a long frame cannot make the integrator ring.
@@ -116,6 +141,12 @@ function CookingMotionUtil.StepSpring(
 	local nextVelocity = velocity + acceleration * dt
 	local nextPosition = position + nextVelocity * dt
 	return nextPosition, nextVelocity
+end
+
+-- True once a spring sits on its target with no meaningful velocity left.
+function CookingMotionUtil.IsSpringSettled(position: number, velocity: number, target: number): boolean
+	return math.abs(position - target) < CookingMotionUtil.SPRING_SETTLE_EPSILON
+		and math.abs(velocity) < CookingMotionUtil.SPRING_SETTLE_EPSILON
 end
 
 --[[ Attribute readers ]]

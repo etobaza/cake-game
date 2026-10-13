@@ -12,11 +12,6 @@ local RunService = game:GetService("RunService")
 --[[ Modules ]]--
 local Config = require(ReplicatedStorage.Shared.Configs.AdminAbuse)
 
---[[ Constants ]]--
-local SPIN_SPEED = 2
-local BOB_SPEED = 3
-local BOB_HEIGHT = 0.4
-
 --[[ Types ]]--
 type Cupcake = { Model: Model, Rest: CFrame, LandsAt: number }
 
@@ -72,11 +67,11 @@ function Rain.Step(self: Rain, now: number): ()
 			self.Cupcakes[model] = nil
 			continue
 		end
-		local spin = CFrame.Angles(0, (now * SPIN_SPEED) % (math.pi * 2), 0)
+		local spin = CFrame.Angles(0, (now * tuning.SpinSpeed) % (math.pi * 2), 0)
 		local remaining = cupcake.LandsAt - now
 		local lift = if remaining > 0
 			then tuning.DropHeight * (math.min(remaining / tuning.FallSeconds, 1) ^ 2)
-			else BOB_HEIGHT * (1 + math.sin(now * BOB_SPEED))
+			else tuning.BobHeight * (1 + math.sin(now * tuning.BobSpeed))
 		model:PivotTo(cupcake.Rest * CFrame.new(0, lift, 0) * spin)
 	end
 end

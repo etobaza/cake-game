@@ -138,7 +138,8 @@ function AdminPanelHandler.OnStart(_self: AdminPanelHandler): ()
 					}
 					currentView.ConfirmText.Text = response.message
 					currentView.ConfirmScroll.CanvasPosition = Vector2.zero
-					currentView.Accept.Text = if action == "resetProgress" then Config.ById[action].label else "CONFIRM"
+					local entry = Config.ById[action]
+					currentView.Accept.Text = (entry and entry.confirmLabel) or "CONFIRM"
 					viewOwner:Add(
 						task.delay(expires - os.clock(), function(): ()
 							viewOwner:RemoveNoClean("ConfirmationExpiry")

@@ -191,11 +191,7 @@ function ReportHandler.Refresh(self: ReportHandler): ()
 	if not day or day.Phase ~= "Summary" then
 		return
 	end
-	local progress = Upgrades:GetProgress(
-		DataClient:GetData({ "Base", "Upgrades" }) or {},
-		DataClient:GetData({ "Level" }) or 1,
-		DataClient:GetData({ "Cash" }) or 0
-	)
+	local progress = Upgrades:ReadProgress(DataClient)
 	for _, row in REPORT_ROWS do
 		local item = self.Content:FindFirstChild(row.Key)
 		if not item then

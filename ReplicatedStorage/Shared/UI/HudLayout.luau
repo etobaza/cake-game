@@ -6,6 +6,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --[[ Modules ]]--
+local HudConfig = require(ReplicatedStorage.Shared.Configs.HudLayout)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local OrderLayout = require(script.Parent.OrderLayout)
 local UpgradeReveal = require(ReplicatedStorage.Shared.Configs.UpgradeReveal)
@@ -38,7 +39,7 @@ end
 --[[ Handling ]]--
 function HudLayout.Apply(hud: GuiObject): ()
 	local size = hud.AbsoluteSize
-	local compact = size.X < 700 or size.Y < 500
+	local compact = size.X < HudConfig.CompactWidth or size.Y < HudConfig.CompactHeight
 	local portrait = size.Y > size.X
 	local scale = if compact
 		then 1
