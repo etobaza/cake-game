@@ -195,6 +195,8 @@ Re-uploading an icon creates a new asset id; update the owning config entry.
 
 ## Sounds
 
+Background music is the client `MusicHandler`: `Configs/Music` lists the soundtrack (`Cake ST1`-`ST3`, uploaded by Increates Cake Game), and the tracks play in order and loop through a `Music` SoundGroup in SoundService. Like Lemon Cake's `BP_Music`, each track fades in over its first `FadeSeconds` (5) and out over its last, so tracks never overlap or cut; a track that has not loaded after `LoadTimeoutSeconds` is skipped. Lemon Cake picks one track per day stage; cake-game has three tracks for its own phases, so it plays them as a playlist.
+
 `Configs/Sounds` lists the `funset_*` audio assets uploaded by Increates Cake Game, with volume, looping and positional range. The success-feedback sounds (`CashRegister`, `Coin`, `Sparkle`, `LevelUp`, `StationReady`, `OrderUp`, `Purchase`, `Reward`, `Pop`, `StreakMilestone`, `NewRecord`, `FireWhoosh`) are free Creator Store effects, chosen by measuring each candidate in Studio with an `AudioAnalyzer` for an immediate attack (under 0.05 s of leading silence), length and loudness; replace any id freely. `Shared/SoundPlayer` builds configured `Sound` instances: `Create` returns a stopped sound owned by its parent, and `Play` plays a one-shot that destroys itself on `Ended` or after `Sounds.Lifetime`, because servers do not simulate playback; its optional `playbackSpeed` lets repeated feedback climb in pitch. World sounds are created by their server owners under world parts, so they replicate positionally to nearby players:
 
 - `OvenView` keeps a looped `OvenFire` crackle under the oven's fire part, playing exactly while firewood burns.
