@@ -14,6 +14,28 @@ function TextScale.Get(viewport: Vector2): number
 	)
 end
 
+--- Density for always-visible screen UI and pixel-sized billboards. Unlike `Get`, it drops below 1
+--- on phones; `maximum` lets desktop surfaces that grow with the screen exceed `ScreenScale.Maximum`.
+function TextScale.Screen(viewport: Vector2, maximum: number?): number
+	local config = Theme.ScreenScale
+	return math.clamp(
+		math.min(viewport.X / config.ReferenceSize.X, viewport.Y / config.ReferenceSize.Y),
+		config.Minimum,
+		math.max(config.Minimum, maximum or config.Maximum)
+	)
+end
+
+--- Scale for a billboard laid out in pixels that keeps a constant world size at `position`
+--- (`Theme.WorldScale`): perspective already makes it the same share of every screen. Apply it
+--- through a UIScale every frame; a relayout per change would re-fit text and step visibly.
+function TextScale.World(camera: Camera, position: Vector3): number
+	local config = Theme.WorldScale
+	local view = camera.CFrame
+	local depth = math.max((position - view.Position):Dot(view.LookVector), 0.1)
+	local pixelsPerStud = camera.ViewportSize.Y / (2 * depth * math.tan(math.rad(camera.FieldOfView) / 2))
+	return math.min(pixelsPerStud * config.StudsPerPixel, config.Maximum)
+end
+
 function TextScale.Fit(constraint: UITextSizeConstraint, scale: number): ()
 	-- The baseline follows cloned rows and survives repeated compact/wide transitions.
 	local authored = constraint:GetAttribute("AuthoredMaxTextSize")

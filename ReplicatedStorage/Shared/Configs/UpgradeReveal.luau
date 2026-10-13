@@ -66,10 +66,13 @@ return {
 		-- Bottom offset never drops below this many pixels, whatever the density.
 		MinBottom = 18,
 		Margin = 16,
-		-- Pixel sizes scale with viewport height / DensityHeight, clamped to this range.
+		-- Sizes here are logical pixels, drawn at TextScale.Screen density (smaller on phones). Within
+		-- that, they scale with logical viewport height / DensityHeight, clamped to this range.
 		DensityHeight = 900,
 		MinDensity = 0.85,
 		MaxDensity = 1.2,
+		-- On touch screens Skip keeps `Theme.ScreenScale.MinTouchPixels` on each side (the rows below it
+		-- move down to make room).
 		-- Below this width the receipt switches to the compact layout.
 		NarrowWidth = 400,
 		IconSize = 84,

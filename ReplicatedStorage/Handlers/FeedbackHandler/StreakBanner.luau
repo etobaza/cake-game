@@ -22,6 +22,9 @@ type View = {
 	SubtitleStroke: UIStroke,
 }
 
+-- Centre row and scale for a banner reaching `above` and `below` its centre at design size.
+type Place = (anchor: number, above: number, below: number) -> (number, number)
+
 --[[ Constants ]]--
 local STREAK = Config.Streak
 local TUNING = STREAK.Banner
@@ -33,6 +36,7 @@ local CONFETTI_FAN = 150
 local EMBERS = 10
 local TITLE_STROKE_THICKNESS = 5
 local FLAME_GAP = 4
+local HEIGHT = TUNING.TitleHeight + TUNING.SubtitleTextSize + 12
 
 --[[ Tables ]]--
 local StreakBanner = {}
@@ -42,6 +46,7 @@ export type StreakBanner = typeof(setmetatable(
 	{} :: {
 		Parent: GuiObject,
 		Sparks: Sparks.Sparks,
+		Place: Place,
 		View: View?,
 		StartedAt: number,
 		Scale: number,
@@ -82,7 +87,7 @@ local function build(parent: GuiObject): View
 	root.Name = "StreakBanner"
 	root.AnchorPoint = Vector2.new(0.5, 0.5)
 	root.Position = UDim2.fromScale(TUNING.Anchor.X, TUNING.Anchor.Y)
-	root.Size = UDim2.fromOffset(TUNING.Width, TUNING.TitleHeight + TUNING.SubtitleTextSize + 12)
+	root.Size = UDim2.fromOffset(TUNING.Width, HEIGHT)
 	root.BackgroundTransparency = 1
 	root.ZIndex = 14
 	root.Parent = parent
@@ -150,10 +155,11 @@ local function build(parent: GuiObject): View
 end
 
 --[[ Handling ]]--
-function StreakBanner.new(parent: GuiObject, sparks: Sparks.Sparks): StreakBanner
+function StreakBanner.new(parent: GuiObject, sparks: Sparks.Sparks, place: Place): StreakBanner
 	return setmetatable({
 		Parent = parent,
 		Sparks = sparks,
+		Place = place,
 		View = nil,
 		StartedAt = 0,
 		Scale = 1,
@@ -162,11 +168,13 @@ function StreakBanner.new(parent: GuiObject, sparks: Sparks.Sparks): StreakBanne
 end
 
 --- Shows (or restarts with) `title` over the `run` line.
-function StreakBanner.Show(self: StreakBanner, title: string, run: string, scale: number): ()
+function StreakBanner.Show(self: StreakBanner, title: string, run: string): ()
 	local view = self.View or build(self.Parent)
 	self.View = view
 	self.StartedAt = os.clock()
+	local center, scale = self.Place(TUNING.Anchor.Y, HEIGHT / 2, HEIGHT / 2)
 	self.Scale = scale
+	view.Root.Position = UDim2.new(TUNING.Anchor.X, 0, 0, center)
 	self.Burst = false
 	view.Title.Text = title
 	view.Subtitle.Text = run

@@ -10,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 --[[ Modules ]]--
 local Animate = require(ReplicatedStorage.Shared.UI.Animate)
 local Config = require(ReplicatedStorage.Shared.Configs.AdminAbuse)
+local TextScale = require(ReplicatedStorage.Shared.UI.TextScale)
 local Theme = require(ReplicatedStorage.Shared.UI.Theme)
 
 --[[ Constants ]]--
@@ -62,18 +63,14 @@ function Banner.new(): Banner
 	gui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
+	-- Placed and sized by Layout.
 	local card = Instance.new("Frame")
 	card.Name = "Card"
 	card.AnchorPoint = Vector2.new(0.5, 0)
-	card.Position = hud.Position
-	card.Size = UDim2.new(1, -32, 0, 0)
 	card.AutomaticSize = Enum.AutomaticSize.Y
 	card.BackgroundColor3 = hud.CardColor
 	card.BackgroundTransparency = hud.CardTransparency
 	card.Parent = gui
-	local constraint = Instance.new("UISizeConstraint")
-	constraint.MaxSize = Vector2.new(hud.Width, math.huge)
-	constraint.Parent = card
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, hud.CornerRadius)
 	corner.Parent = card
@@ -137,7 +134,31 @@ function Banner.new(): Banner
 		Name = name,
 		Role = role,
 		Text = text,
+		Scale = 0,
+		TextSizes = {
+			[status] = hud.TextSizes.Status,
+			[name] = hud.TextSizes.Name,
+			[role] = hud.TextSizes.Role,
+			[text] = hud.TextSizes.Line,
+		},
 	}, Banner)
+end
+
+--- Centres the card just below absolute row `top`, at the screen's density.
+function Banner.Layout(self: Banner, top: number): ()
+	local hud = Config.Hud
+	local area = self.Gui.AbsoluteSize
+	local scale = TextScale.Screen(area)
+	self.Card.Position = UDim2.new(0.5, 0, 0, top - self.Gui.AbsolutePosition.Y)
+	self.Card.Size = UDim2.fromOffset(math.min(hud.Width, (area.X - hud.SideMargin * 2) / scale), 0)
+	if scale == self.Scale then
+		return
+	end
+	self.Scale = scale
+	Animate.SetLayoutScale(self.Card, scale)
+	for line, size in self.TextSizes do
+		line.TextSize = math.max(size, Theme.ScreenScale.MinTextPixels / scale)
+	end
 end
 
 function Banner.ShowCountdown(self: Banner, seconds: number): ()
@@ -184,6 +205,9 @@ export type Banner = typeof(setmetatable(
 		Name: TextLabel,
 		Role: TextLabel,
 		Text: TextLabel,
+		-- Density of the last layout, and each label's configured logical text size.
+		Scale: number,
+		TextSizes: { [TextLabel]: number },
 	},
 	Banner
 ))

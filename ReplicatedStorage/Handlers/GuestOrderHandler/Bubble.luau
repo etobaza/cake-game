@@ -41,13 +41,25 @@ Bubble.__index = Bubble
 export type Bubble = typeof(setmetatable(
 	{} :: {
 		Model: Model,
+		Head: BasePart,
 		Janitor: any,
+		Billboard: BillboardGui,
+		-- Holds the layout at its configured pixels; Zoom scales it to the guest's world size.
+		Root: Frame,
+		Zoom: UIScale,
 		Panel: Frame,
+		Corner: UICorner,
+		Strokes: { UIStroke },
+		Tail: Frame,
+		Seam: Frame,
+		Row: Frame,
+		RowLayout: UIListLayout,
 		Icons: { ImageLabel },
 		Ponder: TextLabel,
 		Caption: TextLabel,
 		Badge: Frame,
 		BadgeText: TextLabel,
+		Bar: CanvasGroup,
 		Clip: Frame,
 		Fill: Frame,
 		Gradient: UIGradient?,
@@ -63,51 +75,48 @@ export type Bubble = typeof(setmetatable(
 		Said: string,
 		Voice: Sound,
 		VoiceAt: number,
+		-- Layout pixels, world scale (TextScale.World) and the dish lines the caption is sized for.
+		Size: Vector2,
+		Scale: number,
+		Lines: number,
 	},
 	Bubble
 ))
 
 --[[ Private Functions ]]--
-local function round(parent: GuiObject, radius: UDim): ()
+local function round(parent: GuiObject, radius: UDim): UICorner
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = radius
 	corner.Parent = parent
+	return corner
 end
 
-local function outline(parent: GuiObject): ()
+local function outline(parent: GuiObject): UIStroke
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Theme.Colors.PanelEdge
-	stroke.Thickness = STYLE.StrokeThickness
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = parent
+	return stroke
 end
 
+-- Fixed sizes without wrapping: the renderer fits and wraps text at its scaled pixel size, so
+-- either would flip a line as the bubble scales with distance.
 local function label(name: string, parent: GuiObject, size: number): TextLabel
 	local text = Instance.new("TextLabel")
 	text.Name = name
 	text.BackgroundTransparency = 1
 	text.FontFace = Theme.Fonts.Bold
 	text.TextColor3 = Theme.Colors.Cocoa
-	text.TextScaled = true
-	text.TextWrapped = true
-	local limit = Instance.new("UITextSizeConstraint")
-	limit.MinTextSize = STYLE.MinTextSize
-	limit.MaxTextSize = size
-	limit.Parent = text
+	text.TextSize = size
 	text.Parent = parent
 	return text
 end
 
-local function height(captionHeight: number?): number
-	return STYLE.Padding * 4 + STYLE.IconSize + (captionHeight or STYLE.CaptionHeight) + STYLE.BarHeight
-end
-
 --[[ Handling ]]--
-function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup): Bubble
+function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup, scale: number): Bubble
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "OrderBubble"
 	billboard.Adornee = head
-	billboard.Size = UDim2.fromOffset(STYLE.Width, height() + STYLE.TailSize)
 	-- Grow upward from the anchor, so a taller bubble never sinks into the guest's head.
 	billboard.SizeOffset = Vector2.new(0, 0.5)
 	billboard.StudsOffsetWorldSpace = STYLE.Offset
@@ -120,36 +129,36 @@ function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup): Bub
 	-- Sibling ZIndex values below are ordered within each parent.
 	billboard.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
+	local root = Instance.new("Frame")
+	root.Name = "Root"
+	root.BackgroundTransparency = 1
+	root.Parent = billboard
+	local zoom = Instance.new("UIScale")
+	zoom.Parent = root
+
 	local panel = Instance.new("Frame")
 	panel.Name = "Panel"
 	panel.AnchorPoint = Vector2.new(0.5, 0.5)
-	panel.Position = UDim2.new(0.5, 0, 0, height() / 2)
-	panel.Size = UDim2.fromOffset(STYLE.Width - STYLE.StrokeThickness * 2, height())
 	panel.BackgroundColor3 = Theme.Colors.PanelFill
 	panel.BorderSizePixel = 0
 	panel.ZIndex = 2
-	panel.Parent = billboard
-	round(panel, UDim.new(0, STYLE.CornerRadius))
-	outline(panel)
+	panel.Parent = root
+	local corner = round(panel, UDim.new())
 
 	-- A rotated square half hidden behind the panel points the bubble at the guest.
 	local tail = Instance.new("Frame")
 	tail.Name = "Tail"
 	tail.AnchorPoint = Vector2.new(0.5, 0.5)
 	tail.Position = UDim2.fromScale(0.5, 1)
-	tail.Size = UDim2.fromOffset(STYLE.TailSize * 1.4, STYLE.TailSize * 1.4)
 	tail.Rotation = 45
 	tail.BackgroundColor3 = Theme.Colors.PanelFill
 	tail.BorderSizePixel = 0
 	tail.ZIndex = 1
 	tail.Parent = panel
-	outline(tail)
 	-- Covers the tail's stroke where it crosses into the panel.
 	local seam = Instance.new("Frame")
 	seam.Name = "Seam"
 	seam.AnchorPoint = Vector2.new(0.5, 1)
-	seam.Position = UDim2.new(0.5, 0, 1, STYLE.StrokeThickness + 0.5)
-	seam.Size = UDim2.fromOffset(STYLE.TailSize * 1.2, STYLE.TailSize)
 	seam.BackgroundColor3 = Theme.Colors.PanelFill
 	seam.BorderSizePixel = 0
 	seam.ZIndex = 3
@@ -158,15 +167,12 @@ function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup): Bub
 	local row = Instance.new("Frame")
 	row.Name = "Dishes"
 	row.BackgroundTransparency = 1
-	row.Position = UDim2.fromOffset(0, STYLE.Padding)
-	row.Size = UDim2.new(1, 0, 0, STYLE.IconSize)
 	row.ZIndex = 4
 	row.Parent = panel
 	local layout = Instance.new("UIListLayout")
 	layout.FillDirection = Enum.FillDirection.Horizontal
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	layout.VerticalAlignment = Enum.VerticalAlignment.Center
-	layout.Padding = UDim.new(0, STYLE.IconGap)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = row
 	local icons: { ImageLabel } = {}
@@ -175,7 +181,6 @@ function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup): Bub
 		icon.Name = `Dish{index}`
 		icon.LayoutOrder = index
 		icon.BackgroundTransparency = 1
-		icon.Size = UDim2.fromOffset(STYLE.IconSize, STYLE.IconSize)
 		icon.ScaleType = Enum.ScaleType.Fit
 		icon.Visible = false
 		icon.ZIndex = 4
@@ -184,22 +189,16 @@ function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup): Bub
 	end
 
 	local ponder = label("Ponder", panel, STYLE.PonderSize)
-	ponder.Position = row.Position
-	ponder.Size = row.Size
 	ponder.FontFace = Theme.Fonts.ExtraBold
 	ponder.ZIndex = 4
 
 	local caption = label("Caption", panel, STYLE.TextSize)
-	caption.Position = UDim2.fromOffset(STYLE.Padding, STYLE.Padding * 2 + STYLE.IconSize)
-	caption.Size = UDim2.new(1, -STYLE.Padding * 2, 0, STYLE.CaptionHeight)
 	caption.ZIndex = 4
 
 	-- Preserve the order HUD's exact border, mask and striped artwork.
 	local bar = barTemplate:Clone()
 	bar.Name = "Patience"
 	bar.AnchorPoint = Vector2.new(0, 1)
-	bar.Position = UDim2.new(0, STYLE.Padding, 1, -STYLE.Padding)
-	bar.Size = UDim2.new(1, -STYLE.Padding * 2, 0, STYLE.BarHeight)
 	bar.Visible = true
 	bar.GroupTransparency = 0
 	bar.ZIndex = 4
@@ -213,8 +212,6 @@ function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup): Bub
 	local badge = Instance.new("Frame")
 	badge.Name = "Seat"
 	badge.AnchorPoint = Vector2.new(0.5, 0.5)
-	badge.Position = UDim2.fromOffset(STYLE.BadgeSize / 3, STYLE.BadgeSize / 3)
-	badge.Size = UDim2.fromOffset(STYLE.BadgeSize * 1.4, STYLE.BadgeSize)
 	badge.BackgroundColor3 = Theme.Colors.Cocoa
 	badge.BorderSizePixel = 0
 	badge.ZIndex = 5
@@ -227,13 +224,24 @@ function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup): Bub
 
 	local self: Bubble = setmetatable({
 		Model = model,
+		Head = head,
 		Janitor = Janitor.new(),
+		Billboard = billboard,
+		Root = root,
+		Zoom = zoom,
 		Panel = panel,
+		Corner = corner,
+		Strokes = { outline(panel), outline(tail) },
+		Tail = tail,
+		Seam = seam,
+		Row = row,
+		RowLayout = layout,
 		Icons = icons,
 		Ponder = ponder,
 		Caption = caption,
 		Badge = badge,
 		BadgeText = badgeText,
+		Bar = bar,
 		Clip = clip,
 		Fill = fill,
 		Gradient = gradient,
@@ -248,7 +256,11 @@ function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup): Bub
 		-- The guest's voice: one positional blip at the head, restarted per letter.
 		Voice = SoundPlayer.Create("NpcText", head),
 		VoiceAt = -math.huge,
+		Size = Vector2.zero,
+		Scale = scale,
+		Lines = 0,
 	}, Bubble)
+	self:Layout()
 	self.Janitor:Add(self.Voice, "Destroy")
 	self.Janitor:Add(function(): ()
 		for _, icon in icons do
@@ -262,6 +274,55 @@ function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup): Bub
 	billboard.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 	Animate.Pop(panel, Config.Pop.Appear)
 	return self
+end
+
+-- Sizes every piece at its configured pixels; the caption grows with its dish lines.
+function Bubble.Layout(self: Bubble): ()
+	local padding = STYLE.Padding
+	local iconSize = STYLE.IconSize
+	local captionHeight = math.max(STYLE.CaptionHeight, self.Lines * STYLE.LineHeight)
+	local barHeight = STYLE.BarHeight
+	local panelHeight = padding * 4 + iconSize + captionHeight + barHeight
+	local width = STYLE.Width
+	local stroke = STYLE.StrokeThickness
+	local tail = STYLE.TailSize
+	local badge = STYLE.BadgeSize
+
+	self.Size = Vector2.new(width, panelHeight + tail)
+	self.Root.Size = UDim2.fromOffset(self.Size.X, self.Size.Y)
+	self:SetScale(self.Scale)
+	self.Panel.Position = UDim2.new(0.5, 0, 0, panelHeight / 2)
+	self.Panel.Size = UDim2.fromOffset(width - stroke * 2, panelHeight)
+	self.Corner.CornerRadius = UDim.new(0, STYLE.CornerRadius)
+	for _, edge in self.Strokes do
+		edge.Thickness = stroke
+	end
+	self.Tail.Size = UDim2.fromOffset(tail * 1.4, tail * 1.4)
+	self.Seam.Position = UDim2.new(0.5, 0, 1, stroke + 0.5)
+	self.Seam.Size = UDim2.fromOffset(tail * 1.2, tail)
+
+	self.Row.Position = UDim2.fromOffset(0, padding)
+	self.Row.Size = UDim2.new(1, 0, 0, iconSize)
+	self.RowLayout.Padding = UDim.new(0, STYLE.IconGap)
+	for _, icon in self.Icons do
+		icon.Size = UDim2.fromOffset(iconSize, iconSize)
+	end
+	self.Ponder.Position = self.Row.Position
+	self.Ponder.Size = self.Row.Size
+	self.Caption.Position = UDim2.fromOffset(padding, padding * 2 + iconSize)
+	self.Caption.Size = UDim2.new(1, -padding * 2, 0, captionHeight)
+	self.Bar.Position = UDim2.new(0, padding, 1, -padding)
+	self.Bar.Size = UDim2.new(1, -padding * 2, 0, barHeight)
+	self.Badge.Position = UDim2.fromOffset(badge / 3, badge / 3)
+	self.Badge.Size = UDim2.fromOffset(badge * 1.4, badge)
+end
+
+-- The handler keeps `scale` at the guest's world scale every frame, so the bubble shrinks smoothly
+-- with distance like the guest.
+function Bubble.SetScale(self: Bubble, scale: number): ()
+	self.Scale = scale
+	self.Zoom.Scale = scale
+	self.Billboard.Size = UDim2.fromOffset(self.Size.X * scale, self.Size.Y * scale)
 end
 
 function Bubble.SetRemaining(self: Bubble, remaining: number, now: number): ()
@@ -322,13 +383,10 @@ function Bubble.Show(self: Bubble, view: View): ()
 	end
 
 	-- Multiple dishes keep their full names on separate lines instead of shrinking one long sentence.
-	local captionHeight = math.max(STYLE.CaptionHeight, #names * STYLE.CaptionHeightPerDish)
-	local panelHeight = height(captionHeight)
-	self.Panel.Position = UDim2.new(0.5, 0, 0, panelHeight / 2)
-	self.Panel.Size = UDim2.fromOffset(STYLE.Width - STYLE.StrokeThickness * 2, panelHeight)
-	local billboard = self.Panel.Parent :: BillboardGui
-	billboard.Size = UDim2.fromOffset(STYLE.Width, panelHeight + STYLE.TailSize)
-	self.Caption.Size = UDim2.new(1, -STYLE.Padding * 2, 0, captionHeight)
+	if #names ~= self.Lines then
+		self.Lines = #names
+		self:Layout()
+	end
 
 	local ready = choosing and view.Ready
 	self.Ponder.Visible = not ordered

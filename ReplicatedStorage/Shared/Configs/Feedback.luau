@@ -80,10 +80,14 @@ return {
 	-- Window shoppers carry their pastry this many studs below the head; their sale bursts there.
 	CarriedDrop = 1.4,
 
-	-- Pixel sizes below are designed at this viewport height and scale with the screen, clamped.
-	ReferenceHeight = 900,
+	-- Pixel sizes below are designed for this viewport and scale with its tighter axis, clamped, so a
+	-- portrait phone follows its width rather than its tall height.
+	ReferenceSize = Vector2.new(1280, 900),
 	MinScale = 0.6,
 	MaxScale = 1.2,
+	-- Banners keep this many pixels clear of the HUD clock above and the hotbar below; where the gap
+	-- between them is shorter than a banner, it moves and then shrinks to fit.
+	BannerGap = 8,
 
 	-- The floating "+24$" over the guest. A pixel-sized billboard stays readable at any distance.
 	Popup = {
@@ -191,7 +195,7 @@ return {
 			LoseSeconds = 1.3,
 		},
 		Banner = {
-			-- Below the clock and the status toast.
+			-- Below the clock and the status toast; never above the clock (`BannerGap`).
 			Anchor = Vector2.new(0.5, 0.32),
 			Seconds = 1.7,
 			ExitSeconds = 0.3,

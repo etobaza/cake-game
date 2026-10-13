@@ -40,6 +40,9 @@ local Wallet = require(_Shared.UI.Stores.Wallet)
 
 --[[ Constants ]]--
 local COIN_ICON_PATH = "Currency.Main.Icon"
+-- Banners stay between the clock and the hotbar.
+local CLOCK_PATH = "Time"
+local HOTBAR_PATH = "Hotbar"
 -- Styles an unknown grade from a newer server.
 local FALLBACK_GRADE: Config.Grade = "Great"
 -- The level-up line lists at most this many unlocked recipes.
@@ -60,8 +63,21 @@ local FeedbackHandler = {
 --[[ Private Functions ]]--
 local function viewportScale(): number
 	local camera = workspace.CurrentCamera
-	local height = if camera then camera.ViewportSize.Y else Config.ReferenceHeight
-	return math.clamp(height / Config.ReferenceHeight, Config.MinScale, Config.MaxScale)
+	local reference = Config.ReferenceSize
+	local viewport = if camera then camera.ViewportSize else reference
+	return math.clamp(math.min(viewport.X / reference.X, viewport.Y / reference.Y), Config.MinScale, Config.MaxScale)
+end
+
+-- A HUD element by path, or nil with a note on what goes without it.
+local function hudElement(path: string, without: string): GuiObject?
+	local found, element = pcall(function(): Instance
+		return UIHandler:GetHud(path)
+	end)
+	if found and element:IsA("GuiObject") then
+		return element
+	end
+	print(`[FeedbackHandler] HUD element {path} is missing; {without}`)
+	return nil
 end
 
 -- Absolute GUI point of a world position. Off-screen positions launch from the screen edge in their
@@ -178,21 +194,20 @@ function FeedbackHandler.OnStart(self: FeedbackHandler): ()
 	self.Janitor:Add(popups, "Destroy")
 	self.PopupFolder = popups
 
-	local found, icon = pcall(function(): Instance
-		return UIHandler:GetHud(COIN_ICON_PATH)
-	end)
-	self.CoinIcon = if found and icon:IsA("GuiObject") then icon else nil
-	if not self.CoinIcon then
-		print(`[FeedbackHandler] HUD coin {COIN_ICON_PATH} is missing; sales skip the coin flight`)
-	end
+	self.CoinIcon = hudElement(COIN_ICON_PATH, "sales skip the coin flight")
+	self.Clock = hudElement(CLOCK_PATH, "banners only avoid the topbar")
+	self.Hotbar = hudElement(HOTBAR_PATH, "banners may reach the screen bottom")
 
+	local function place(anchor: number, above: number, below: number): (number, number)
+		return self:PlaceBanner(anchor, above, below)
+	end
 	self.Sparks = Sparks.new(root)
 	self.Coins = CoinFlight.new(root, function(): (Vector2?, Vector2?)
 		return self:CoinTarget()
 	end)
-	self.LevelUp = LevelUp.new(root, self.Sparks)
-	self.Banner = StreakBanner.new(root, self.Sparks)
-	self.RareGuest = RareGuestBanner.new(root)
+	self.LevelUp = LevelUp.new(root, self.Sparks, place)
+	self.Banner = StreakBanner.new(root, self.Sparks, place)
+	self.RareGuest = RareGuestBanner.new(root, place)
 	self.PendingBanner = nil
 	self.Meter = StreakMeter.new(root, function(): (Vector2?, Vector2?)
 		return self:CoinTarget()
@@ -271,6 +286,36 @@ function FeedbackHandler.CoinTarget(self: FeedbackHandler): (Vector2?, Vector2?)
 		return nil, nil
 	end
 	return icon.AbsolutePosition + size / 2, size
+end
+
+--- Absolute rows left between the HUD clock and the hotbar, less `BannerGap`. A clock or hotbar
+--- that is hidden or slid away frees its side, though never above Roblox's topbar.
+function FeedbackHandler.BannerBand(self: FeedbackHandler): (number, number)
+	local root = self.Root
+	local top = 0
+	local bottom = root.AbsolutePosition.Y + root.AbsoluteSize.Y
+	local clock = self.Clock
+	if clock and isShown(clock) then
+		top = math.max(top, clock.AbsolutePosition.Y + clock.AbsoluteSize.Y)
+	end
+	local hotbar = self.Hotbar
+	if hotbar and isShown(hotbar) then
+		bottom = math.min(bottom, hotbar.AbsolutePosition.Y)
+	end
+	return top + Config.BannerGap, bottom - Config.BannerGap
+end
+
+--- Centre row inside the overlay and scale for a banner reaching `above` and `below` its centre at
+--- design size, wanting its centre at `anchor` of the screen height. It keeps that row and the
+--- screen's scale where it fits in the banner band; otherwise it moves, and then shrinks.
+function FeedbackHandler.PlaceBanner(self: FeedbackHandler, anchor: number, above: number, below: number): (number, number)
+	local origin = self.Root.AbsolutePosition.Y
+	local top, bottom = self:BannerBand()
+	top -= origin
+	bottom -= origin
+	local scale = math.min(viewportScale(), math.max(bottom - top, 0) / (above + below))
+	local center = math.min(anchor * self.Root.AbsoluteSize.Y, bottom - below * scale)
+	return math.max(center, top + above * scale), scale
 end
 
 function FeedbackHandler.PlaySale(
@@ -401,7 +446,7 @@ function FeedbackHandler.PlayLevelUp(self: FeedbackHandler, level: number): ()
 		SoundPlayer.Play("LevelUp")
 		SoundPlayer.Play("Pop")
 	end
-	self.LevelUp:Show(level, unlockLine(level), viewportScale())
+	self.LevelUp:Show(level, unlockLine(level))
 
 	local player = Players.LocalPlayer
 	local character = player.Character
@@ -438,10 +483,10 @@ function FeedbackHandler.Step(self: FeedbackHandler, deltaTime: number): ()
 	local pending = self.PendingBanner
 	if pending and not self.LevelUp:IsShowing() then
 		self.PendingBanner = nil
-		self.Banner:Show(pending.Title, pending.Run, scale)
+		self.Banner:Show(pending.Title, pending.Run)
 	end
 	self.Banner:Step(now)
-	self.RareGuest:Step(now, scale, self.LevelUp:IsShowing() or self.Banner:IsShowing(), function(guestId: string): boolean
+	self.RareGuest:Step(now, self.LevelUp:IsShowing() or self.Banner:IsShowing(), function(guestId: string): boolean
 		return DataClient:GetData({ "Customers", guestId }, "Session") ~= nil
 	end)
 	self.Meter:Step(now, scale)
@@ -464,6 +509,8 @@ export type FeedbackHandler = typeof(FeedbackHandler) & {
 	Root: Frame,
 	PopupFolder: Folder,
 	CoinIcon: GuiObject?,
+	Clock: GuiObject?,
+	Hotbar: GuiObject?,
 	Coins: CoinFlight.CoinFlight,
 	Sparks: Sparks.Sparks,
 	LevelUp: LevelUp.LevelUp,

@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Configs.Feedback)
 local Ease = require(ReplicatedStorage.Shared.UI.Ease)
 local Sparks = require(ReplicatedStorage.Shared.UI.Sparks)
+local TextScale = require(ReplicatedStorage.Shared.UI.TextScale)
 local Theme = require(ReplicatedStorage.Shared.UI.Theme)
 
 --[[ Types ]]--
@@ -26,7 +27,11 @@ type View = {
 	TitleScale: UIScale,
 	Subtitle: TextLabel,
 	SubtitleStroke: UIStroke,
+	SubtitleLimit: UITextSizeConstraint,
 }
+
+-- Centre row and scale for a banner reaching `above` and `below` its centre at design size.
+type Place = (anchor: number, above: number, below: number) -> (number, number)
 
 --[[ Constants ]]--
 local TUNING = Config.LevelUp
@@ -36,6 +41,8 @@ local STAR_POP_STRENGTH = 2.4
 local NUMBER_DELAY = 0.12
 local TITLE_DELAY = 0.16
 local TITLE_DROP = 60
+-- The title rests on the star's top point, this far above the banner centre.
+local TITLE_CENTER = TUNING.StarSize / 2 + TUNING.TitleBox.Y * 0.45
 local TITLE_STROKE_THICKNESS = 5
 local SUBTITLE_FROM, SUBTITLE_SECONDS = 0.45, 0.3
 local CONFETTI_AT = 0.06
@@ -53,6 +60,7 @@ export type LevelUp = typeof(setmetatable(
 	{} :: {
 		Parent: GuiObject,
 		Sparks: Sparks.Sparks,
+		Place: Place,
 		View: View?,
 		StartedAt: number,
 		Scale: number,
@@ -169,14 +177,16 @@ local function build(parent: GuiObject): View
 		TitleScale = uiScale(titleFrame, 0),
 		Subtitle = subtitle,
 		SubtitleStroke = subtitleStroke,
+		SubtitleLimit = subtitleLimit,
 	}
 end
 
 --[[ Handling ]]--
-function LevelUp.new(parent: GuiObject, sparks: Sparks.Sparks): LevelUp
+function LevelUp.new(parent: GuiObject, sparks: Sparks.Sparks, place: Place): LevelUp
 	return setmetatable({
 		Parent = parent,
 		Sparks = sparks,
+		Place = place,
 		View = nil,
 		StartedAt = 0,
 		Scale = 1,
@@ -189,15 +199,28 @@ function LevelUp.IsShowing(self: LevelUp): boolean
 end
 
 --- Shows `level`; a second level up while the banner is still on screen restarts it with the new number.
-function LevelUp.Show(self: LevelUp, level: number, unlocks: string, scale: number): ()
+function LevelUp.Show(self: LevelUp, level: number, unlocks: string): ()
 	local view = self.View or build(self.Parent)
 	self.View = view
 	self.StartedAt = os.clock()
-	self.Scale = scale
 	self.Burst = false
 	view.Number.Text = tostring(level)
 	view.Subtitle.Text = unlocks
 	view.Subtitle.Visible = unlocks ~= ""
+
+	-- The rays may spill past the clock and hotbar; the lettering and the star may not.
+	local below = TUNING.StarSize / 2 + (if unlocks ~= "" then TUNING.SubtitleHeight else 0)
+	local center, scale = self.Place(TUNING.Anchor.Y, TITLE_CENTER + TUNING.TitleBox.Y / 2, below)
+	self.Scale = scale
+	view.Root.Position = UDim2.new(TUNING.Anchor.X, 0, 0, center)
+	-- Text constraints count rendered pixels under the banner's UIScale.
+	local floor = Theme.ScreenScale.MinTextPixels / scale
+	TextScale.Bound(
+		view.SubtitleLimit,
+		math.max(TUNING.SubtitleMinTextSize, floor),
+		math.max(TUNING.SubtitleTextSize, floor),
+		scale
+	)
 end
 
 function LevelUp.Step(self: LevelUp, now: number): ()
@@ -238,7 +261,7 @@ function LevelUp.Step(self: LevelUp, now: number): ()
 		0.5,
 		0,
 		0.5,
-		-(TUNING.StarSize / 2 + TUNING.TitleBox.Y * 0.45) - TITLE_DROP * (1 - drop)
+		-TITLE_CENTER - TITLE_DROP * (1 - drop)
 	)
 
 	local shown = Ease.Clamp((age - SUBTITLE_FROM) / SUBTITLE_SECONDS)

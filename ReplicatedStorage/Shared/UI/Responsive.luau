@@ -1,6 +1,6 @@
 --!strict
 -- Fits a logical page canvas uniformly into the safe viewport. Compact artwork reflows
--- on narrow screens; Animate composes the fit with the page's opening/closing spring.
+-- on narrow portrait screens; Animate composes the fit with the page's opening/closing spring.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,6 +10,7 @@ local UserInputService = game:GetService("UserInputService")
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Animate = require(script.Parent.Animate)
 local TextScale = require(script.Parent.TextScale)
+local Theme = require(script.Parent.Theme)
 
 --[[ Constants ]]--
 local COMPACT_WIDTH = 700
@@ -17,15 +18,25 @@ local COMPACT_WIDTH = 700
 local COMPACT_CANVAS_WIDTH = 360
 local MARGIN = 16
 local SHORT_HEIGHT = 500
-local MIN_SHORT_CANVAS_HEIGHT = 300
-
---[[ Private Variables ]]--
--- Some authored properties only have a Short override. Restore their original geometry
--- when leaving that mode, rather than retaining the previous viewport's override.
-local Originals: { [GuiObject]: { Size: UDim2, Position: UDim2 } } = setmetatable({}, { __mode = "k" }) :: any
 
 --[[ Tables ]]--
 local Responsive = {}
+
+--[[ Private Functions ]]--
+-- Some authored properties only have a Short or Keyboard override. Leaving that mode restores the
+-- geometry recorded before the first override. An attribute survives where a weak table keyed by
+-- the instance loses its entry once Luau collects the wrapper.
+local function authored(element: GuiObject, property: string, current: UDim2): UDim2?
+	if element:GetAttribute(`Short{property}`) == nil and element:GetAttribute(`Keyboard{property}`) == nil then
+		return nil
+	end
+	local recorded = element:GetAttribute(`Authored{property}`)
+	if typeof(recorded) == "UDim2" then
+		return recorded
+	end
+	element:SetAttribute(`Authored{property}`, current)
+	return current
+end
 
 --[[ Handling ]]--
 function Responsive.Apply(screen: ScreenGui, viewport: Vector2?): ()
@@ -34,33 +45,27 @@ function Responsive.Apply(screen: ScreenGui, viewport: Vector2?): ()
 		return
 	end
 	local available = viewport or screen.AbsoluteSize
-	local compact = available.X < COMPACT_WIDTH
+	-- Only narrow portrait screens reflow to the compact artwork. Every other screen, phone
+	-- landscape included, keeps the desktop canvas and its proportions, scaled like a small window.
+	local compact = available.X < COMPACT_WIDTH and available.X < available.Y
 	local keyboard = screen.Name == "Codes" and UserInputService.OnScreenKeyboardVisible
 	local width = (screen:GetAttribute("PanelWidth") :: number?) or 780
 	if compact then
 		width = math.min(width, COMPACT_CANVAS_WIDTH)
 	end
 	local height = (screen:GetAttribute(if compact then "CompactHeight" else "PanelHeight") :: number?) or 680
-	-- Authored Short overrides place columns side by side. Use them before fitting a tall
-	-- desktop canvas to phone landscape; otherwise every label shrinks to half its size.
-	local short = not compact and available.Y < SHORT_HEIGHT
-	if short then
-		height = math.min(
-			height,
-			(screen:GetAttribute("ShortHeight") :: number?) or math.max(MIN_SHORT_CANVAS_HEIGHT, available.Y - MARGIN * 2)
-		)
-	end
 	if keyboard then
 		height = math.min(height, 80)
 	end
 	width, height = math.max(width, 1), math.max(height, 1)
-	-- Both axes use the same factor: a short phone must not flatten the page's artwork.
+	-- Screen density keeps a short page's share of a phone screen the same as on a desktop.
 	local scale = math.min(
-		TextScale.Get(available),
+		TextScale.Screen(available, Theme.TextScale.Maximum),
 		math.max(1, available.X - MARGIN * 2) / width,
 		math.max(1, available.Y - MARGIN * 2) / height
 	)
-	short = short or height < SHORT_HEIGHT
+	-- Authored short canvases (Codes) use their Short overrides on every screen.
+	local short = height < SHORT_HEIGHT
 	panel.Size = UDim2.fromOffset(width, height)
 	Animate.SetLayoutScale(panel, scale)
 	screen:SetAttribute("Compact", compact)
@@ -73,26 +78,19 @@ function Responsive.Apply(screen: ScreenGui, viewport: Vector2?): ()
 		if not element:IsA("GuiObject") then
 			continue
 		end
-		local original = Originals[element]
-		if not original then
-			original = { Size = element.Size, Position = element.Position }
-			Originals[element] = original
-		end
+		local authoredSize = authored(element, "Size", element.Size)
+		local authoredPosition = authored(element, "Position", element.Position)
 		local size = (if keyboard then element:GetAttribute("KeyboardSize") else nil)
 			or (if short then element:GetAttribute("ShortSize") else nil)
 			or element:GetAttribute(if compact then "CompactSize" else "WideSize")
+			or authoredSize
 		local position = (if keyboard then element:GetAttribute("KeyboardPosition") else nil)
 			or (if short then element:GetAttribute("ShortPosition") else nil)
 			or element:GetAttribute(if compact then "CompactPosition" else "WidePosition")
+			or authoredPosition
 		local visible = element:GetAttribute(if compact then "CompactVisible" else "WideVisible")
 		if keyboard and element:GetAttribute("KeyboardVisible") ~= nil then
 			visible = element:GetAttribute("KeyboardVisible")
-		end
-		if not size and (element:GetAttribute("ShortSize") or element:GetAttribute("KeyboardSize")) then
-			size = original.Size
-		end
-		if not position and (element:GetAttribute("ShortPosition") or element:GetAttribute("KeyboardPosition")) then
-			position = original.Position
 		end
 		if typeof(size) == "UDim2" then
 			element.Size = size

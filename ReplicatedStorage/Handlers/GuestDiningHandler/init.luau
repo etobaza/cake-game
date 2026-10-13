@@ -108,8 +108,10 @@ function GuestDiningHandler.OnStart(self: GuestDiningHandler): ()
 	)
 
 	RunService:BindToRenderStep(BIND_NAME, Enum.RenderPriority.Last.Value + 1, function(): ()
+		local camera = workspace.CurrentCamera
 		for _, view in self.Views do
 			view:Align()
+			view:FitWorld(camera)
 		end
 	end)
 

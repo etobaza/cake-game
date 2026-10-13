@@ -105,6 +105,9 @@ function LiveEventHandler.Update(self: LiveEventHandler, now: number): ()
 		self.Speech:Clear()
 		return
 	end
+	-- The clock can slide away with the HUD, so the card follows it while the event runs.
+	local top = FeedbackHandler:BannerBand()
+	self.Banner:Layout(top)
 	if now < state.StartsAt then
 		self.Banner:ShowCountdown(state.StartsAt - now)
 		return

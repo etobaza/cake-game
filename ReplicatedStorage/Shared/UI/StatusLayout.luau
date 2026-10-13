@@ -35,35 +35,37 @@ local function prepareArtwork(frame: GuiObject): ()
 	end
 end
 
-local function restingRectangle(group: GuiObject): (number, number)
-	local top = group.AbsolutePosition.Y
-	local height = group.AbsoluteSize.Y
+local function resolve(dimension: UDim2, size: Vector2): Vector2
+	return Vector2.new(
+		size.X * dimension.X.Scale + dimension.X.Offset,
+		size.Y * dimension.Y.Scale + dimension.Y.Offset
+	)
+end
+
+local function restingRect(group: GuiObject, includeChildren: boolean): Rect
+	local position = group.AbsolutePosition
+	local size = group.AbsoluteSize
 	local home = group:GetAttribute("HomePosition")
 	local parent = group.Parent
 	if typeof(home) == "UDim2" and parent and parent:IsA("GuiObject") then
 		-- The resting rectangle ignores the group's entrance and press springs.
-		height = parent.AbsoluteSize.Y * group.Size.Y.Scale + group.Size.Y.Offset
-		local anchorY = parent.AbsolutePosition.Y + parent.AbsoluteSize.Y * home.Y.Scale + home.Y.Offset
-		top = anchorY - height * group.AnchorPoint.Y
+		size = resolve(group.Size, parent.AbsoluteSize)
+		position = parent.AbsolutePosition + resolve(home, parent.AbsoluteSize) - size * group.AnchorPoint
 	end
-	return top, height
-end
-
-local function restingBottom(group: GuiObject, includeChildren: boolean): number
-	local top, height = restingRectangle(group)
-	local bottom = top + height
+	local minimum, maximum = position, position + size
 	if includeChildren then
-		-- Currency's boost/Invite row can extend below the authored group. Use its
+		-- Currency's boost/Invite row can extend outside the authored group. Use its
 		-- direct children's layout properties, not rendered press/pop bounds.
 		for _, child in group:GetChildren() do
 			if child:IsA("GuiObject") and child.Visible then
-				local childHeight = height * child.Size.Y.Scale + child.Size.Y.Offset
-				local anchorY = top + height * child.Position.Y.Scale + child.Position.Y.Offset
-				bottom = math.max(bottom, anchorY + childHeight * (1 - child.AnchorPoint.Y))
+				local childSize = resolve(child.Size, size)
+				local childMinimum = position + resolve(child.Position, size) - childSize * child.AnchorPoint
+				minimum = minimum:Min(childMinimum)
+				maximum = maximum:Max(childMinimum + childSize)
 			end
 		end
 	end
-	return bottom
+	return Rect.new(minimum, maximum)
 end
 
 local function observeGroup(janitor: Janitor.Janitor, group: GuiObject?, update: () -> ()): ()
@@ -144,18 +146,30 @@ function StatusLayout.Bind(
 			return
 		end
 
+		local camera = workspace.CurrentCamera
+		local viewport = if camera then camera.ViewportSize else available
 		local compact = available.X < Config.CompactWidth or available.Y < Config.CompactHeight
 		local layout = if compact then Config.Compact else Config.Wide
-		local scale = TextScale.Get(available)
+		-- Desktops keep the page density's growth (at least 1); smaller screens follow the screen
+		-- density (at most 1), so a phone's toast takes about the share of the screen a desktop's does.
+		local scale = TextScale.Get(available) * TextScale.Screen(viewport)
 		local width = math.min(layout.Width * scale, math.max(1, available.X - Config.EdgePadding * 2))
 		frame.AnchorPoint = Vector2.new(0.5, 0)
 		frame.Size = UDim2.fromOffset(width, layout.Height * scale)
+		local origin = screen.AbsolutePosition
 		local top = layout.Top
 		if clock then
-			top = math.max(top, math.ceil(restingBottom(clock, false) - screen.AbsolutePosition.Y + Config.ClockGap))
+			top = math.max(top, math.ceil(restingRect(clock, false).Max.Y - origin.Y + Config.ClockGap))
 		end
 		if compact and currency and currency.Visible then
-			top = math.max(top, math.ceil(restingBottom(currency, true) - screen.AbsolutePosition.Y + Config.ClockGap))
+			-- Only a Currency group reaching into the toast's column pushes it down (portrait); in
+			-- landscape the toast sits beside it, just below the clock.
+			local bounds = restingRect(currency, true)
+			local centre = origin.X + available.X / 2
+			local reach = width / 2 + Config.ClockGap
+			if bounds.Min.X < centre + reach and bounds.Max.X > centre - reach then
+				top = math.max(top, math.ceil(bounds.Max.Y - origin.Y + Config.ClockGap))
+			end
 		end
 		Animate.Place(frame, UDim2.new(0.5, 0, 0, top))
 
@@ -177,15 +191,27 @@ function StatusLayout.Bind(
 		end
 	end
 
+	local cameraJanitor = Janitor.new()
+	janitor:Add(cameraJanitor, "Destroy")
+	local function bindCamera(): ()
+		cameraJanitor:Cleanup()
+		local camera = workspace.CurrentCamera
+		if camera then
+			cameraJanitor:Add(camera:GetPropertyChangedSignal("ViewportSize"):Connect(update), "Disconnect")
+		end
+		update()
+	end
+
 	janitor:Add(screen:GetPropertyChangedSignal("AbsoluteSize"):Connect(update), "Disconnect")
 	janitor:Add(screen:GetPropertyChangedSignal("AbsolutePosition"):Connect(update), "Disconnect")
+	janitor:Add(workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(bindCamera), "Disconnect")
 	observeGroup(janitor, clock, update)
 	observeGroup(janitor, currency, update)
 	if currency then
 		observeChildren(janitor, currency, update)
 	end
 	janitor:LinkToInstance(frame)
-	update()
+	bindCamera()
 
 	return janitor
 end

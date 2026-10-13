@@ -26,6 +26,8 @@ return {
 	},
 
 	FingerTip = Vector2.new(0.4, 0.18),
+	-- Hand size when the viewport's shorter side is ReferenceHeight; it follows that side down to
+	-- MinFingerSize.
 	FingerSize = 88,
 	MinFingerSize = 48,
 	MinScaledFingerSize = 24,
@@ -47,6 +49,8 @@ return {
 	} :: { [FingerPhase]: PhaseDefinition },
 
 	FocusDuration = 0.45,
+	-- GUI focus padding (and a caller's Padding) at the reference canvas; smaller screens scale it
+	-- by TextScale.Screen.
 	Padding = 8,
 	CornerRadius = 12,
 	ShadeColor = Color3.fromRGB(21, 16, 30),

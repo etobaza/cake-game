@@ -225,10 +225,15 @@ function StoreHandler.BindSection(self: StoreHandler, parent: Instance?, prefix:
 
 		local buy = row:FindFirstChild("Buy")
 		if buy and buy:IsA("GuiObject") then
-			Animate.Press(buy)
-			Press.BindTap(buy, function()
+			local function purchase(): ()
 				self:Buy(entryId :: string)
-			end)
+			end
+			Animate.Press(buy)
+			Press.BindTap(buy, purchase)
+			-- A currency tile's Buy plate is under 30 pixels tall on phones, so the whole tile buys.
+			-- A press on the plate never reaches the tile; the plate stays the gamepad's stop.
+			Press.BindTap(row, purchase)
+			row.Selectable = false
 		end
 	end
 end

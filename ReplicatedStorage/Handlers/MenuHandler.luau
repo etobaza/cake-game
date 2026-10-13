@@ -58,6 +58,9 @@ local CELL_STROKE_IDLE = Color3.fromRGB(238, 165, 75)
 local CELL_STROKE_PICKED = Color3.fromRGB(34, 169, 0)
 local FILTER_ON = Color3.fromRGB(247, 233, 205)
 local FILTER_OFF = Color3.fromRGB(205, 191, 161)
+-- Compact filter tabs hide their icons, so the caption spans the tab instead of the slot beside the icon.
+local FILTER_COMPACT_CAPTION_SIZE = UDim2.fromScale(0.86, 0.6)
+local FILTER_COMPACT_CAPTION_POSITION = UDim2.fromScale(0.5, 0.51)
 local BONUS_ROW_HEIGHT = 24
 local BONUS_ROW_GAP = 4
 local BONUS_FOOTER_SHIFT = 28
@@ -376,6 +379,11 @@ function MenuHandler.BindFilters(self: MenuHandler): ()
 		end
 
 		self.Filters[filter.Name] = tab
+		local caption = tab:FindFirstChild("Txt")
+		if caption and caption:IsA("GuiObject") then
+			caption:SetAttribute("CompactSize", FILTER_COMPACT_CAPTION_SIZE)
+			caption:SetAttribute("CompactPosition", FILTER_COMPACT_CAPTION_POSITION)
+		end
 
 		table.insert(rowButtons, tab)
 		self.Janitor:Add(

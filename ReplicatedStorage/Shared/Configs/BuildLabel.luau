@@ -8,7 +8,8 @@ return {
 	-- Characters of the server JobId appended after the version; 0 hides the server part.
 	JobIdLength = 8,
 
-	-- Pixels from the bottom-left corner of the device safe area.
+	-- Pixels from the bottom-left corner of the device safe area, drawn at TextScale.Screen density;
+	-- the text never renders below `Theme.ScreenScale.MinTextPixels`.
 	Offset = Vector2.new(6, 4),
 	Size = Vector2.new(160, 14),
 	TextSize = 12,

@@ -14,6 +14,7 @@ local Animate = require(_Shared.UI.Animate)
 local Config = require(_Shared.Configs.Orders)
 local FoodPreview = require(_Shared.UI.FoodPreview)
 local GuestOrders = require(_Shared.GuestOrders)
+local HudLayout = require(_Shared.UI.HudLayout)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Press = require(_Shared.UI.Press)
 local Recipes = require(_Shared.Configs.Registries.Recipes)
@@ -60,9 +61,9 @@ local function drawFill(clip: Frame, fill: Frame, value: number): ()
 	clip.Visible = ratio > 0
 end
 
--- A pixel size from Orders config at the HUD's text density.
-local function scaled(size: number, scale: number): number
-	return math.floor(size * scale + 0.5)
+-- The cards' density: the HUD's screen density, capped like the card geometry (OrderLayout).
+local function density(viewport: Vector2): number
+	return TextScale.Screen(viewport, Config.Layout.MaxScale)
 end
 
 --[[ Handling ]]--
@@ -170,9 +171,9 @@ function Card.new(root: Frame, tooltip: Tooltip, onTap: (customerId: string) -> 
 	end)
 	local function refreshText(): ()
 		local screen = root:FindFirstAncestorWhichIsA("ScreenGui")
-		local scale = if screen then TextScale.Get(screen.AbsoluteSize) else 1
-		limit.MinTextSize = scaled(STATUS.MinTextSize, scale)
-		limit.MaxTextSize = scaled(STATUS.MaxTextSize, scale)
+		local scale = if screen then density(screen.AbsoluteSize) else 1
+		limit.MinTextSize = HudLayout.TextSize(STATUS.MinTextSize, scale)
+		limit.MaxTextSize = HudLayout.TextSize(STATUS.MaxTextSize, scale)
 	end
 	self.Janitor:Add(root:GetPropertyChangedSignal("AbsoluteSize"):Connect(refreshText), "Disconnect")
 	refreshText()
@@ -203,15 +204,15 @@ function Card.RefreshHeader(self: Card): ()
 	local parentHud = parent.Parent
 	local hud = if parentHud and parentHud:IsA("GuiObject") then parentHud else nil
 	local margin = Config.TooltipMargin
-	local scale = if hud then TextScale.Get(hud.AbsoluteSize) else 1
+	local scale = if hud then density(hud.AbsoluteSize) else 1
 	local width = if hud
 		then math.min(Config.TooltipWidth * scale, hud.AbsoluteSize.X - margin * 2)
 		else Config.TooltipWidth
 	tooltip.Root.Size = UDim2.fromOffset(width, Config.TooltipHeight * scale)
 	local limit = tooltip.ItemName:FindFirstChildOfClass("UITextSizeConstraint")
 	if limit then
-		limit.MinTextSize = scaled(Config.TooltipMinTextSize, scale)
-		limit.MaxTextSize = scaled(Config.TooltipMaxTextSize, scale)
+		limit.MinTextSize = HudLayout.TextSize(Config.TooltipMinTextSize, scale)
+		limit.MaxTextSize = HudLayout.TextSize(Config.TooltipMaxTextSize, scale)
 	end
 	-- Keep the whole tooltip on the HUD near the screen edges.
 	local center = relative.X

@@ -81,12 +81,13 @@ local GuestDining = {
 	HeadBoundsRefreshSeconds = 0.25,
 	TargetUpdateDistance = 0.12,
 	ElbowOffset = Vector3.new(1.8, -0.3, -0.15),
-	BarSize = Vector2.new(156, 52),
+	-- Progress card layout pixels, drawn at a constant world size (Theme.WorldScale) like the guest's bubble.
+	BarSize = Vector2.new(176, 60),
 	BarOffset = Vector3.new(0, 1.65, 0),
 	MaxDistance = 45,
-	BarHeight = 12,
-	BarPadding = 5,
-	TextSize = 18,
+	BarHeight = 14,
+	BarPadding = 6,
+	TextSize = 21,
 	CornerRadius = 7,
 	StrokeThickness = 1.5,
 }

@@ -369,13 +369,19 @@ return function(hud: Instance, props: Props): ()
 	if quests and quests:IsA("GuiObject") and arrow and arrow:IsA("GuiObject") then
 		-- 0 = expanded, 1 = folded with the whole arrow visible, 2 = hidden for a page.
 		-- Derive distances during drawing so resizing never leaves a stale fold ratio.
+		local container = quests:FindFirstChild("Container")
 		local progress = 2
 		local function draw(): ()
 			local base = home(quests)
 			local width = quests.AbsoluteSize.X
 			local folded = math.max(0, width - arrow.AbsoluteSize.X)
-			local offset = math.min(progress, 1) * folded + math.max(progress - 1, 0) * (width + 48 - folded)
+			local span = (quests.Parent :: GuiObject).AbsoluteSize.X
+			local offset = math.min(progress, 1) * folded + math.max(progress - 1, 0) * span
 			quests.Position = base + UDim2.fromOffset(offset, 0)
+			-- Folded content rests past the safe area, which a notched screen still draws.
+			if container and container:IsA("GuiObject") then
+				container.Visible = progress < 1
+			end
 		end
 		local slide = Animate.Track(quests, "SlideX", 2, function(value: number)
 			progress = value
@@ -383,6 +389,7 @@ return function(hud: Instance, props: Props): ()
 		end)
 		Flux.cleanup(quests:GetAttributeChangedSignal("HomePosition"):Connect(draw))
 		Flux.cleanup(quests:GetPropertyChangedSignal("AbsoluteSize"):Connect(draw))
+		Flux.cleanup((quests.Parent :: GuiObject):GetPropertyChangedSignal("AbsoluteSize"):Connect(draw))
 		Flux.cleanup(arrow:GetPropertyChangedSignal("AbsoluteSize"):Connect(draw))
 		if props.OnQuestsToggle then
 			Flux.cleanup(Press.BindTap(arrow, props.OnQuestsToggle))

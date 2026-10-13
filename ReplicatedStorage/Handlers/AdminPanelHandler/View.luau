@@ -2,6 +2,7 @@
 -- Owned, responsive developer UI. No place-authored screen is replaced.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 local Config = require(ReplicatedStorage.Shared.Configs.Admin)
 
 local BACKGROUND = Color3.fromRGB(23, 27, 36)
@@ -76,8 +77,26 @@ function View.Create(playerGui: PlayerGui, owner: any): View
 	screen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	screen.Parent = playerGui
 	owner:Add(screen)
-	local toggle = button(screen, "Toggle", "ADMIN • F4", UDim2.new(1, -136, 0, 8), UDim2.fromOffset(124, 36))
+	-- The toggle lives in Roblox's topbar row, where no HUD group is drawn on any device.
+	local bar = Instance.new("ScreenGui")
+	bar.Name = "AdminToggle"
+	bar.ResetOnSpawn = false
+	bar.DisplayOrder = Config.DisplayOrder
+	bar.ScreenInsets = Enum.ScreenInsets.TopbarSafeInsets
+	bar.Parent = playerGui
+	owner:Add(bar)
+	local toggleConfig = Config.Toggle
+	local toggle = button(bar, "Toggle", "", UDim2.new(1, -toggleConfig.RightClearance, 0.5, 0), UDim2.new())
+	toggle.AnchorPoint = Vector2.new(1, 0.5)
 	toggle.BackgroundColor3 = ACCENT
+	local function refreshToggle(): ()
+		local touch = UserInputService.PreferredInput == Enum.PreferredInput.Touch
+		local size = if touch then toggleConfig.TouchSize else toggleConfig.Size
+		toggle.Text = if touch then toggleConfig.TouchText else toggleConfig.Text
+		toggle.Size = UDim2.fromOffset(size.X, size.Y)
+	end
+	owner:Add(UserInputService:GetPropertyChangedSignal("PreferredInput"):Connect(refreshToggle))
+	refreshToggle()
 	local panel = Instance.new("Frame")
 	panel.Name = "Panel"
 	panel.AnchorPoint = Vector2.new(0.5, 0.5)

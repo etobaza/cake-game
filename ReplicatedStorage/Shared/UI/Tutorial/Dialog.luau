@@ -13,6 +13,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 local TextService = game:GetService("TextService")
+local UserInputService = game:GetService("UserInputService")
 
 --[[ Modules ]]--
 local Animate = require(script.Parent.Parent.Animate)
@@ -37,6 +38,8 @@ local FONT = Theme.Fonts.ExtraBold
 local HINT_FONT = Theme.Fonts.Bold
 local HOTBAR_PATH = "Hotbar"
 local CLOCK_PATH = "Time"
+local ORDER_PATH = "Order"
+local SIDE_PATH = "SideBtns"
 -- The shared Report/Menu/Upgrades header: its tabs and Next Day stay uncovered while it is up.
 local MENU_PANEL = "BakeryMenu"
 local MENU_HEADER = { "MainFrame", "Header" }
@@ -139,10 +142,14 @@ export type Dialog = typeof(setmetatable(
 		-- When the last Hide arrived; a step that returns within the grace keeps the bubble up.
 		HideAt: number?,
 		Shown: number,
-		LayoutWidth: number,
+		-- What the last full layout was made for; a change in either lays the bubble out again.
+		LayoutViewport: Vector2,
+		LayoutTouch: boolean,
 		HopAt: number,
 		-- When the current line was presented; drives the bubble's boing.
 		ChangedAt: number,
+		-- Left edge and bottom on screen, eased toward each frame's goal.
+		X: number?,
 		Y: number?,
 		Avoid: Rect?,
 		HotbarEdge: EdgeWatch,
@@ -506,13 +513,23 @@ local function viewportSize(): Vector2
 	return if camera then camera.ViewportSize else Vector2.new(1280, STYLE.ReferenceHeight)
 end
 
+-- The shorter side, so a portrait phone is not sized like a desktop by its tall height.
 local function uiScale(viewport: Vector2): number
-	return math.clamp(viewport.Y / STYLE.ReferenceHeight, STYLE.MinScale, STYLE.MaxScale)
+	return math.clamp(math.min(viewport.X, viewport.Y) / STYLE.ReferenceHeight, STYLE.MinScale, STYLE.MaxScale)
+end
+
+local function isCompact(viewport: Vector2): boolean
+	return math.min(viewport.X, viewport.Y) / STYLE.ReferenceHeight < STYLE.MinScale
+end
+
+local function touchInput(): boolean
+	return UserInputService.PreferredInput == Enum.PreferredInput.Touch
 end
 
 -- Reference width of the whole dialog for this viewport.
 local function dialogWidth(viewport: Vector2, scale: number): number
-	return math.floor(math.clamp(viewport.X / scale * STYLE.WidthRatio, STYLE.MinWidth, STYLE.Width))
+	local widest = if isCompact(viewport) then STYLE.Compact.Width else STYLE.Width
+	return math.floor(math.clamp(viewport.X / scale * STYLE.WidthRatio, STYLE.MinWidth, widest))
 end
 
 local function hudElement(path: string): GuiObject?
@@ -538,6 +555,25 @@ local function hudBottom(path: string): number?
 		return nil
 	end
 	return element.AbsolutePosition.Y + element.AbsoluteSize.Y + hudInset(element)
+end
+
+-- A HUD group's frame in this overlay's space while it is on screen (pages slide the HUD away).
+local function hudRect(path: string, viewport: Vector2): Rect?
+	local element = hudElement(path)
+	if not element then
+		return nil
+	end
+	local minimum = element.AbsolutePosition + Vector2.new(0, hudInset(element))
+	local maximum = minimum + element.AbsoluteSize
+	if maximum.X <= 0 or maximum.Y <= 0 or minimum.X >= viewport.X or minimum.Y >= viewport.Y then
+		return nil
+	end
+	return Rect.new(minimum, maximum)
+end
+
+-- Whether `rect` meets the dialog drawn with this left edge, bottom edge and size.
+local function overlaps(rect: Rect, left: number, bottom: number, width: number, height: number): boolean
+	return rect.Max.X > left and rect.Min.X < left + width and rect.Max.Y > bottom - height and rect.Min.Y < bottom
 end
 
 -- How far the highest visible descendant reaches above `element`'s frame, in pixels.
@@ -613,50 +649,52 @@ local function menuHeaderEdge(): number?
 	return if bottom > 0 then bottom else nil
 end
 
--- Unwrapped width of one line of copy.
-local function lineWidth(text: string, font: Font, size: number): number
+-- Unwrapped width of one line of copy. Copy is measured at its rendered size (reference size times
+-- `scale`) and converted back: text under a UIScale snaps to the font's own sizes, so a
+-- reference-size measure can come out a few percent narrow and wrap a snug line on a phone.
+local function lineWidth(text: string, font: Font, size: number, scale: number): number
 	if text == "" then
 		return 0
 	end
 	local params = Instance.new("GetTextBoundsParams")
 	params.Text = text
 	params.Font = font
-	params.Size = size
+	params.Size = size * scale
 	params.Width = UNWRAPPED_WIDTH
 	params.RichText = true
 	local ok, bounds = pcall(function(): Vector2
 		return TextService:GetTextBoundsAsync(params)
 	end)
-	return if ok then math.ceil(bounds.X) else UNWRAPPED_WIDTH
+	return if ok then math.ceil(bounds.X / scale) else UNWRAPPED_WIDTH
 end
 
 -- Outer width of a plate or badge holding `text`; a failed measurement falls back to an estimate
 -- rather than an absurd width.
-local function pillWidth(text: string): number
+local function pillWidth(text: string, scale: number): number
 	if text == "" then
 		return 0
 	end
-	local width = lineWidth(text, FONT, STYLE.PlateTextSize)
+	local width = lineWidth(text, FONT, STYLE.PlateTextSize, scale)
 	if width >= UNWRAPPED_WIDTH then
 		width = math.ceil((utf8.len(text) or #text) * STYLE.PlateTextSize * 0.7)
 	end
 	return width + PILL_PADDING * 2 + STYLE.Stroke * 2
 end
 
-local function measure(text: string, font: Font, size: number, width: number): number
+local function measure(text: string, font: Font, size: number, width: number, scale: number): number
 	if text == "" then
 		return 0
 	end
 	local params = Instance.new("GetTextBoundsParams")
 	params.Text = text
 	params.Font = font
-	params.Size = size
-	params.Width = width
+	params.Size = size * scale
+	params.Width = width * scale
 	params.RichText = true
 	local ok, bounds = pcall(function(): Vector2
 		return TextService:GetTextBoundsAsync(params)
 	end)
-	return if ok then math.ceil(bounds.Y) else math.ceil(size * 1.25)
+	return if ok then math.ceil(bounds.Y / scale) else math.ceil(size * 1.25)
 end
 
 -- Which mood the mentor shows for a step: a table of goal ids first, then urgent and recovery
@@ -715,9 +753,11 @@ function Dialog.new(acknowledge: (string) -> ()): Dialog
 		Wanted = false,
 		HideAt = nil,
 		Shown = 0,
-		LayoutWidth = 0,
+		LayoutViewport = Vector2.zero,
+		LayoutTouch = false,
 		HopAt = -math.huge,
 		ChangedAt = -math.huge,
+		X = nil,
 		Y = nil,
 		Avoid = nil,
 		HotbarEdge = { Janitor = edgeOwner, Element = nil, Overhang = 0, Dirty = true, Rebind = false },
@@ -885,16 +925,20 @@ function Dialog.Layout(self: Dialog): ()
 	local view = self.View
 	local viewport = viewportSize()
 	local scale = uiScale(viewport)
+	local compact = isCompact(viewport)
 	local widest = dialogWidth(viewport, scale)
-	local portrait = if view.Portrait then view.Portrait.Size.X.Offset else 0
+	local portraitScale = if compact then STYLE.Compact.PortraitScale else 1
+	local portraitSize = if view.Face then PORTRAIT.ImageSize else PORTRAIT.Size
+	local portrait = if view.Portrait then math.floor(portraitSize * portraitScale) else 0
 	local bubbleX = math.floor(portrait * PORTRAIT.BubbleStart)
 	local itemSpace = if view.Item.Visible then STYLE.ItemSize + STYLE.ItemGap else 0
-	-- The mentor leans over the bubble's left edge; the copy starts clear of it.
-	local gap = if view.Face then PORTRAIT.ImageGap else STYLE.PortraitGap
+	-- The mentor leans over the bubble's left edge; the copy starts clear of it. The image gap is
+	-- the art's own transparent margin, so it shrinks with the image.
+	local gap = if view.Face then PORTRAIT.ImageGap * portraitScale else STYLE.PortraitGap
 	local textLeft = math.max(STYLE.Padding.X, portrait - bubbleX + gap)
 	local chrome = bubbleX + textLeft + STYLE.Padding.X + itemSpace
 	local widestText = widest - chrome
-	local key = `{content.Key}@{widestText}`
+	local key = `{content.Key}@{widestText}@{textLeft}@{scale}`
 
 	if self.Measured ~= key then
 		if self.Measuring == key then
@@ -902,15 +946,15 @@ function Dialog.Layout(self: Dialog): ()
 		end
 		self.Measuring = key
 		task.spawn(function(): ()
-			local titleHeight = measure(content.Title, FONT, STYLE.TitleSize, widestText)
-			local hintHeight = measure(content.Hint, HINT_FONT, STYLE.HintSize, widestText)
+			local titleHeight = measure(content.Title, FONT, STYLE.TitleSize, widestText, scale)
+			local hintHeight = measure(content.Hint, HINT_FONT, STYLE.HintSize, widestText, scale)
 			local line = math.max(
-				lineWidth(content.Title, FONT, STYLE.TitleSize),
-				lineWidth(content.Hint, HINT_FONT, STYLE.HintSize)
+				lineWidth(content.Title, FONT, STYLE.TitleSize, scale),
+				lineWidth(content.Hint, HINT_FONT, STYLE.HintSize, scale)
 			)
 			-- The badge and the Done! stamp share the top-right slot; the plate starts at the copy.
-			local slot = math.max(pillWidth(content.Progress or ""), pillWidth(view.Done.Text))
-			local header = textLeft + pillWidth(view.Plate.Text) + HEADER_GAP + slot + STYLE.Padding.X
+			local slot = math.max(pillWidth(content.Progress or "", scale), pillWidth(view.Done.Text, scale))
+			local header = textLeft + pillWidth(view.Plate.Text, scale) + HEADER_GAP + slot + STYLE.Padding.X
 			if self.Measuring ~= key then
 				return
 			end
@@ -921,7 +965,20 @@ function Dialog.Layout(self: Dialog): ()
 		end)
 		return
 	end
-	self.LayoutWidth = widest
+	self.LayoutViewport = viewport
+	local touch = touchInput()
+	self.LayoutTouch = touch
+	if view.Portrait then
+		view.Portrait.Size = UDim2.fromOffset(portrait, portrait)
+	end
+	local touchButton = STYLE.TouchButton
+	local buttonHeight = if touch
+		then math.max(STYLE.ButtonHeight, math.ceil(touchButton.Height / scale))
+		else STYLE.ButtonHeight
+	view.Button.Size = UDim2.fromOffset(0, buttonHeight)
+	view.Button.TextSize = if touch
+		then math.max(STYLE.ButtonTextSize, math.ceil(touchButton.TextSize / scale))
+		else STYLE.ButtonTextSize
 
 	-- A short line gets a snug bubble (text plus its chrome); a long one wraps at the widest.
 	local textWidth = math.min(widestText, self.Heights.Line + SNUG_SLACK)
@@ -933,7 +990,7 @@ function Dialog.Layout(self: Dialog): ()
 	local heights = self.Heights
 	local top = math.ceil(STYLE.PlateHeight * PLATE_INSIDE)
 	local text = heights.Title + (if heights.Hint > 0 then STYLE.LineGap + heights.Hint else 0)
-	local buttonSpace = if view.Button.Visible then STYLE.LineGap * 2 + STYLE.ButtonHeight else 0
+	local buttonSpace = if view.Button.Visible then STYLE.LineGap * 2 + buttonHeight else 0
 	local inner = math.max(text + buttonSpace, if view.Item.Visible then STYLE.ItemSize else 0)
 	local bubbleHeight = math.max(STYLE.MinBubbleHeight, inner + STYLE.Padding.Y * 2 + top)
 	local height = math.max(bubbleHeight + math.ceil(STYLE.PlateHeight / 2), portrait)
@@ -999,7 +1056,7 @@ function Dialog.Step(self: Dialog, deltaTime: number): ()
 
 	-- Appear with a pop; leave with a quick shrink, then switch the screen off.
 	if wanted and self.Shown == 0 then
-		self.Y = nil
+		self.X, self.Y = nil, nil
 	end
 	local rate = deltaTime / (if wanted then STYLE.AppearSeconds else STYLE.ExitSeconds)
 	self.Shown = math.clamp(self.Shown + (if wanted then rate else -rate), 0, 1)
@@ -1015,7 +1072,7 @@ function Dialog.Step(self: Dialog, deltaTime: number): ()
 	local viewport = viewportSize()
 	local scale = uiScale(viewport)
 	view.Scale.Scale = scale
-	if self.LayoutWidth ~= dialogWidth(viewport, scale) then
+	if self.LayoutViewport ~= viewport or self.LayoutTouch ~= touchInput() then
 		self:Layout()
 	end
 	self:Place(deltaTime, viewport, scale)
@@ -1037,43 +1094,55 @@ function Dialog.Boing(self: Dialog, now: number): ()
 		UDim2.new(1, STYLE.Stroke, 1, STYLE.Stroke + STYLE.ShadowDrop - boing.Lift * wave)
 end
 
--- Bottom centre above the hotbar; at the top, below the clock and any page header, when that would
--- cover the target. A target too large to dodge (a page's whole recipe grid) is covered either way,
--- so the bubble then stays at the bottom, clear of the header tabs and Next Day.
+-- Bottom centre above the hotbar (left of, or else above, an order row reaching into that band); at
+-- the top, below the clock and any page header, when that would cover the target. A target too
+-- large to dodge (a page's whole recipe grid) is covered either way, so the bubble then stays at
+-- the bottom, clear of the header tabs and Next Day.
 function Dialog.Place(self: Dialog, deltaTime: number, viewport: Vector2, scale: number): ()
 	local view = self.View
 	local size = view.Root.Size
 	local width, height = size.X.Offset * scale, size.Y.Offset * scale
+	local gap = STYLE.HotbarGap * scale
 	-- The HUD slides off screen while a page is open; then the plain bottom margin applies.
 	local hotbar = hudTop(HOTBAR_PATH, self.HotbarEdge)
 	local onScreen = hotbar ~= nil and hotbar < viewport.Y
-	local bottom = if hotbar and onScreen
-		then hotbar - STYLE.HotbarGap * scale
-		else viewport.Y - STYLE.BottomMargin * scale
-	local avoid = self.Avoid
-	local left = viewport.X / 2 - width / 2
-	local function covers(lowest: number): boolean
-		return avoid ~= nil
-			and avoid.Max.X > left
-			and avoid.Min.X < left + width
-			and avoid.Max.Y > lowest - height
-			and avoid.Min.Y < lowest
+	local bottom = if hotbar and onScreen then hotbar - gap else viewport.Y - STYLE.BottomMargin * scale
+	local centre = viewport.X / 2 - width / 2
+	local left = centre
+	local side = hudRect(SIDE_PATH, viewport)
+	-- The leftmost edge that clears the side buttons beside a dialog with this bottom edge.
+	local function leftLimit(lowest: number): number
+		return if side and side.Max.Y > lowest - height and side.Min.Y < lowest then side.Max.X + gap else gap
 	end
-	local goal = bottom
-	if covers(bottom) then
+	-- The order row shares the bottom band and rises above the hotbar on narrow screens: slide left
+	-- of it while the side buttons leave room, else stack above it.
+	local order = hudRect(ORDER_PATH, viewport)
+	if order and overlaps(order, left, bottom, width, height) then
+		local slid = order.Min.X - gap - width
+		if slid >= leftLimit(bottom) then
+			left = slid
+		else
+			bottom = math.min(bottom, order.Min.Y - gap)
+		end
+	end
+	left = math.max(left, leftLimit(bottom))
+	local avoid = self.Avoid
+	local goalX, goalY = left, bottom
+	if avoid and overlaps(avoid, left, bottom, width, height) then
 		-- The clock slides off screen while a page is open; its off-screen edge must not count.
 		local clock = hudBottom(CLOCK_PATH)
 		local top = if clock and clock > 0 then clock else STYLE.TopFallback * scale
 		top = math.max(top, menuHeaderEdge() or 0)
 		local raised = top + STYLE.TopGap * scale + height
-		if not covers(raised) then
-			goal = raised
+		if not overlaps(avoid, centre, raised, width, height) then
+			goalX, goalY = centre, raised
 		end
 	end
-	local last = self.Y
-	local y = if last then last + (goal - last) * (1 - math.exp(-deltaTime / STYLE.MoveSmoothing)) else goal
-	self.Y = y
-	view.Root.Position = UDim2.fromOffset(viewport.X / 2, y)
+	local blend = 1 - math.exp(-deltaTime / STYLE.MoveSmoothing)
+	local x = if self.X then self.X + (goalX - self.X) * blend else goalX
+	local y = if self.Y then self.Y + (goalY - self.Y) * blend else goalY
+	self.X, self.Y = x, y
+	view.Root.Position = UDim2.fromOffset(x + width / 2, y)
 end
 
 function Dialog.Type(self: Dialog, deltaTime: number, now: number): ()

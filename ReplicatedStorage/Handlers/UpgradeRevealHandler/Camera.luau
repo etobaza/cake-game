@@ -50,7 +50,7 @@ local function screenFraming(camera: CameraObject): Framing
 	local viewport = camera.ViewportSize
 	local card = Metrics.Card(viewport)
 	local bottom = math.clamp(
-		(viewport.Y - card.Height - card.Bottom) / math.max(viewport.Y, 1) - Config.CardGap,
+		(viewport.Y - (card.Height + card.Bottom) * card.Scale) / math.max(viewport.Y, 1) - Config.CardGap,
 		Config.MinCardEdge,
 		Config.MaxCardEdge
 	)

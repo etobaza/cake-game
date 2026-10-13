@@ -8,6 +8,7 @@ local Config = require(Shared.Configs.UpgradeReveal)
 local Ease = require(Shared.UI.Ease)
 local Metrics = require(script.Parent.Metrics)
 local Sparks = require(Shared.UI.Sparks)
+local TextScale = require(Shared.UI.TextScale)
 local Theme = require(Shared.UI.Theme)
 local Upgrades = require(Shared.Configs.Registries.Upgrades)
 
@@ -19,7 +20,10 @@ export type Card = typeof(setmetatable(
 		Root: Frame,
 		Plate: CanvasGroup,
 		Scale: UIScale,
+		-- Screen density from the last layout; the arrival pop multiplies it.
+		Fit: number,
 		Title: TextLabel,
+		TitleLimit: UITextSizeConstraint,
 		Benefit: TextLabel,
 		Tag: TextLabel,
 		Icon: ImageLabel,
@@ -104,8 +108,6 @@ function Card.new(skip: () -> ()): Card
 	local title = label(plate, "Name", tuning.TitleSize, true)
 	title.TextScaled = true
 	local constraint = Instance.new("UITextSizeConstraint")
-	constraint.MinTextSize = tuning.MinTitleSize
-	constraint.MaxTextSize = tuning.TitleSize
 	constraint.Parent = title
 	local benefit = label(plate, "Benefit", tuning.BenefitSize, false)
 	benefit.TextWrapped = true
@@ -133,9 +135,7 @@ function Card.new(skip: () -> ()): Card
 	skipButton.BackgroundTransparency = tuning.SkipTransparency
 	skipButton.TextColor3 = Theme.Colors.Cocoa
 	skipButton.FontFace = Theme.Fonts.ExtraBold
-	skipButton.TextSize = tuning.SkipTextSize
 	skipButton.AutoButtonColor = true
-	skipButton.Size = UDim2.fromOffset(tuning.SkipWidth, tuning.SkipHeight)
 	skipButton.ZIndex = 4
 	round(skipButton, tuning.SkipCorner)
 	skipButton.Parent = plate
@@ -145,7 +145,9 @@ function Card.new(skip: () -> ()): Card
 		Root = root,
 		Plate = plate,
 		Scale = scale,
+		Fit = 1,
 		Title = title,
+		TitleLimit = constraint,
 		Benefit = benefit,
 		Tag = tag,
 		Icon = icon,
@@ -157,7 +159,7 @@ function Card.new(skip: () -> ()): Card
 		Corner = Vector2.zero,
 		TwinklePending = false,
 	}, Card)
-	-- Layout follows the viewport and the skip hint follows the input device; neither runs per frame.
+	-- Layout follows the viewport and the input device (Skip's hint and touch size); neither runs per frame.
 	table.insert(self.Connections, skipButton.Activated:Connect(skip))
 	table.insert(
 		self.Connections,
@@ -169,6 +171,7 @@ function Card.new(skip: () -> ()): Card
 		self.Connections,
 		UserInputService:GetPropertyChangedSignal("PreferredInput"):Connect(function(): ()
 			self:RefreshSkip()
+			self:Layout()
 		end)
 	)
 	self:RefreshSkip()
@@ -198,27 +201,37 @@ function Card.Show(self: Card, id: string, level: number): ()
 	self.TwinklePending = true
 end
 
+--- Lays the receipt out in logical pixels; its UIScale draws them at the screen's density.
 function Card.Layout(self: Card): ()
-	local viewport = self.Root.AbsoluteSize
+	local area = self.Root.AbsoluteSize
 	local tuning = Config.Card
-	local metrics = Metrics.Card(viewport)
-	local width, height = metrics.Width, metrics.Height
+	local metrics = Metrics.Card(area)
+	local scale = metrics.Scale
+	local width, height, drop = metrics.Width, metrics.Height, metrics.Drop
+	local floor = Theme.ScreenScale.MinTextPixels / scale
 	local iconSize = if metrics.Narrow then tuning.NarrowIconSize else tuning.IconSize * metrics.Density
 	local left = iconSize + tuning.TextColumnGap
 	local textInset = -left - tuning.RightPadding
+	self.Fit = scale
+	self.Sparks:SetScale(scale)
 	self.Plate.Size = UDim2.fromOffset(width, height)
-	self.Plate.Position = UDim2.new(0.5, 0, 1, -metrics.Bottom)
-	self.Corner = Vector2.new((viewport.X - width) / 2, viewport.Y - metrics.Bottom - height)
+	self.Plate.Position = UDim2.new(0.5, 0, 1, -metrics.Bottom * scale)
+	self.Corner = Vector2.new((area.X - width * scale) / 2, area.Y - (metrics.Bottom + height) * scale)
 	self.Icon.Size = UDim2.fromOffset(iconSize, iconSize)
-	self.Icon.Position = UDim2.fromOffset(tuning.Padding, (height - iconSize) / 2 - tuning.IconLift)
+	self.Icon.Position = UDim2.fromOffset(tuning.Padding, drop + (height - drop - iconSize) / 2 - tuning.IconLift)
 	self.Tag.Position = UDim2.fromOffset(tuning.Padding, tuning.TagTop)
-	self.Tag.Size = UDim2.new(1, -tuning.SkipWidth - tuning.TagSkipGap, 0, tuning.TagHeight)
-	self.Title.Position = UDim2.fromOffset(left, tuning.TitleTop)
+	self.Tag.Size = UDim2.new(1, -metrics.Skip.X - tuning.TagSkipGap, 0, tuning.TagHeight)
+	self.Tag.TextSize = math.max(tuning.TagSize, floor)
+	self.Title.Position = UDim2.fromOffset(left, tuning.TitleTop + drop)
 	self.Title.Size = UDim2.new(1, textInset, 0, tuning.TitleHeight)
-	self.Benefit.Position = UDim2.fromOffset(left, tuning.BenefitTop)
-	self.Benefit.Size = UDim2.new(1, textInset, 1, -tuning.BenefitTop - tuning.BenefitBottom)
-	self.Benefit.TextSize = math.max(tuning.MinBenefitSize, tuning.BenefitSize * metrics.Density)
+	-- Text constraints count rendered pixels under the receipt's UIScale.
+	TextScale.Bound(self.TitleLimit, math.max(tuning.MinTitleSize, floor), math.max(tuning.TitleSize, floor), scale)
+	self.Benefit.Position = UDim2.fromOffset(left, tuning.BenefitTop + drop)
+	self.Benefit.Size = UDim2.new(1, textInset, 1, -tuning.BenefitTop - drop - tuning.BenefitBottom)
+	self.Benefit.TextSize = math.max(tuning.MinBenefitSize, tuning.BenefitSize * metrics.Density, floor)
 	self.Skip.Position = UDim2.new(1, -tuning.SkipInset.X, 0, tuning.SkipInset.Y)
+	self.Skip.Size = UDim2.fromOffset(metrics.Skip.X, metrics.Skip.Y)
+	self.Skip.TextSize = math.max(tuning.SkipTextSize, floor)
 end
 
 function Card.RefreshSkip(self: Card): ()
@@ -233,11 +246,14 @@ function Card.Step(self: Card, deltaTime: number, age: number, duration: number,
 	local tuning = Config.Card
 	if self.TwinklePending then
 		self.TwinklePending = false
-		self.Sparks:Twinkle(self.Root.AbsolutePosition + self.Corner + tuning.TwinkleOffset, tuning.TwinkleCount)
+		self.Sparks:Twinkle(
+			self.Root.AbsolutePosition + self.Corner + tuning.TwinkleOffset * self.Fit,
+			tuning.TwinkleCount
+		)
 	end
 	local arrive = Ease.OutCubic(age / tuning.EnterSeconds)
-	self.Scale.Scale = tuning.EnterScale
-		+ (1 - tuning.EnterScale) * Ease.OutBack(age / tuning.EnterSeconds, tuning.EnterOvershoot)
+	self.Scale.Scale = self.Fit
+		* (tuning.EnterScale + (1 - tuning.EnterScale) * Ease.OutBack(age / tuning.EnterSeconds, tuning.EnterOvershoot))
 	self.Plate.GroupTransparency = if returning then math.min(age / tuning.ExitSeconds, 1) else 1 - arrive
 	self.Progress.Size = UDim2.fromScale(math.clamp(1 - age / math.max(duration, 0.01), 0, 1), 1)
 	self.Veil.BackgroundTransparency = 1 - math.clamp(veil, 0, 1)

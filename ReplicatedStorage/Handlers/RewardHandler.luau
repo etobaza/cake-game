@@ -147,6 +147,20 @@ local function Claimed(list: any, index: number): boolean
 	return false
 end
 
+-- A ready tile claims from anywhere on it: the authored Claim plate is under 44 pixels tall on
+-- phones. A press on the plate never reaches the tile, so one tap claims once. The plate stays the
+-- gamepad's selection stop.
+local function BindClaim(cell: Frame, claim: GuiObject, callback: () -> ()): ()
+	Animate.Press(claim)
+	Press.BindTap(claim, callback)
+	Press.BindTap(cell, function(): ()
+		if claim.Visible then
+			callback()
+		end
+	end)
+	cell.Selectable = false
+end
+
 --[[ Handling ]]--
 function RewardHandler.OnStart(self: RewardHandler): ()
 	self.Janitor = Janitor.new()
@@ -243,8 +257,7 @@ function RewardHandler.BindDaily(self: RewardHandler): ()
 	for _, cell in self.DailyCells do
 		local claim = cell:FindFirstChild("Claim")
 		if claim and claim:IsA("GuiObject") then
-			Animate.Press(claim)
-			Press.BindTap(claim, function()
+			BindClaim(cell, claim, function()
 				Bus.Progress.ClaimDaily:Fire()
 			end)
 		end
@@ -277,8 +290,7 @@ function RewardHandler.BindPlaytime(self: RewardHandler): ()
 		CenterTimer(cell)
 		local claim = cell:FindFirstChild("ClaimButton")
 		if claim and claim:IsA("GuiObject") then
-			Animate.Press(claim)
-			Press.BindTap(claim, function()
+			BindClaim(cell, claim, function()
 				Bus.Progress.ClaimPlaytime:Fire(index)
 			end)
 		end

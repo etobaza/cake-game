@@ -4,10 +4,10 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local Animate = require(Shared.UI.Animate)
-local HudConfig = require(Shared.Configs.HudLayout)
+local HudLayout = require(Shared.UI.HudLayout)
 local Invite = require(Shared.Configs.Friends).Invite
 local Janitor = require(ReplicatedStorage.Packages.janitor)
-local TextScale = require(Shared.UI.TextScale)
+local Theme = require(Shared.UI.Theme)
 
 local Control = {}
 
@@ -99,15 +99,17 @@ function Control.Bind(currency: GuiObject, hud: GuiObject): (TextButton, any)
 	)
 
 	local function layout(): ()
-		-- Match HudLayout's switch, which also decides the Currency group's compact size.
-		local compact = hud.AbsoluteSize.X < HudConfig.CompactWidth or hud.AbsoluteSize.Y < HudConfig.CompactHeight
-		local scale = if compact then 1 else math.max(1, currency.Size.X.Offset / Invite.DesktopCurrencyWidth)
+		-- HudLayout draws Currency at the HUD density, so its width against the desktop plate is that
+		-- density. Below desktop size the icon shrinks with it; above, it keeps its pixel size.
+		local scale = currency.Size.X.Offset / Invite.DesktopCurrencyWidth
+		local iconScale = math.min(scale, 1)
 		local width = currency.Size.X.Offset
 		local height = currency.Size.Y.Offset
 		local textLeft = width * original.Position.X.Scale + original.Position.X.Offset
 		local top = height * original.Position.Y.Scale + original.Position.Y.Offset
 		local padding = Invite.HitPadding * scale
-		local inlineWidth = Invite.IconSize + Invite.IconGap
+		local iconSize = Invite.IconSize * iconScale
+		local inlineWidth = iconSize + Invite.IconGap * iconScale
 		local currencyLeft = currency.AbsolutePosition.X - hud.AbsolutePosition.X
 		local home = currency:GetAttribute("HomePosition")
 		if typeof(home) == "UDim2" then
@@ -118,15 +120,18 @@ function Control.Bind(currency: GuiObject, hud: GuiObject): (TextButton, any)
 		local available = hud.AbsoluteSize.X - currencyLeft - left - Invite.EdgePadding + padding
 		local rowWidth = math.min(Invite.TextWidth * scale + inlineWidth + padding * 2, available)
 		local rowHeight = Invite.RowHeight * scale
+		-- The hitbox stays a usable touch target around the row's centre line on small screens.
+		local hitHeight = math.max(rowHeight, Theme.ScreenScale.MinTouchPixels)
 		boost.AnchorPoint = Vector2.new(0, 0.5)
 		boost.Position = UDim2.fromOffset(left + inlineWidth, top + rowHeight / 2)
 		boost.Size = UDim2.fromOffset(math.max(1, rowWidth - inlineWidth - padding * 2), Invite.TextHeight * scale)
-		button.Position = UDim2.fromOffset(left - padding, top)
-		button.Size = UDim2.fromOffset(rowWidth, rowHeight)
+		button.Position = UDim2.fromOffset(left - padding, top + (rowHeight - hitHeight) / 2)
+		button.Size = UDim2.fromOffset(rowWidth, hitHeight)
 		icon.Position = UDim2.new(0, padding, 0.5, 0)
-		icon.Size = UDim2.fromOffset(Invite.IconSize, Invite.IconSize)
+		icon.Size = UDim2.fromOffset(iconSize, iconSize)
 		for _, constraint in constraints do
-			TextScale.Bound(constraint, Invite.MinTextSize, Invite.TextSize, scale)
+			constraint.MinTextSize = HudLayout.TextSize(Invite.MinTextSize, scale)
+			constraint.MaxTextSize = HudLayout.TextSize(Invite.TextSize, scale)
 		end
 	end
 	owner:Add(currency:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout), "Disconnect")

@@ -19,6 +19,7 @@ local DataClient = require(_Handlers.DataHandlerClient)
 local Ingredients = require(_Configs.Registries.Ingredients)
 local InteractHandler = require(_Handlers.InteractHandler)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local MixerInteraction = require(_Configs.MixerInteraction)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Recipes = require(_Configs.Registries.Recipes)
 local UIHandler = require(_Handlers.UIHandler)
@@ -48,6 +49,13 @@ function MixHandler.OnStart(self: MixHandler): ()
 	self.Janitor = Janitor.new()
 	self.Accumulator = 0
 	self:BuildBillboard()
+	self:FitBillboard()
+	self.Janitor:Add(
+		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function(): ()
+			self:FitBillboard()
+		end),
+		"Disconnect"
+	)
 
 	DataClient:WaitForData()
 	self:Refresh()
@@ -111,6 +119,8 @@ function MixHandler.BuildBillboard(self: MixHandler): ()
 
 	self.Billboard = billboard
 	self.Janitor:Add(billboard, "Destroy")
+	self.AuthoredSize = billboard.Size
+	self.AuthoredOffset = billboard.StudsOffsetWorldSpace
 	self.BillboardCard = card
 	-- One chip per required unit mirrors the reference: flour x4 becomes four separate flour chips.
 	-- The billboard floats in the world, so its chips press on contact and leave the camera alone.
@@ -124,6 +134,19 @@ function MixHandler.BuildBillboard(self: MixHandler): ()
 	)
 	doneTemplate:Destroy()
 	notDoneTemplate:Destroy()
+end
+
+-- The card is sized in studs; a short screen grows it to the pixel size it has on a
+-- `CardMinViewportHeight` screen. Its bottom edge stays put, so it grows upward, away from the bowl.
+function MixHandler.FitBillboard(self: MixHandler): ()
+	local billboard, size, offset = self.Billboard, self.AuthoredSize, self.AuthoredOffset
+	if not billboard or not size or not offset then
+		return
+	end
+
+	local grow = math.max(1, MixerInteraction.CardMinViewportHeight / workspace.CurrentCamera.ViewportSize.Y)
+	billboard.Size = UDim2.new(size.X.Scale * grow, size.X.Offset, size.Y.Scale * grow, size.Y.Offset)
+	billboard.StudsOffsetWorldSpace = offset + Vector3.new(0, size.Y.Scale * (grow - 1) / 2, 0)
 end
 
 function MixHandler.Refresh(self: MixHandler): ()
@@ -196,6 +219,9 @@ end
 export type MixHandler = typeof(MixHandler) & {
 	Janitor: any,
 	Billboard: BillboardGui?,
+	-- The template's stud size and offset, before FitBillboard grows them for short screens.
+	AuthoredSize: UDim2?,
+	AuthoredOffset: Vector3?,
 	BillboardCard: Frame?,
 	BillboardChips: { IngredientCard.ChipPair },
 	Accumulator: number,

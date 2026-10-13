@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Configs.GuestDining)
 local FoodModel = require(ReplicatedStorage.Shared.FoodModel)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local TextScale = require(ReplicatedStorage.Shared.UI.TextScale)
 local Theme = require(ReplicatedStorage.Shared.UI.Theme)
 local Clearance = require(script.Parent.Clearance)
 local JointPose = require(ReplicatedStorage.Shared.JointPose)
@@ -17,7 +18,10 @@ export type Visual = typeof(setmetatable(
 		Model: Model,
 		Head: BasePart,
 		Janitor: any,
+		Billboard: BillboardGui,
 		Panel: CanvasGroup,
+		Zoom: UIScale,
+		Bar: CanvasGroup,
 		Clip: Frame,
 		Fill: Frame,
 		Label: TextLabel,
@@ -46,19 +50,22 @@ function Visual.new(model: Model, template: CanvasGroup, handClip: JointPose.Cli
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "EatingProgress"
 	billboard.Adornee = head
-	billboard.Size = UDim2.fromOffset(Config.BarSize.X, Config.BarSize.Y)
 	billboard.StudsOffsetWorldSpace = Config.BarOffset
 	billboard.MaxDistance = Config.MaxDistance
 	billboard.AlwaysOnTop = false
 	billboard.LightInfluence = 0
 	billboard.Parent = model
+	-- Laid out once at its configured pixels; Zoom keeps it at a constant world size.
+	local padding = Config.BarPadding
 	local panel = Instance.new("CanvasGroup")
 	panel.Name = "Meal"
-	panel.Size = UDim2.fromScale(1, 1)
+	panel.Size = UDim2.fromOffset(Config.BarSize.X, Config.BarSize.Y)
 	panel.BackgroundColor3 = Theme.Colors.PanelFill
 	panel.BorderSizePixel = 0
 	panel.GroupTransparency = 1
 	panel.Parent = billboard
+	local zoom = Instance.new("UIScale")
+	zoom.Parent = panel
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, Config.CornerRadius)
 	corner.Parent = panel
@@ -69,19 +76,19 @@ function Visual.new(model: Model, template: CanvasGroup, handClip: JointPose.Cli
 	local label = Instance.new("TextLabel")
 	label.Name = "Caption"
 	label.BackgroundTransparency = 1
-	label.Position = UDim2.fromOffset(Config.BarPadding, 0)
-	label.Size = UDim2.new(1, -Config.BarPadding * 2, 1, -Config.BarHeight - Config.BarPadding)
 	label.FontFace = Theme.Fonts.Bold
-	label.TextSize = Config.TextSize
 	label.TextColor3 = Theme.Colors.Cocoa
+	label.TextSize = Config.TextSize
 	label.Text = "Enjoying..."
+	label.Position = UDim2.fromOffset(padding, 0)
+	label.Size = UDim2.new(1, -padding * 2, 1, -Config.BarHeight - padding)
 	label.Parent = panel
 	-- Preserve the order HUD's exact border, mask and striped artwork.
 	local bar = template:Clone()
 	bar.Name = "Progress"
 	bar.AnchorPoint = Vector2.new(0, 1)
-	bar.Position = UDim2.new(0, Config.BarPadding, 1, -Config.BarPadding)
-	bar.Size = UDim2.new(1, -Config.BarPadding * 2, 0, Config.BarHeight)
+	bar.Position = UDim2.new(0, padding, 1, -padding)
+	bar.Size = UDim2.new(1, -padding * 2, 0, Config.BarHeight)
 	bar.Visible = true
 	bar.GroupTransparency = 0
 	bar.Parent = panel
@@ -98,7 +105,10 @@ function Visual.new(model: Model, template: CanvasGroup, handClip: JointPose.Cli
 		HandClip = handClip,
 		Head = head,
 		Janitor = Janitor.new(),
+		Billboard = billboard,
 		Panel = panel,
+		Zoom = zoom,
+		Bar = bar,
 		Clip = clip,
 		Fill = fill,
 		Label = label,
@@ -106,8 +116,23 @@ function Visual.new(model: Model, template: CanvasGroup, handClip: JointPose.Cli
 		NextHeadScanAt = 0,
 		PoseStartedAt = 0,
 	}, Visual)
+	self:SetScale(self:WorldScale(workspace.CurrentCamera))
 	self.Janitor:Add(billboard, "Destroy")
 	return self
+end
+
+-- The card keeps a constant world size, so it shrinks with distance like its guest.
+function Visual.WorldScale(self: Visual, camera: Camera): number
+	return TextScale.World(camera, self.Head.Position + Config.BarOffset)
+end
+
+function Visual.FitWorld(self: Visual, camera: Camera): ()
+	self:SetScale(self:WorldScale(camera))
+end
+
+function Visual.SetScale(self: Visual, scale: number): ()
+	self.Zoom.Scale = scale
+	self.Billboard.Size = UDim2.fromOffset(Config.BarSize.X * scale, Config.BarSize.Y * scale)
 end
 
 function Visual.BindFood(self: Visual, now: number): ()

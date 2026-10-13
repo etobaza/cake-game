@@ -17,7 +17,8 @@ return {
 	-- The first order card stays in focus until the player taps it; this is only the fallback for
 	-- players who cannot tap it (gamepad).
 	OrderPreviewSeconds = 20,
-	-- Extra room around the order card's spotlight, in pixels.
+	-- Extra room around the order card's spotlight, in pixels at the reference canvas (Hint scales
+	-- it down on smaller screens).
 	OrderFocusPadding = 22,
 	SuccessSeconds = 4,
 	RefreshInterval = 0.15,
@@ -42,19 +43,29 @@ return {
 	},
 	-- The guide's speech bubble (Shared/UI/Tutorial/Dialog): a cat mentor at the bottom of the
 	-- screen whose bubble stays up for as long as its step is active. Sizes are reference pixels at
-	-- `ReferenceHeight`; one UIScale follows the viewport height.
+	-- `ReferenceHeight`; one UIScale follows the viewport's shorter side.
 	Dialog = {
 		-- Above the hint overlay's dim (55), so the step text is never darkened.
 		DisplayOrder = 56,
 		ReferenceHeight = 900,
+		-- Legibility floor: the speaker plate's text stays above 10 rendered pixels.
 		MinScale = 0.62,
 		MaxScale = 1.35,
 		Width = 600,
 		MinWidth = 320,
 		-- Share of the viewport width the whole dialog may use.
 		WidthRatio = 0.62,
-		-- Gap above the hotbar, and the bottom margin when no hotbar is found.
-		-- Room between the bubble (and its drop shadow) and the hotbar's highest drawn element.
+		-- Where MinScale binds (phones) the dialog would take a larger share of the screen than on a
+		-- desktop, so a smaller mentor and a narrower bubble keep it in the bottom band.
+		Compact = {
+			PortraitScale = 0.67,
+			Width = 480,
+		},
+		-- Rendered pixels the Got it button keeps at any scale while touch is the input.
+		TouchButton = { Height = 44, TextSize = 16 },
+		-- Room between the bubble (and its drop shadow) and the hotbar's highest drawn element; on a
+		-- portrait phone it also keeps the bubble above the thumbstick and jump button beside the
+		-- hotbar. BottomMargin applies when no hotbar is on screen.
 		HotbarGap = 28,
 		BottomMargin = 110,
 		-- Gap below the clock when the dialog moves to the top to clear its own target.

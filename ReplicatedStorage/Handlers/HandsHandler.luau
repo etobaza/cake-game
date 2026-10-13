@@ -18,10 +18,10 @@ local Animate = require(_Shared.UI.Animate)
 local BaseStats = require(_Configs.BaseStats)
 local Buildings = require(_Configs.Buildings)
 local DataClient = require(_Handlers.DataHandlerClient)
+local HudLayout = require(_Shared.UI.HudLayout)
 local Ingredients = require(_Configs.Registries.Ingredients)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Recipes = require(_Configs.Registries.Recipes)
-local TextScale = require(_Shared.UI.TextScale)
 local UIHandler = require(_Handlers.UIHandler)
 
 --[[ Constants ]]
@@ -114,8 +114,8 @@ local function FitNameLabel(label: TextLabel, scale: number): ()
 	label.LineHeight = 1
 	local constraint = label:FindFirstChildOfClass("UITextSizeConstraint") or Instance.new("UITextSizeConstraint")
 	constraint.Parent = label
-	constraint.MinTextSize = math.floor(NAME_MIN_TEXT_SIZE * scale + 0.5)
-	constraint.MaxTextSize = math.floor(NAME_MAX_TEXT_SIZE * scale + 0.5)
+	constraint.MinTextSize = HudLayout.TextSize(NAME_MIN_TEXT_SIZE, scale)
+	constraint.MaxTextSize = HudLayout.TextSize(NAME_MAX_TEXT_SIZE, scale)
 end
 
 local function FindNameLabel(slot: Frame): TextLabel?
@@ -218,7 +218,8 @@ function HandsHandler.ResolveSlots(self: HandsHandler): { Slot }
 		end)
 	end
 	local function refreshNames(): ()
-		local scale = TextScale.Get(UIHandler.Hud.AbsoluteSize)
+		-- The hotbar's own density, so its name text shrinks and grows with the slot.
+		local scale = HudLayout.Scale(UIHandler.Hud.AbsoluteSize)
 		for _, slot in slots do
 			slot.Name.Size = UDim2.new(1, -NAME_INSET * scale, 0, NAME_HEIGHT * scale)
 			slot.Name.Position = UDim2.new(0.5, 0, 1, -NAME_BOTTOM * scale)

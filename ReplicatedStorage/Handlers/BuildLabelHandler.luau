@@ -11,6 +11,7 @@ local RunService = game:GetService("RunService")
 
 --[[ Modules ]]--
 local Config = require(ReplicatedStorage.Shared.Configs.BuildLabel)
+local TextScale = require(ReplicatedStorage.Shared.UI.TextScale)
 local Theme = require(ReplicatedStorage.Shared.UI.Theme)
 
 --[[ Constants ]]--
@@ -51,11 +52,8 @@ function BuildLabelHandler.OnStart(_self: BuildLabelHandler): ()
 	label.Active = false
 	label.Selectable = false
 	label.AnchorPoint = Vector2.new(0, 1)
-	label.Position = UDim2.new(0, Config.Offset.X, 1, -Config.Offset.Y)
-	label.Size = UDim2.fromOffset(Config.Size.X, Config.Size.Y)
 	label.BackgroundTransparency = 1
 	label.FontFace = Theme.Fonts.SemiBold
-	label.TextSize = Config.TextSize
 	label.TextColor3 = Config.TextColor
 	label.TextTransparency = Config.TextTransparency
 	label.TextXAlignment = Enum.TextXAlignment.Left
@@ -69,6 +67,18 @@ function BuildLabelHandler.OnStart(_self: BuildLabelHandler): ()
 
 	label.Parent = gui
 	gui.Parent = playerGui
+
+	-- The connection goes with the label's ScreenGui.
+	local function layout(): ()
+		local scale = TextScale.Screen(gui.AbsoluteSize)
+		local textSize = math.max(Theme.ScreenScale.MinTextPixels, Config.TextSize * scale)
+		local box = Config.Size * textSize / Config.TextSize
+		label.TextSize = textSize
+		label.Size = UDim2.fromOffset(box.X, box.Y)
+		label.Position = UDim2.new(0, Config.Offset.X * scale, 1, -Config.Offset.Y * scale)
+	end
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
+	layout()
 end
 
 export type BuildLabelHandler = typeof(BuildLabelHandler)

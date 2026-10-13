@@ -28,7 +28,7 @@ local Friends = {
 		TextWidth = 184,
 		TextSize = 20,
 		MinTextSize = 14,
-		-- The Currency group's unscaled desktop width (HudLayout); wider groups scale the row up.
+		-- The Currency group's unscaled desktop width (HudLayout); the row scales with Currency's width against it.
 		DesktopCurrencyWidth = 250,
 	},
 }

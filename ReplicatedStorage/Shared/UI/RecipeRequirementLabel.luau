@@ -18,6 +18,13 @@ function RecipeRequirementLabel.Create(parent: GuiObject, row: boolean): TextLab
 	label.AnchorPoint = Vector2.new(0.5, 0.5)
 	label.Position = style.Position
 	label.Size = style.Size
+	if row then
+		-- Responsive switches the caption with its row's wide and compact geometry.
+		label:SetAttribute("WidePosition", Config.Row.Position)
+		label:SetAttribute("WideSize", Config.Row.Size)
+		label:SetAttribute("CompactPosition", Config.Row.CompactPosition)
+		label:SetAttribute("CompactSize", Config.Row.CompactSize)
+	end
 	label.BackgroundTransparency = 1
 	label.FontFace = Theme.Fonts.Bold
 	label.TextColor3 = Theme.Colors.TextFace

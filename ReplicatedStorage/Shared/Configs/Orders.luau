@@ -19,9 +19,12 @@ return {
 	ProgressSteps = 100,
 	RefreshInterval = 0.25,
 	PonderInterval = 0.5,
+	-- Logical sizes drawn at the HUD's screen density (Shared/UI/HudLayout), capped at MaxScale.
 	Layout = {
-		Compact = { CardWidth = 112, Height = 160, LabelWidth = 52, Edge = 8 },
-		Wide = { CardWidth = 124, Height = 180, LabelWidth = 64, Edge = 16 },
+		CardWidth = 124,
+		Height = 180,
+		LabelWidth = 64,
+		Edge = 16,
 		MaxScale = 1.4,
 		CardGap = 6,
 		ContentPadding = 5,
@@ -32,19 +35,23 @@ return {
 		Appear = 0.55,
 		Placed = 1.25,
 	},
-	-- Speech bubble over each of the owner's seated guests (GuestOrderHandler). Sizes are pixels.
+	-- Speech bubble over each of the owner's seated guests (GuestOrderHandler). Sizes are layout pixels
+	-- drawn at a constant world size (Theme.WorldScale), so the bubble shrinks with distance like its guest.
 	Bubble = {
 		-- States that show a bubble; Arriving and Eating guests have their own cues.
 		States = { Queued = true, Choosing = true, Waiting = true } :: { [string]: boolean },
-		Width = 168,
+		-- Captions never wrap (the renderer would re-wrap them as the bubble scales), so the width fits
+		-- the longest dish name (Blueberry Cheesecake, 158 pixels at TextSize) with room for the font
+		-- snapping a UIScale causes.
+		Width = 190,
 		Padding = 6,
 		IconSize = 44,
 		IconGap = 4,
 		MaxIcons = 3,
 		CaptionHeight = 44,
-		CaptionHeightPerDish = 40,
+		-- One caption line per dish.
+		LineHeight = 22,
 		TextSize = 18,
-		MinTextSize = 16,
 		PonderSize = 36,
 		BarHeight = 10,
 		CornerRadius = 10,
@@ -71,8 +78,8 @@ return {
 	},
 	-- Status line drawn over the top of each order card (OrderHandler/Card): what the guest needs
 	-- next, coloured by urgency. Heights and slot placement are shares of the card; text sizes are
-	-- pixels. A two-line status (several dishes) takes the Multiple values and pushes the authored
-	-- slot (number and dish art) further down.
+	-- logical pixels at the cards' density. A two-line status (several dishes) takes the Multiple
+	-- values and pushes the authored slot (number and dish art) further down.
 	CardStatus = {
 		Height = 0.32,
 		MultipleHeight = 0.45,
@@ -123,6 +130,7 @@ return {
 		-- Plate, face and lettering stack upward from this ZIndex, above the row's art.
 		ZIndex = 10,
 	},
+	-- Logical pixels at the cards' density, like the status text.
 	TooltipWidth = 300,
 	TooltipHeight = 88,
 	TooltipGap = 8,

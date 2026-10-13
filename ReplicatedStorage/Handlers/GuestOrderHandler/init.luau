@@ -19,6 +19,7 @@ local DataClient = require(_Handlers.DataHandlerClient)
 local GuestOrders = require(_Shared.GuestOrders)
 local Guests = require(_Shared.Configs.Guests)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local TextScale = require(_Shared.UI.TextScale)
 local UIHandler = require(_Handlers.UIHandler)
 local World = require(_Shared.World)
 
@@ -41,12 +42,22 @@ local function findGuests(userId: number): Instance?
 	return nil
 end
 
+local function worldScale(head: BasePart): number
+	return TextScale.World(workspace.CurrentCamera, head.Position + Config.Bubble.Offset)
+end
+
 --[[ Handling ]]--
 function GuestOrderHandler.OnStart(self: GuestOrderHandler): ()
 	self.Janitor = Janitor.new()
 	self.Bubbles = {}
 	self.Accumulator = 0
 	self.UserId = Players.LocalPlayer.UserId
+	self.Janitor:Add(
+		RunService.PreRender:Connect(function(): ()
+			self:FitWorld()
+		end),
+		"Disconnect"
+	)
 	local order = UIHandler:GetHud("Order")
 	local bar = order:FindFirstChild("Bar", true)
 	assert(bar and bar:IsA("CanvasGroup"), "[GuestOrderHandler] Order HUD has no Bar CanvasGroup")
@@ -88,6 +99,13 @@ function GuestOrderHandler.Remove(self: GuestOrderHandler, customerId: string): 
 	end
 end
 
+-- Bubbles keep a constant world size, so each follows its guest's distance from the camera.
+function GuestOrderHandler.FitWorld(self: GuestOrderHandler): ()
+	for _, bubble in self.Bubbles do
+		bubble:SetScale(worldScale(bubble.Head))
+	end
+end
+
 function GuestOrderHandler.Refresh(self: GuestOrderHandler): ()
 	local customers = DataClient:GetData({ "Customers" }, "Session") or {}
 	local folder = findGuests(self.UserId)
@@ -110,7 +128,7 @@ function GuestOrderHandler.Refresh(self: GuestOrderHandler): ()
 			self:Remove(customerId)
 		end
 		if not self.Bubbles[customerId] then
-			self.Bubbles[customerId] = Bubble.new(model, head, self.BarTemplate)
+			self.Bubbles[customerId] = Bubble.new(model, head, self.BarTemplate, worldScale(head))
 		end
 		shown[customerId] = true
 

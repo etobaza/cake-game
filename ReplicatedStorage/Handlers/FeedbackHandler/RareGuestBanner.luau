@@ -5,7 +5,8 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
-local Config = require(Shared.Configs.Feedback).RareGuest
+local Feedback = require(Shared.Configs.Feedback)
+local Config = Feedback.RareGuest
 local CustomerTypes = require(Shared.Configs.Registries.CustomerTypes)
 local Ease = require(Shared.UI.Ease)
 local SoundPlayer = require(Shared.SoundPlayer)
@@ -14,6 +15,14 @@ local Theme = require(Shared.UI.Theme)
 
 type Notice = { GuestId: string, TypeId: string, ExpiresAt: number }
 type Chip = { Frame: Frame, Label: TextLabel, Stroke: UIStroke, Scale: UIScale }
+-- Centre row and scale for a banner reaching `above` and `below` its centre at design size.
+type Place = (anchor: number, above: number, below: number) -> (number, number)
+
+-- The tag pill straddles the top edge and the shadow plate drops below the card.
+local TAG_HEIGHT = 28
+local SHADOW_DROP = 6
+-- Pixels kept clear on each side of a narrow screen.
+local SIDE_MARGIN = 12
 
 local RareGuestBanner = {}
 RareGuestBanner.__index = RareGuestBanner
@@ -22,7 +31,10 @@ export type RareGuestBanner = typeof(setmetatable(
 	{} :: {
 		Root: Frame,
 		Scale: UIScale,
+		Place: Place,
+		Fit: number,
 		Title: TextLabel,
+		TitleLimit: UITextSizeConstraint,
 		Tag: Frame,
 		Stars: { ImageLabel },
 		TipChip: Chip,
@@ -123,7 +135,7 @@ local function shade(color: Color3): Color3
 	return color:Lerp(Color3.new(0, 0, 0), 0.35)
 end
 
-function RareGuestBanner.new(parent: GuiObject): RareGuestBanner
+function RareGuestBanner.new(parent: GuiObject, place: Place): RareGuestBanner
 	local root = Instance.new("Frame")
 	root.Name = "RareGuestBanner"
 	root.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -136,7 +148,7 @@ function RareGuestBanner.new(parent: GuiObject): RareGuestBanner
 	scale.Parent = root
 
 	local shadow = plate(root, "Shadow", 1)
-	shadow.Position = UDim2.fromOffset(0, 6)
+	shadow.Position = UDim2.fromOffset(0, SHADOW_DROP)
 	shadow.BackgroundColor3 = Config.ShadowColor
 	shadow.BackgroundTransparency = 0.55
 	corner(shadow, UDim.new(0, Config.Corner))
@@ -183,9 +195,8 @@ function RareGuestBanner.new(parent: GuiObject): RareGuestBanner
 	title.ZIndex = 6
 	gradient(title, Config.TitleTop, Config.TitleBottom)
 	stroke(title, Config.TitleStroke, 3)
+	-- Bound per notice: the constraint counts rendered pixels under the card's UIScale.
 	local limit = Instance.new("UITextSizeConstraint")
-	-- The card's UIScale handles density, so the logical sizes apply unscaled.
-	TextScale.Bound(limit, Config.TitleMinTextSize, Config.TitleTextSize, 1)
 	limit.Parent = title
 	title.Parent = card
 
@@ -208,7 +219,7 @@ function RareGuestBanner.new(parent: GuiObject): RareGuestBanner
 	tipChip.Frame.BackgroundColor3 = Config.TipChip
 	tipChip.Stroke.Color = Theme.Colors.Gold
 
-	local tag, tagLabel = pill(root, "Tag", 28, 16, 7)
+	local tag, tagLabel = pill(root, "Tag", TAG_HEIGHT, 16, 7)
 	tag.AnchorPoint = Vector2.new(0.5, 0.5)
 	tag.Position = UDim2.fromScale(0.5, 0)
 	tag.BackgroundColor3 = Theme.Colors.PanelEdge
@@ -218,7 +229,10 @@ function RareGuestBanner.new(parent: GuiObject): RareGuestBanner
 	return setmetatable({
 		Root = root,
 		Scale = scale,
+		Place = place,
+		Fit = 1,
 		Title = title,
+		TitleLimit = limit,
 		Tag = tag,
 		Stars = { star(card, UDim.new(0, Config.StarInset)), star(card, UDim.new(1, -Config.StarInset)) },
 		TipChip = tipChip,
@@ -247,13 +261,7 @@ function RareGuestBanner.Push(self: RareGuestBanner, guestId: string, typeId: st
 	table.insert(self.Queue, { GuestId = guestId, TypeId = typeId, ExpiresAt = os.clock() + Config.QueueSeconds })
 end
 
-function RareGuestBanner.Step(
-	self: RareGuestBanner,
-	now: number,
-	scale: number,
-	blocked: boolean,
-	exists: (string) -> boolean
-): ()
+function RareGuestBanner.Step(self: RareGuestBanner, now: number, blocked: boolean, exists: (string) -> boolean): ()
 	local elapsed = now - self.LastAt
 	self.LastAt = now
 	for index = #self.Queue, 1, -1 do
@@ -290,6 +298,7 @@ function RareGuestBanner.Step(
 				)
 				self.DishChip.Frame.BackgroundColor3 = entry.color
 				self.DishChip.Stroke.Color = shade(entry.color)
+				self:Layout()
 				SoundPlayer.Play(Config.Sound)
 			end
 			break
@@ -306,9 +315,7 @@ function RareGuestBanner.Step(
 	end
 
 	local age = self.Age
-	local camera = workspace.CurrentCamera
-	local fit = if camera then math.min(scale, (camera.ViewportSize.X - 24) / Config.Width) else scale
-	self.Scale.Scale = math.max(0, fit)
+	self.Scale.Scale = self.Fit
 		* Ease.OutBack(age / Config.PopSeconds)
 		* (1 - Ease.Clamp((age - Config.Seconds) / Config.ExitSeconds))
 	for index, item in { self.TipChip, self.DishChip } do
@@ -320,6 +327,23 @@ function RareGuestBanner.Step(
 	self.Stars[2].Rotation = sway
 	local sweep = Ease.OutCubic((age - Config.PopSeconds) / Config.ShineSeconds)
 	self.Shine.Offset = Vector2.new(-1 + 2 * sweep, 0)
+end
+
+-- Sizes and rows the card for the notice it is about to show.
+function RareGuestBanner.Layout(self: RareGuestBanner): ()
+	local center, scale =
+		self.Place(Config.Anchor.Y, Config.Height / 2 + TAG_HEIGHT / 2, Config.Height / 2 + SHADOW_DROP)
+	local parent = self.Root.Parent :: GuiObject
+	local fit = math.min(scale, (parent.AbsoluteSize.X - SIDE_MARGIN * 2) / Config.Width)
+	self.Fit = fit
+	self.Root.Position = UDim2.new(Config.Anchor.X, 0, 0, center)
+	local floor = Theme.ScreenScale.MinTextPixels / fit
+	TextScale.Bound(
+		self.TitleLimit,
+		math.max(Config.TitleMinTextSize, floor),
+		math.max(Config.TitleTextSize, floor),
+		fit
+	)
 end
 
 function RareGuestBanner.Destroy(self: RareGuestBanner): ()

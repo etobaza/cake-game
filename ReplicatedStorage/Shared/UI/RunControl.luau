@@ -1,5 +1,6 @@
 --!strict
--- Fits the authored sprint button beside the live Roblox touch jump control.
+-- Fits the authored sprint button beside the live Roblox touch jump control and publishes the
+-- screen corner the pair covers.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -39,22 +40,30 @@ function RunControl.Bind(button: TextButton, playerGui: PlayerGui): Janitor.Jani
 	stroke.Color = Config.Light
 	stroke.Transparency = Config.IdleTransparency
 	RunControl.SetRunning(button, false)
-	button:SetAttribute("TouchLayoutReady", false)
+
+	-- TouchReserve is the bottom-right area the visible jump and run controls cover, measured from
+	-- the container's bottom-right corner; HudLayout keeps HUD groups out of it.
+	local function publish(reserve: Vector2?): ()
+		button:SetAttribute("TouchLayoutReady", reserve ~= nil)
+		button:SetAttribute("TouchReserve", reserve)
+	end
+	publish(nil)
 
 	local function update(): ()
 		local target = jump
 		local bounds = container.AbsoluteSize
 		if not target or not target:IsDescendantOf(playerGui) or bounds.X <= 0 or bounds.Y <= 0 then
-			button:SetAttribute("TouchLayoutReady", false)
+			publish(nil)
 			return
 		end
 		local size = target.AbsoluteSize
 		local side = math.min(size.X, size.Y)
 		if side <= 0 then
-			button:SetAttribute("TouchLayoutReady", false)
+			publish(nil)
 			return
 		end
-		local center = target.AbsolutePosition + size / 2 - container.AbsolutePosition
+		local jumpCorner = target.AbsolutePosition - container.AbsolutePosition
+		local center = jumpCorner + size / 2
 		local offset = side + Config.Gap
 		-- Phones keep the central hotbar free; tablets have room for a horizontal pair.
 		center -= if side <= Config.SmallButtonThreshold then Vector2.new(0, offset) else Vector2.new(offset, 0)
@@ -65,15 +74,14 @@ function RunControl.Bind(button: TextButton, playerGui: PlayerGui): Janitor.Jani
 		button.TextSize = side * Config.TextSize
 		local touchGui = target:FindFirstAncestorWhichIsA("ScreenGui")
 		local targetParent = target.Parent
-		button:SetAttribute(
-			"TouchLayoutReady",
-			target.Visible
-				and touchGui ~= nil
-				and touchGui.Enabled
-				and targetParent ~= nil
-				and targetParent:IsA("GuiObject")
-				and targetParent.Visible
-		)
+		local ready = target.Visible
+			and touchGui ~= nil
+			and touchGui.Enabled
+			and targetParent ~= nil
+			and targetParent:IsA("GuiObject")
+			and targetParent.Visible
+		local topLeft = jumpCorner:Min(center - Vector2.one * diameter / 2)
+		publish(if ready then bounds - topLeft else nil)
 	end
 
 	local function findJump(): ()

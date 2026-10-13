@@ -1,5 +1,6 @@
 --!strict
 -- Pixel geometry for the existing Assets.Prompt artwork; world anchoring stays in PromptHandler.
+-- Sizes are pixels on the 1280 by 720 reference screen, scaled by TextScale.Screen (0.6 on phones).
 
 return {
 	CompactWidth = 700,

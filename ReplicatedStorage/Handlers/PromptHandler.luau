@@ -32,6 +32,7 @@ local PromptConfig = require(_Configs.Prompts)
 local Scope = require(_Shared.UI.Scope)
 local StationStatusConfig = require(_Configs.StationStatus)
 local TextScale = require(_Shared.UI.TextScale)
+local Theme = require(_Shared.UI.Theme)
 local WorldPose = require(_Shared.WorldPose)
 
 --[[ Constants ]]--
@@ -91,14 +92,6 @@ local function bindLayout(billboard: BillboardGui, root: Frame): any
 			holder.Size = geometry.Size
 		end
 	end
-	for _, child in root:GetChildren() do
-		if child:IsA("ImageLabel") and string.sub(child.Name, 1, 4) == "Icon" then
-			child.AnchorPoint = Vector2.new(0.5, 0.5)
-			child.Position = PromptConfig.IconPosition
-			child.Size = UDim2.fromOffset(PromptConfig.IconSize, PromptConfig.IconSize)
-			child.ScaleType = Enum.ScaleType.Fit
-		end
-	end
 	local function update(): ()
 		local camera = workspace.CurrentCamera
 		local viewport = if camera then camera.ViewportSize else Vector2.zero
@@ -106,8 +99,12 @@ local function bindLayout(billboard: BillboardGui, root: Frame): any
 		local status = billboard:GetAttribute("StatusOnly") == true
 		local dimensions = if status then PromptConfig.StatusSize
 			else if compact then PromptConfig.CompactSize else PromptConfig.WideSize
-		local scale = math.min(TextScale.Get(viewport), PromptConfig.MaximumScale)
-		-- Fixed pixels preserve distance stability without inflating proximity plates on large screens.
+		-- Fixed pixels preserve distance stability; the screen density keeps the plate's share of a phone
+		-- screen, and a plate the player can press stays tall enough to tap.
+		local scale = TextScale.Screen(viewport, PromptConfig.MaximumScale)
+		if not status then
+			scale = math.max(scale, Theme.ScreenScale.MinTouchPixels / dimensions.Y)
+		end
 		local width = math.min(dimensions.X * scale, math.max(1, viewport.X - PromptConfig.EdgePadding * 2))
 		billboard.Size = UDim2.fromOffset(width, dimensions.Y * scale)
 		local aspect = root:FindFirstChildOfClass("UIAspectRatioConstraint")
@@ -115,6 +112,14 @@ local function bindLayout(billboard: BillboardGui, root: Frame): any
 			aspect.AspectRatio = width / (dimensions.Y * scale)
 		end
 		Animate.SetLayoutScale(root, 1)
+		for _, child in root:GetChildren() do
+			if child:IsA("ImageLabel") and string.sub(child.Name, 1, 4) == "Icon" then
+				child.AnchorPoint = Vector2.new(0.5, 0.5)
+				child.Position = PromptConfig.IconPosition
+				child.Size = UDim2.fromOffset(PromptConfig.IconSize * scale, PromptConfig.IconSize * scale)
+				child.ScaleType = Enum.ScaleType.Fit
+			end
+		end
 		local name = root:FindFirstChild("Name")
 		for _, label in root:GetDescendants() do
 			if not label:IsA("TextLabel") then

@@ -149,9 +149,11 @@ local AdminAbuse = {
 		Title = "ADMIN ABUSE",
 		StartingText = "Starting in %d...",
 		LiveText = "Golden guests x5 • Cupcake rain • %s left",
-		-- Below the day sign at the top of the HUD.
-		Position = UDim2.new(0.5, 0, 0, 120),
+		-- Centred just below the HUD clock (FeedbackHandler's banner band). Pixel sizes here are drawn
+		-- at TextScale.Screen density; the card never reaches closer than SideMargin to either screen
+		-- edge, and its text never renders below `Theme.ScreenScale.MinTextPixels`.
 		Width = 560,
+		SideMargin = 16,
 		DisplayOrder = 30,
 		Accent = Color3.fromRGB(255, 196, 64),
 		-- Card look, in pixels where it is a size.

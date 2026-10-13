@@ -1,34 +1,46 @@
 --!strict
--- Fits the authored order ribbon to its visible cards and keeps it clear of the hotbar.
+-- Fits the authored order ribbon to its visible cards and keeps it clear of the hotbar and the
+-- touch jump/run controls.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Configs.Orders)
 
+-- A row sized for N cards at a fractional density must still count N cards (3.0 can be 2.9999).
+local SLOT_TOLERANCE = 1e-6
+
 local OrderLayout = {}
 
-function OrderLayout.Apply(hud: GuiObject, compact: boolean, hudScale: number): ()
+--- `touchReserve` is the bottom-right area the touch controls cover, measured from the HUD's
+--- bottom-right corner (RunControl), or nil without touch controls.
+function OrderLayout.Apply(hud: GuiObject, hudScale: number, touchReserve: Vector2?): ()
 	local root = hud:FindFirstChild("Order")
 	local hotbar = hud:FindFirstChild("Hotbar")
 	if not root or not root:IsA("GuiObject") or not hotbar or not hotbar:IsA("GuiObject") then
 		return
 	end
 
-	local config = Config.Layout
-	local layout = if compact then config.Compact else config.Wide
-	local scale = math.min(hudScale, config.MaxScale)
+	local layout = Config.Layout
+	local scale = math.min(hudScale, layout.MaxScale)
 	local count = math.clamp((root:GetAttribute("OrderCount") :: number?) or 1, 1, Config.Slots)
 	local edge = layout.Edge * scale
+	local gap = layout.HotbarGap * scale
+	-- The controls reach the bottom edge, so a row at the bottom always stays left of them.
+	local right = if touchReserve then math.max(edge, touchReserve.X + gap) else edge
 	local desiredWidth = (count * layout.CardWidth + layout.LabelWidth) * scale
-	local width = math.min(desiredWidth, math.max(1, hud.AbsoluteSize.X - edge * 2))
+	local width = math.min(desiredWidth, math.max(1, hud.AbsoluteSize.X - edge - right))
 	local height = layout.Height * scale
-	local gap = config.HotbarGap * scale
 	local hotbarHome = (hotbar:GetAttribute("HomePosition") :: UDim2?) or hotbar.Position
 	local hotbarRight = hud.AbsoluteSize.X * hotbarHome.X.Scale + hotbarHome.X.Offset
 		+ hotbar.Size.X.Offset * (1 - hotbar.AnchorPoint.X)
 	local bottom = edge
-	-- A full row moves above the centered hotbar instead of crossing it.
-	if hud.AbsoluteSize.X - edge - width < hotbarRight + gap then
+	local besideHotbar = hud.AbsoluteSize.X - right - hotbarRight - gap
+	if touchReserve and besideHotbar >= (layout.CardWidth + layout.LabelWidth) * scale then
+		-- Between the hotbar and the touch controls the row scrolls instead of rising into the
+		-- short play view, where it would cover quests and the XP toast.
+		width = math.min(width, besideHotbar)
+	elseif hud.AbsoluteSize.X - right - width < hotbarRight + gap then
+		-- A full row moves above the centered hotbar instead of crossing it.
 		bottom = math.max(bottom, -hotbarHome.Y.Offset + hotbar.Size.Y.Offset + gap)
 	end
 	local availableWidth = width
@@ -41,20 +53,21 @@ function OrderLayout.Apply(hud: GuiObject, compact: boolean, hudScale: number): 
 		local top = hud.AbsoluteSize.Y * home.Y.Scale + home.Y.Offset - group.Size.Y.Offset * group.AnchorPoint.Y
 		local orderBottom = hud.AbsoluteSize.Y - bottom
 		if orderBottom > top and orderBottom - height < top + group.Size.Y.Offset then
-			local right = hud.AbsoluteSize.X * home.X.Scale + home.X.Offset
+			local groupRight = hud.AbsoluteSize.X * home.X.Scale + home.X.Offset
 				+ group.Size.X.Offset * (1 - group.AnchorPoint.X)
-			availableWidth = math.min(availableWidth, math.max(1, hud.AbsoluteSize.X - edge - right - gap))
+			availableWidth = math.min(availableWidth, math.max(1, hud.AbsoluteSize.X - right - groupRight - gap))
 		end
 	end
 	-- Short portrait screens can share a row with the side buttons. Keep usable
 	-- card widths there by scrolling fewer slots, rather than squeezing four cards.
-	local slots = math.clamp(math.floor((availableWidth / scale - layout.LabelWidth) / layout.CardWidth), 1, count)
+	local fit = (availableWidth / scale - layout.LabelWidth) / layout.CardWidth
+	local slots = math.clamp(math.floor(fit + SLOT_TOLERANCE), 1, count)
 	width = math.min(availableWidth, (slots * layout.CardWidth + layout.LabelWidth) * scale)
 
 	root.AnchorPoint = Vector2.one
 	root.Size = UDim2.fromOffset(width, height)
 	root:SetAttribute("VisibleOrderSlots", slots)
-	root:SetAttribute("HomePosition", UDim2.new(1, -edge, 1, -bottom))
+	root:SetAttribute("HomePosition", UDim2.new(1, -right, 1, -bottom))
 
 	local labelWidth = math.min(layout.LabelWidth * scale, width / 2)
 	local container = root:FindFirstChild("Container")

@@ -103,4 +103,14 @@ return {
 	ConfirmationSeconds = 30,
 	AccessAttribute = "AdminPanelAccess",
 	DisplayOrder = 100,
+	-- The panel toggle sits at the right end of Roblox's topbar row, clear of every HUD group. Touch
+	-- has no F4 key, so it drops the hint there and keeps a touch-sized height.
+	Toggle = {
+		Text = "ADMIN • F4",
+		TouchText = "ADMIN",
+		Size = Vector2.new(124, 36),
+		TouchSize = Vector2.new(84, 44),
+		-- Pixels left free at the row's right end for the tutorial's help button.
+		RightClearance = 60,
+	},
 }

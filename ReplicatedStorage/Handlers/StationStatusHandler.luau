@@ -29,12 +29,20 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local OvenFuel = require(_Shared.Configs.OvenFuel)
 local Pages = require(_Shared.UI.Stores.Pages)
 local PromptHandler = require(_Handlers.PromptHandler)
+local TextScale = require(_Shared.UI.TextScale)
 local Theme = require(_Shared.UI.Theme)
 local World = require(_Shared.World)
 
 --[[ Types ]]--
-type LineTag = { Billboard: BillboardGui, Line: TextLabel }
-type IconTag = { Billboard: BillboardGui, Icon: ImageLabel, Pulse: UIScale }
+type LineTag = { Billboard: BillboardGui, Line: TextLabel, Outline: UIStroke }
+type IconTag = {
+	Billboard: BillboardGui,
+	Plate: Frame,
+	Edge: UIStroke,
+	Icon: ImageLabel,
+	Badge: TextLabel,
+	Pulse: UIScale,
+}
 
 --[[ Constants ]]--
 local ICON = Config.AlertIcon
@@ -51,11 +59,10 @@ local StationStatusHandler = {
 --[[ Private Functions ]]--
 -- A hidden, depth-tested billboard under PlayerGui. Depth testing lets other rooms' walls cover it;
 -- AlwaysOnTop would also stop the icon's viewport from drawing.
-local function newBillboard(name: string, adornee: BasePart, width: number, height: number): BillboardGui
+local function newBillboard(name: string, adornee: BasePart): BillboardGui
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = name
 	billboard.Adornee = adornee
-	billboard.Size = UDim2.fromOffset(width, height)
 	billboard.MaxDistance = Config.MaxDistance
 	billboard.LightInfluence = 0
 	billboard.ResetOnSpawn = false
@@ -77,23 +84,37 @@ local function towardCamera(eye: Vector3, position: Vector3, distance: number): 
 	return if toCamera.Magnitude > 0 then toCamera.Unit * distance else Vector3.zero
 end
 
-local function buildLine(part: BasePart): LineTag
-	local billboard = newBillboard("StationStatus", part, Config.Width, Config.Height)
+local function layoutLine(tag: LineTag, scale: number): ()
+	tag.Billboard.Size = UDim2.fromOffset(Config.Width * scale, Config.Height * scale)
+	tag.Line.TextSize = TextScale.Size(Config.TextSize, scale)
+	tag.Outline.Thickness = Config.Outline * scale
+end
+
+local function layoutIcon(tag: IconTag, scale: number): ()
+	local edge = ICON.EdgeThickness * scale
+	tag.Billboard.Size = UDim2.fromOffset(ICON.Size * scale, ICON.Size * scale)
+	tag.Plate.Size = UDim2.new(1, -edge * 2, 1, -edge * 2)
+	tag.Edge.Thickness = edge
+	tag.Badge.Size = UDim2.fromOffset(ICON.BadgeSize * scale, ICON.BadgeSize * scale)
+end
+
+local function buildLine(part: BasePart, scale: number): LineTag
+	local billboard = newBillboard("StationStatus", part)
 
 	local text = Instance.new("TextLabel")
 	text.Name = "Line"
 	text.BackgroundTransparency = 1
 	text.Size = UDim2.fromScale(1, 1)
 	text.FontFace = Theme.Fonts.ExtraBold
-	text.TextSize = Config.TextSize
 	text.TextColor3 = Config.Face
 	text.Parent = billboard
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Config.Ink
-	stroke.Thickness = Config.Outline
 	stroke.Parent = text
 
-	return { Billboard = billboard, Line = text }
+	local tag = { Billboard = billboard, Line = text, Outline = stroke }
+	layoutLine(tag, scale)
+	return tag
 end
 
 -- The fire part OvenView put in this station's firebox, in the same bakery.
@@ -111,20 +132,18 @@ local function findFirebox(part: BasePart): BasePart?
 	return if fire and fire:IsA("BasePart") then fire else nil
 end
 
-local function buildIcon(fire: BasePart): IconTag
-	local billboard = newBillboard("StationAlert", fire, ICON.Size, ICON.Size)
+local function buildIcon(fire: BasePart, scale: number): IconTag
+	local billboard = newBillboard("StationAlert", fire)
 
 	local plate = Instance.new("Frame")
 	plate.Name = "Plate"
 	plate.AnchorPoint = Vector2.new(0.5, 0.5)
 	plate.Position = UDim2.fromScale(0.5, 0.5)
-	plate.Size = UDim2.new(1, -ICON.EdgeThickness * 2, 1, -ICON.EdgeThickness * 2)
 	plate.BackgroundColor3 = ICON.Plate
 	plate.Parent = billboard
 	round(plate)
 	local edge = Instance.new("UIStroke")
 	edge.Color = ICON.Edge
-	edge.Thickness = ICON.EdgeThickness
 	edge.Parent = plate
 	local pulse = Instance.new("UIScale")
 	pulse.Parent = plate
@@ -143,7 +162,6 @@ local function buildIcon(fire: BasePart): IconTag
 	badge.Name = "Badge"
 	badge.AnchorPoint = Vector2.new(0.5, 0.5)
 	badge.Position = UDim2.fromScale(ICON.BadgeAt.X, ICON.BadgeAt.Y)
-	badge.Size = UDim2.fromOffset(ICON.BadgeSize, ICON.BadgeSize)
 	badge.BackgroundColor3 = ICON.Badge
 	badge.Text = "!"
 	badge.TextColor3 = ICON.BadgeText
@@ -153,7 +171,9 @@ local function buildIcon(fire: BasePart): IconTag
 	badge.Parent = plate
 	round(badge)
 
-	return { Billboard = billboard, Icon = icon, Pulse = pulse }
+	local tag = { Billboard = billboard, Plate = plate, Edge = edge, Icon = icon, Badge = badge, Pulse = pulse }
+	layoutIcon(tag, scale)
+	return tag
 end
 
 --[[ Handling ]]--
@@ -162,6 +182,13 @@ function StationStatusHandler.OnStart(self: StationStatusHandler): ()
 	self.Tags = {}
 	self.Icons = {}
 	self.Accumulator = 0
+	self:Rescale()
+	self.Janitor:Add(
+		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function(): ()
+			self:Rescale()
+		end),
+		"Disconnect"
+	)
 	self.Janitor:Add(function(): ()
 		for part in self.Tags do
 			self:Remove(part)
@@ -217,6 +244,17 @@ function StationStatusHandler.Place(self: StationStatusHandler): ()
 	end
 end
 
+-- Labels and icons are pixel-sized, so they follow the screen density to keep their share of a phone screen.
+function StationStatusHandler.Rescale(self: StationStatusHandler): ()
+	self.Scale = TextScale.Screen(workspace.CurrentCamera.ViewportSize)
+	for _, tag in self.Tags do
+		layoutLine(tag, self.Scale)
+	end
+	for _, alert in self.Icons do
+		layoutIcon(alert, self.Scale)
+	end
+end
+
 function StationStatusHandler.Refresh(self: StationStatusHandler): ()
 	local covered = Pages.Current:peek() ~= Pages.Names.None or Pages.Presenting:peek()
 	local prompt, billboard = PromptHandler:GetActiveView()
@@ -263,7 +301,7 @@ function StationStatusHandler.ShowLine(
 ): ()
 	local tag = self.Tags[part]
 	if not tag then
-		tag = buildLine(part)
+		tag = buildLine(part, self.Scale)
 		self.Tags[part] = tag
 	end
 	tag.Line.Text = text
@@ -279,7 +317,7 @@ function StationStatusHandler.ShowIcon(self: StationStatusHandler, part: BasePar
 		return
 	end
 	self:RemoveIcon(part)
-	local built = buildIcon(fire)
+	local built = buildIcon(fire, self.Scale)
 	built.Billboard.Enabled = visible
 	self.Icons[part] = built
 end
@@ -310,6 +348,8 @@ export type StationStatusHandler = typeof(StationStatusHandler) & {
 	Tags: { [BasePart]: LineTag },
 	Icons: { [BasePart]: IconTag },
 	Accumulator: number,
+	-- Screen density (TextScale.Screen) applied to every label and icon.
+	Scale: number,
 }
 
 return StationStatusHandler :: StationStatusHandler

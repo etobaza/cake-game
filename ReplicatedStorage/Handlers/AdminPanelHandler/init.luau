@@ -183,18 +183,21 @@ function AdminPanelHandler.OnStart(_self: AdminPanelHandler): ()
 		end
 		local created = View.Create(player:WaitForChild("PlayerGui") :: PlayerGui, viewOwner)
 		view = created
-		local screen = created.Panel:FindFirstAncestorWhichIsA("ScreenGui")
-		if screen then
-			viewOwner:Add(
-				Scope.Run(function(): ()
-					Flux.edit(screen)({
-						Enabled = function(): boolean
-							return not Pages.Presenting()
-						end,
-					})
-				end),
-				"Destroy"
-			)
+		local roots: { GuiObject } = { created.Panel, created.Toggle }
+		for _, gui in roots do
+			local screen = gui:FindFirstAncestorWhichIsA("ScreenGui")
+			if screen then
+				viewOwner:Add(
+					Scope.Run(function(): ()
+						Flux.edit(screen)({
+							Enabled = function(): boolean
+								return not Pages.Presenting()
+							end,
+						})
+					end),
+					"Destroy"
+				)
+			end
 		end
 		refreshRoster()
 		updateControls()

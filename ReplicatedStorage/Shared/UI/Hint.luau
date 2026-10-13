@@ -16,6 +16,7 @@ local HintAnimation = require(script.Parent.HintAnimation)
 local HintBeam = require(script.Parent.HintBeam)
 local HintRoute = require(script.Parent.HintRoute)
 local Surface = require(script.Parent.HintSurface)
+local TextScale = require(script.Parent.TextScale)
 local WorldPose = require(ReplicatedStorage.Shared.WorldPose)
 
 --[[ Types ]]
@@ -43,7 +44,15 @@ export type Options = {
 type Target = GuiObject | WorldTarget
 type WorldResolved = { kind: "World", point: Vector3, instance: Instance? }
 type Resolved = { kind: "Gui", rect: Geometry.Rect } | WorldResolved
-type Frame = { camera: Camera, viewport: Vector2, safe: Geometry.Rect, side: number, progress: number }
+type Frame = {
+	camera: Camera,
+	viewport: Vector2,
+	safe: Geometry.Rect,
+	side: number,
+	-- Screen density (TextScale.Screen): focus padding keeps its share of a phone's screen.
+	density: number,
+	progress: number,
+}
 
 --[[ Constants ]]
 --
@@ -220,8 +229,12 @@ local function obstructed(point: Vector3, target: Instance?, camera: Camera): bo
 end
 
 local function fingerSize(options: Options, viewport: Vector2): number
-	local responsive =
-		math.clamp(Config.FingerSize * viewport.Y / Config.ReferenceHeight, Config.MinFingerSize, Config.FingerSize)
+	-- The shorter side, so a portrait phone does not get a desktop-sized hand from its tall height.
+	local responsive = math.clamp(
+		Config.FingerSize * math.min(viewport.X, viewport.Y) / Config.ReferenceHeight,
+		Config.MinFingerSize,
+		Config.FingerSize
+	)
 	local requested = (options.FingerSize or responsive) * (options.Scale or 1)
 	local maximum =
 		math.max(Config.MinScaledFingerSize, math.min(viewport.X, viewport.Y) * Config.MaxFingerViewportFraction)
@@ -245,7 +258,7 @@ local function drawGui(self: View, rect: Geometry.Rect, frame: Frame): (Vector2,
 		rotation = 180 - rotation
 	end
 
-	local padding = Vector2.one * math.max(0, options.Padding or Config.Padding)
+	local padding = Vector2.one * math.max(0, options.Padding or Config.Padding) * frame.density
 	-- HUD artwork may extend above the finger's safe region. Clip the hole only at the
 	-- viewport edge; otherwise a top-aligned clock gets a visibly lowered spotlight.
 	self.Bounds = Geometry.Intersect(
@@ -354,6 +367,7 @@ local function draw(self: View, resolved: Resolved, delta: number): ()
 		viewport = camera.ViewportSize,
 		safe = Geometry.Safe(camera.ViewportSize, Config.EdgePadding),
 		side = fingerSize(self.Options, camera.ViewportSize),
+		density = TextScale.Screen(camera.ViewportSize),
 		-- Cubic ease-out for the focus opening.
 		progress = 1 - (1 - elapsed) ^ 3,
 	}

@@ -14,5 +14,8 @@ return {
 	Row = {
 		Position = UDim2.new(0.5, -20, 1, -10),
 		Size = UDim2.new(1, -280, 0, 18),
+		-- Compact rows stack the chips under the name: between the chips and the reward, left of Start.
+		CompactPosition = UDim2.new(0.5, -72, 0, 161),
+		CompactSize = UDim2.new(1, -168, 0, 18),
 	},
 }

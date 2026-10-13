@@ -1,7 +1,8 @@
 --!strict
 -- Floating status line over busy stations (StationStatusHandler): "Mixing 5s", "Baking 12s",
 -- "Needs firewood". Shown while a station has nothing to press, so its progress is readable from
--- across the kitchen instead of only on the prompt of the station last used. Sizes are pixels.
+-- across the kitchen instead of only on the prompt of the station last used. Sizes are pixels on the
+-- 1280 by 720 reference screen, scaled by TextScale.Screen (0.6 on phones).
 
 return {
 	RefreshInterval = 0.25,
@@ -27,7 +28,7 @@ return {
 
 	-- An alert is drawn as an icon in the station's firebox instead of words: a round cream plate
 	-- holding the carried firewood model and a small "!" badge, breathing gently. The fire part is the
-	-- one OvenView places in the opening (OvenFuel.FirePartPrefix). Sizes are pixels.
+	-- one OvenView places in the opening (OvenFuel.FirePartPrefix). Sizes are reference pixels, as above.
 	AlertIcon = {
 		Size = 72,
 		-- Studs toward the camera, so the plate sits in front of the opening instead of inside it.

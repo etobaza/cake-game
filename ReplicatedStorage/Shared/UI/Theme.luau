@@ -73,4 +73,23 @@ Theme.TextScale = {
 	Maximum = 1.4,
 }
 
+-- Always-visible screen UI (HUD, overlays, pixel-sized billboards) keeps roughly the same share of
+-- the screen on every device: it follows the reference canvas down to phones, floored for legibility.
+Theme.ScreenScale = {
+	ReferenceSize = Vector2.new(1280, 720),
+	Minimum = 0.6,
+	Maximum = 1,
+	-- Legibility floors on small screens, in rendered pixels: text, and a side of a touch target.
+	MinTextPixels = 10,
+	MinTouchPixels = 44,
+}
+
+-- Billboards labelling a model (guest bubbles, meal progress) keep a constant world size: one layout
+-- pixel spans StudsPerPixel, so they shrink with distance like the guest. Maximum stops a billboard
+-- beside the camera from filling the screen.
+Theme.WorldScale = {
+	StudsPerPixel = 0.023,
+	Maximum = 2,
+}
+
 return Theme
