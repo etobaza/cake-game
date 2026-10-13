@@ -97,6 +97,20 @@ local function stepKind(step: Types.TutorialGoal): string
 	return string.match(step.id, "^%a+") or step.id
 end
 
+-- A seated guest is choosing or waiting for food during the shift. While this holds, the coach
+-- speaks sooner and keeps its line in the bubble instead of a one-off toast.
+local function guestWaiting(session: any): boolean
+	if session.Day.Phase ~= "Shift" then
+		return false
+	end
+	for _, customer in session.Customers do
+		if customer.TableId and (customer.State == "Choosing" or customer.State == "Waiting") then
+			return true
+		end
+	end
+	return false
+end
+
 local function nudge(situation: Types.CoachSituation): Types.TutorialGoal
 	return {
 		id = `coach_nudge:{situation.key}`,
@@ -219,16 +233,26 @@ function Coach.Update(
 		return nil
 	end
 	self.Active = true
-	local delays = Settings.Delays[situation.delay]
+	-- While a guest waits, ordinary hesitation uses the Guest delays, and the line stays up across
+	-- steps: progress restarts only the pointer wait, not the explanation.
+	local serving = guestWaiting(session)
+	local delayName = if serving and (situation.delay == "Stuck" or situation.delay == "Idle")
+		then "Guest"
+		else situation.delay
+	local delays = Settings.Delays[delayName]
 	local level = profile(cloud)
 	local scale = if situation.delay == "Feature" then 1 else level.Scale
 	if situation.key ~= self.Key or (progressed and situation.delay ~= "Feature") then
 		self.Key = situation.key
 		self.Since = clock
-		self.Nudged = false
+		self.Nudged = serving and self.Nudged
 		self.Pointing = false
 	end
 
+	local function shown(goal: Types.TutorialGoal): Types.TutorialGoal
+		goal.persistent = serving or nil
+		return goal
+	end
 	local elapsed = clock - self.Since
 	local boosted = clock < self.BoostUntil
 	local step = situation.step
@@ -242,11 +266,11 @@ function Coach.Update(
 				self.Points[kind] = (self.Points[kind] or 0) + 1
 				self.BoostUntil = 0
 			end
-			return point(situation, step)
+			return shown(point(situation, step))
 		end
 	end
 	if self.Nudged then
-		return nudge(situation)
+		return shown(nudge(situation))
 	end
 	if elapsed < delays.Nudge * scale then
 		return nil
@@ -256,7 +280,7 @@ function Coach.Update(
 	end
 	self.Nudged = true
 	self.LastNudgeAt = clock
-	return nudge(situation)
+	return shown(nudge(situation))
 end
 
 return Coach

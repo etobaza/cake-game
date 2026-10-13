@@ -57,10 +57,11 @@ local function incomingGuest(cloud: any, session: any): string?
 end
 
 -- One short line per stage (or optional lesson), so the bubble does not change with every small
--- step; the pointer and the item tile carry the step itself. Recovery and urgent steps, and steps
--- outside any stage, keep their own title.
+-- step; the pointer and the item tile carry the step itself. Recovery and urgent steps, steps that
+-- close a page (the stage line would not say why the page has to go), and steps outside any stage
+-- keep their own title.
 local function stageLine(cloud: any, session: any, goal: Types.TutorialGoal): string?
-	if goal.recovery or goal.urgent then
+	if goal.recovery or goal.urgent or (goal.target and goal.target.control == "Close") then
 		return nil
 	end
 	local lines = Config.Dialog.Lines
@@ -257,6 +258,12 @@ function TutorialHandler.OnStart(self: TutorialHandler): ()
 		end, true)
 	end)
 	self.Janitor:Add(scope, "Destroy")
+	self.Janitor:Add(Scope.Run(function(): ()
+		Flux(function(): ()
+			local _presenting = Pages.Presenting()
+			self:Refresh()
+		end, true)
+	end), "Destroy")
 	self.Janitor:Add(
 		screen.Destroying:Connect(function(): ()
 			self:Destroy()
@@ -276,6 +283,15 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 		self.GuestHighlight:Clear()
 		return
 	end
+	if Pages.Presenting:peek() then
+		self.Guiding = false
+		self.TargetId = nil
+		self.GuestHighlight:Clear()
+		self.Coach:Reset()
+		self.View:Set(nil, cloud.Tutorial)
+		self.Janitor:Remove("Frame")
+		return
+	end
 	local guestId = incomingGuest(cloud, session)
 	self.GuestHighlight:Update(guestId)
 	local props = Interact:GetOwnedIds()
@@ -287,11 +303,16 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 		self.CartDismissed = true
 		Bus.Tutorial.Control:Fire("Dismiss", "Cart")
 	end
+	local upgradeScreen = UIHandler:GetPanel("Upgrades")
+	local tree = upgradeScreen and upgradeScreen:FindFirstChild("Content", true)
 	local goal = Scenario.Resolve(cloud, session, props, self.Page, now, {
 		canClose = Pages.CanOpen(Pages.Names.None),
 		orderSeen = self.OrderSeen,
 		room = room,
 		gamepad = UserInputService.PreferredInput == Enum.PreferredInput.Gamepad,
+		upgradeCategory = if tree then tree:GetAttribute("UpgradeCategory") :: string? else nil,
+		upgradeSelectedId = if tree then tree:GetAttribute("SelectedUpgradeId") :: string? else nil,
+		upgradeSelectedLevel = if tree then tree:GetAttribute("SelectedPurchaseLevel") :: number? else nil,
 	})
 	if goal and goal.id == "cart_load" then
 		self.CartPrompted = true

@@ -27,8 +27,10 @@ local EconomyHandler = require(ServerScriptService.Handlers.EconomyHandler)
 local FeedbackConfig = require(_Configs.Feedback)
 local GuestState = require(script.GuestState)
 local InventoryHandler = require(ServerScriptService.Handlers.InventoryHandler)
+local LiveEventHandler = require(ServerScriptService.Handlers.LiveEventHandler)
 local LoggerUtil = require(_Libs.Logger)
 local OrdersConfig = require(_Configs.Orders)
+local RecipeRequirements = require(ReplicatedStorage.Shared.RecipeRequirements)
 local Recipes = require(_Configs.Registries.Recipes)
 local Sanitize = require(_Shared.Sanitize)
 local Signal = require(_Libs.Signal)
@@ -58,6 +60,7 @@ local CustomerHandler = {
 		"EconomyHandler",
 		"UpgradeHandler",
 		"CatHandler",
+		"LiveEventHandler",
 	},
 	priority = 40,
 }
@@ -87,6 +90,17 @@ local function CountCustomers(customers: any): number
 	local count = 0
 	for _ in customers do
 		count += 1
+	end
+
+	return count
+end
+
+local function CountOfType(customers: any, typeId: string): number
+	local count = 0
+	for _, customer in customers do
+		if customer.TypeId == typeId then
+			count += 1
+		end
 	end
 
 	return count
@@ -130,7 +144,7 @@ end
 local function FreePedestal(player: Player, customers: any, customerId: string, current: number?): number?
 	local claimed = ClaimedSlots(customers, customerId, false)
 	local free: { number } = {}
-	for slot = 2, DisplayHandler:GetGuestCapacity(player) + 1 do
+	for slot = 1, DisplayHandler:GetGuestCapacity(player) do
 		if not claimed[slot] and slot ~= current then
 			free[#free + 1] = slot
 		end
@@ -171,6 +185,20 @@ local function RollOrders(menu: { string }, entry: CustomerTypes.CustomerTypeEnt
 	end
 
 	return orders
+end
+
+-- Menu dishes the player can supply. A menu saved before a requirement existed can still list one
+-- whose ingredient source was never bought; guests do not order it.
+local function OrderableMenu(data: any): { string }
+	local levels = data.Cloud.Base.Upgrades
+	local menu: { string } = {}
+	for _, recipeId in data.Session.Day.Menu do
+		local recipe = Recipes:Get(recipeId)
+		if recipe and RecipeRequirements.IsObtainable(recipe, levels) then
+			menu[#menu + 1] = recipeId
+		end
+	end
+	return menu
 end
 
 local function PickType(player: Player, kind: string): CustomerTypes.CustomerTypeEntry?
@@ -257,6 +285,7 @@ function CustomerHandler.StartShift(self: CustomerHandler, player: Player): ()
 		NextSpawnAt = workspace:GetServerTimeNow() + DayCycleConfig.FirstSpawnDelay,
 		FirstGuest = true,
 		Rush = 0,
+		Ramp = 0,
 		-- Ids never restart: a guest walking out still owns their body while the next shift spawns.
 		NextId = if previous then previous.NextId else 1,
 		ScriptedGuest = data ~= nil and TutorialPolicy.IsActive(data.Cloud),
@@ -319,6 +348,13 @@ function CustomerHandler.SpawnCustomer(self: CustomerHandler, player: Player): b
 		then "Display"
 		else "Seated"
 	local entry = scriptedEntry or PickType(player, kind)
+	-- During a live event some seated arrivals are golden guests (Configs/AdminAbuse.Guests).
+	local eventTypeId = if not scriptedEntry and kind == "Seated" and not TutorialPolicy.IsActive(data.Cloud)
+		then LiveEventHandler:PickGuestType(function(typeId: string): number
+			return CountOfType(data.Session.Customers, typeId)
+		end)
+		else nil
+	entry = if eventTypeId then CustomerTypes:Get(eventTypeId) or entry else entry
 	if not entry then
 		return false
 	end
@@ -334,7 +370,7 @@ function CustomerHandler.SpawnCustomer(self: CustomerHandler, player: Player): b
 			return false
 		end
 	end
-	local orders = scriptedOrders or (if entry.kind == "Display" then {} else RollOrders(data.Session.Day.Menu, entry))
+	local orders = scriptedOrders or (if entry.kind == "Display" then {} else RollOrders(OrderableMenu(data), entry))
 	if entry.kind == "Seated" and #orders == 0 then
 		return false
 	end
@@ -419,6 +455,9 @@ function CustomerHandler.SpawnCustomer(self: CustomerHandler, player: Player): b
 		self:FinishCustomer(player, customerId, customer, served)
 	end, if rush then OrdersConfig.FirstGuestChooseSeconds else nil)
 	self.CustomerSpawned:Fire(player, customerId)
+	if entry.arrivalTitle and not scriptedEntry then
+		Bus.Cafe.RareGuestArrived:FireClient(player, customerId, entry.id)
+	end
 	return true
 end
 
@@ -728,6 +767,7 @@ function CustomerHandler.PayForDish(
 		})
 
 	local before = data.Cloud.Cash
+	coins *= entry.coinMultiplier or 1
 	DayCycleHandler:AddResult(player, coins, Economy.GetDishXP(recipe.price), 0, 0, recipeId)
 	-- What actually reached the wallet, pass multipliers included; zero once the shift has closed.
 	local credited = math.round((data.Cloud.Cash - before) * 100) / 100
@@ -858,7 +898,22 @@ function CustomerHandler.ReleaseTutorial(self: CustomerHandler, player: Player):
 		runtime.ScriptedGuest = false
 		runtime.NextSpawnAt = now + DayCycleConfig.FirstSpawnDelay
 		runtime.Rush = DayCycleConfig.TutorialRushGuests
+		runtime.Ramp = 1
 	end
+end
+
+-- After the introduction the shift ramps up instead of rushing (DayCycle.IntroRampGaps). Returns
+-- the ramp's next arrival gap, advancing it only when a guest actually arrived; nil once it is over.
+local function rampGap(runtime: any, spawned: boolean): number?
+	if runtime.Ramp <= 0 then
+		return nil
+	end
+	local gaps = DayCycleConfig.IntroRampGaps
+	local gap = gaps[runtime.Ramp]
+	if spawned then
+		runtime.Ramp = if runtime.Ramp < #gaps then runtime.Ramp + 1 else 0
+	end
+	return gap
 end
 
 function CustomerHandler.UpdateCustomers(self: CustomerHandler): ()
@@ -908,6 +963,7 @@ function CustomerHandler.UpdatePlayerCustomers(self: CustomerHandler, player: Pl
 	end
 	local capacity = self:GetCapacity(player)
 	local hasCapacity = count < DayCycleConfig.GetMaxActive(capacity)
+		and (runtime.Ramp <= 0 or count < DayCycleConfig.IntroRampMaxGuests)
 	if hasCapacity and now >= runtime.NextSpawnAt - GuestsConfig.Street.AdmissionLeadSeconds then
 		Street.Prepare(player, runtime.FirstGuest or runtime.Rush > 0 or count == 0)
 	end
@@ -928,10 +984,11 @@ function CustomerHandler.UpdatePlayerCustomers(self: CustomerHandler, player: Pl
 		end
 	end
 
+	local ramp = if runtime.Rush > 0 then nil else rampGap(runtime, hasCapacity)
 	runtime.NextSpawnAt = now
 		+ if runtime.Rush > 0
 			then DayCycleConfig.RushSpawnInterval
-			else DayCycleConfig.GetSpawnInterval() * runtime.DisplayFlow
+			else ramp or DayCycleConfig.GetSpawnInterval() * runtime.DisplayFlow
 end
 
 function CustomerHandler.UpdateOneCustomer(
@@ -1037,6 +1094,8 @@ export type CustomerHandler = typeof(CustomerHandler) & {
 			FirstGuest: boolean,
 			-- Guests still owed a quick arrival after the introduction ends.
 			Rush: number,
+			-- Next DayCycle.IntroRampGaps entry after the introduction; 0 once the ramp is over.
+			Ramp: number,
 			ScriptedGuest: boolean,
 			DisplayFlow: number,
 			RecordShown: boolean,

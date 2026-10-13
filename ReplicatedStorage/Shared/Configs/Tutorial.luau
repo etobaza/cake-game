@@ -54,7 +54,8 @@ return {
 		-- Share of the viewport width the whole dialog may use.
 		WidthRatio = 0.62,
 		-- Gap above the hotbar, and the bottom margin when no hotbar is found.
-		HotbarGap = 12,
+		-- Room between the bubble (and its drop shadow) and the hotbar's highest drawn element.
+		HotbarGap = 28,
 		BottomMargin = 110,
 		-- Gap below the clock when the dialog moves to the top to clear its own target.
 		TopGap = 14,
@@ -205,6 +206,9 @@ return {
 		-- Cooldown = true makes the nudge wait for `Cooldown` seconds after the previous one.
 		Delays = {
 			Stuck = { Nudge = 30, Point = 50, Cooldown = true },
+			-- Stuck or Idle while a seated guest chooses or waits for food: the line comes sooner and
+			-- stays in the guide's bubble until no guest waits (Coach).
+			Guest = { Nudge = 6, Point = 20, Cooldown = false },
 			Urgent = { Nudge = 8, Point = 15, Cooldown = false },
 			Prep = { Nudge = 60, Point = 90, Cooldown = true },
 			Feature = { Nudge = 0, Point = 8, Cooldown = false },
@@ -317,6 +321,11 @@ return {
 		}
 	},
 	Topics = {
+		{
+			id = "Upgrades",
+			title = "Bakery upgrades",
+			text = "After your first shift, spend your earnings on an available upgrade. Upgrades selects the cheapest unlocked purchase. Read its benefit, press Purchase, then watch your bakery improve. Skip returns early. You can shop from the evening header or the first HUD button.",
+		},
 		{
 			id = "Cooking",
 			title = "Cooking",

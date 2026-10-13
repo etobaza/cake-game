@@ -33,7 +33,7 @@ local function BuildPrompt(part: BasePart, kind: BuildingsConfig.Kind): ()
 	prompt.Name = PROMPT_NAME
 	prompt.ActionText = "Use"
 	prompt.ObjectText = kind.Label
-	prompt.MaxActivationDistance = PROMPT_DISTANCE
+	prompt.MaxActivationDistance = kind.PromptDistance or PROMPT_DISTANCE
 	prompt.RequiresLineOfSight = false
 	-- The stock UI never renders: the client's PromptHandler draws the artist billboard instead.
 	prompt.Style = Enum.ProximityPromptStyle.Custom

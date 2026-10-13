@@ -41,6 +41,9 @@ local DAILY_GRID = { "MainFrame", "Content" }
 
 local PLAYTIME_SCREEN = "Playtime"
 local PLAYTIME_GRID = { "MainFrame", "Container", "Content" }
+-- The authored footer said "Leaving Resets Progress!"; the track is saved now and turns over daily.
+local PLAYTIME_NOTE = { "MainFrame", "Bottom", "Txt" }
+local PLAYTIME_NOTE_TEXT = "Progress resets daily!"
 -- The alert "!" on the HUD button that opens the playtime screen.
 local PLAYTIME_ALERT = "SideBtns.Rewards.Mark"
 -- The authored timer is a narrow, left-aligned strip; "1:00:52" needs nearly the whole tile.
@@ -69,6 +72,21 @@ local function GridCells(grid: Instance): { Frame }
 	end)
 	return cells
 end
+-- Seconds played today and the tiers already taken, by the same rule the server checks.
+local function PlaytimeState(): (number, { number })
+	local record = DataClient:GetData({ "Playtime" }, "Cloud")
+	local session = DataClient:GetData({ "Playtime" }, "Session")
+	if not record then
+		return 0, {}
+	end
+
+	local now = workspace:GetServerTimeNow()
+	local startedAt = if session then session.StartedAt else 0
+	local played = Rewards.GetPlayedSeconds(record.Day, record.Seconds, startedAt, now)
+	local claimed = if record.Day == Rewards.GetPlaytimeDay(now) then record.Claimed else {}
+	return played, claimed
+end
+
 -- Tile art grows with the reward, and the last tile of a track wears the chest.
 local function SetIcon(cell: Frame, reward: Rewards.Reward?, isFinal: boolean): ()
 	local icon = cell:FindFirstChild("Icon")
@@ -153,7 +171,7 @@ function RewardHandler.OnStart(self: RewardHandler): ()
 
 	DataClient:SubscribeToPath({ "Playtime" }, function()
 		self:Refresh()
-	end, "Session", true)
+	end, "Any", true)
 
 	-- The countdowns move on their own, so an open screen is redrawn once a second. Closed screens
 	-- are skipped: nothing behind a disabled ScreenGui is worth the work.
@@ -245,6 +263,11 @@ function RewardHandler.BindPlaytime(self: RewardHandler): ()
 	self.Playtime = screen
 	self.PlaytimeCells = GridCells(grid)
 
+	local note = Authored.Resolve(screen, PLAYTIME_NOTE)
+	if note and note:IsA("TextLabel") then
+		note.Text = PLAYTIME_NOTE_TEXT
+	end
+
 	local ok, alert = pcall(UIHandler.GetHud, UIHandler, PLAYTIME_ALERT)
 	if ok and alert:IsA("GuiObject") then
 		self.PlaytimeAlert = alert
@@ -275,10 +298,7 @@ function RewardHandler.RefreshAlert(self: RewardHandler): ()
 		return
 	end
 
-	local record = DataClient:GetData({ "Playtime" }, "Session")
-	local startedAt = if record then record.StartedAt else 0
-	local claimed = if record then record.Claimed else {}
-	local elapsed = if startedAt > 0 then workspace:GetServerTimeNow() - startedAt else 0
+	local elapsed, claimed = PlaytimeState()
 	local hasReady = false
 	for index = 1, #Rewards.Playtime.Tiers do
 		if elapsed >= Rewards.GetTierSeconds(index) and not Claimed(claimed, index) then
@@ -328,10 +348,7 @@ function RewardHandler.RefreshDaily(self: RewardHandler): ()
 end
 
 function RewardHandler.RefreshPlaytime(self: RewardHandler): ()
-	local record = DataClient:GetData({ "Playtime" }, "Session")
-	local startedAt = if record then record.StartedAt else 0
-	local claimed = if record then record.Claimed else {}
-	local elapsed = if startedAt > 0 then workspace:GetServerTimeNow() - startedAt else 0
+	local elapsed, claimed = PlaytimeState()
 
 	for index, cell in self.PlaytimeCells do
 		local reward = Rewards.GetTier(index)

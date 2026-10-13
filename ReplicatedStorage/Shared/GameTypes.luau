@@ -27,6 +27,8 @@ export type TutorialGoal = {
 	topic: string?,
 	-- The world target glows while this step is shown (a spill to find).
 	highlight: boolean?,
+	-- A coaching line that stays in the guide's bubble instead of a one-off toast (a guest waits).
+	persistent: boolean?,
 }
 
 -- Client-only facts the tutorial reads beside replicated data. `room` is the bakery room the local
@@ -38,6 +40,10 @@ export type TutorialContext = {
 	room: string?,
 	-- The player is on a gamepad, where the order card cannot be tapped.
 	gamepad: boolean?,
+	-- Presentation facts from the authored upgrade tree; the server still validates every purchase.
+	upgradeCategory: string?,
+	upgradeSelectedId: string?,
+	upgradeSelectedLevel: number?,
 }
 
 -- A post-tutorial coaching moment: a short cause-and-fix message, then optionally a pointer step.

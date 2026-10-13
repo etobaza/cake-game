@@ -98,6 +98,10 @@ export type PlayerData = {
 
 -- Fired when a player's profile has attached and proxies are ready.
 DataHandler.PlayerReady = Signal() :: Signal.Signal<Player, PlayerData>
+-- Called on leave just before the profile session ends: the last moment a write is still saved.
+-- A plain list rather than a Signal, because the project's Signal is deferred and would run after
+-- EndSession. Callbacks run in order and must not yield.
+local LeavingCallbacks: { (Player, PlayerData) -> () } = {}
 
 local LiveStore = ProfileStore.New(DataHandler.StoreName, cloudDataTemplate)
 local PlayerStore: typeof(LiveStore.Mock) = LiveStore
@@ -461,6 +465,19 @@ function DataHandler.OnInit(self: DataHandler)
 		local profile = Profiles[player]
 		if profile ~= nil then
 			GardenSave.Recover(self.Data[player])
+			local data = self.Data[player]
+			if data then
+				for _, callback in LeavingCallbacks do
+					-- Typed as string? so pcall's second return carries the error message.
+					local ok, message = pcall(function(): string?
+						callback(player, data)
+						return nil
+					end)
+					if not ok then
+						Logger:Warn(`Leaving callback failed for {player.Name}: {message}`)
+					end
+				end
+			end
 			profile:EndSession()
 		end
 		PENDING_UPDATES[player] = nil
@@ -569,6 +586,11 @@ function DataHandler.RequestProgressReset(self: DataHandler, player: Player): st
 	Logger:Info(`Progress reset requested for {player.Name}`)
 	profile:EndSession()
 	return `Progress reset requested for {player.Name}. Rejoin for a fresh start. Paid ownership is preserved.`
+end
+
+--- Registers `callback` to write final values on leave, before the profile session ends.
+function DataHandler.OnLeaving(_self: DataHandler, callback: (Player, PlayerData) -> ()): ()
+	table.insert(LeavingCallbacks, callback)
 end
 
 function DataHandler.WipeData(self: DataHandler, player: Player)

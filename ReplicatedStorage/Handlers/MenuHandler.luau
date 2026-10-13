@@ -31,6 +31,9 @@ local DayCycleConfig = require(_Configs.DayCycle)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Press = require(_Shared.UI.Press)
 local Recipes = require(_Configs.Registries.Recipes)
+local RecipeRequirements = require(_Shared.RecipeRequirements)
+local RequirementLabel = require(_Shared.UI.RecipeRequirementLabel)
+local GuidanceConfig = require(_Configs.RecipeGuidance)
 local Responsive = require(_Shared.UI.Responsive)
 local UIHandler = require(_Handlers.UIHandler)
 
@@ -173,6 +176,7 @@ function MenuHandler.OnStart(self: MenuHandler): ()
 	self.Grid = grid
 	self.PickedStrip = picked
 	self.Cells = {}
+	self.RequirementLabels = {}
 	self.PickedSlots = {}
 	self.Filters = {}
 	self.Selected = {}
@@ -191,6 +195,9 @@ function MenuHandler.OnStart(self: MenuHandler): ()
 	DataClient:SubscribeToPath({ "Level" }, function()
 		self:Rebuild()
 	end, "Cloud")
+	self.Janitor:Add(DataClient:SubscribeToPath({ "Base", "Upgrades" }, function(): ()
+		self:Rebuild()
+	end, "Cloud", true), "Disconnect")
 
 	-- A freezer or coffee machine was bought: its recipes become pickable right away.
 	DataClient:SubscribeToPath({ "Stations" }, function()
@@ -248,6 +255,9 @@ function MenuHandler.BuildCells(self: MenuHandler): ()
 		cell.Visible = false
 		cell.Parent = self.Grid
 		self.Cells[index] = cell
+		local requirement = RequirementLabel.Create(cell, false)
+		self.RequirementLabels[cell] = requirement
+		self.Janitor:Add(requirement, "Destroy")
 		Animate.Press(cell)
 		self.Janitor:Add(
 			Press.BindTap(cell, function()
@@ -454,8 +464,10 @@ function MenuHandler.Rebuild(self: MenuHandler): ()
 			break
 		end
 
-		local selectable = recipe.unlockLevel <= level and HasStation(recipe.station)
-		-- The server refuses a recipe without its station, so it cannot stay picked either.
+		local selectable = recipe.unlockLevel <= level
+			and HasStation(recipe.station)
+			and RecipeRequirements.IsObtainable(recipe, DataClient:GetData({ "Base", "Upgrades" }) or {})
+		-- The server refuses a recipe without its station or ingredient source, so it cannot stay picked.
 		if not selectable and self.Selected[recipe.id] then
 			self.Selected[recipe.id] = nil
 			dropped = true
@@ -487,10 +499,18 @@ function MenuHandler.PaintCell(self: MenuHandler, cell: Frame, recipe: Recipes.R
 	cell.Visible = true
 
 	SetPair(cell:FindFirstChild("Txt"), recipe.name)
+	local missing = RecipeRequirements.GetMissing(recipe, DataClient:GetData({ "Base", "Upgrades" }) or {})
+	RequirementLabel.Show(self.RequirementLabels[cell], missing)
 	SetPair(resolve(cell, { "Price", "Price" }), UIHandler:FormatNumber(recipe.price))
 
 	local icon = cell:FindFirstChild("Icon")
 	if icon and icon:IsA("ImageLabel") then
+		if icon:GetAttribute("RecipeIconPosition") == nil then
+			icon:SetAttribute("RecipeIconPosition", icon.Position)
+			icon:SetAttribute("RecipeIconSize", icon.Size)
+		end
+		icon.Position = if #missing > 0 then GuidanceConfig.Card.IconPosition else icon:GetAttribute("RecipeIconPosition") :: UDim2
+		icon.Size = if #missing > 0 then GuidanceConfig.Card.IconSize else icon:GetAttribute("RecipeIconSize") :: UDim2
 		FoodPreview.Show(icon, recipe)
 	end
 
@@ -624,8 +644,18 @@ function MenuHandler.ToggleRecipe(self: MenuHandler, recipeId: string): ()
 	end
 
 	if not HasStation(recipe.station) then
-		UIHandler:Toast(`Needs a {recipe.station} - buy it in Upgrades`)
+		local missing = RecipeRequirements.GetMissing(recipe, DataClient:GetData({ "Base", "Upgrades" }) or {})
+		local guidance = RecipeRequirements.Describe(missing)
+		UIHandler:Toast(if guidance ~= "" then guidance else `Waiting for the {recipe.station} station`)
 		return
+	end
+	if not self.Selected[recipeId] then
+		-- The server refuses a dish whose ingredient the player cannot get; say what is missing.
+		local missing = RecipeRequirements.GetMissing(recipe, DataClient:GetData({ "Base", "Upgrades" }) or {})
+		if #missing > 0 then
+			UIHandler:Toast(RecipeRequirements.Describe(missing))
+			return
+		end
 	end
 
 	if self.Selected[recipeId] then
@@ -676,6 +706,7 @@ export type BonusPair = { On: GuiObject?, Off: GuiObject? }
 export type PickedSlot = { Filled: Frame, Empty: Frame }
 
 export type MenuHandler = typeof(MenuHandler) & {
+	RequirementLabels: { [Frame]: TextLabel },
 	Janitor: any,
 	Screen: ScreenGui,
 	Grid: Instance,

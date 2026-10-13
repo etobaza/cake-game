@@ -46,6 +46,7 @@ local CatHandler = {
 		"DataHandler",
 		"DayCycleHandler",
 		"InventoryHandler",
+		"UpgradeHandler",
 		"UpgradeViewHandler",
 		"TickHandler",
 	},

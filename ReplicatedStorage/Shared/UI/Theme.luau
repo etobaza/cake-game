@@ -56,4 +56,11 @@ Theme.Corners = {
 	Button = UDim.new(0.1951, 0),
 }
 
+-- Logical UI pixels grow on desktop; each surface still fits its own safe rectangle.
+Theme.TextScale = {
+	ReferenceSize = Vector2.new(1280, 720),
+	Minimum = 1,
+	Maximum = 1.4,
+}
+
 return Theme

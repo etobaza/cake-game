@@ -34,7 +34,9 @@ export type StatKey =
 --[[ Tables ]]--
 local BaseStats = {
 	-- Cafe
-	DisplaySlots = 1,
+	-- Every display slot stands on one of the Display Counter tables, so there is none before the
+	-- first table is bought (or handed out by the Bigger Window pass).
+	DisplaySlots = 0,
 	-- Kitchen window pass-through (Lemon Cake BP_Counter9): one food slot once rebuilt.
 	WindowSlots = 0,
 	TableCount = 1,

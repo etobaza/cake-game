@@ -20,6 +20,7 @@ local LoggerUtil = require(_Libs.Logger)
 local Products = require(_Configs.Registries.Products)
 local Sanitize = require(_Shared.Sanitize)
 local Signal = require(_Libs.Signal)
+local TutorialEvents = require(ServerScriptService.TutorialEvents)
 local Upgrades = require(_Configs.Registries.Upgrades)
 
 --[[ Private Variables ]]--
@@ -118,6 +119,10 @@ function UpgradeHandler.HasStat(self: UpgradeHandler, player: Player, statKey: B
 end
 
 function UpgradeHandler.TryBuy(self: UpgradeHandler, player: Player, upgradeId: string, purchaseLevel: number?): boolean
+	local levels = GetUpgradeLevels(player)
+	if not levels then
+		return false
+	end
 	local entry = Upgrades:Get(upgradeId)
 	if not entry then
 		Bus.Progress.ActionFailed:FireClient(player, "unknown_upgrade")
@@ -130,18 +135,18 @@ function UpgradeHandler.TryBuy(self: UpgradeHandler, player: Player, upgradeId: 
 	end
 
 	-- Tree order: a node opens only after the one it grows from has been bought at least once.
-	if Upgrades:GetMissingRequirement(entry, GetUpgradeLevels(player) or {}) then
+	if Upgrades:GetMissingRequirement(entry, levels) then
 		Bus.Progress.ActionFailed:FireClient(player, "needs_parent")
 		return false
 	end
 
-	local level = self:GetLevel(player, upgradeId)
+	local level = levels[upgradeId] or 0
 	-- Separate UI cells buy one exact level. A stale/repeated click cannot purchase the next cell.
 	if purchaseLevel ~= nil and purchaseLevel ~= level + 1 then
 		Bus.Progress.ActionFailed:FireClient(player, if purchaseLevel <= level then "max_level" else "needs_parent")
 		return false
 	end
-	local cost = Upgrades:GetCost(upgradeId, level)
+	local cost = Upgrades:GetPurchaseCost(upgradeId, levels, EconomyHandler:GetLevel(player))
 	if not cost then
 		Bus.Progress.ActionFailed:FireClient(player, "max_level")
 		return false
@@ -152,16 +157,13 @@ function UpgradeHandler.TryBuy(self: UpgradeHandler, player: Player, upgradeId: 
 		return false
 	end
 
-	local levels = GetUpgradeLevels(player)
-	if not levels then
-		return false
-	end
-
 	levels[upgradeId] = level + 1
 	self.StatCache[player] = nil
 
 	Logger:Info(`{player.Name} bought {upgradeId} to level {level + 1} for {cost}`)
 	UpgradeHandler.StatsChanged:Fire(player)
+	TutorialEvents.Action:Fire(player, "BuyUpgrade", upgradeId)
+	Bus.Progress.UpgradeBought:FireClient(player, upgradeId, level + 1, cost)
 
 	return true
 end

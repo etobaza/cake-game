@@ -11,6 +11,7 @@ local Policy = require(script.Parent.Parent.TutorialPolicy)
 local Recipes = require(script.Parent.Parent.Configs.Registries.Recipes)
 local State = require(script.Parent.State)
 local Types = require(script.Parent.Parent.GameTypes)
+local UpgradeLesson = require(script.Parent.UpgradeLesson)
 
 --[[ Tables ]]--
 local Scenario = {}
@@ -94,8 +95,13 @@ local function clean(session: any, now: number): Types.TutorialGoal
 end
 
 -- The first order card is shown until the player taps it or acknowledges it in the bubble. Only a
--- gamepad, which cannot tap the card, also moves on after the fallback time.
+-- gamepad, which cannot tap the card, also moves on after the fallback time. A player who already
+-- carries the ordered dish skips the card: Serve is the next useful press.
 local function previewing(session: any, customer: any, now: number, facts: Types.TutorialContext): boolean
+	local held = session.Hands[1]
+	if held and held.Kind == "Dish" and table.find(customer.Orders, held.Id) then
+		return false
+	end
 	return customer.State == "Waiting"
 		and facts.orderSeen ~= session.Tutorial.GuestId
 		and (not facts.gamepad or now - customer.OrderStartedAt < Config.OrderPreviewSeconds)
@@ -160,6 +166,10 @@ local function resolve(
 	facts: Types.TutorialContext
 ): Types.TutorialGoal?
 	local active = Policy.IsActive(cloud)
+	local upgradeGoal = UpgradeLesson.Resolve(cloud, session, page, facts)
+	if upgradeGoal then
+		return upgradeGoal
+	end
 	if session.Day.Phase == "Summary" then
 		return if not cloud.Tutorial.Lessons.NextDay and not cloud.Tutorial.Lessons["Dismissed:NextDay"]
 			then Lessons.Summary(session, page)

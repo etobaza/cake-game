@@ -12,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Buildings = require(ReplicatedStorage.Shared.Configs.Buildings)
 local Config = require(ReplicatedStorage.Shared.Configs.Hint).Route
 local World = require(ReplicatedStorage.Shared.World)
+local WorldPose = require(ReplicatedStorage.Shared.WorldPose)
 
 --[[ Types ]]--
 type Edge = { a: string, b: string, point: Vector3, door: Instance, count: number }
@@ -107,9 +108,9 @@ local function buildGraph(bakery: Instance): Graph
 			continue
 		end
 
-		local frame, size = door:GetBoundingBox()
+		local frame, size = WorldPose.Bounds(door)
 		local center = frame.Position
-		local pivot = door:GetPivot()
+		local pivot = WorldPose.Pivot(door)
 		for _, axis in { pivot.LookVector, pivot.RightVector } do
 			local flat = Vector3.new(axis.X, 0, axis.Z)
 			if flat.Magnitude < 1e-3 then

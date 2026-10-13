@@ -34,6 +34,7 @@ export type SoundName =
 	| "TextSay"
 	| "NpcText"
 	| "ResponseText"
+	| "DoorBell"
 
 export type Definition = {
 	Id: string,
@@ -70,6 +71,8 @@ local sounds: { [SoundName]: Definition } = {
 	Sparkle = { Id = "rbxassetid://2609981431", Volume = 0.35 },
 	LevelUp = { Id = "rbxassetid://128460880879263", Volume = 0.55 },
 	StationReady = { Id = "rbxassetid://110253665387820", Volume = 0.6, MaxDistance = 45 },
+	-- Reuse the accessible short bell for one gentle chime when the bakery opens.
+	DoorBell = { Id = "rbxassetid://110253665387820", Volume = 0.24, MaxDistance = 35 },
 	OrderUp = { Id = "rbxassetid://135165335432475", Volume = 0.45, MaxDistance = 45 },
 	Purchase = { Id = "rbxassetid://136211732441165", Volume = 0.45 },
 	Reward = { Id = "rbxassetid://134821092416328", Volume = 0.5 },

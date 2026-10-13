@@ -44,17 +44,21 @@ local previous = Flux(Pages.Names.None)
 -- The evening modal allows its report/menu tabs while preventing dismissal.
 local locked = Flux(false)
 local allowedWhileLocked: { [Page]: boolean } = {}
+local presenting = Flux(false)
+local presentationToken = 0
 
 --[[ Public nodes ]]--
 Pages.Current = current
 Pages.Previous = previous
 Pages.Locked = locked
+-- A short world reveal suspends page drawing without discarding navigation or the evening lock.
+Pages.Presenting = presenting
 
 --[[ Handling ]]--
 --- A node that is true exactly while `page` is the open one. Bind it to Enabled or Visible.
 function Pages.IsOpen(page: Page): Flux.Node<boolean>
 	return Flux.computed(function(): boolean
-		return current() == page
+		return current() == page and not presenting()
 	end)
 end
 
@@ -95,6 +99,21 @@ function Pages.SetLocked(isLocked: boolean, allowedPages: { [Page]: boolean }?):
 	allowedWhileLocked = allowedPages or {}
 	-- An updated allowlist must refresh navigation even when the lock stays enabled.
 	locked:set(isLocked, true)
+end
+
+function Pages.BeginPresentation(): number?
+	if presenting:peek() then
+		return nil
+	end
+	presentationToken += 1
+	presenting:set(true)
+	return presentationToken
+end
+
+function Pages.EndPresentation(token: number): ()
+	if token == presentationToken then
+		presenting:set(false)
+	end
 end
 
 return Pages

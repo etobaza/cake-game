@@ -16,6 +16,7 @@ local HintAnimation = require(script.Parent.HintAnimation)
 local HintBeam = require(script.Parent.HintBeam)
 local HintRoute = require(script.Parent.HintRoute)
 local Surface = require(script.Parent.HintSurface)
+local WorldPose = require(ReplicatedStorage.Shared.WorldPose)
 
 --[[ Types ]]
 --
@@ -152,7 +153,7 @@ local function resolveWorld(target: Target): Resolved?
 	end
 
 	if target:IsA("Model") then
-		local resolved: WorldResolved = { kind = "World", point = target:GetPivot().Position, instance = target }
+		local resolved: WorldResolved = { kind = "World", point = WorldPose.Pivot(target).Position, instance = target }
 		return resolved
 	end
 

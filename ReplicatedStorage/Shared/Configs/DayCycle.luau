@@ -9,6 +9,9 @@ local DayCycle = {
 	ShiftSeconds = 480,
 	-- BP_DailyCycle checks for the last departing guest every three seconds.
 	ClosingCheckSeconds = 3,
+	-- After closing time the bakery waits this long for the last guests, then closes anyway: a guest
+	-- still waiting for food (or stuck on the way out) must not keep the day open.
+	ClosingMaxSeconds = 30,
 	-- One eight-minute shift represents the bakery's working day. Prep stays at opening time,
 	-- Summary stays at closing time, while the lighting moves farther into the evening.
 	OpenHour = 8,
@@ -33,8 +36,13 @@ local DayCycle = {
 	-- Finishing the introduction sends this many guests in a row, RushSpawnInterval apart, so the
 	-- player has work at once. Rush guests (and the first guest of a shift, and any guest arriving to
 	-- an empty bakery) step in from the porch and choose in Orders.FirstGuestChooseSeconds.
-	TutorialRushGuests = 2,
+	TutorialRushGuests = 1,
 	RushSpawnInterval = 2,
+	-- Then the shift ramps up instead of rushing: after each arrival the next one waits the next gap
+	-- here, with at most IntroRampMaxGuests guests inside, before SpawnInterval takes over. Four guests
+	-- in five seconds right after the introduction left a new player with no guidance.
+	IntroRampGaps = { 18, 14, 10 },
+	IntroRampMaxGuests = 2,
 
 	-- Guests allowed on top of the capacity: room for visitors roaming while every place is taken.
 	QueueSlack = 2,

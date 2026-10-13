@@ -31,6 +31,7 @@ local Causes: { [string]: string } = {
 	collect = "Your batch is ready to collect",
 	burnt = "Burnt food is blocking the oven",
 	choose = "Pick a recipe at the mixer first",
+	put = "Free your hands to pick a recipe",
 	start = "Start the recipe you picked",
 	close = "Close the recipes to keep cooking",
 	fetch = "The mixer still needs ingredients",
@@ -86,6 +87,13 @@ local function cook(
 	-- Dough's next station is named by the step itself.
 	if step.id == "load_dough" then
 		cause = "Dough goes to its next station"
+	end
+	-- The introduction's mixer copy ("Go to your mixer… Let's start with…") reads like a restart in
+	-- the middle of a shift; name the dish instead.
+	local chosen = if word(step.id) == "choose" then Recipes:Get(step.recipeId or recipe.id) else nil
+	if chosen then
+		step.title = `Pick {chosen.name} at the mixer`
+		step.hint = "Open the mixer's recipes and start this dish."
 	end
 	return stuck(key, cause or fallback, step, delay)
 end
@@ -360,13 +368,16 @@ function Assist.Resolve(cloud: any, session: any, props: { [string]: boolean }, 
 		return stuck(`order:{entry.id}`, "A guest is ready to order", step)
 	end
 
+	local waitingFor: string? = nil
 	for _, entry in seated(session, { Waiting = true }) do
 		local recipe = Recipes:Get(entry.customer.Orders[1])
 		if recipe then
-			local result = cook(cloud, session, props, `guest:{entry.id}`, recipe, `A guest is waiting for {recipe.name}`)
+			local message = `A guest is waiting for {recipe.name}`
+			local result = cook(cloud, session, props, `guest:{entry.id}`, recipe, message)
 			if result then
 				return result
 			end
+			waitingFor = waitingFor or message
 		end
 	end
 
@@ -389,6 +400,12 @@ function Assist.Resolve(cloud: any, session: any, props: { [string]: boolean }, 
 	local floor = spill(session, props)
 	if floor then
 		return floor
+	end
+
+	-- The ordered dish is mixing or baking: nothing to point at, but the guest still waits. Coach
+	-- keeps this line up so the shift never goes silent while an order is open.
+	if waitingFor then
+		return { key = "guest:busy", message = waitingFor, delay = "Stuck" }
 	end
 
 	if phase == "Shift" then

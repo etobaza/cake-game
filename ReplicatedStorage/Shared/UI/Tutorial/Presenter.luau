@@ -185,8 +185,9 @@ function Presenter.Draw(self: Presenter, _deltaTime: number, page: string): ()
 
 	local target = self.Focus.Target
 	local message = if target and target.message then target.message else goal.title
-	if not self.Coaching then
-		-- The bubble owns the step: it stays up, so it never waits behind other toasts.
+	if not self.Coaching or goal.persistent then
+		-- The bubble owns the step: it stays up, so it never waits behind other toasts. Coaching
+		-- uses it too while a guest waits, so the shift never goes silent.
 		hideToast(self)
 		local shown = table.clone(goal)
 		shown.title = self.Line or goal.title

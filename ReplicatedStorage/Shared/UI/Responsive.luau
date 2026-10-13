@@ -9,12 +9,15 @@ local UserInputService = game:GetService("UserInputService")
 --[[ Modules ]]--
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Animate = require(script.Parent.Animate)
+local TextScale = require(script.Parent.TextScale)
 
 --[[ Constants ]]--
 local COMPACT_WIDTH = 700
 -- The compact artwork is a phone-width layout, not a squeezed desktop canvas.
 local COMPACT_CANVAS_WIDTH = 360
 local MARGIN = 16
+local SHORT_HEIGHT = 500
+local MIN_SHORT_CANVAS_HEIGHT = 300
 
 --[[ Private Variables ]]--
 -- Some authored properties only have a Short override. Restore their original geometry
@@ -23,23 +26,6 @@ local Originals: { [GuiObject]: { Size: UDim2, Position: UDim2 } } = setmetatabl
 
 --[[ Tables ]]--
 local Responsive = {}
-
---[[ Private Functions ]]--
-local function fitText(constraint: UITextSizeConstraint, scale: number): ()
-	-- Constraints clamp rendered pixels after UIScale. An authored 22px minimum
-	-- must not force a 10px-high phone label to render oversized text.
-	-- The baseline travels with cloned rows, so later reflows never scale it twice.
-	local authored = constraint:GetAttribute("AuthoredMaxTextSize")
-	local maximum: number
-	if typeof(authored) == "number" then
-		maximum = authored
-	else
-		maximum = constraint.MaxTextSize
-		constraint:SetAttribute("AuthoredMaxTextSize", maximum)
-	end
-	constraint.MinTextSize = 1
-	constraint.MaxTextSize = math.max(1, math.floor(maximum * scale + 0.5))
-end
 
 --[[ Handling ]]--
 function Responsive.Apply(screen: ScreenGui, viewport: Vector2?): ()
@@ -55,21 +41,33 @@ function Responsive.Apply(screen: ScreenGui, viewport: Vector2?): ()
 		width = math.min(width, COMPACT_CANVAS_WIDTH)
 	end
 	local height = (screen:GetAttribute(if compact then "CompactHeight" else "PanelHeight") :: number?) or 680
+	-- Authored Short overrides place columns side by side. Use them before fitting a tall
+	-- desktop canvas to phone landscape; otherwise every label shrinks to half its size.
+	local short = not compact and available.Y < SHORT_HEIGHT
+	if short then
+		height = math.min(
+			height,
+			(screen:GetAttribute("ShortHeight") :: number?) or math.max(MIN_SHORT_CANVAS_HEIGHT, available.Y - MARGIN * 2)
+		)
+	end
 	if keyboard then
 		height = math.min(height, 80)
 	end
 	width, height = math.max(width, 1), math.max(height, 1)
 	-- Both axes use the same factor: a short phone must not flatten the page's artwork.
-	local scale =
-		math.min(1, math.max(1, available.X - MARGIN * 2) / width, math.max(1, available.Y - MARGIN * 2) / height)
-	local short = height < 500
+	local scale = math.min(
+		TextScale.Get(available),
+		math.max(1, available.X - MARGIN * 2) / width,
+		math.max(1, available.Y - MARGIN * 2) / height
+	)
+	short = short or height < SHORT_HEIGHT
 	panel.Size = UDim2.fromOffset(width, height)
 	Animate.SetLayoutScale(panel, scale)
 	screen:SetAttribute("Compact", compact)
 	screen:SetAttribute("Short", short)
 	for _, element in panel:GetDescendants() do
 		if element:IsA("UITextSizeConstraint") then
-			fitText(element, scale)
+			TextScale.Fit(element, scale)
 			continue
 		end
 		if not element:IsA("GuiObject") then

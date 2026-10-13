@@ -42,24 +42,35 @@ function Sanitize.IdList(value: any, maxCount: number): { string }?
 	end
 
 	local list = value :: { any }
-	if #list > maxCount then
+	local length = #list
+	if length > maxCount then
 		return nil
 	end
 
 	local seen: { [string]: boolean } = {}
 	local result: { string } = {}
+	local count = 0
 
-	for _, raw in list do
+	for index, raw in list do
+		-- Network tables must be dense arrays; # alone does not bound dictionaries or holes.
+		if typeof(index) ~= "number" or index % 1 ~= 0 or index < 1 or index > length then
+			return nil
+		end
+
 		local id = Sanitize.Id(raw)
 		if not id or seen[id] then
 			return nil
 		end
 
 		seen[id] = true
-		result[#result + 1] = id
+		count += 1
+		if count > maxCount then
+			return nil
+		end
+		result[index] = id
 	end
 
-	return result
+	return if count == length then result else nil
 end
 
 return Sanitize

@@ -53,6 +53,7 @@ local CustomerViewHandler = {
 		"BaseHandler",
 		"BuildingHandler",
 		"CollisionHandler",
+		"CatHandler",
 		"CustomerHandler",
 		"DisplayHandler",
 		"TickHandler",

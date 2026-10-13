@@ -57,11 +57,6 @@ local function collectOrders(): { Order }
 end
 
 --[[ Handling ]]--
--- Seat numbers are shared with the speech bubbles and the table prompts (GuestOrders.SeatLabel).
-function OrderHandler.SeatLabel(tableId: string, seatIndex: number?): string
-	return GuestOrders.SeatLabel(tableId, seatIndex)
-end
-
 function OrderHandler.OnStart(self: OrderHandler): ()
 	self.Janitor = Janitor.new()
 	self.Cards = {}
@@ -201,7 +196,7 @@ function OrderHandler.Refresh(self: OrderHandler): ()
 			continue
 		end
 		local customer = order.Customer
-		local need, status = GuestOrders.Need(customer, held, now)
+		local need: GuestOrders.Need, status = GuestOrders.Need(customer, held, now)
 		local placed = customer.State ~= "Choosing"
 		-- Cards follow guests as earlier orders finish; only a guest's own change punches.
 		local stage = customer.State
@@ -216,10 +211,10 @@ function OrderHandler.Refresh(self: OrderHandler): ()
 		local first = customer.Orders[1]
 		local recipe = if placed and first then Recipes:Get(first) else nil
 		local remaining = GuestOrders.Remaining(customer, now)
-		card:Show({
+		local view: Card.View = {
 			CustomerId = order.CustomerId,
 			Recipe = recipe,
-			Label = OrderHandler.SeatLabel(customer.TableId, customer.SeatIndex),
+			Label = GuestOrders.SeatLabel(customer.TableId, customer.SeatIndex),
 			Name = if need == "Eating"
 				then "Eating"
 				elseif placed then GuestOrders.DishNames(customer)
@@ -229,7 +224,8 @@ function OrderHandler.Refresh(self: OrderHandler): ()
 			Status = status,
 			Low = need ~= "Eating" and remaining < Config.Bubble.LowPatience,
 			Now = now,
-		})
+		}
+		card:Show(view)
 	end
 	self.Stages = stages
 end

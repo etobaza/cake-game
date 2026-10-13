@@ -23,6 +23,7 @@ local GardenSource = require(_Shared.GardenSource)
 local InteractHandler = require(_Handlers.InteractHandler)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Press = require(_Shared.UI.Press)
+local Pages = require(_Shared.UI.Stores.Pages)
 local Recipes = require(_Configs.Registries.Recipes)
 local UIHandler = require(_Handlers.UIHandler)
 
@@ -236,6 +237,7 @@ function MixHandler.RefreshBillboard(self: MixHandler): ()
 	local recipe = selectedId and Recipes:Get(selectedId)
 	local adornee: Instance? = billboard.Adornee
 	local visible = recipe ~= nil and Recipes:GetStartStation(recipe) == STATION_KIND and adornee ~= nil
+		and not Pages.Presenting:peek()
 	billboard.Enabled = visible
 	if not recipe or not visible then
 		return

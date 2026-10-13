@@ -52,6 +52,8 @@ function UIHandler.OnInit(self: UIHandler): ()
 	self.StatusVisible = Flux(false)
 	self.QuestText = Flux("")
 	self.QuestCount = Flux("")
+	self.QuestCost = Flux("")
+	self.QuestCostVisible = Flux(false)
 	self.QuestAlpha = Flux(0)
 	self.HasQuest = Flux(false)
 	self.XPText = Flux("")
@@ -78,6 +80,8 @@ function UIHandler.OnStart(self: UIHandler): ()
 		StatusVisible = self.StatusVisible,
 		QuestText = self.QuestText,
 		QuestCount = self.QuestCount,
+		QuestCost = self.QuestCost,
+		QuestCostVisible = self.QuestCostVisible,
 		QuestAlpha = self.QuestAlpha,
 		HasQuest = self.HasQuest,
 		XPText = self.XPText,
@@ -255,6 +259,8 @@ export type UIHandler = typeof(UIHandler) & {
 	StatusVisible: Flux.Node<boolean>,
 	QuestText: Flux.Node<string>,
 	QuestCount: Flux.Node<string>,
+	QuestCost: Flux.Node<string>,
+	QuestCostVisible: Flux.Node<boolean>,
 	QuestAlpha: Flux.Node<number>,
 	HasQuest: Flux.Node<boolean>,
 	XPText: Flux.Node<string>,

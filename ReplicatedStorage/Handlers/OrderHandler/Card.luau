@@ -13,10 +13,12 @@ local _Shared = ReplicatedStorage.Shared
 local Animate = require(_Shared.UI.Animate)
 local Config = require(_Shared.Configs.Orders)
 local FoodPreview = require(_Shared.UI.FoodPreview)
+local GuestOrders = require(_Shared.GuestOrders)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Press = require(_Shared.UI.Press)
 local Recipes = require(_Shared.Configs.Registries.Recipes)
 local Theme = require(_Shared.UI.Theme)
+local TextScale = require(_Shared.UI.TextScale)
 
 --[[ Constants ]]--
 local STATUS = Config.CardStatus
@@ -38,8 +40,8 @@ export type View = {
 	Name: string,
 	-- Patience left, 0-1, already stepped.
 	Ratio: number,
-	-- GuestOrders.Need: Choosing, Ready, Cook, Serve or Eating.
-	Need: string,
+	Need: GuestOrders.Need,
+	-- One line per ordered dish.
 	Status: string,
 	Low: boolean,
 	Now: number,
@@ -58,6 +60,11 @@ local function drawFill(clip: Frame, fill: Frame, value: number): ()
 	clip.Visible = ratio > 0
 end
 
+-- A pixel size from Orders config at the HUD's text density.
+local function scaled(size: number, scale: number): number
+	return math.floor(size * scale + 0.5)
+end
+
 --[[ Handling ]]--
 function Card.new(root: Frame, tooltip: Tooltip, onTap: (customerId: string) -> ()): Card
 	local slot = root:FindFirstChild("Slot") :: Frame
@@ -73,13 +80,13 @@ function Card.new(root: Frame, tooltip: Tooltip, onTap: (customerId: string) -> 
 	status.Name = "Status"
 	status.AnchorPoint = Vector2.new(0.5, 0)
 	status.Position = UDim2.fromScale(0.5, 0)
-	status.Size = UDim2.fromScale(1.1, STATUS.Height)
+	status.Size = UDim2.fromScale(1, STATUS.Height)
 	status.BackgroundTransparency = 1
 	status.FontFace = Theme.Fonts.ExtraBold
 	status.TextScaled = true
 	status.TextWrapped = true
 	status.TextYAlignment = Enum.TextYAlignment.Bottom
-	status.ZIndex = 10
+	status.ZIndex = STATUS.ZIndex
 	local limit = Instance.new("UITextSizeConstraint")
 	limit.MinTextSize = STATUS.MinTextSize
 	limit.MaxTextSize = STATUS.MaxTextSize
@@ -161,6 +168,14 @@ function Card.new(root: Frame, tooltip: Tooltip, onTap: (customerId: string) -> 
 	self.Janitor:Add(function(): ()
 		FoodPreview.Clear(self.Icon)
 	end)
+	local function refreshText(): ()
+		local screen = root:FindFirstAncestorWhichIsA("ScreenGui")
+		local scale = if screen then TextScale.Get(screen.AbsoluteSize) else 1
+		limit.MinTextSize = scaled(STATUS.MinTextSize, scale)
+		limit.MaxTextSize = scaled(STATUS.MaxTextSize, scale)
+	end
+	self.Janitor:Add(root:GetPropertyChangedSignal("AbsoluteSize"):Connect(refreshText), "Disconnect")
+	refreshText()
 	self:Clear()
 	return self
 end
@@ -185,7 +200,26 @@ function Card.RefreshHeader(self: Card): ()
 	-- Convert rendered card geometry to the shared tooltip parent's coordinate space.
 	local topCenter = self.Background.AbsolutePosition + Vector2.new(self.Background.AbsoluteSize.X / 2, 0)
 	local relative = topCenter - parent.AbsolutePosition
-	tooltip.Root.Position = UDim2.new(relative.X / parentSize.X, 0, relative.Y / parentSize.Y, -Config.TooltipGap)
+	local parentHud = parent.Parent
+	local hud = if parentHud and parentHud:IsA("GuiObject") then parentHud else nil
+	local margin = Config.TooltipMargin
+	local scale = if hud then TextScale.Get(hud.AbsoluteSize) else 1
+	local width = if hud
+		then math.min(Config.TooltipWidth * scale, hud.AbsoluteSize.X - margin * 2)
+		else Config.TooltipWidth
+	tooltip.Root.Size = UDim2.fromOffset(width, Config.TooltipHeight * scale)
+	local limit = tooltip.ItemName:FindFirstChildOfClass("UITextSizeConstraint")
+	if limit then
+		limit.MinTextSize = scaled(Config.TooltipMinTextSize, scale)
+		limit.MaxTextSize = scaled(Config.TooltipMaxTextSize, scale)
+	end
+	-- Keep the whole tooltip on the HUD near the screen edges.
+	local center = relative.X
+	if hud then
+		local left = hud.AbsolutePosition.X - parent.AbsolutePosition.X
+		center = math.clamp(center, left + width / 2 + margin, left + hud.AbsoluteSize.X - width / 2 - margin)
+	end
+	tooltip.Root.Position = UDim2.new(center / parentSize.X, 0, relative.Y / parentSize.Y, -Config.TooltipGap)
 end
 
 function Card.Show(self: Card, view: View): ()
@@ -218,12 +252,13 @@ function Card.Show(self: Card, view: View): ()
 	self.Ponder.TextColor3 = if ready then STATUS.Colors.Ready else self.PonderColor
 	-- A guest waiting for their order to be taken keeps calling from the HUD as well.
 	if ready and view.Now >= self.NextPulseAt then
-		self.NextPulseAt = view.Now + STATUS.ReadyPulseSeconds
+		self.NextPulseAt = view.Now + Config.ReadyPulseSeconds
 		Animate.Pop(self.Slot, STATUS.ReadyPulseFrom)
 	end
 
 	self.Status.Text = view.Status
-	self.Status.TextColor3 = if view.Low then STATUS.Colors.Low else STATUS.Colors[view.Need] or STATUS.Colors.Cook
+	self:Layout(string.find(view.Status, "\n", 1, true) ~= nil)
+	self.Status.TextColor3 = if view.Low then STATUS.Colors.Low else STATUS.Colors[view.Need]
 	self.Background.ImageColor3 = if view.Low then STATUS.LowTint else self.ArtColor
 	self.Background.ImageTransparency = if eating then STATUS.EatingTransparency else self.ArtTransparency
 	self.Bar.Visible = not eating
@@ -254,6 +289,7 @@ function Card.Clear(self: Card): ()
 	self.Root:SetAttribute("RecipeId", nil)
 	self.Root.Visible = false
 	self.Status.Text = ""
+	self:Layout(false)
 	self.Background.ImageColor3 = self.ArtColor
 	self.Background.ImageTransparency = self.ArtTransparency
 	self.Ponder.TextColor3 = self.PonderColor
@@ -264,6 +300,14 @@ function Card.Clear(self: Card): ()
 	self.Motion:setPosition(0)
 	self.Motion:setVelocity(0)
 	drawFill(self.Clip, self.Fill, 0)
+end
+
+-- Keeps the status line above the authored card number and dish art; a two-line status takes more
+-- of the card and pushes the slot down.
+function Card.Layout(self: Card, multiline: boolean): ()
+	self.Status.Size = UDim2.fromScale(1, if multiline then STATUS.MultipleHeight else STATUS.Height)
+	self.Slot.Position = UDim2.fromScale(0.5, if multiline then STATUS.MultipleSlotY else STATUS.SlotY)
+	self.Slot.Size = UDim2.fromScale(1, if multiline then STATUS.MultipleSlotHeight else STATUS.SlotHeight)
 end
 
 function Card.Destroy(self: Card): ()

@@ -26,7 +26,9 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local LevelUp = require(script.LevelUp)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Popup = require(script.Popup)
+local RareGuestBanner = require(script.RareGuestBanner)
 local Recipes = require(_Shared.Configs.Registries.Recipes)
+local RecipeRequirements = require(_Shared.RecipeRequirements)
 local Sounds = require(_Shared.Configs.Sounds)
 local SoundPlayer = require(_Shared.SoundPlayer)
 local Sparks = require(_Shared.UI.Sparks)
@@ -101,19 +103,29 @@ end
 
 local function unlockLine(level: number): string
 	local names: { string } = {}
+	local missing: { [string]: boolean } = {}
+	local levels = DataClient:GetData({ "Base", "Upgrades" }) or {}
 	for _, recipe in Recipes:GetUnlockedAt(level) do
 		if #names >= MAX_UNLOCK_NAMES then
 			break
 		end
 		table.insert(names, recipe.name)
+		for _, id in RecipeRequirements.GetMissing(recipe, levels) do
+			missing[id] = true
+		end
 	end
 	if #names == 0 then
 		return ""
 	end
-	if #names == 1 then
-		return string.format(Config.LevelUp.UnlockSingle, names[1])
+	local line = if #names == 1 then string.format(Config.LevelUp.UnlockSingle, names[1])
+		else string.format(Config.LevelUp.UnlockMany, table.concat(names, ", "))
+	local ids: { string } = {}
+	for id in missing do
+		table.insert(ids, id)
 	end
-	return string.format(Config.LevelUp.UnlockMany, table.concat(names, ", "))
+	table.sort(ids)
+	local requirements = RecipeRequirements.Describe(ids, Config.LevelUp.MaxRequirementNames)
+	return if requirements ~= "" then `{line}\n{requirements}` else line
 end
 
 -- Listed milestones, then every `MilestoneEvery` sales past the last one.
@@ -180,6 +192,7 @@ function FeedbackHandler.OnStart(self: FeedbackHandler): ()
 	end)
 	self.LevelUp = LevelUp.new(root, self.Sparks)
 	self.Banner = StreakBanner.new(root, self.Sparks)
+	self.RareGuest = RareGuestBanner.new(root)
 	self.PendingBanner = nil
 	self.Meter = StreakMeter.new(root, function(): (Vector2?, Vector2?)
 		return self:CoinTarget()
@@ -190,6 +203,7 @@ function FeedbackHandler.OnStart(self: FeedbackHandler): ()
 		self.Sparks:Destroy()
 		self.LevelUp:Destroy()
 		self.Banner:Destroy()
+		self.RareGuest:Destroy()
 		self.Meter:Destroy()
 		for _, popup in self.Popups do
 			popup:Destroy()
@@ -235,6 +249,9 @@ function FeedbackHandler.OnStart(self: FeedbackHandler): ()
 		end),
 		"Disconnect"
 	)
+	self.Janitor:Add(Bus.Cafe.RareGuestArrived.OnClientEvent:Connect(function(guestId: string, typeId: string): ()
+		self.RareGuest:Push(guestId, typeId)
+	end), "Disconnect")
 	self.Janitor:Add(
 		RunService.RenderStepped:Connect(function(deltaTime: number): ()
 			self:Step(deltaTime)
@@ -409,6 +426,7 @@ function FeedbackHandler.Celebrate(self: FeedbackHandler, target: GuiObject, sou
 end
 
 function FeedbackHandler.Step(self: FeedbackHandler, deltaTime: number): ()
+	self.Root.Visible = not Pages.Presenting:peek()
 	local now = os.clock()
 	local scale = viewportScale()
 	self.Sparks:SetScale(scale)
@@ -423,6 +441,9 @@ function FeedbackHandler.Step(self: FeedbackHandler, deltaTime: number): ()
 		self.Banner:Show(pending.Title, pending.Run, scale)
 	end
 	self.Banner:Step(now)
+	self.RareGuest:Step(now, scale, self.LevelUp:IsShowing() or self.Banner:IsShowing(), function(guestId: string): boolean
+		return DataClient:GetData({ "Customers", guestId }, "Session") ~= nil
+	end)
 	self.Meter:Step(now, scale)
 	for index = #self.Popups, 1, -1 do
 		local popup = self.Popups[index]
@@ -447,6 +468,7 @@ export type FeedbackHandler = typeof(FeedbackHandler) & {
 	Sparks: Sparks.Sparks,
 	LevelUp: LevelUp.LevelUp,
 	Banner: StreakBanner.StreakBanner,
+	RareGuest: RareGuestBanner.RareGuestBanner,
 	PendingBanner: { Title: string, Run: string }?,
 	Meter: StreakMeter.StreakMeter,
 	Popups: { Popup.Popup },

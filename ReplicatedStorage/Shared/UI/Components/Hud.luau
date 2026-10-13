@@ -28,6 +28,7 @@ local Pages = require(_Shared.UI.Stores.Pages)
 local Progression = require(_Configs.Progression)
 local UseClock = require(_Shared.UI.Hooks.UseClock)
 local UseData = require(_Shared.UI.Hooks.UseData)
+local Upgrades = require(_Configs.Registries.Upgrades)
 local Wallet = require(_Shared.UI.Stores.Wallet)
 
 --[[ Constants ]]--
@@ -41,9 +42,11 @@ export type Deps = {
 	-- Owned by whoever shows toasts.
 	Status: any,
 	StatusVisible: any,
-	-- Owned by the tutorial.
+	-- Owned by HudHandler's next-upgrade goal.
 	QuestText: any,
 	QuestCount: any,
+	QuestCost: any,
+	QuestCostVisible: any,
 	QuestAlpha: any,
 	HasQuest: any,
 	-- Owned by whoever watches XP gains.
@@ -58,6 +61,7 @@ return function(hud: Instance, deps: Deps): ()
 	local data = deps.Data
 
 	local cash = UseData.Path(data, { "Cash" }, "Cloud", 0)
+	local friendPercent = UseData.Path(data, { "FriendBoost", "Percent" }, "Session", 0)
 	-- Coins still flying into the plate are added as they land.
 	local shownCash = Flux(function(): number
 		local value = cash()
@@ -65,6 +69,17 @@ return function(hud: Instance, deps: Deps): ()
 	end)
 	local level = UseData.Path(data, { "Level" }, "Cloud", 1)
 	local xp = UseData.Path(data, { "XP" }, "Cloud", 0)
+	local upgradeCount = Flux(0)
+	local function refreshUpgradeCount(): ()
+		local progress = Upgrades:GetProgress(
+			data:GetData({ "Base", "Upgrades" }) or {},
+			data:GetData({ "Level" }) or 1,
+			data:GetData({ "Cash" }) or 0
+		)
+		upgradeCount:set(progress.AffordableCount)
+	end
+	refreshUpgradeCount()
+	Flux.cleanup(data:SubscribeToDataType("Cloud", refreshUpgradeCount))
 	local phase = UseData.Path(data, { "Day", "Phase" }, "Session", "Prep")
 	local endsAt = UseData.Path(data, { "Day", "EndsAt" }, "Session", 0)
 	local now = UseClock.Now()
@@ -104,8 +119,9 @@ return function(hud: Instance, deps: Deps): ()
 		FormatBalance = function(value: number): string
 			return `{Format.Number(value)}$`
 		end,
-		-- No friend-boost system yet; the authored line read +0%.
-		FriendBoost = 'Friend Boost: <font color="#1EFF00">+0%</font>',
+		FriendBoost = function(): string
+			return `Friend Boost: <font color="#1EFF00">+{friendPercent()}%</font>`
+		end,
 
 		-- The bakery clock is frozen at 08:00 during prep, advances to 16:00 during the shift,
 		-- then stays at 16:00 while the evening menu is planned.
@@ -124,6 +140,8 @@ return function(hud: Instance, deps: Deps): ()
 
 		QuestText = deps.QuestText,
 		QuestCount = deps.QuestCount,
+		QuestCost = deps.QuestCost,
+		QuestCostVisible = deps.QuestCostVisible,
 		QuestAlpha = deps.QuestAlpha,
 		HasQuest = deps.HasQuest,
 		QuestsCollapsed = questsCollapsed,
@@ -136,6 +154,7 @@ return function(hud: Instance, deps: Deps): ()
 		LevelAlpha = levelAlpha,
 
 		ShopLabel = "Shop",
+		UpgradesAvailable = upgradeCount,
 		OnShop = function()
 			Pages.Toggle(Pages.Names.Store)
 		end,

@@ -17,6 +17,7 @@ local _Packages = ReplicatedStorage.Packages
 
 --[[ Modules ]]--
 local Animate = require(_Shared.UI.Animate)
+local Authored = require(_Shared.UI.Authored)
 local Flux = require(_Packages.flux)
 local HudLayout = require(_Shared.UI.HudLayout)
 local HudReveal = require(_Shared.UI.Stores.HudReveal)
@@ -85,6 +86,8 @@ export type Props = {
 	XPVisible: UITypes.Reactive<boolean>,
 	QuestText: UITypes.Reactive<string>,
 	QuestCount: UITypes.Reactive<string>,
+	QuestCost: UITypes.Reactive<string>,
+	QuestCostVisible: UITypes.Reactive<boolean>,
 	QuestAlpha: UITypes.Reactive<number>,
 	HasQuest: UITypes.Reactive<boolean>,
 	-- Folds the quest panel off the right edge, leaving only the arrow on screen.
@@ -95,6 +98,7 @@ export type Props = {
 	LevelAlpha: UITypes.Reactive<number>,
 	-- What the left side shop button is called.
 	ShopLabel: UITypes.Reactive<string>,
+	UpgradesAvailable: UITypes.Reactive<number>,
 	OnShop: (() -> ())?,
 	OnTime: (() -> ())?,
 	OnUpgrades: (() -> ())?,
@@ -208,6 +212,10 @@ local function fill(root: Instance, path: string, alpha: UITypes.Reactive<number
 	local anchorY = instance.Position.Y
 
 	edit(instance)({
+		-- Some authored fills ship hidden (the Quest bar's did); progress decides visibility instead.
+		Visible = function(): boolean
+			return (Flux.read(alpha) :: number) > 0
+		end,
 		Size = function(): UDim2
 			return UDim2.new(math.clamp(Flux.read(alpha) :: number, 0, 1), 0, height.Scale, height.Offset)
 		end,
@@ -223,6 +231,68 @@ end
 --- Call inside a Flux.scope; every binding is torn down with it.
 return function(hud: Instance, props: Props): ()
 	Flux.cleanup(HudLayout.Bind(hud :: GuiObject))
+	local questMain = resolve(hud, "Quests.Container.Quest.Main")
+	local questIcon = resolve(hud, "Quests.Container.Quest.Main.Icon")
+	local currencyIcon = resolve(hud, "Currency.Main.Icon")
+	local questCost = resolve(hud, "Quests.Container.Quest.Main.Reward")
+	local currencyCost = resolve(hud, "Currency.Main.CoinBalance")
+	if questMain and questMain:IsA("GuiObject") then
+		-- This authored reward badge now shows the goal's price, with space between icon and text.
+		questMain.AnchorPoint = Vector2.new(1, 0.5)
+		questMain.Position = UDim2.fromScale(1, 0.19)
+		questMain.Size = UDim2.fromScale(0.39, 0.385)
+		local layout = questMain:FindFirstChildOfClass("UIListLayout")
+		if layout then
+			layout.Padding = UDim.new(0.04, 0)
+		end
+	end
+	if questIcon and questIcon:IsA("ImageLabel") and currencyIcon and currencyIcon:IsA("ImageLabel") then
+		questIcon.Image = currencyIcon.Image
+		questIcon.ImageColor3 = currencyIcon.ImageColor3
+		questIcon.ImageRectOffset = currencyIcon.ImageRectOffset
+		questIcon.ImageRectSize = currencyIcon.ImageRectSize
+		questIcon.ScaleType = Enum.ScaleType.Fit
+		questIcon.Size = UDim2.fromScale(0.25, 0.9)
+	end
+	if questCost and questCost:IsA("TextLabel") then
+		questCost.AutomaticSize = Enum.AutomaticSize.None
+		questCost.Size = UDim2.fromScale(0.7, 0.9)
+		questCost.TextColor3 = Color3.new(0, 0, 0)
+		for _, child in questCost:GetDescendants() do
+			if child:IsA("UIStroke") then
+				child.Color = Color3.new(0, 0, 0)
+				local donor = if child.Parent == questCost then currencyCost
+					else currencyCost and currencyCost:FindFirstChild("Inside")
+				local stroke = donor and donor:FindFirstChildOfClass("UIStroke")
+				if stroke then
+					child.Thickness = stroke.Thickness
+					child.StrokeSizingMode = stroke.StrokeSizingMode
+				end
+			end
+		end
+	end
+	local upgrades = resolve(hud, "SideBtns.Upgrades")
+	local rewardMark = resolve(hud, "SideBtns.Rewards.Mark")
+	local mark = upgrades and upgrades:FindFirstChild("Mark")
+	if not mark and upgrades and rewardMark and rewardMark:IsA("GuiObject") then
+		-- Reuse the authored reward alert artwork; the mounted HUD scope owns this copy.
+		local copy = rewardMark:Clone()
+		copy.Active = false
+		copy.Selectable = false
+		copy.Interactable = false
+		copy.Parent = upgrades
+		Flux.cleanup(copy)
+		mark = copy
+	end
+	if mark and mark:IsA("GuiObject") then
+		edit(mark)({
+			Visible = function(): boolean
+				return read(props.UpgradesAvailable) > 0
+			end,
+		})
+	else
+		print("[HydrateHud] no authored alert artwork for Upgrades")
+	end
 	edit(hud)({
 		-- Currency. The balance itself is driven below, by a spring that counts to it.
 		label(hud, "Currency.FriendBoost", props.FriendBoost),
@@ -239,10 +309,16 @@ return function(hud: Instance, props: Props): ()
 		findPath("Quests.Container.Quest")({ Visible = props.HasQuest }),
 		label(hud, "Quests.Container.Quest.Progress", props.QuestText),
 		label(hud, "Quests.Container.Quest.ProgressBar.Progress", props.QuestCount),
+		findPath("Quests.Container.Quest.Main")({ Visible = props.QuestCostVisible }),
+		label(hud, "Quests.Container.Quest.Main.Reward", props.QuestCost),
 		label(hud, "Quests.Container.Level.Progress", props.LevelText),
 
 		-- Buttons
 		label(hud, "SideBtns.Shop.Shop", props.ShopLabel),
+		label(hud, "SideBtns.Upgrades.Upgrades", function(): string
+			local count = read(props.UpgradesAvailable)
+			return if count > 0 then `Upgrades ({count})` else "Upgrades"
+		end),
 		findPath("SideBtns.Shop.Btn")({ Activated = props.OnShop }),
 		findPath("SideBtns.Upgrades.Btn")({ Activated = props.OnUpgrades }),
 		findPath("SideBtns.Rewards")({ Activated = props.OnRewards }),
@@ -277,6 +353,15 @@ return function(hud: Instance, props: Props): ()
 
 	local quests = resolve(hud, "Quests")
 	local arrow = resolve(hud, "Quests.Btn")
+	if quests and quests:IsA("GuiObject") then
+		quests.Visible = true
+		for _, descendant in quests:GetDescendants() do
+			if descendant:IsA("TextLabel") and descendant.Text == "Quests" then
+				descendant.Text = "Next Upgrade"
+				Authored.SetPair(descendant, "Next Upgrade")
+			end
+		end
+	end
 	if quests and quests:IsA("GuiObject") and arrow and arrow:IsA("GuiObject") then
 		-- 0 = expanded, 1 = folded with the whole arrow visible, 2 = hidden for a page.
 		-- Derive distances during drawing so resizing never leaves a stale fold ratio.

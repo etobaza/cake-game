@@ -15,6 +15,8 @@ export type PromptState = {
 	-- mixing or baking), so the plate does not vanish and pop back in when the action returns.
 	-- InteractHandler honours it only on the prop the player last used.
 	Status: boolean?,
+	-- The status waits on the player (an oven out of firewood): drawn as an icon, not words.
+	Alert: boolean?,
 }
 
 export type Context = {

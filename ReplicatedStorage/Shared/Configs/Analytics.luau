@@ -35,4 +35,20 @@ return {
 		{ MaxDay = 14, Label = "Day8-14" },
 	},
 	LateDayLabel = "Day15+",
+
+	-- Script errors reported by ErrorReportHandler: one custom event per error with the realm
+	-- ("Server" or "Client") in the first field and the erroring script's name in the second.
+	-- Messages and line numbers stay out of the event; they would explode field cardinality.
+	Errors = {
+		Event = "ScriptError",
+		-- The same script reports at most once per window: per server for server errors, per player
+		-- for client errors.
+		DedupeSeconds = 300,
+		-- Client reports a player may send per minute, whatever the script.
+		ClientPerMinute = 6,
+		MaxKeyLength = 48,
+		-- No script could be named, or a client named one the server does not ship to clients.
+		UnknownKey = "Unknown",
+		OtherKey = "Other",
+	},
 }

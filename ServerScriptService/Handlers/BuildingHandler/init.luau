@@ -179,11 +179,19 @@ function BuildingHandler.OnStart(self: BuildingHandler): ()
 	Actions.Bind(self)
 end
 
--- Slot number from a packet, checked against how many slots of that kind the player owns.
-function BuildingHandler.SanitizeSlot(_self: BuildingHandler, player: Player, kindName: string, slotIndex: any): number?
-	local stat = BuildingsConfig.Kinds[kindName].Stat :: any
+-- How many buildings of a stat-driven kind the player owns: the stat, capped by the bought tables
+-- of a kind that needs one per slot.
+function BuildingHandler.GetSlotCount(_self: BuildingHandler, player: Player, kind: BuildingsConfig.Kind): number
+	local count = if kind.Stat then UpgradeHandler:GetStat(player, kind.Stat :: any) else 0
+	if kind.TableUpgrade then
+		count = math.min(count, UpgradeHandler:GetLevel(player, kind.TableUpgrade))
+	end
+	return count
+end
 
-	return Sanitize.Index(slotIndex, UpgradeHandler:GetStat(player, stat))
+-- Slot number from a packet, checked against how many slots of that kind the player owns.
+function BuildingHandler.SanitizeSlot(self: BuildingHandler, player: Player, kindName: string, slotIndex: any): number?
+	return Sanitize.Index(slotIndex, self:GetSlotCount(player, BuildingsConfig.Kinds[kindName]))
 end
 
 function BuildingHandler.Build(self: BuildingHandler, player: Player, root: Folder): ()
@@ -252,26 +260,19 @@ function BuildingHandler.Refresh(self: BuildingHandler, player: Player): ()
 	self:RefreshDisplayPlacement(player)
 end
 
--- Slots remain a dense inventory array. Bonus capacity uses the permanent ledge until the player
--- buys pedestal upgrades; moving a display never changes or discards the dish stored in that slot.
+-- Slots remain a dense inventory array. Every slot stands on its own Display Counter table; a dish is
+-- never put on the floor, and moving a display never changes or discards the dish stored in it.
 function BuildingHandler.RefreshDisplayPlacement(self: BuildingHandler, player: Player): ()
 	local base = self.Bases[player]
 	if not base then
 		return
 	end
-	local bought = math.clamp(
-		UpgradeHandler:GetLevel(player, FoodPresentation.DisplayUpgrade),
-		0,
-		FoodPresentation.DisplayPedestals
-	)
 	local anchors = BaseHandler.Template:FindFirstChild(BaseConfig.AnchorsFolderName)
 	for _, building in base.Buildings do
 		if building.Kind ~= "Display" then
 			continue
 		end
-		local physical = if building.Index <= bought + 1
-			then building.Index
-			else FoodPresentation.DisplayPedestals + building.Index - bought
+		local physical = building.Index + FoodPresentation.DisplayAnchorOffset
 		local anchor = anchors and anchors:FindFirstChild(`display_{physical}`)
 		if not anchor or not anchor:IsA("BasePart") then
 			continue
@@ -304,7 +305,7 @@ function BuildingHandler.SpawnGroup(
 		return
 	end
 
-	local stat = UpgradeHandler:GetStat(player, kind.Stat :: any)
+	local stat = self:GetSlotCount(player, kind)
 	local slots = BaseHandler:CountAnchors(kind.Prefix)
 
 	for purchase = 1, math.min(stat, slots) do

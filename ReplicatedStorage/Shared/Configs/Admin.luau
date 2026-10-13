@@ -1,6 +1,11 @@
 --!strict
 -- Presentation and bounds only. Authorization lives in ServerScriptService.Cmdr.Admin.
 
+local AdminAbuse = require(script.Parent.AdminAbuse)
+
+-- Live event actions are this prefix plus a script id from Configs/AdminAbuse.
+local LIVE_EVENT_PREFIX = "liveEvent:"
+
 export type Action = {
 	id: string,
 	label: string,
@@ -8,6 +13,8 @@ export type Action = {
 	max: number?,
 	allowZero: boolean?,
 	warning: string?,
+	-- Acts on every server instead of the selected player; no profile is needed.
+	global: boolean?,
 }
 
 local actions: { Action } = {
@@ -55,6 +62,29 @@ local actions: { Action } = {
 	},
 }
 
+-- One start button per live event script, then a stop button.
+local scriptIds: { string } = {}
+for scriptId in AdminAbuse.Scripts do
+	scriptIds[#scriptIds + 1] = scriptId
+end
+table.sort(scriptIds)
+for _, scriptId in scriptIds do
+	actions[#actions + 1] = {
+		id = `{LIVE_EVENT_PREFIX}{scriptId}`,
+		label = `Start: {AdminAbuse.Scripts[scriptId].Name}`,
+		section = "Live event",
+		global = true,
+		warning = "Starts the admin abuse event on every server.",
+	}
+end
+actions[#actions + 1] = {
+	id = "liveEventStop",
+	label = "Stop live event",
+	section = "Live event",
+	global = true,
+	warning = "Stops the admin abuse event on every server.",
+}
+
 local byId: { [string]: Action } = {}
 for _, action in actions do
 	byId[action.id] = action
@@ -63,6 +93,7 @@ end
 return {
 	Actions = actions,
 	ById = byId,
+	LiveEventPrefix = LIVE_EVENT_PREFIX,
 	MaxCash = 100000000,
 	MaxPantry = 100000,
 	RequestCooldown = 0.4,

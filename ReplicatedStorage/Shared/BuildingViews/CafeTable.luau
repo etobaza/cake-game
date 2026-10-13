@@ -19,6 +19,13 @@ local Recipes = require(_Shared.Configs.Registries.Recipes)
 local Tints = require(script.Parent.Tints)
 local Types = require(script.Parent.Types)
 
+--[[ Constants ]]--
+-- What a seat's prompt says beside the guest's number while there is nothing to do for them.
+local IDLE_STATES: { [string]: string } = {
+	Arriving = "sitting down",
+	Eating = "eating",
+}
+
 --[[ Tables ]]--
 local CafeTable = {}
 
@@ -33,18 +40,18 @@ local function DescribeSeat(context: Types.Context, entry: any, seat: number): T
 	end
 	local guest = `Guest {GuestOrders.SeatLabel(context.PropId, seat)}`
 	if customer.State == "Choosing" then
-		local id = customerId
 		return {
 			Label = guest,
 			Action = "Take order",
 			Tint = Tints.Guest,
 			Fire = function()
-				Bus.Cafe.TakeOrder:Fire(id)
+				Bus.Cafe.TakeOrder:Fire(customerId)
 			end,
 		}
 	end
 	if customer.State ~= "Waiting" then
-		return { Label = `{guest}: {customer.State}`, Tint = Tints.Guest }
+		local idle = IDLE_STATES[customer.State]
+		return { Label = if idle then `{guest}: {idle}` else guest, Tint = Tints.Guest }
 	end
 
 	local held = context.Held()
@@ -56,13 +63,12 @@ local function DescribeSeat(context: Types.Context, entry: any, seat: number): T
 		return { Label = wants, Tint = Tints.Guest }
 	end
 	local matches = held.Kind == "Dish" and DataList.Contains(customer.Orders, held.Id)
-	local id = customerId
 	return {
 		Label = if matches then guest else wants,
 		Action = "Serve",
 		Tint = if matches then Tints.Guest else Tints.Bad,
 		Fire = function()
-			Bus.Cafe.Serve:Fire(id)
+			Bus.Cafe.Serve:Fire(customerId)
 		end,
 	}
 end

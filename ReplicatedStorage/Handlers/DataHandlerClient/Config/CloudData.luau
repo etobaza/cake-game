@@ -77,10 +77,21 @@ return {
 	-- Rewards handed out outside the shift: promo codes and the daily streak.
 	-- Days is how far the streak has gone; ClaimedAt is os.time of the last claim, and the two
 	-- together decide whether the next day is ready, still cooling down, or a broken streak.
+	-- GroupClaimed marks the one-off group reward; Reconcile adds it to older profiles.
 	Rewards = {
 		Codes = {} :: { string },
 		Day = 0,
 		ClaimedAt = 0,
+		GroupClaimed = false,
+	},
+
+	-- Today's playtime track (Configs/Rewards.Playtime). Day is the UTC day number it belongs to,
+	-- Seconds the time already played that day in earlier sessions or saves, and Claimed the tier
+	-- indexes taken. A new day replaces all three; Reconcile adds them to older profiles.
+	Playtime = {
+		Day = 0,
+		Seconds = 0,
+		Claimed = {} :: { number },
 	},
 
 	-- Registry ids of the gamepasses and permanent products this player owns. Written by the server

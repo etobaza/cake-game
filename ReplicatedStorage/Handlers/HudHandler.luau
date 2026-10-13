@@ -1,5 +1,5 @@
 --!strict
--- Feeds the HUD its earned-XP notification; ReportHandler owns shift results.
+-- Feeds the HUD its earned-XP notification and next-upgrade goal; ReportHandler owns shift results.
 --
 -- Everything else the old HudHandler drove -- coins, the level bar, the clock, the phase icon, the
 -- buttons -- is bound straight from DataClient inside Shared/UI/Components/Hud now. This handler
@@ -18,6 +18,7 @@ local DataClient = require(_Handlers.DataHandlerClient)
 local Format = require(_Shared.UI.Format)
 local Progression = require(_Configs.Progression)
 local UIHandler = require(_Handlers.UIHandler)
+local Upgrades = require(_Configs.Registries.Upgrades)
 
 --[[ Tables ]]--
 local HudHandler = {
@@ -34,8 +35,6 @@ end
 
 function HudHandler.OnStart(self: HudHandler): ()
 	DataClient:WaitForData()
-	-- The introduction owns StarterGui.Tutorial; the retired HUD quest slot stays hidden.
-	UIHandler.HasQuest:set(false)
 	self:Refresh()
 
 	DataClient:SubscribeToDataType("Cloud", function()
@@ -48,6 +47,44 @@ function HudHandler.Refresh(self: HudHandler): ()
 	local xp = DataClient:GetData({ "XP" }) or 0
 
 	self:RefreshXP(level, xp)
+	self:RefreshGoal(level)
+end
+
+function HudHandler.RefreshGoal(_self: HudHandler, playerLevel: number): ()
+	local levels = DataClient:GetData({ "Base", "Upgrades" }) or {}
+	local cash = DataClient:GetData({ "Cash" }) or 0
+	local progress = Upgrades:GetProgress(levels, playerLevel, cash)
+	local goal = progress.Goal
+	UIHandler.HasQuest:set(true)
+	UIHandler.QuestCost:set("")
+	UIHandler.QuestCostVisible:set(false)
+	if progress.Complete then
+		UIHandler.QuestText:set("All upgrades purchased!")
+		UIHandler.QuestCount:set("Complete")
+		UIHandler.QuestAlpha:set(1)
+		return
+	end
+	if not goal then
+		return
+	end
+	local name = Upgrades:GetDisplayName(goal.Id, goal.Level - 1)
+	if progress.Recommended then
+		local costText = Format.Money(goal.Cost)
+		UIHandler.QuestCost:set(`{costText}$`)
+		UIHandler.QuestCostVisible:set(true)
+		UIHandler.QuestText:set(if cash >= goal.Cost then `Buy {name}` else `Save for {name}`)
+		UIHandler.QuestCount:set(`{Format.Money(cash)}$/{costText}$`)
+		UIHandler.QuestAlpha:set(math.clamp(cash / goal.Cost, 0, 1))
+		return
+	end
+	-- Future level-gated registries still expose a goal without calling it purchasable.
+	local entry = Upgrades:Get(goal.Id)
+	local missing = entry and Upgrades:GetMissingRequirement(entry, levels)
+	local requirement = if missing then Upgrades:GetDisplayName(missing, levels[missing] or 0)
+		else `level {if entry then entry.unlockLevel else playerLevel + 1}`
+	UIHandler.QuestText:set(`Unlock {name}`)
+	UIHandler.QuestCount:set(`Requires {requirement}`)
+	UIHandler.QuestAlpha:set(0)
 end
 
 --- XP arrives as a notification: the plate slides in with what was just earned and leaves. The

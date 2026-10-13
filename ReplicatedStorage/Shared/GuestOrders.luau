@@ -46,8 +46,9 @@ function GuestOrders.Remaining(customer: any, now: number): number
 	return math.clamp((endsAt - now) / math.max(customer.Patience or 1, 1), 0, 1)
 end
 
--- Ordered dish names joined for display; empty until the order is placed.
-function GuestOrders.DishNames(customer: any): string
+-- Ordered dish names joined for display (" + " unless `separator` says otherwise); empty until the
+-- order is placed.
+function GuestOrders.DishNames(customer: any, separator: string?): string
 	local names: { string } = {}
 	for _, recipeId in customer.Orders or {} do
 		local recipe = Recipes:Get(recipeId)
@@ -55,11 +56,11 @@ function GuestOrders.DishNames(customer: any): string
 			names[#names + 1] = recipe.name
 		end
 	end
-	return table.concat(names, " + ")
+	return table.concat(names, separator or " + ")
 end
 
--- What the guest needs next, and the line the order card shows for it. `held` is the item in the
--- local player's hands (nil when empty).
+-- What the guest needs next, and the line the order card shows for it: several dishes go on
+-- separate lines. `held` is the item in the local player's hands (nil when empty).
 function GuestOrders.Need(customer: any, held: any?, now: number): (Need, string)
 	if customer.State == "Eating" then
 		return "Eating", "Eating"
@@ -70,7 +71,7 @@ function GuestOrders.Need(customer: any, held: any?, now: number): (Need, string
 		end
 		return "Choosing", "Choosing"
 	end
-	local names = GuestOrders.DishNames(customer)
+	local names = GuestOrders.DishNames(customer, "\n")
 	if held and held.Kind == "Dish" and DataList.Contains(customer.Orders, held.Id) then
 		return "Serve", `Serve {names}`
 	end
@@ -91,7 +92,8 @@ function GuestOrders.CountWaiting(customers: any): { [string]: number }
 	return counts
 end
 
--- Seconds the player has left to take a ready guest's order before they order on their own.
+-- Server time at which a ready guest stops waiting for the player and orders on their own; 0 while
+-- they have not started choosing.
 function GuestOrders.FallbackAt(customer: any): number
 	local endsAt = customer.ChoosingEndsAt or 0
 	return if endsAt > 0 then endsAt + Config.TakeOrderFallbackSeconds else 0

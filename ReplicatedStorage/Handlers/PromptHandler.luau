@@ -28,16 +28,16 @@ local Janitor = require(_Packages.janitor)
 local Flux = require(_Packages.flux)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Press = require(_Shared.UI.Press)
+local PromptConfig = require(_Configs.Prompts)
 local Scope = require(_Shared.UI.Scope)
+local StationStatusConfig = require(_Configs.StationStatus)
+local TextScale = require(_Shared.UI.TextScale)
+local WorldPose = require(_Shared.WorldPose)
 
 --[[ Constants ]]--
 local TEMPLATE_TIMEOUT = 10
 -- Studs above the top of the adorned part, matching where the artist floated the sample.
 local PROMPT_LIFT = 1
--- Keep a readable, tappable plate on phones without covering the station/player.
-local PHONE_SCALE = 0.7
-local PHONE_WIDTH = 700
-local PHONE_HEIGHT = 500
 -- Which icon answers which input, by child name in the authored art. The art carries several
 -- variants named IconE; the first one wins.
 local ICON_KEYBOARD = "IconE"
@@ -58,18 +58,11 @@ local SWAP_SECONDS = 0.3
 local SWAP_POP = 0.94
 -- A status-only plate (a busy station) swaps its card for a small wooden sign
 -- (funset_ui_status_plate_wood, generated with Codex in the HUD icon style) with one centred line.
-local STATUS_CARD_SCALE = 0.7
 local STATUS_PLATE_IMAGE = "rbxassetid://129385372765867"
--- The sign art is about four times wider than tall; in the card's shape that is this size.
-local STATUS_PLATE_SIZE = UDim2.fromScale(0.98, 0.64)
 local STATUS_NAME_POSITION = UDim2.fromScale(0.5, 0.5)
-local STATUS_NAME_SIZE = UDim2.fromScale(0.78, 0.4)
-local STATUS_TEXT_SIZE = 36
--- The status line's lettering: white face, a thin dark cocoa outline and a short drop shadow. A
--- thick outline on billboard text merges into a shapeless blob.
+-- The status line's lettering: white face and a short cocoa drop shadow, without an outline.
 local STATUS_FACE = Color3.fromRGB(255, 255, 255)
 local STATUS_INK = Color3.fromRGB(58, 32, 22)
-local STATUS_OUTLINE = 1.5
 local STATUS_SHADOW_DROP = UDim2.fromScale(0, 0.05)
 
 --[[ Tables ]]--
@@ -79,7 +72,7 @@ local PromptHandler = {
 }
 
 --[[ Private Functions ]]--
-local function bindLayout(root: Frame): any
+local function bindLayout(billboard: BillboardGui, root: Frame): any
 	local janitor = Janitor.new()
 	local cameraJanitor = Janitor.new()
 	janitor:Add(cameraJanitor, "Destroy")
@@ -87,14 +80,56 @@ local function bindLayout(root: Frame): any
 	-- Center the scaled art on its billboard; enter/exit motion keeps the same rest point.
 	root.AnchorPoint = Vector2.new(0.5, 0.5)
 	Animate.Place(root, UDim2.fromScale(0.5, 0.5))
+	local holders: { [string]: { Position: UDim2, Size: UDim2 } } = {
+		Name = { Position = PromptConfig.NamePosition, Size = PromptConfig.NameSize },
+		Txt = { Position = PromptConfig.ActionPosition, Size = PromptConfig.ActionSize },
+	}
+	for name, geometry in holders do
+		local holder = root:FindFirstChild(name)
+		if holder and holder:IsA("GuiObject") then
+			holder.Position = geometry.Position
+			holder.Size = geometry.Size
+		end
+	end
+	for _, child in root:GetChildren() do
+		if child:IsA("ImageLabel") and string.sub(child.Name, 1, 4) == "Icon" then
+			child.AnchorPoint = Vector2.new(0.5, 0.5)
+			child.Position = PromptConfig.IconPosition
+			child.Size = UDim2.fromOffset(PromptConfig.IconSize, PromptConfig.IconSize)
+			child.ScaleType = Enum.ScaleType.Fit
+		end
+	end
 	local function update(): ()
 		local camera = workspace.CurrentCamera
 		local viewport = if camera then camera.ViewportSize else Vector2.zero
-		local phone = UserInputService.TouchEnabled
-			and viewport.X > 0
-			and viewport.Y > 0
-			and (viewport.X < PHONE_WIDTH or viewport.Y < PHONE_HEIGHT)
-		Animate.SetLayoutScale(root, if phone then PHONE_SCALE else 1)
+		local compact = viewport.X < PromptConfig.CompactWidth or viewport.Y < PromptConfig.CompactHeight
+		local status = billboard:GetAttribute("StatusOnly") == true
+		local dimensions = if status then PromptConfig.StatusSize
+			else if compact then PromptConfig.CompactSize else PromptConfig.WideSize
+		local scale = math.min(TextScale.Get(viewport), PromptConfig.MaximumScale)
+		-- Fixed pixels preserve distance stability without inflating proximity plates on large screens.
+		local width = math.min(dimensions.X * scale, math.max(1, viewport.X - PromptConfig.EdgePadding * 2))
+		billboard.Size = UDim2.fromOffset(width, dimensions.Y * scale)
+		local aspect = root:FindFirstChildOfClass("UIAspectRatioConstraint")
+		if aspect then
+			aspect.AspectRatio = width / (dimensions.Y * scale)
+		end
+		Animate.SetLayoutScale(root, 1)
+		local name = root:FindFirstChild("Name")
+		for _, label in root:GetDescendants() do
+			if not label:IsA("TextLabel") then
+				continue
+			end
+			local nameLabel = name ~= nil and label:IsDescendantOf(name)
+			local maximum = if nameLabel then (if status then PromptConfig.StatusTextSize else PromptConfig.NameTextSize)
+				else PromptConfig.ActionTextSize
+			label.TextWrapped = true
+			label.TextScaled = true
+			local constraint = label:FindFirstChildOfClass("UITextSizeConstraint") or Instance.new("UITextSizeConstraint")
+			constraint.MinTextSize = math.floor(PromptConfig.MinTextSize * scale + 0.5)
+			constraint.MaxTextSize = math.floor(maximum * scale + 0.5)
+			constraint.Parent = label
+		end
 	end
 	local function bindCamera(): ()
 		cameraJanitor:Cleanup()
@@ -105,7 +140,7 @@ local function bindLayout(root: Frame): any
 		update()
 	end
 	janitor:Add(workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(bindCamera), "Disconnect")
-	janitor:Add(UserInputService:GetPropertyChangedSignal("TouchEnabled"):Connect(update), "Disconnect")
+	janitor:Add(billboard:GetAttributeChangedSignal("StatusOnly"):Connect(update), "Disconnect")
 	janitor:LinkToInstance(root)
 	bindCamera()
 	return janitor
@@ -164,7 +199,7 @@ local function promptTargetPosition(part: BasePart, path: { string }): Vector3?
 				return target.Position
 			end
 			if target:IsA("Model") then
-				local frame = target:GetBoundingBox()
+				local frame = WorldPose.Bounds(target)
 				return frame.Position
 			end
 		end
@@ -262,7 +297,7 @@ function PromptHandler.OnStart(self: PromptHandler): ()
 	-- that is what the cursor icon in the art promises. The keyboard key keeps working on its own.
 	local root = self.Root
 	if root then
-		self.Lifetime:Add(bindLayout(root), "Destroy")
+		self.Lifetime:Add(bindLayout(billboard, root), "Destroy")
 		-- The plate still answers a mouse click while inactive; only touch and gamepad need it to sink input.
 		self.Lifetime:Add(Press.SinkUnlessMouse(root), "Destroy")
 
@@ -426,7 +461,7 @@ function PromptHandler.Refresh(self: PromptHandler, prompt: ProximityPrompt): ()
 	if action and action:IsA("GuiObject") then
 		action.Visible = actionable
 	end
-	self:StatusLayout(root, not actionable)
+	self:StatusLayout(root, not actionable, prompt:GetAttribute(StationStatusConfig.AlertAttribute) == true)
 
 	-- The art stacks one icon per input kind (plus spare variants); exactly one is up.
 	local chosen = pickIcon()
@@ -446,43 +481,50 @@ function PromptHandler.Refresh(self: PromptHandler, prompt: ProximityPrompt): ()
 end
 
 type Authored = {
-	Size: UDim2,
 	Position: UDim2,
 	NameSize: UDim2,
-	Limits: { [UITextSizeConstraint]: number },
 	-- The card art (background, dashed lines) a status line floats without.
 	Card: { [GuiObject]: boolean },
+	CardStrokes: { [UIStroke]: boolean },
 	-- The wooden sign drawn behind the status line instead.
 	Plate: ImageLabel,
-	-- Each name label's own position, colour and outline.
-	Labels: { [TextLabel]: { Position: UDim2, Color: Color3 } },
-	Strokes: { [UIStroke]: { Color: Color3, Thickness: number } },
+	-- Each name label's own position, colour, alignment, visibility and authored outline state.
+	Labels: { [TextLabel]: { Position: UDim2, Color: Color3, Alignment: Enum.TextXAlignment, Visible: boolean } },
+	Strokes: { [UIStroke]: boolean },
 }
 
-local function remember(billboard: BillboardGui, root: Frame, name: GuiObject): Authored
-	local limits = {}
+local function remember(root: Frame, name: GuiObject): Authored
 	local labels = {}
 	local strokes = {}
 	for _, child in name:GetDescendants() do
-		if child:IsA("UITextSizeConstraint") then
-			limits[child] = child.MaxTextSize
-		elseif child:IsA("TextLabel") then
-			labels[child] = { Position = child.Position, Color = child.TextColor3 }
+		if child:IsA("TextLabel") then
+			labels[child] = {
+				Position = child.Position,
+				Color = child.TextColor3,
+				Alignment = child.TextXAlignment,
+				Visible = child.Visible,
+			}
 		elseif child:IsA("UIStroke") then
-			strokes[child] = { Color = child.Color, Thickness = child.Thickness }
+			strokes[child] = child.Enabled
 		end
 	end
 	local card = {}
+	local cardStrokes = {}
 	for _, piece in { root:FindFirstChild("Bg"), root:FindFirstChild("InnerLines") } do
 		if piece and piece:IsA("GuiObject") then
 			card[piece] = piece.Visible
+			for _, child in piece:GetDescendants() do
+				if child:IsA("UIStroke") then
+					cardStrokes[child] = child.Enabled
+				end
+			end
 		end
 	end
 	local plate = Instance.new("ImageLabel")
 	plate.Name = "StatusPlate"
 	plate.AnchorPoint = Vector2.new(0.5, 0.5)
 	plate.Position = UDim2.fromScale(0.5, 0.5)
-	plate.Size = STATUS_PLATE_SIZE
+	plate.Size = PromptConfig.StatusPlateSize
 	plate.BackgroundTransparency = 1
 	plate.Image = STATUS_PLATE_IMAGE
 	plate.ScaleType = Enum.ScaleType.Stretch
@@ -491,52 +533,50 @@ local function remember(billboard: BillboardGui, root: Frame, name: GuiObject): 
 	plate.Parent = root
 	return {
 		Plate = plate,
-		Size = billboard.Size,
 		Position = name.Position,
 		NameSize = name.Size,
-		Limits = limits,
 		Card = card,
+		CardStrokes = cardStrokes,
 		Labels = labels,
 		Strokes = strokes,
 	}
 end
 
 -- Remembers the authored name plate, then switches between it and the status line: the card art
--- gives way to the wooden sign, with white lettering over a short drop shadow.
-function PromptHandler.StatusLayout(self: PromptHandler, root: Frame, status: boolean): ()
+-- gives way to the wooden sign, with white lettering over a short drop shadow. An alert line asks the
+-- player to act and is drawn as StationStatusHandler's firebox icon instead, so the plate shows nothing.
+function PromptHandler.StatusLayout(self: PromptHandler, root: Frame, status: boolean, alerted: boolean): ()
 	local billboard = self.Billboard
 	local name = root:FindFirstChild("Name")
 	if not billboard or not name or not name:IsA("GuiObject") then
 		return
 	end
-	local authored = self.Authored or remember(billboard, root, name)
+	local authored = self.Authored or remember(root, name)
 	self.Authored = authored
-	billboard.Size = if status
-		then UDim2.new(
-			authored.Size.X.Scale * STATUS_CARD_SCALE,
-			authored.Size.X.Offset * STATUS_CARD_SCALE,
-			authored.Size.Y.Scale * STATUS_CARD_SCALE,
-			authored.Size.Y.Offset * STATUS_CARD_SCALE
-		)
-		else authored.Size
 	name.Position = if status then STATUS_NAME_POSITION else authored.Position
-	name.Size = if status then STATUS_NAME_SIZE else authored.NameSize
-	for constraint, size in authored.Limits do
-		constraint.MaxTextSize = if status then STATUS_TEXT_SIZE else size
-	end
+	name.Size = if status then PromptConfig.StatusNameSize else authored.NameSize
+	billboard:SetAttribute("StatusOnly", status)
 	for piece, visible in authored.Card do
 		piece.Visible = visible and not status
 	end
-	authored.Plate.Visible = status
+	-- Disable the card border explicitly; only the wooden image frames a status line.
+	for stroke, enabled in authored.CardStrokes do
+		stroke.Enabled = enabled and not status
+	end
+	local alert = status and alerted
+	authored.Plate.Visible = status and not alert
 	for label, original in authored.Labels do
 		-- The pair's dark half drops below the face and becomes its shadow.
 		local shadow = label.Name == "Shadow"
+		label.Visible = original.Visible and not alert
 		label.Position = if status and shadow then original.Position + STATUS_SHADOW_DROP else original.Position
 		label.TextColor3 = if not status then original.Color elseif shadow then STATUS_INK else STATUS_FACE
+		-- The authored name sits left beside the input icon; a status line centres on the sign.
+		label.TextXAlignment = if status then Enum.TextXAlignment.Center else original.Alignment
 	end
-	for stroke, original in authored.Strokes do
-		stroke.Color = if status then STATUS_INK else original.Color
-		stroke.Thickness = if status then STATUS_OUTLINE else original.Thickness
+	-- Authored strokes use ScaledSize; preserve their tuning and omit them from status text.
+	for stroke, enabled in authored.Strokes do
+		stroke.Enabled = enabled and not status
 	end
 end
 

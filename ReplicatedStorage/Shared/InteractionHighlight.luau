@@ -11,6 +11,7 @@ local Config = require(ReplicatedStorage.Shared.Configs.InteractionHighlight)
 local Garden = require(ReplicatedStorage.Shared.Configs.Garden)
 local Tables = require(ReplicatedStorage.Shared.Configs.TableMenus)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local WorldPose = require(ReplicatedStorage.Shared.WorldPose)
 
 --[[ Tables ]]--
 local InteractionHighlight = {}
@@ -87,7 +88,7 @@ local function nearest(part: BasePart, candidates: { Instance }): Instance?
 		end
 		local frame: CFrame, size: Vector3
 		if candidate:IsA("Model") then
-			frame, size = candidate:GetBoundingBox()
+			frame, size = WorldPose.Bounds(candidate)
 		else
 			frame, size = candidate.CFrame, candidate.Size
 		end

@@ -23,6 +23,7 @@ local GardenConfig = require(_Configs.Garden)
 local DataClient = require(_Handlers.DataHandlerClient)
 local Ingredients = require(_Configs.Registries.Ingredients)
 local Recipes = require(_Configs.Registries.Recipes)
+local StationStatusConfig = require(_Configs.StationStatus)
 local TablesConfig = require(_Configs.TableMenus)
 local Types = require(_Views.Types)
 
@@ -189,28 +190,14 @@ function InteractHandler.Track(self: InteractHandler, instance: Instance): ()
 end
 
 -- Own building by id: this is how the tutorial guide finds where to point. A table's per-seat
--- prompt targets share its id and are skipped; GetSeatProp finds one of them.
-function InteractHandler.GetProp(self: InteractHandler, propId: string): BasePart?
+-- prompt targets share its id: without `seat` the table part itself is returned, with it the prompt
+-- target of that dining place (Take order / Serve for that guest).
+function InteractHandler.GetProp(self: InteractHandler, propId: string, seat: number?): BasePart?
 	for part in self.Props do
 		if
 			part.Parent
 			and part:GetAttribute(BuildingsConfig.IdAttribute) == propId
 			and part:GetAttribute(GardenConfig.AnimalActionAttribute) ~= "Harvest"
-			and part:GetAttribute(TablesConfig.SeatPromptAttribute) == nil
-		then
-			return part :: BasePart
-		end
-	end
-
-	return nil
-end
-
--- The prompt target of one dining place at an own table (Take order / Serve for that guest).
-function InteractHandler.GetSeatProp(self: InteractHandler, propId: string, seat: number): BasePart?
-	for part in self.Props do
-		if
-			part.Parent
-			and part:GetAttribute(BuildingsConfig.IdAttribute) == propId
 			and part:GetAttribute(TablesConfig.SeatPromptAttribute) == seat
 		then
 			return part :: BasePart
@@ -281,6 +268,9 @@ function InteractHandler.RefreshProp(self: InteractHandler, part: BasePart): ()
 		-- A status-only plate stays only on the prop the player last used: elsewhere it would take
 		-- the one shared prompt slot from a nearby prop that has an action.
 		local status = state.Status == true and part == self.LastUsed
+		-- PromptHandler draws an alert status as StationStatusHandler's icon instead of words. Set
+		-- before the texts: their change signals redraw the plate.
+		prompt:SetAttribute(StationStatusConfig.AlertAttribute, state.Alert == true)
 		prompt.Enabled = state.Action ~= nil or status
 		prompt.ActionText = state.Action or ""
 		prompt.ObjectText = state.Label

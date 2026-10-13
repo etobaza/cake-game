@@ -28,6 +28,8 @@ type RecipeDefinition = {
 	-- Hotbar art. Until it is filled in the slot shows the name alone.
 	icon: string?,
 	asset: string?,
+	-- Blended batter on the mixer and carried dough; finished recipe art remains textured.
+	doughColor: Color3?,
 	category: string,
 	order: number,
 	-- Original table flags, including its dietary inconsistencies, are retained below.
@@ -38,6 +40,7 @@ export type RecipeEntry = RecipeDefinition & { id: string }
 
 local list: { [string]: RecipeDefinition } = {
 	bread = {
+		doughColor = Color3.fromRGB(250, 240, 214),
 		name = "French Baguette",
 		asset = "Bread",
 		category = "Bread",
@@ -53,6 +56,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	sweet_roll = {
+		doughColor = Color3.fromRGB(250, 232, 190),
 		name = "Sweet Roll",
 		asset = "SweetRoll",
 		category = "Donut",
@@ -68,6 +72,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	marshmallow_twist = {
+		doughColor = Color3.fromRGB(252, 238, 205),
 		name = "Marshmallow Twist",
 		asset = "MarshmallowTwist",
 		category = "Candy",
@@ -83,6 +88,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = true,
 	},
 	sweet_pretzel = {
+		doughColor = Color3.fromRGB(238, 214, 165),
 		name = "Sweet Pretzel",
 		asset = "SweetPretzel",
 		category = "Bread",
@@ -98,6 +104,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	chocolate_cookie = {
+		doughColor = Color3.fromRGB(120, 82, 55),
 		name = "Chocolate Cookie",
 		asset = "ChocolateCookie",
 		category = "Cookie",
@@ -113,6 +120,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	chocolate_croissant = {
+		doughColor = Color3.fromRGB(134, 95, 66),
 		name = "Chocolate Croissant",
 		asset = "ChocolateCroissant",
 		category = "Bread",
@@ -128,6 +136,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	strawberry_donut = {
+		doughColor = Color3.fromRGB(236, 170, 170),
 		name = "Strawberry Donut",
 		asset = "StrawberryDonut",
 		category = "Donut",
@@ -143,6 +152,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	egg_benedict = {
+		doughColor = Color3.fromRGB(248, 226, 170),
 		name = "Egg Benedict",
 		asset = "EggBenedict",
 		category = "Bread",
@@ -158,6 +168,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	cherry_jelly = {
+		doughColor = Color3.fromRGB(214, 120, 120),
 		name = "Cherry Jelly",
 		asset = "CherryJelly",
 		category = "Donut",
@@ -173,6 +184,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	chocolate_strawberry = {
+		doughColor = Color3.fromRGB(150, 92, 80),
 		name = "Chocolate Strawberry",
 		asset = "ChocolateStrawberry",
 		category = "Candy",
@@ -188,6 +200,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = true,
 	},
 	blueberry_bagel = {
+		doughColor = Color3.fromRGB(150, 150, 190),
 		name = "Blueberry Bagel",
 		asset = "BlueberryBagel",
 		category = "Bread",
@@ -203,6 +216,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	honey_taffy = {
+		doughColor = Color3.fromRGB(232, 186, 104),
 		name = "Honey Taffy",
 		asset = "HoneyTaffy",
 		category = "Candy",
@@ -218,6 +232,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = true,
 	},
 	berry_crumble = {
+		doughColor = Color3.fromRGB(186, 136, 162),
 		name = "Berry Crumble",
 		asset = "BerryCrumble",
 		category = "Pie",
@@ -233,6 +248,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	raisin_bread = {
+		doughColor = Color3.fromRGB(186, 150, 160),
 		name = "Raisin Bread",
 		asset = "RaisinBread",
 		category = "Bread",
@@ -248,6 +264,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	apple_tart = {
+		doughColor = Color3.fromRGB(236, 214, 150),
 		name = "Apple Tart",
 		asset = "AppleTart",
 		category = "Pie",
@@ -263,6 +280,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	strawberry_scone = {
+		doughColor = Color3.fromRGB(238, 186, 170),
 		name = "Strawberry Scone",
 		asset = "StrawberryScone",
 		category = "Cookie",
@@ -278,6 +296,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	chocolate_eclair = {
+		doughColor = Color3.fromRGB(128, 90, 64),
 		name = "Chocolate Eclair",
 		asset = "ChocolateEclair",
 		category = "Donut",
@@ -293,6 +312,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	rainbow_lollipop = {
+		doughColor = Color3.fromRGB(198, 160, 198),
 		name = "Rainbow Lollipop",
 		asset = "RainbowLollipop",
 		category = "Candy",
@@ -308,6 +328,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = true,
 	},
 	carrot_granola_bar = {
+		doughColor = Color3.fromRGB(210, 150, 96),
 		name = "Carrot Granola Bar",
 		asset = "CarrotGranolaBar",
 		category = "Cookie",
@@ -323,6 +344,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	blueberry_cheesecake = {
+		doughColor = Color3.fromRGB(178, 180, 206),
 		name = "Blueberry Cheesecake",
 		asset = "BlueberryCheesecake",
 		category = "Cake",
@@ -338,6 +360,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = true,
 	},
 	grape_popsicle = {
+		doughColor = Color3.fromRGB(150, 110, 170),
 		name = "Grape Popsicle",
 		asset = "GrapePopsicle",
 		category = "Frozen",
@@ -353,6 +376,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = true,
 	},
 	apple_strudel = {
+		doughColor = Color3.fromRGB(232, 204, 150),
 		name = "Apple Strudel",
 		asset = "AppleStrudel",
 		category = "Donut",
@@ -368,6 +392,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	milk_chocolate = {
+		doughColor = Color3.fromRGB(140, 100, 72),
 		name = "Milk Chocolate",
 		asset = "MilkChocolate",
 		category = "Candy",
@@ -383,6 +408,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = true,
 	},
 	soft_serve = {
+		doughColor = Color3.fromRGB(252, 244, 224),
 		name = "Soft Serve",
 		asset = "SoftServe",
 		category = "Frozen",
@@ -398,6 +424,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = true,
 	},
 	honey_cruller = {
+		doughColor = Color3.fromRGB(230, 188, 118),
 		name = "Honey Cruller",
 		asset = "HoneyCruller",
 		category = "Donut",
@@ -413,6 +440,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	caramel_flan = {
+		doughColor = Color3.fromRGB(238, 206, 150),
 		name = "Caramel Flan",
 		asset = "CaramelFlan",
 		category = "Pie",
@@ -428,6 +456,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = true,
 	},
 	chocolate_pancake = {
+		doughColor = Color3.fromRGB(138, 100, 72),
 		name = "Chocolate Pancake",
 		asset = "ChocolatePancake",
 		category = "Cake",
@@ -443,6 +472,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	carrot_pie = {
+		doughColor = Color3.fromRGB(224, 150, 92),
 		name = "Carrot Pie",
 		asset = "CarrotPie",
 		category = "Pie",
@@ -458,6 +488,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	caramel_apple = {
+		doughColor = Color3.fromRGB(224, 184, 128),
 		name = "Caramel Apple",
 		asset = "CaramelApple",
 		category = "Candy",
@@ -473,6 +504,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = true,
 	},
 	cherry_bundt_cake = {
+		doughColor = Color3.fromRGB(216, 140, 140),
 		name = "Cherry Bundt Cake",
 		asset = "CherryBundtCake",
 		category = "Cake",
@@ -488,6 +520,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	ice_cream_sandwich = {
+		doughColor = Color3.fromRGB(150, 112, 86),
 		name = "Ice Cream Sandwich",
 		asset = "IceCreamSandwich",
 		category = "Frozen",
@@ -503,6 +536,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = true,
 	},
 	red_velvet_cake = {
+		doughColor = Color3.fromRGB(168, 70, 66),
 		name = "Red Velvet Cake",
 		asset = "RedVelvetCake",
 		category = "Cake",
@@ -518,6 +552,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	strawberry_ice_cream = {
+		doughColor = Color3.fromRGB(242, 190, 190),
 		name = "Strawberry Ice Cream",
 		asset = "StrawberryIceCream",
 		category = "Frozen",
@@ -533,6 +568,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = true,
 	},
 	cherry_biscotti = {
+		doughColor = Color3.fromRGB(214, 150, 146),
 		name = "Cherry Biscotti",
 		asset = "CherryBiscotti",
 		category = "Cookie",
@@ -548,6 +584,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	honey_macaron = {
+		doughColor = Color3.fromRGB(234, 200, 140),
 		name = "Honey Macaron",
 		asset = "HoneyMacaron",
 		category = "Cookie",
@@ -563,6 +600,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	lemon_sorbet = {
+		doughColor = Color3.fromRGB(244, 232, 160),
 		name = "Lemon Sorbet",
 		asset = "LemonSorbet",
 		category = "Frozen",
@@ -578,6 +616,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = true,
 	},
 	carrot_cupcake = {
+		doughColor = Color3.fromRGB(226, 160, 100),
 		name = "Carrot Cupcake",
 		asset = "CarrotCupcake",
 		category = "Cake",
@@ -593,6 +632,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	lemon_wafer = {
+		doughColor = Color3.fromRGB(242, 230, 170),
 		name = "Lemon Wafer",
 		asset = "LemonWafer",
 		category = "Cookie",
@@ -608,6 +648,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	lemon_meringue = {
+		doughColor = Color3.fromRGB(246, 228, 158),
 		name = "Lemon Meringue",
 		asset = "LemonMeringue",
 		category = "Pie",
@@ -623,6 +664,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	waffle_sundae = {
+		doughColor = Color3.fromRGB(160, 120, 96),
 		name = "Waffle Sundae",
 		asset = "WaffleSundae",
 		category = "Frozen",
@@ -638,6 +680,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	cherry_pie = {
+		doughColor = Color3.fromRGB(210, 134, 130),
 		name = "Cherry Pie",
 		asset = "CherryPie",
 		category = "Pie",
@@ -653,6 +696,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	lemon_cake = {
+		doughColor = Color3.fromRGB(244, 230, 156),
 		name = "Lemon Cake",
 		asset = "LemonCake",
 		category = "Cake",
@@ -668,6 +712,7 @@ local list: { [string]: RecipeDefinition } = {
 		glutenFree = false,
 	},
 	coffee = {
+		doughColor = Color3.fromRGB(120, 86, 60),
 		name = "Coffee",
 		asset = "Coffee",
 		category = "Coffee",
@@ -694,6 +739,7 @@ local STATION_ICONS: { [string]: string } = {
 }
 
 type RecipesMethods = {
+	GetDoughColor: (self: RecipesRegistry, entry: RecipeEntry) -> Color3,
 	GetDirectRecipe: (self: RecipesRegistry, menu: { string }, station: string, selectedId: string?) -> RecipeEntry?,
 	GetStartStation: (self: RecipesRegistry, entry: RecipeEntry) -> GameTypes.StationKind,
 	GetIcon: (self: RecipesRegistry, entry: RecipeEntry) -> string,
@@ -703,6 +749,10 @@ type RecipesMethods = {
 export type RecipesRegistry = Registry.Registry<RecipeEntry> & RecipesMethods
 
 local methods: RecipesMethods = {
+	GetDoughColor = function(_self: RecipesRegistry, entry: RecipeEntry): Color3
+		return entry.doughColor or Color3.fromRGB(238, 216, 173)
+	end,
+
 	-- Direct stations can prepare their sole menu recipe without taking the mixer's selection.
 	GetDirectRecipe = function(
 		self: RecipesRegistry,

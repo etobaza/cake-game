@@ -12,6 +12,11 @@ return {
 		-- Client -> Server: presentation preferences and skip intent; never step completion.
 		Control = Packet("TutorialControl", Packet.String, Packet.String), -- action, value
 	},
+	Diagnostics = {
+		-- Client -> Server: a client script errored; the payload is only the script's name, which the
+		-- server checks against the scripts it ships before reporting it to analytics.
+		ClientError = Packet("DiagnosticsClientError", Packet.String), -- script name
+	},
 	Hints = {
 		-- Server-authorized Cmdr preview; no profile writes or client-to-server listener.
 		Debug = Packet("HintDebug", Packet.String, Packet.String, Packet.NumberF64, Packet.String),
@@ -101,6 +106,8 @@ return {
 	},
 
 	Cafe = {
+		-- Server -> Client: one successfully spawned special guest in the owner's bakery.
+		RareGuestArrived = Packet("CafeRareGuestArrived", Packet.String, Packet.String), -- guestId, customerTypeId
 		-- Client -> Server: pet an owned cat, or give the play-area cat carried milk.
 		CatInteract = Packet("CafeCatInteract", Packet.String), -- unique daily cat ID
 		-- Client -> Server: ask a choosing guest at an owned nearby table for their order
@@ -153,6 +160,8 @@ return {
 	Progress = {
 		-- Client -> Server: buy the next upgrade level
 		BuyUpgrade = Packet("ProgressBuyUpgrade", Packet.String, Packet.NumberU8), -- upgradeId, purchaseLevel
+		-- Server -> Client: a successful coin purchase, after the saved level and stats agree.
+		UpgradeBought = Packet("ProgressUpgradeBought", Packet.String, Packet.NumberU8, Packet.NumberF64), -- upgradeId, purchasedLevel, paidCost
 		-- Client -> Server: assign the assistant task for the next day during Summary
 		SetAssistantTask = Packet("ProgressSetAssistantTask", Packet.String), -- taskId
 		-- Client -> Server: redeem a promo code typed into the codes screen
@@ -161,9 +170,26 @@ return {
 		ClaimDaily = Packet("ProgressClaimDaily", Packet.Nil),
 		-- Client -> Server: take one playtime tier
 		ClaimPlaytime = Packet("ProgressClaimPlaytime", Packet.NumberU8), -- tier index
+		-- Client -> Server: take the one-off group reward; the server checks membership itself
+		ClaimGroup = Packet("ProgressClaimGroup", Packet.Nil),
 		-- Server -> Client: a reward was handed out, text for a toast
 		RewardGranted = Packet("ProgressRewardGranted", Packet.String), -- message
 		-- Server -> Client: the action was rejected, reason for a toast
 		ActionFailed = Packet("ProgressActionFailed", Packet.String), -- reason
+	},
+	-- Admin abuse live event. Only ids and the absolute start time travel; every line, the countdown
+	-- and the end are derived from Configs/AdminAbuse on each client. An empty event id means none.
+	LiveEvent = {
+		-- Server -> Client: the event changed (started, replaced, ended or stopped).
+		State = Packet("LiveEventState", Packet.String, Packet.String, Packet.NumberF64), -- eventId, scriptId, startsAt
+		-- Client -> Server: the current state for a client that just started listening.
+		Get = Packet("LiveEventGet", Packet.Nil):Response(Packet.String, Packet.String, Packet.NumberF64),
+		-- Server -> Client: the server collected one of this player's cupcakes.
+		CupcakeCollected = Packet(
+			"LiveEventCupcakeCollected",
+			Packet.Vector3F32,
+			Packet.NumberF64,
+			Packet.NumberF64
+		), -- position, credited coins, balance
 	},
 }

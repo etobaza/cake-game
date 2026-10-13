@@ -87,16 +87,12 @@ function DisplayHandler.TakeWindowDish(_self: DisplayHandler, player: Player): (
 	return nil, false
 end
 
-function DisplayHandler.GetGuestCapacity(_self: DisplayHandler, player: Player): number
-	local pedestals = math.clamp(
-		UpgradeHandler:GetLevel(player, FoodPresentation.DisplayUpgrade),
-		0,
-		FoodPresentation.DisplayPedestals
-	)
-	return pedestals
+-- Every slot is a table guests can buy from.
+function DisplayHandler.GetGuestCapacity(self: DisplayHandler, player: Player): number
+	return math.clamp(self:GetSlotCount(player), 0, FoodPresentation.DisplayPedestals)
 end
 
--- Slot 1 and bonus ledges are storage. Purchased window pedestals are slots 2..N+1.
+-- Guests buy from slots 1..capacity, one table each.
 -- Claimed pedestals are skipped; a stocked preferred pedestal wins so a guest buys where they stand.
 function DisplayHandler.FindStockedSlot(
 	self: DisplayHandler,
@@ -108,14 +104,14 @@ function DisplayHandler.FindStockedSlot(
 	if not display then
 		return nil
 	end
-	local last = self:GetGuestCapacity(player) + 1
+	local last = self:GetGuestCapacity(player)
 	local function free(index: number): boolean
 		return display[index] ~= nil and not (claimed and claimed[index])
 	end
-	if preferred and preferred >= 2 and preferred <= last and free(preferred) then
+	if preferred and preferred >= 1 and preferred <= last and free(preferred) then
 		return preferred
 	end
-	for index = 2, last do
+	for index = 1, last do
 		if free(index) then
 			return index
 		end
@@ -127,7 +123,7 @@ end
 function DisplayHandler.TakeSlot(self: DisplayHandler, player: Player, index: number): (string?, boolean?)
 	local display = GetDisplay(player)
 	local leftovers = GetLeftovers(player)
-	if not display or not leftovers or index < 2 or index > self:GetGuestCapacity(player) + 1 then
+	if not display or not leftovers or index < 1 or index > self:GetGuestCapacity(player) then
 		return nil, nil
 	end
 	local recipeId = display[index]
@@ -139,10 +135,13 @@ function DisplayHandler.TakeSlot(self: DisplayHandler, player: Player, index: nu
 	return recipeId, leftover
 end
 
+-- Slots that stand on a bought Display Counter table; a larger stat has nowhere to show its dish.
 function DisplayHandler.GetSlotCount(_self: DisplayHandler, player: Player): number
-	local stat = BuildingsConfig.Kinds[DISPLAY_KIND].Stat :: any
+	local kind = BuildingsConfig.Kinds[DISPLAY_KIND]
+	local stat = UpgradeHandler:GetStat(player, kind.Stat :: any)
+	local tables = if kind.TableUpgrade then UpgradeHandler:GetLevel(player, kind.TableUpgrade) else stat
 
-	return UpgradeHandler:GetStat(player, stat)
+	return math.min(stat, tables)
 end
 
 function DisplayHandler.HasFreeSlot(self: DisplayHandler, player: Player): boolean

@@ -18,7 +18,31 @@ return {
 	Face = Color3.fromRGB(255, 255, 255),
 	Ink = Color3.fromRGB(58, 32, 22),
 	Outline = 2.5,
-	-- The label's colour while the station waits on the player (a dead fire).
+	-- The label's colour while the station waits on the player (a dead fire) and has no firebox to
+	-- carry the icon.
 	Alert = Color3.fromRGB(255, 196, 0),
-	AlertWords = { "firewood" } :: { string },
+	-- Prompt attribute InteractHandler sets from a view's `Alert` (Shared/BuildingViews/Types), so the
+	-- prompt plate leaves an alert to the icon below.
+	AlertAttribute = "StatusAlert",
+
+	-- An alert is drawn as an icon in the station's firebox instead of words: a round cream plate
+	-- holding the carried firewood model and a small "!" badge, breathing gently. The fire part is the
+	-- one OvenView places in the opening (OvenFuel.FirePartPrefix). Sizes are pixels.
+	AlertIcon = {
+		Size = 72,
+		-- Studs toward the camera, so the plate sits in front of the opening instead of inside it.
+		Forward = 1.5,
+		Plate = Color3.fromRGB(253, 234, 195),
+		Edge = Color3.fromRGB(238, 165, 75),
+		EdgeThickness = 3,
+		-- Share of the plate the firewood model fills.
+		ItemScale = 0.8,
+		Badge = Color3.fromRGB(226, 66, 52),
+		BadgeText = Color3.fromRGB(255, 255, 255),
+		BadgeSize = 24,
+		-- Badge centre as a share of the plate: its top-right shoulder.
+		BadgeAt = Vector2.new(0.86, 0.14),
+		PulseScale = 0.07,
+		PulseSeconds = 1.3,
+	},
 }

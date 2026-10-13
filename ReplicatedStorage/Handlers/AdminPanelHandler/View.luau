@@ -8,6 +8,7 @@ local BACKGROUND = Color3.fromRGB(23, 27, 36)
 local SURFACE = Color3.fromRGB(38, 44, 57)
 local TEXT = Color3.fromRGB(239, 242, 248)
 local ACCENT = Color3.fromRGB(71, 117, 101)
+local DANGER = Color3.fromRGB(129, 52, 62)
 
 local View = {}
 
@@ -98,10 +99,14 @@ function View.Create(playerGui: PlayerGui, owner: any): View
 	bounds.Parent = screen
 	local function resize(): ()
 		local size = bounds.AbsoluteSize
-		-- Keep touch text readable: narrow displays get a narrower panel, not tiny text.
-		local width = math.min(700, math.max(300, size.X - 16))
-		panel.Size = UDim2.fromOffset(width, 650)
-		scale.Scale = math.min(1, math.max(0.3, (size.Y - 16) / 650))
+		if size.X <= 0 or size.Y <= 0 then
+			return
+		end
+		-- Short displays shrink the ordinary action list before scaling the fixed controls.
+		local height = math.clamp(size.Y - 16, 540, 650)
+		scale.Scale = math.min(1, math.max(1, size.Y - 16) / height, math.max(1, size.X - 16) / 300)
+		local width = math.min(700, math.max(1, size.X - 16) / scale.Scale)
+		panel.Size = UDim2.fromOffset(width, height)
 	end
 	owner:Add(bounds:GetPropertyChangedSignal("AbsoluteSize"):Connect(resize))
 	resize()
@@ -137,29 +142,52 @@ function View.Create(playerGui: PlayerGui, owner: any): View
 	amount.ClearTextOnFocus = false
 	amount.Parent = panel
 	corner(amount)
-	local actions = scroll(panel, "Actions", UDim2.fromOffset(18, 184), UDim2.new(1, -36, 0, 274))
+	local danger = Instance.new("Frame")
+	danger.Name = "DangerZone"
+	danger.Position = UDim2.fromOffset(18, 184)
+	danger.Size = UDim2.new(1, -36, 0, 80)
+	danger.BackgroundColor3 = Color3.fromRGB(47, 31, 38)
+	danger.BorderSizePixel = 0
+	danger.Parent = panel
+	corner(danger)
+	local reset = Config.ById.resetProgress
+	local dangerTitle = label(danger, "Title", reset.section, UDim2.fromOffset(12, 10), UDim2.new(0.5, -18, 0, 18))
+	dangerTitle.Font = Enum.Font.GothamBold
+	dangerTitle.TextSize = 14
+	dangerTitle.TextColor3 = Color3.fromRGB(255, 184, 190)
+	label(
+		danger,
+		"Warning",
+		"Deletes progress.\nRequires rejoin.",
+		UDim2.fromOffset(12, 32),
+		UDim2.new(0.5, -18, 0, 38)
+	).TextSize =
+		12
+	local resetButton = button(danger, reset.id, reset.label, UDim2.new(0.5, 6, 0, 16), UDim2.new(0.5, -18, 0, 48))
+	resetButton.BackgroundColor3 = DANGER
+	local actions = scroll(panel, "Actions", UDim2.fromOffset(18, 276), UDim2.new(1, -36, 1, -468))
 	local grid = Instance.new("UIGridLayout")
 	grid.CellSize = UDim2.new(0.5, -6, 0, 62)
 	grid.CellPadding = UDim2.fromOffset(8, 8)
 	grid.SortOrder = Enum.SortOrder.LayoutOrder
 	grid.Parent = actions
-	local buttons: { [string]: TextButton } = {}
+	local buttons: { [string]: TextButton } = { [reset.id] = resetButton }
 	for index, definition in Config.Actions do
+		if definition.id == reset.id then
+			continue
+		end
 		local text = `{definition.section}\n{definition.label}`
 		if definition.max then
 			text ..= ` (≤ {definition.max})`
 		end
 		local actionButton = button(actions, definition.id, text, UDim2.new(), UDim2.new())
 		actionButton.LayoutOrder = index
-		if definition.id == "resetProgress" then
-			actionButton.BackgroundColor3 = Color3.fromRGB(129, 52, 62)
-		end
 		buttons[definition.id] = actionButton
 	end
 	local confirm = Instance.new("Frame")
 	confirm.Name = "Confirmation"
-	confirm.Position = actions.Position
-	confirm.Size = actions.Size
+	confirm.Position = danger.Position
+	confirm.Size = UDim2.new(1, -36, 1, -376)
 	confirm.BackgroundColor3 = SURFACE
 	confirm.BorderSizePixel = 0
 	confirm.Visible = false
@@ -168,22 +196,13 @@ function View.Create(playerGui: PlayerGui, owner: any): View
 	local confirmScroll = scroll(confirm, "Details", UDim2.fromOffset(14, 12), UDim2.new(1, -28, 1, -76))
 	local confirmText = label(confirmScroll, "Text", "", UDim2.new(), UDim2.new(1, -8, 0, 0))
 	confirmText.AutomaticSize = Enum.AutomaticSize.Y
-	local accept =
-		button(confirm, "Accept", "CONFIRM", UDim2.new(0, 12, 1, -52), UDim2.new(0.5, -18, 0, 40))
-	accept.BackgroundColor3 = Color3.fromRGB(129, 52, 62)
+	local accept = button(confirm, "Accept", "CONFIRM", UDim2.new(0, 12, 1, -52), UDim2.new(0.5, -18, 0, 40))
+	accept.BackgroundColor3 = DANGER
 	local cancel = button(confirm, "Cancel", "Cancel", UDim2.new(0.5, 6, 1, -52), UDim2.new(0.5, -18, 0, 40))
-	buttons.inspect =
-		button(panel, "Inspect", "Refresh status", UDim2.fromOffset(18, 470), UDim2.new(0.5, -22, 0, 34))
-	buttons.audit =
-		button(panel, "Audit", "Server log", UDim2.new(0.5, 4, 0, 470), UDim2.new(0.5, -22, 0, 34))
-	local resultScroll = scroll(panel, "ResultScroll", UDim2.fromOffset(18, 516), UDim2.new(1, -36, 0, 116))
-	local result = label(
-		resultScroll,
-		"Result",
-		"Select a player and an action.",
-		UDim2.new(),
-		UDim2.new(1, -8, 0, 0)
-	)
+	buttons.inspect = button(panel, "Inspect", "Refresh status", UDim2.new(0, 18, 1, -180), UDim2.new(0.5, -22, 0, 34))
+	buttons.audit = button(panel, "Audit", "Server log", UDim2.new(0.5, 4, 1, -180), UDim2.new(0.5, -22, 0, 34))
+	local resultScroll = scroll(panel, "ResultScroll", UDim2.new(0, 18, 1, -134), UDim2.new(1, -36, 0, 116))
+	local result = label(resultScroll, "Result", "Select a player and an action.", UDim2.new(), UDim2.new(1, -8, 0, 0))
 	result.TextSize = 13
 	result.AutomaticSize = Enum.AutomaticSize.Y
 	return {
@@ -194,10 +213,12 @@ function View.Create(playerGui: PlayerGui, owner: any): View
 		Previous = previous,
 		Next = nextButton,
 		Amount = amount,
+		Danger = danger,
 		Actions = actions,
 		Buttons = buttons,
 		Confirm = confirm,
 		ConfirmText = confirmText,
+		ConfirmScroll = confirmScroll,
 		Accept = accept,
 		Cancel = cancel,
 		Result = result,
@@ -213,10 +234,12 @@ export type View = {
 	Previous: TextButton,
 	Next: TextButton,
 	Amount: TextBox,
+	Danger: Frame,
 	Actions: ScrollingFrame,
 	Buttons: { [string]: TextButton },
 	Confirm: Frame,
 	ConfirmText: TextLabel,
+	ConfirmScroll: ScrollingFrame,
 	Accept: TextButton,
 	Cancel: TextButton,
 	Result: TextLabel,

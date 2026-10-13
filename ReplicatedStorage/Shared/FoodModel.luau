@@ -135,10 +135,25 @@ function FoodModel.ForItem(recipeId: string, kind: string, parent: Instance, max
 	if not recipe or not recipe.asset then
 		return nil
 	end
-	-- The yellow pastry mesh is a neutral mixed batch; it is not shown as finished decorated food.
+	-- The authored pastry shape represents mixed batter; finished dishes retain their texture.
 	local asset = if kind == "Dough" then "pastry" else recipe.asset
 	local visual = FoodModel.new(asset, parent, maxSize, kind == "Burnt")
 	if visual then
+		if kind == "Dough" then
+			for _, child in visual.Model:GetDescendants() do
+				if child:IsA("SurfaceAppearance") or child:IsA("Decal") or child:IsA("Texture") then
+					child:Destroy()
+				end
+			end
+			local color = Recipes:GetDoughColor(recipe)
+			for _, entry in visual.Parts do
+				if entry.Part:IsA("MeshPart") then
+					entry.Part.TextureID = ""
+				end
+				entry.Part.Color = color
+				entry.Color = color
+			end
+		end
 		visual.Model:SetAttribute("RecipeId", recipeId)
 		visual.Model:SetAttribute("FoodKind", kind)
 		-- The first real mesh follows SetCFrame; a Model's imported WorldPivot does not.

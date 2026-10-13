@@ -12,6 +12,8 @@ local _Libs = _Shared.Libs
 --[[ Modules ]]--
 local Ripple = require(_Libs.Ripple)
 
+type MotionOwner = { Connection: RBXScriptConnection?, Motions: { Ripple.Motion<number> } }
+
 --[[ Constants ]]--
 -- Snappy overshoot for anything that appears or reacts to a press.
 local POP_SPRING = { frequency = 5, dampingRatio = 0.55 }
@@ -49,11 +51,56 @@ local Counts: { [Instance]: any } = setmetatable({}, { __mode = "k" }) :: any
 -- current one before it hides anything.
 local ExitTokens: { [GuiObject]: number } = setmetatable({}, { __mode = "k" }) :: any
 local Tracked: { [Instance]: { [string]: any } } = setmetatable({}, { __mode = "k" }) :: any
+local MotionOwners: { [Instance]: MotionOwner } = setmetatable({}, { __mode = "k" }) :: any
 
 --[[ Tables ]]--
 local Animate = {}
 
 --[[ Private Functions ]]--
+local function OwnMotion(key: Instance, motion: Ripple.Motion<number>): ()
+	local owner = MotionOwners[key]
+	if not owner then
+		local created: MotionOwner = { Motions = {} }
+		MotionOwners[key] = created
+		created.Connection = key.Destroying:Connect(function(): ()
+			-- Weak cache keys do not stop a motion still retained by Ripple's scheduler.
+			for _, owned in created.Motions do
+				owned:destroy()
+			end
+			table.clear(created.Motions)
+			if created.Connection then
+				created.Connection:Disconnect()
+				created.Connection = nil
+			end
+			if key:IsA("GuiObject") then
+				Scales[key], ScaleBases[key], Rises[key], RiseOffsets[key] = nil, nil, nil, nil
+				Fills[key], Spans[key], ExitTokens[key] = nil, nil, nil
+			end
+			Counts[key], Tracked[key], MotionOwners[key] = nil, nil, nil
+		end)
+		owner = created
+	end
+	table.insert(owner.Motions, motion)
+end
+
+local function ReleaseMotion(key: Instance, motion: Ripple.Motion<number>): ()
+	motion:destroy()
+	local owner = MotionOwners[key]
+	if not owner then
+		return
+	end
+	local index = table.find(owner.Motions, motion)
+	if index then
+		table.remove(owner.Motions, index)
+	end
+	if #owner.Motions == 0 then
+		if owner.Connection then
+			owner.Connection:Disconnect()
+		end
+		MotionOwners[key] = nil
+	end
+end
+
 local function GetScaler(element: GuiObject): UIScale
 	local existing = element:FindFirstChildOfClass("UIScale")
 	if existing then
@@ -84,6 +131,7 @@ function Animate.Scale(element: GuiObject): any
 	local baseScale = scaler.Scale
 	ScaleBases[element] = baseScale
 	local motion = Ripple.createMotion(1, { start = true, spring = POP_SPRING })
+	OwnMotion(element, motion)
 
 	motion:onChange(function(value: number)
 		scaler.Scale = baseScale * GetLayoutScale(element) * value
@@ -130,6 +178,7 @@ function Animate.Enter(element: GuiObject, rise: number?): ()
 		local base = element.Position
 
 		motion = Ripple.createMotion(0, { start = true, spring = POP_SPRING })
+		OwnMotion(element, motion)
 		motion:onChange(function(value: number)
 			RiseOffsets[element] = value
 			element.Position = ((element:GetAttribute("RestPosition") :: UDim2?) or base) + UDim2.fromOffset(0, value)
@@ -212,7 +261,7 @@ function Animate.Press(hitbox: GuiObject, target: GuiObject?, owner: any?): () -
 	end
 	if motionOwner then
 		motionOwner:Add(function(): ()
-			motion:destroy()
+			ReleaseMotion(element, motion)
 			Scales[element] = nil
 			local scaler = element:FindFirstChildOfClass("UIScale")
 			if scaler then
@@ -280,6 +329,7 @@ function Animate.Fill(fill: GuiObject, ratio: number): ()
 		local height = fill.Size.Y
 
 		motion = Ripple.createMotion(fill.Size.X.Scale, { start = true, spring = SMOOTH_SPRING })
+		OwnMotion(fill, motion)
 		motion:onChange(function(value: number)
 			fill.Size = UDim2.new(value, 0, height.Scale, height.Offset)
 			fill.Position = UDim2.new(edge + value / 2, 0, fill.Position.Y.Scale, fill.Position.Y.Offset)
@@ -307,6 +357,7 @@ function Animate.Track(key: Instance, property: string, initial: number, write: 
 	end
 
 	motion = Ripple.createMotion(initial, { start = true, spring = SMOOTH_SPRING })
+	OwnMotion(key, motion)
 	motion:onChange(write)
 	springs[property] = motion
 
@@ -320,6 +371,7 @@ function Animate.Count(key: Instance, value: number, write: (number) -> (), deci
 	if not motion then
 		local precision = 10 ^ (decimals or 0)
 		motion = Ripple.createMotion(value, { start = true, spring = SMOOTH_SPRING })
+		OwnMotion(key, motion)
 		motion:onChange(function(current: number)
 			write(math.round(current * precision) / precision)
 		end)

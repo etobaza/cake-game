@@ -142,12 +142,18 @@ local function build(parent: GuiObject): View
 	local subtitleFrame = Instance.new("Frame")
 	subtitleFrame.Name = "Unlocks"
 	subtitleFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-	subtitleFrame.Position = UDim2.new(0.5, 0, 0.5, TUNING.StarSize / 2 + TUNING.SubtitleTextSize)
-	subtitleFrame.Size = UDim2.fromOffset(TUNING.RaysSize, TUNING.SubtitleTextSize + 8)
+	subtitleFrame.Position = UDim2.new(0.5, 0, 0.5, TUNING.StarSize / 2 + TUNING.SubtitleHeight / 2)
+	subtitleFrame.Size = UDim2.fromOffset(TUNING.RaysSize, TUNING.SubtitleHeight)
 	subtitleFrame.BackgroundTransparency = 1
 	subtitleFrame.ZIndex = 5
 	subtitleFrame.Parent = root
 	local subtitle, subtitleStroke = caption(subtitleFrame, TUNING.SubtitleTextSize, TUNING.NumberStroke, 3)
+	subtitle.TextWrapped = true
+	subtitle.TextScaled = true
+	local subtitleLimit = Instance.new("UITextSizeConstraint")
+	subtitleLimit.MinTextSize = 18
+	subtitleLimit.MaxTextSize = TUNING.SubtitleTextSize
+	subtitleLimit.Parent = subtitle
 
 	return {
 		Root = root,

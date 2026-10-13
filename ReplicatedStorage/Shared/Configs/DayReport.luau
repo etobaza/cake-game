@@ -11,6 +11,8 @@ export type Row = {
 }
 
 return {
+	-- Current wallet affordability, not a result earned during the finished shift.
+	UpgradeRow = { Key = "AffordableUpgrades", Label = "Upgrades available", Template = "Served" } :: Row,
 	Rows = {
 		{ Key = "Baked", Label = "Dishes Prepared" },
 		{ Key = "Burned", Label = "Pastries Burned" },

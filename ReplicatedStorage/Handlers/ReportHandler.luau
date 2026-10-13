@@ -1,5 +1,5 @@
 --!strict
--- Drives StarterGui.Report and owns the evening modal across report and menu.
+-- Drives StarterGui.Report and owns the evening modal across report, menu and upgrades.
 -- Counters are read from the server snapshot; opening this page never grants rewards.
 
 --[[ Services ]]--
@@ -17,20 +17,24 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Responsive = require(_Shared.UI.Responsive)
 local UIHandler = require(_Handlers.UIHandler)
+local Upgrades = require(_Shared.Configs.Registries.Upgrades)
 
 --[[ Constants ]]--
-local EVENING_PAGES: { [string]: boolean } = { Report = true, Inventory = true }
+local EVENING_PAGES: { [string]: boolean } = { Report = true, Inventory = true, Upgrades = true }
+local REPORT_ROWS = table.clone(Config.Rows)
+table.insert(REPORT_ROWS, Config.UpgradeRow)
 local ROW_GAP = 8
 local ROW_SIDE_PADDING = 20
 local ROW_NUMBER_WIDTH = 72
 local ROW_TEXT_GAP = 12
 local ROW_TEXT_SIZE = 32
 local HEADING_TEXT_SIZE = 34
+local SHORT_ROW_HEIGHT = 48
 
 --[[ Tables ]]--
 local ReportHandler = {
-	-- Menu must have hydrated its recipe cells before the evening navigation opens it.
-	dependencies = { "DataClient", "UIHandler", "MenuHandler" },
+	-- Evening destinations hydrate their content before the modal opens navigation.
+	dependencies = { "DataClient", "UIHandler", "MenuHandler", "ShopHandler" },
 }
 
 --[[ Private Functions ]]--
@@ -69,8 +73,24 @@ local function prepareLayout(screen: ScreenGui, panel: Instance, content: Scroll
 	content.AutomaticCanvasSize = Enum.AutomaticSize.None
 	content.CanvasSize = UDim2.fromScale(0, 0)
 	content.CanvasPosition = Vector2.zero
+	-- Reserve a usable scroll viewport on the 300px landscape canvas. The tall layout's
+	-- fixed heading and profit sections otherwise leave only one clipped line of rows.
+	local shortLayout: { [string]: { Size: UDim2, Position: UDim2 } } = {
+		Top = { Size = UDim2.new(1, -48, 0, 46), Position = UDim2.new(0.5, 0, 0, 77) },
+		Middle = { Size = UDim2.new(1, -44, 1, -168), Position = UDim2.new(0.5, 0, 0, 108) },
+		DailyProfit = { Size = UDim2.new(1, -44, 0, 44), Position = UDim2.new(0.5, 0, 1, -8) },
+	}
+	for name, geometry in shortLayout do
+		local section = panel:FindFirstChild(name)
+		if section and section:IsA("GuiObject") then
+			section:SetAttribute("ShortSize", geometry.Size)
+			section:SetAttribute("ShortPosition", geometry.Position)
+		end
+	end
+	content.ScrollingDirection = Enum.ScrollingDirection.Y
+	content.ScrollBarThickness = 6
 	-- Rows added after the screen was drawn copy an authored row's styling.
-	for _, row in Config.Rows do
+	for _, row in REPORT_ROWS do
 		local template = if row.Template then content:FindFirstChild(row.Template) else nil
 		if not content:FindFirstChild(row.Key) and template then
 			local copy = template:Clone()
@@ -79,9 +99,9 @@ local function prepareLayout(screen: ScreenGui, panel: Instance, content: Scroll
 			copy.Parent = content
 		end
 	end
-	local rowCount = #Config.Rows
+	local rowCount = #REPORT_ROWS
 	local rowSize = UDim2.new(1, -4, 1 / rowCount, -math.ceil(ROW_GAP * (rowCount - 1) / rowCount))
-	for index, row in Config.Rows do
+	for index, row in REPORT_ROWS do
 		local item = content:FindFirstChild(row.Key)
 		if not item or not item:IsA("GuiObject") then
 			continue
@@ -90,6 +110,7 @@ local function prepareLayout(screen: ScreenGui, panel: Instance, content: Scroll
 		item.Size = rowSize
 		item:SetAttribute("WideSize", rowSize)
 		item:SetAttribute("CompactSize", rowSize)
+		item:SetAttribute("ShortSize", UDim2.new(1, -4, 0, SHORT_ROW_HEIGHT))
 		local caption = item:FindFirstChild("Txt")
 		local number = item:FindFirstChild("Num")
 		if caption and caption:IsA("GuiObject") then
@@ -106,6 +127,7 @@ local function prepareLayout(screen: ScreenGui, panel: Instance, content: Scroll
 	local heading = Authored.Resolve(panel, { "Top", "DailyReport", "Txt" })
 	if heading and heading:IsA("GuiObject") then
 		heading.Size = UDim2.new(heading.Size.X.Scale, heading.Size.X.Offset, 1, -16)
+		heading:SetAttribute("ShortSize", UDim2.new(heading.Size.X.Scale, heading.Size.X.Offset, 1, -4))
 	end
 	sizeText(heading, HEADING_TEXT_SIZE)
 	sizeText(Authored.Resolve(panel, { "Top", "DailyReport", "Num" }), HEADING_TEXT_SIZE)
@@ -129,7 +151,21 @@ function ReportHandler.OnStart(self: ReportHandler): ()
 	self.Content = content
 	self.Modal = false
 	prepareLayout(screen, panel, content)
+	local function refreshCanvas(): ()
+		-- The landscape report scrolls full-height text rows; taller screens still show all rows together.
+		content.CanvasSize = if screen:GetAttribute("Short") == true
+			then UDim2.fromOffset(0, #REPORT_ROWS * SHORT_ROW_HEIGHT + (#REPORT_ROWS - 1) * ROW_GAP)
+			else UDim2.fromScale(0, 0)
+	end
+	self.Janitor:Add(screen:GetAttributeChangedSignal("Short"):Connect(refreshCanvas), "Disconnect")
+	refreshCanvas()
 	DataClient:WaitForData()
+	self.Janitor:Add(
+		DataClient:SubscribeToDataType("Cloud", function(): ()
+			self:Refresh()
+		end),
+		"Disconnect"
+	)
 	self.Janitor:Add(
 		DataClient:SubscribeToPath({ "Day", "Phase" }, function(phase: string): ()
 			self:RefreshPhase(phase)
@@ -155,13 +191,19 @@ function ReportHandler.Refresh(self: ReportHandler): ()
 	if not day or day.Phase ~= "Summary" then
 		return
 	end
-	for _, row in Config.Rows do
+	local progress = Upgrades:GetProgress(
+		DataClient:GetData({ "Base", "Upgrades" }) or {},
+		DataClient:GetData({ "Level" }) or 1,
+		DataClient:GetData({ "Cash" }) or 0
+	)
+	for _, row in REPORT_ROWS do
 		local item = self.Content:FindFirstChild(row.Key)
 		if not item then
 			continue
 		end
 		Authored.SetPair(item:FindFirstChild("Txt"), row.Label)
-		Authored.SetPair(item:FindFirstChild("Num"), tostring(day.Summary[row.Key] or 0))
+		local value = if row.Key == Config.UpgradeRow.Key then progress.AffordableCount else day.Summary[row.Key] or 0
+		Authored.SetPair(item:FindFirstChild("Num"), tostring(value))
 	end
 	Authored.SetPair(Authored.Resolve(self.Panel, { "Top", "DailyReport", "Num" }), `# {day.Number}`)
 	Authored.SetPair(

@@ -3,6 +3,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Config = require(ReplicatedStorage.Shared.Configs.AmbientMotion)
+local Reveal = require(ReplicatedStorage.Shared.Configs.UpgradeReveal)
 local Clip = require(script.Parent.Clip)
 
 local Visual = {}
@@ -100,6 +101,9 @@ function Visual.Step(self: Visual, now: number, cameraPosition: Vector3): ()
 	self:Show()
 	local clone = self.Clone :: BasePart
 	clone.Transparency = self.Source.Transparency
+	local alpha = self.Source:GetAttribute(Reveal.AppearanceAttribute)
+	clone.LocalTransparencyModifier = self.Hidden + (1 - self.Hidden)
+		* (1 - (if typeof(alpha) == "number" then math.clamp(alpha, 0, 1) else 1))
 	local time = now * self.Speed + self.Phase
 	if self.Kind == "Bee" then
 		local angle = time * Config.BeeOrbitSpeed

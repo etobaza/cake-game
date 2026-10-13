@@ -21,6 +21,7 @@ local DataClient = require(_Handlers.DataHandlerClient)
 local Ingredients = require(_Configs.Registries.Ingredients)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Recipes = require(_Configs.Registries.Recipes)
+local TextScale = require(_Shared.UI.TextScale)
 local UIHandler = require(_Handlers.UIHandler)
 
 --[[ Constants ]]
@@ -32,11 +33,12 @@ local EMPTY_TRANSPARENCY = 0.6
 -- Reuse an authored name line, or clone the number label in older layouts to keep its artwork.
 local NAME_LABEL = "ItemName"
 local NAME_SOURCE = "NumberOutside"
-local NAME_SIZE = UDim2.new(1, -8, 0.34, 0)
-local NAME_POSITION = UDim2.new(0.5, 0, 1, -3)
+local NAME_HEIGHT = 54
+local NAME_INSET = 8
+local NAME_BOTTOM = 3
 local NAME_ANCHOR = Vector2.new(0.5, 1)
-local NAME_MIN_TEXT_SIZE = 10
-local NAME_MAX_TEXT_SIZE = 16
+local NAME_MIN_TEXT_SIZE = 16
+local NAME_MAX_TEXT_SIZE = 20
 local ICON_LABEL = "ImageLabel"
 local TOOL_KIND = "Tool"
 local FUEL_KIND = "Fuel"
@@ -101,19 +103,19 @@ local function SetSlotText(label: TextLabel, text: string): ()
 	end
 end
 
-local function FitNameLabel(label: TextLabel): ()
+local function FitNameLabel(label: TextLabel, scale: number): ()
 	label.Rotation = 0
 	label.TextScaled = true
 	label.TextSize = NAME_MAX_TEXT_SIZE
 	label.TextWrapped = true
-	label.TextTruncate = Enum.TextTruncate.AtEnd
+	label.TextTruncate = Enum.TextTruncate.None
 	label.TextXAlignment = Enum.TextXAlignment.Center
 	label.TextYAlignment = Enum.TextYAlignment.Center
 	label.LineHeight = 1
 	local constraint = label:FindFirstChildOfClass("UITextSizeConstraint") or Instance.new("UITextSizeConstraint")
 	constraint.Parent = label
-	constraint.MinTextSize = NAME_MIN_TEXT_SIZE
-	constraint.MaxTextSize = NAME_MAX_TEXT_SIZE
+	constraint.MinTextSize = math.floor(NAME_MIN_TEXT_SIZE * scale + 0.5)
+	constraint.MaxTextSize = math.floor(NAME_MAX_TEXT_SIZE * scale + 0.5)
 end
 
 local function FindNameLabel(slot: Frame): TextLabel
@@ -132,10 +134,10 @@ local function BuildName(slot: Frame): TextLabel
 	local label = FindNameLabel(slot)
 	-- Authored ItemName instances need the same normalization as freshly cloned numbers.
 	label.AnchorPoint = NAME_ANCHOR
-	label.Position = NAME_POSITION
-	label.Size = NAME_SIZE
+	label.Position = UDim2.new(0.5, 0, 1, -NAME_BOTTOM)
+	label.Size = UDim2.new(1, -NAME_INSET, 0, NAME_HEIGHT)
 	label.Visible = false
-	FitNameLabel(label)
+	FitNameLabel(label, 1)
 
 	-- The clone brings the inner copy of the slot number along: it has to fill the new box.
 	local inner = label:FindFirstChildWhichIsA("TextLabel")
@@ -144,7 +146,7 @@ local function BuildName(slot: Frame): TextLabel
 		inner.Position = UDim2.fromScale(0, 0)
 		inner.Size = UDim2.fromScale(1, 1)
 		inner.FontFace = label.FontFace
-		FitNameLabel(inner)
+		FitNameLabel(inner, 1)
 	end
 
 	return label
@@ -190,13 +192,27 @@ function HandsHandler.ResolveSlots(self: HandsHandler): { Slot }
 			Name = BuildName(child),
 			Filled = false,
 		}
-		-- Reserve the lower third for the name instead of drawing it over the item preview.
-		slots[index].Icon.Size = UDim2.fromScale(0.72, 0.54)
+		-- Reserve the lower half for wrapped names instead of drawing them over the preview.
+		slots[index].Icon.Size = UDim2.fromScale(0.72, 0.44)
 		local icon = slots[index].Icon
 		self.Janitor:Add(function(): ()
 			FoodPreview.Clear(icon)
 		end)
 	end
+	local function refreshNames(): ()
+		local scale = TextScale.Get(UIHandler.Hud.AbsoluteSize)
+		for _, slot in slots do
+			slot.Name.Size = UDim2.new(1, -NAME_INSET * scale, 0, NAME_HEIGHT * scale)
+			slot.Name.Position = UDim2.new(0.5, 0, 1, -NAME_BOTTOM * scale)
+			FitNameLabel(slot.Name, scale)
+			local inner = slot.Name:FindFirstChildWhichIsA("TextLabel")
+			if inner then
+				FitNameLabel(inner, scale)
+			end
+		end
+	end
+	self.Janitor:Add(hotbar:GetPropertyChangedSignal("AbsoluteSize"):Connect(refreshNames), "Disconnect")
+	refreshNames()
 
 	return slots
 end

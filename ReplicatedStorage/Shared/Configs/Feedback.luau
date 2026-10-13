@@ -244,6 +244,40 @@ return {
 		EdgeInset = 0.42,
 	},
 
+	RareGuest = {
+		Anchor = Vector2.new(0.5, 0.24),
+		Width = 560,
+		Height = 112,
+		TitleTextSize = 34,
+		ChipTextSize = 18,
+		Seconds = 3.5,
+		ExitSeconds = 0.3,
+		PopSeconds = 0.3,
+		QueueSeconds = 15,
+		MaxQueued = 4,
+		-- A pill on the top edge, tinted with the guest type's colour.
+		Tag = "RARE GUEST",
+		-- Cream card lit from above, with a darker plate dropped beneath it.
+		FillTop = Color3.fromRGB(255, 250, 234),
+		FillBottom = Color3.fromRGB(252, 222, 168),
+		ShadowColor = Color3.fromRGB(120, 66, 30),
+		-- Gold lettering under a cocoa outline, like the level-up title.
+		TitleTop = Color3.fromRGB(255, 250, 210),
+		TitleBottom = Color3.fromRGB(255, 176, 48),
+		TitleStroke = Color3.fromRGB(92, 40, 8),
+		Star = "rbxassetid://86577432302115",
+		StarSize = 44,
+		-- The tip chip is gold like coins; the dish chip takes the guest type's colour.
+		TipChip = Color3.fromRGB(255, 214, 92),
+		TipFormat = "x%s TIPS",
+		-- Replaces the tip chip for guest types with a coin multiplier (live event golden guests).
+		CoinFormat = "x%s COINS",
+		DishFormat = "%d %s",
+		ChipStagger = 0.08,
+		ShineSeconds = 0.7,
+		Sound = "OrderUp" :: Sounds.SoundName,
+	},
+
 	LevelUp = {
 		Star = "rbxassetid://86577432302115",
 		Rays = "rbxassetid://80513051336918",
@@ -267,6 +301,8 @@ return {
 		NumberTextSize = 78,
 		TitleTextSize = 60,
 		SubtitleTextSize = 26,
+		SubtitleHeight = 96,
+		MaxRequirementNames = 2,
 		Confetti = 48,
 		-- World burst around the player's character (`Configs/VFX`).
 		Effect = "LevelUp",

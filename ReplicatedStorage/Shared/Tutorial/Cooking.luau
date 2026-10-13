@@ -3,6 +3,7 @@
 
 --[[ Modules ]]--
 local Buildings = require(script.Parent.Parent.Configs.Buildings)
+local CarryPolicy = require(script.Parent.Parent.CarryPolicy)
 local GardenSource = require(script.Parent.Parent.GardenSource)
 local Ingredients = require(script.Parent.Parent.Configs.Registries.Ingredients)
 local Recipes = require(script.Parent.Parent.Configs.Registries.Recipes)
@@ -33,6 +34,28 @@ local function choose(recipe: any, page: string, mixer: string): Types.TutorialG
 		goal.target = { kind = "Recipe", id = recipe.id }
 	end
 	goal.recipeId = recipe.id
+	return goal
+end
+
+-- A dispenser ingredient never blocks the hand (State.FreeHands), but while it is held its own
+-- "Put back" prompt sits a few studs from the mixer and can keep the E key. Before a recipe is
+-- picked, the player is asked to return it first so the mixer's Recipes prompt is the one shown.
+local function putBack(session: any, page: string): Types.TutorialGoal?
+	local held = session.Hands[1]
+	if page == "RecipeToCook" or not held or held.Kind ~= "Ingredient" or not CarryPolicy.CanReplace(held) then
+		return nil
+	end
+	local entry = Ingredients:Get(held.Id)
+	local name = if entry then string.lower(entry.name) else "ingredient"
+	local goal = State.Goal(
+		"put_back_" .. held.Id,
+		"Put the {" .. name .. "} back",
+		"Pick the recipe at the mixer with empty hands. Each ingredient is fetched after the recipe starts.",
+		held.SourceId
+	)
+	goal.itemId = held.Id
+	goal.itemKind = "Ingredient"
+	goal.recovery = true
 	return goal
 end
 
@@ -174,6 +197,7 @@ local function ingredient(cloud: any, session: any, props: any, id: string, mixe
 			`{Buildings.Kinds.Ingredient.Prefix}_{id}`
 		)
 		goal.itemId = id
+		goal.itemKind = "Ingredient"
 		return goal
 	end
 	if (cloud.Pantry[id] or 0) > 0 then
@@ -312,7 +336,7 @@ function Cooking.Resolve(cloud: any, session: any, props: any, recipe: any, page
 				return Cooking.Resolve(cloud, session, props, selected, page)
 			end
 		end
-		return choose(recipe, page, stationId)
+		return putBack(session, page) or choose(recipe, page, stationId)
 	end
 	for id, amount in recipe.ingredients do
 		if (station.Loaded[id] or 0) >= amount or Ingredients:IsInfinite(id) or (cloud.Pantry[id] or 0) > 0 then
@@ -345,8 +369,8 @@ function Cooking.Resolve(cloud: any, session: any, props: any, recipe: any, page
 	if page == "RecipeToCook" then
 		return State.Close(
 			"close_recipes",
-			"Return to your mixer",
-			"Your recipe is selected. Its ingredients are now shown above the bowl.",
+			"Close the {recipes}",
+			"Your recipe is selected. Close this page to see its ingredients above the bowl.",
 			"RecipeToCook"
 		)
 	end

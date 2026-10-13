@@ -21,6 +21,7 @@ local Config = require(ReplicatedStorage.Shared.Configs.Tutorial)
 local Ease = require(script.Parent.Parent.Ease)
 local FoodPreview = require(script.Parent.Parent.FoodPreview)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local Pages = require(script.Parent.Parent.Stores.Pages)
 local Press = require(script.Parent.Parent.Press)
 local Recipes = require(ReplicatedStorage.Shared.Configs.Registries.Recipes)
 local SoundPlayer = require(ReplicatedStorage.Shared.SoundPlayer)
@@ -36,9 +37,16 @@ local FONT = Theme.Fonts.ExtraBold
 local HINT_FONT = Theme.Fonts.Bold
 local HOTBAR_PATH = "Hotbar"
 local CLOCK_PATH = "Time"
+-- The shared Report/Menu/Upgrades header: its tabs and Next Day stay uncovered while it is up.
+local MENU_PANEL = "BakeryMenu"
+local MENU_HEADER = { "MainFrame", "Header" }
 -- The plate and the progress badge straddle the bubble's top edge; this share of the plate sits
 -- inside the bubble and pushes the text down.
 local PLATE_INSIDE = 0.35
+-- Inner side padding of the speaker plate and the progress badge.
+local PILL_PADDING = 12
+-- Least space between the speaker plate and the badge, so they never touch.
+local HEADER_GAP = 10
 local POP_STRENGTH = 1.6
 -- The appear pop starts from this scale.
 local APPEAR_FROM = 0.55
@@ -111,7 +119,7 @@ export type Dialog = typeof(setmetatable(
 		Measured: string,
 		Measuring: string,
 		-- Measured copy: wrapped heights at the widest text width, and the unwrapped line width.
-		Heights: { Title: number, Hint: number, Width: number, Line: number },
+		Heights: { Title: number, Hint: number, Width: number, Line: number, Header: number },
 		-- What the item tile shows now ("" for nothing), so a new item can punch.
 		ItemKey: string,
 		Wanted: boolean,
@@ -209,8 +217,8 @@ local function pill(parent: Instance, name: string, fill: Color3): TextLabel
 	-- The white lettering gets a thin ink outline of its own.
 	stroke(plate, 1.5, false)
 	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, 12)
-	padding.PaddingRight = UDim.new(0, 12)
+	padding.PaddingLeft = UDim.new(0, PILL_PADDING)
+	padding.PaddingRight = UDim.new(0, PILL_PADDING)
 	padding.Parent = plate
 	return plate
 end
@@ -503,8 +511,38 @@ local function hudEdge(path: string, bottom: boolean): number?
 	end
 	local screen = element:FindFirstAncestorWhichIsA("ScreenGui")
 	local inset = if screen and not screen.IgnoreGuiInset then GuiService:GetGuiInset().Y else 0
-	local y = element.AbsolutePosition.Y + inset
-	return if bottom then y + element.AbsoluteSize.Y else y
+	if bottom then
+		return element.AbsolutePosition.Y + element.AbsoluteSize.Y + inset
+	end
+	-- The hotbar's slot numbers and item art reach above its frame; the bubble keeps clear of the
+	-- highest thing actually drawn, not just the frame.
+	local top = element.AbsolutePosition.Y
+	for _, child in element:GetDescendants() do
+		if child:IsA("GuiObject") and child.Visible and child.AbsoluteSize.Y > 1 then
+			top = math.min(top, child.AbsolutePosition.Y)
+		end
+	end
+	return top + inset
+end
+
+-- Bottom edge of the evening/page header while it is drawn on screen, else nil.
+local function menuHeaderEdge(): number?
+	local found, panel = pcall(function(): ScreenGui?
+		return UIHandler:GetPanel(MENU_PANEL)
+	end)
+	if not found or not panel or not panel.Enabled then
+		return nil
+	end
+	local header: Instance? = panel
+	for _, name in MENU_HEADER do
+		header = header and header:FindFirstChild(name)
+	end
+	if not header or not header:IsA("GuiObject") or not header.Visible then
+		return nil
+	end
+	local inset = if panel.IgnoreGuiInset then 0 else GuiService:GetGuiInset().Y
+	local bottom = header.AbsolutePosition.Y + header.AbsoluteSize.Y + inset
+	return if bottom > 0 then bottom else nil
 end
 
 -- Unwrapped width of one line of copy.
@@ -522,6 +560,19 @@ local function lineWidth(text: string, font: Font, size: number): number
 		return TextService:GetTextBoundsAsync(params)
 	end)
 	return if ok then math.ceil(bounds.X) else UNWRAPPED_WIDTH
+end
+
+-- Outer width of a plate or badge holding `text`; a failed measurement falls back to an estimate
+-- rather than an absurd width.
+local function pillWidth(text: string): number
+	if text == "" then
+		return 0
+	end
+	local width = lineWidth(text, FONT, STYLE.PlateTextSize)
+	if width >= UNWRAPPED_WIDTH then
+		width = math.ceil((utf8.len(text) or #text) * STYLE.PlateTextSize * 0.7)
+	end
+	return width + PILL_PADDING * 2 + STYLE.Stroke * 2
 end
 
 local function measure(text: string, font: Font, size: number, width: number): number
@@ -589,7 +640,7 @@ function Dialog.new(acknowledge: (string) -> ()): Dialog
 		TypeClock = 0,
 		Measured = "",
 		Measuring = "",
-		Heights = { Title = 0, Hint = 0, Width = 0, Line = 0 },
+		Heights = { Title = 0, Hint = 0, Width = 0, Line = 0, Header = 0 },
 		ItemKey = "",
 		Wanted = false,
 		HideAt = nil,
@@ -786,12 +837,15 @@ function Dialog.Layout(self: Dialog): ()
 				lineWidth(content.Title, FONT, STYLE.TitleSize),
 				lineWidth(content.Hint, HINT_FONT, STYLE.HintSize)
 			)
+			-- The badge and the Done! stamp share the top-right slot; the plate starts at the copy.
+			local slot = math.max(pillWidth(content.Progress or ""), pillWidth(view.Done.Text))
+			local header = textLeft + pillWidth(view.Plate.Text) + HEADER_GAP + slot + STYLE.Padding.X
 			if self.Measuring ~= key then
 				return
 			end
 			self.Measuring = ""
 			self.Measured = key
-			self.Heights = { Title = titleHeight, Hint = hintHeight, Width = widestText, Line = line }
+			self.Heights = { Title = titleHeight, Hint = hintHeight, Width = widestText, Line = line, Header = header }
 			self:Layout()
 		end)
 		return
@@ -800,7 +854,8 @@ function Dialog.Layout(self: Dialog): ()
 
 	-- A short line gets a snug bubble (text plus its chrome); a long one wraps at the widest.
 	local textWidth = math.min(widestText, self.Heights.Line + SNUG_SLACK)
-	local width = math.max(STYLE.MinWidth, chrome + textWidth)
+	-- The top row (speaker plate, badge) needs its room too, or the badge slides over the name.
+	local width = math.max(STYLE.MinWidth, chrome + textWidth, bubbleX + self.Heights.Header)
 	textWidth = width - chrome
 	local bubbleWidth = width - bubbleX
 
@@ -829,6 +884,13 @@ end
 
 function Dialog.Step(self: Dialog, deltaTime: number): ()
 	local view = self.View
+	if Pages.Presenting:peek() then
+		view.Screen.Enabled = false
+		if view.Voice then
+			view.Voice:Stop()
+		end
+		return
+	end
 	local now = os.clock()
 	local hideAt = self.HideAt
 	if self.Wanted and hideAt and now - hideAt >= STYLE.HideGrace then
@@ -904,7 +966,9 @@ function Dialog.Boing(self: Dialog, now: number): ()
 		UDim2.new(1, STYLE.Stroke, 1, STYLE.Stroke + STYLE.ShadowDrop - boing.Lift * wave)
 end
 
--- Bottom centre above the hotbar; at the top, below the clock, when that would cover the target.
+-- Bottom centre above the hotbar; at the top, below the clock and any page header, when that would
+-- cover the target. A target too large to dodge (a page's whole recipe grid) is covered either way,
+-- so the bubble then stays at the bottom, clear of the header tabs and Next Day.
 function Dialog.Place(self: Dialog, deltaTime: number, viewport: Vector2, scale: number): ()
 	local view = self.View
 	local size = view.Root.Size
@@ -917,15 +981,23 @@ function Dialog.Place(self: Dialog, deltaTime: number, viewport: Vector2, scale:
 		else viewport.Y - STYLE.BottomMargin * scale
 	local avoid = self.Avoid
 	local left = viewport.X / 2 - width / 2
-	local covers = avoid ~= nil
-		and avoid.Max.X > left
-		and avoid.Min.X < left + width
-		and avoid.Max.Y > bottom - height
-		and avoid.Min.Y < bottom
+	local function covers(lowest: number): boolean
+		return avoid ~= nil
+			and avoid.Max.X > left
+			and avoid.Min.X < left + width
+			and avoid.Max.Y > lowest - height
+			and avoid.Min.Y < lowest
+	end
 	local goal = bottom
-	if covers then
+	if covers(bottom) then
+		-- The clock slides off screen while a page is open; its off-screen edge must not count.
 		local clock = hudEdge(CLOCK_PATH, true)
-		goal = (clock or STYLE.TopFallback * scale) + STYLE.TopGap * scale + height
+		local top = if clock and clock > 0 then clock else STYLE.TopFallback * scale
+		top = math.max(top, menuHeaderEdge() or 0)
+		local raised = top + STYLE.TopGap * scale + height
+		if not covers(raised) then
+			goal = raised
+		end
 	end
 	local last = self.Y
 	local y = if last then last + (goal - last) * (1 - math.exp(-deltaTime / STYLE.MoveSmoothing)) else goal

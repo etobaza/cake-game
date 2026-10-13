@@ -91,14 +91,15 @@ local function label(name: string, parent: GuiObject, size: number): TextLabel
 	text.TextScaled = true
 	text.TextWrapped = true
 	local limit = Instance.new("UITextSizeConstraint")
+	limit.MinTextSize = STYLE.MinTextSize
 	limit.MaxTextSize = size
 	limit.Parent = text
 	text.Parent = parent
 	return text
 end
 
-local function height(): number
-	return STYLE.Padding * 4 + STYLE.IconSize + STYLE.CaptionHeight + STYLE.BarHeight
+local function height(captionHeight: number?): number
+	return STYLE.Padding * 4 + STYLE.IconSize + (captionHeight or STYLE.CaptionHeight) + STYLE.BarHeight
 end
 
 --[[ Handling ]]--
@@ -320,6 +321,15 @@ function Bubble.Show(self: Bubble, view: View): ()
 		end
 	end
 
+	-- Multiple dishes keep their full names on separate lines instead of shrinking one long sentence.
+	local captionHeight = math.max(STYLE.CaptionHeight, #names * STYLE.CaptionHeightPerDish)
+	local panelHeight = height(captionHeight)
+	self.Panel.Position = UDim2.new(0.5, 0, 0, panelHeight / 2)
+	self.Panel.Size = UDim2.fromOffset(STYLE.Width - STYLE.StrokeThickness * 2, panelHeight)
+	local billboard = self.Panel.Parent :: BillboardGui
+	billboard.Size = UDim2.fromOffset(STYLE.Width, panelHeight + STYLE.TailSize)
+	self.Caption.Size = UDim2.new(1, -STYLE.Padding * 2, 0, captionHeight)
+
 	local ready = choosing and view.Ready
 	self.Ponder.Visible = not ordered
 	self.Ponder.Text = if choosing and not ready
@@ -328,12 +338,12 @@ function Bubble.Show(self: Bubble, view: View): ()
 	self.Ponder.TextColor3 = if ready then STYLE.ReadyMarkColor else self.PonderColor
 	-- Ready to order: the bubble keeps beating until the player comes over.
 	if ready and view.Now >= self.NextPulseAt then
-		self.NextPulseAt = view.Now + STYLE.ReadyPulseSeconds
+		self.NextPulseAt = view.Now + Config.ReadyPulseSeconds
 		Animate.Pop(self.Panel, STYLE.ReadyPulseFrom)
 	end
 	self:Say(
 		if ordered
-			then table.concat(names, " + ")
+			then table.concat(names, "\n")
 			elseif ready then STYLE.ReadyText
 			elseif choosing then "Choosing..."
 			else STYLE.QueuedText

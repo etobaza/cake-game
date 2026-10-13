@@ -12,6 +12,8 @@ local _Shared = ReplicatedStorage.Shared
 --[[ Modules ]]--
 local BaseHandler = require(ServerScriptService.Handlers.BaseHandler)
 local Config = require(_Shared.Configs.FoodPresentation)
+local Motion = require(_Shared.Configs.CookingMotion)
+local CookingMetadata = require(script.Parent.CookingMetadata)
 local DataHandler = require(ServerScriptService.Handlers.DataHandler)
 local DiningConfig = require(_Shared.Configs.GuestDining)
 local GuestsConfig = require(_Shared.Configs.Guests)
@@ -38,6 +40,7 @@ export type FoodSurfaceView = typeof(setmetatable(
 		Key: string,
 		IngredientSlots: { [string]: number },
 		OvenFood: FoodModel.FoodModel?,
+		LastState: string?,
 	},
 	FoodSurfaceView
 ))
@@ -138,9 +141,15 @@ function FoodSurfaceView.new(root: Instance, building: any): FoodSurfaceView?
 		Contents = Janitor.new(),
 		Key = "",
 		IngredientSlots = {},
+		LastState = building.State and building.State.State,
 	}, FoodSurfaceView)
 	self.Janitor:Add(folder, "Destroy")
 	self.Janitor:Add(self.Contents, "Destroy")
+	if building.Kind == "Mixer" then
+		folder:SetAttribute("StationKind", building.Kind)
+		folder:SetAttribute("SurfaceFrame", self.Frame)
+		folder:AddTag(Motion.SurfaceTag)
+	end
 	return self
 end
 
@@ -149,14 +158,33 @@ function FoodSurfaceView.SetFrame(self: FoodSurfaceView, frame: CFrame): ()
 		return
 	end
 	self.Frame = frame
+	self.Root:SetAttribute("SurfaceFrame", frame)
 	self.Frames = { frame }
 	self.Key = "Reposition"
 end
 
 function FoodSurfaceView.Update(self: FoodSurfaceView, _deltaTime: number, now: number): ()
+	local state = self.Building.State
+	local stationState = state and state.State
+	local fresh = stationState == "Ready" and (self.LastState == "Mixing" or self.LastState == "Cooking")
+	self.LastState = stationState
+	if self.Building.Kind == "Mixer" and state then
+		CookingMetadata.Apply(self.Root, state, self.Building.Player)
+		self.Root:SetAttribute("RecipeId", state.RecipeId)
+		local recipe = state.RecipeId and Recipes:Get(state.RecipeId)
+		self.Root:SetAttribute("BatterColor", if recipe then Recipes:GetDoughColor(recipe) else nil)
+		if stationState == "Mixing" then
+			self.Root:SetAttribute("MixStartedAt", state.PhaseStartedAt)
+			self.Root:SetAttribute("MixReadyAt", state.ReadyAt)
+		elseif stationState ~= "Ready" then
+			self.Root:SetAttribute("MixStartedAt", 0)
+			self.Root:SetAttribute("MixReadyAt", 0)
+		end
+	end
 	if self.OvenFood then
 		self.OvenFood:SetBurn(FoodBurn.Fade(self.Building.State, now))
 		if self.Building.State.State == "Burnt" then
+			self.OvenFood.Model:RemoveTag(Motion.FreshTag)
 			self.OvenFood.Model:SetAttribute("FoodKind", "Burnt")
 			for _, entry in self.OvenFood.Parts do
 				entry.Part:RemoveTag(VFX.Tag)
@@ -171,7 +199,7 @@ function FoodSurfaceView.Update(self: FoodSurfaceView, _deltaTime: number, now: 
 		keys[#keys + 1] = `{item.SeatIndex or 0}:{kind}:{item.Id}`
 	end
 	local key = table.concat(keys, "|")
-	if key == self.Key then
+	if key == self.Key and not fresh then
 		return
 	end
 	self.Key = key
@@ -219,6 +247,11 @@ function FoodSurfaceView.Update(self: FoodSurfaceView, _deltaTime: number, now: 
 			end
 		end
 		visual:SetCFrame(frame)
+		if fresh and (item.Kind == "Dish" or item.Kind == "Dough") then
+			visual.Model:SetAttribute("CompletedAt", now)
+			visual.Model:SetAttribute("CompletionFrame", frame)
+			visual.Model:AddTag(Motion.FreshTag)
+		end
 	end
 end
 

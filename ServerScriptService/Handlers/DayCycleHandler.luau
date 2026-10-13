@@ -25,6 +25,7 @@ local Economy = require(_Configs.Economy)
 local GameTypes = require(_Shared.GameTypes)
 local LoggerUtil = require(_Libs.Logger)
 local Ingredients = require(_Configs.Registries.Ingredients)
+local RecipeRequirements = require(ReplicatedStorage.Shared.RecipeRequirements)
 local Recipes = require(_Configs.Registries.Recipes)
 local Sanitize = require(_Shared.Sanitize)
 local Signal = require(_Libs.Signal)
@@ -89,7 +90,10 @@ local function isStationAvailable(player: Player, station: GameTypes.StationKind
 	return UpgradeHandler:HasStat(player, kind.Stat :: any)
 end
 
-local function validateRecipes(player: Player, menu: { string }): (boolean, string?)
+-- `requireIngredients` is for planning a menu: a dish whose ingredient source is missing cannot be
+-- picked. Opening a day skips it, so an older saved menu never locks the bakery; guests simply do
+-- not order such a dish (CustomerHandler's orderable menu).
+local function validateRecipes(player: Player, menu: { string }, requireIngredients: boolean?): (boolean, string?)
 	for _, recipeId in menu do
 		local recipe = Recipes:Get(recipeId)
 		if not recipe or not EconomyHandler:IsRecipeUnlocked(player, recipeId) then
@@ -98,6 +102,12 @@ local function validateRecipes(player: Player, menu: { string }): (boolean, stri
 
 		if not isStationAvailable(player, recipe.station) then
 			return false, "station_missing"
+		end
+
+		-- Guests would order a dish whose ingredient the player has no way to get.
+		local data = if requireIngredients then DataHandler:GetData(player) else nil
+		if data and not RecipeRequirements.IsObtainable(recipe, data.Cloud.Base.Upgrades) then
+			return false, "ingredient_missing"
 		end
 	end
 
@@ -110,6 +120,7 @@ function DayCycleHandler.OnInit(self: DayCycleHandler): ()
 	self.Lifetimes = {}
 	self.GuestBodies = {}
 	self.ClosingChecks = {}
+	self.ClosingDeadlines = {}
 end
 
 function DayCycleHandler.OnStart(self: DayCycleHandler): ()
@@ -131,6 +142,7 @@ function DayCycleHandler.OnStart(self: DayCycleHandler): ()
 		self.Lifetimes[player] = nil
 		self.GuestBodies[player] = nil
 		self.ClosingChecks[player] = nil
+		self.ClosingDeadlines[player] = nil
 		self.Machines[player] = nil
 	end)
 
@@ -309,7 +321,9 @@ function DayCycleHandler.EnterClosing(self: DayCycleHandler, player: Player): ()
 	end
 	day.EndsAt = 0
 	day.Phase = "Closing"
-	self.ClosingChecks[player] = workspace:GetServerTimeNow() + DayCycleConfig.ClosingCheckSeconds
+	local now = workspace:GetServerTimeNow()
+	self.ClosingChecks[player] = now + DayCycleConfig.ClosingCheckSeconds
+	self.ClosingDeadlines[player] = now + DayCycleConfig.ClosingMaxSeconds
 	self.PhaseChanged:Fire(player, "Closing")
 end
 
@@ -335,6 +349,10 @@ function DayCycleHandler.CanFinishClosing(self: DayCycleHandler, player: Player)
 		return false
 	end
 	self.ClosingChecks[player] = now + DayCycleConfig.ClosingCheckSeconds
+	-- The closing wait is bounded; guests still inside are handled like a manual early close.
+	if now >= (self.ClosingDeadlines[player] or math.huge) then
+		return true
+	end
 	local data = DataHandler:GetData(player)
 	if not data then
 		return false
@@ -379,6 +397,7 @@ function DayCycleHandler.EnterSummary(self: DayCycleHandler, player: Player): ()
 	end
 
 	self.ClosingChecks[player] = nil
+	self.ClosingDeadlines[player] = nil
 	day.SummaryStartedAt = workspace:GetServerTimeNow()
 	-- Phase commits the report only after its values and tomorrow's draft exist.
 	day.Phase = "Summary"
@@ -420,7 +439,7 @@ function DayCycleHandler.SelectMenu(_self: DayCycleHandler, player: Player, menu
 		return false
 	end
 
-	local valid, reason = validateRecipes(player, menu)
+	local valid, reason = validateRecipes(player, menu, true)
 	if not valid then
 		Bus.Progress.ActionFailed:FireClient(player, reason :: string)
 		return false
@@ -503,7 +522,8 @@ function DayCycleHandler.NextDay(self: DayCycleHandler, player: Player): boolean
 	end
 
 	local nextMenu = copyList(day.NextMenu)
-	local valid, reason = validateRecipes(player, nextMenu)
+	-- Tomorrow's menu is a plan, so it must be suppliable (the evening Menu drops such dishes).
+	local valid, reason = validateRecipes(player, nextMenu, true)
 	if not valid then
 		Bus.Progress.ActionFailed:FireClient(player, reason :: string)
 		return false
@@ -605,6 +625,7 @@ export type DayCycleHandler = typeof(DayCycleHandler) & {
 	Lifetimes: { [Player]: any },
 	GuestBodies: { [Player]: GuestBodySet },
 	ClosingChecks: { [Player]: number },
+	ClosingDeadlines: { [Player]: number },
 }
 
 return DayCycleHandler :: DayCycleHandler

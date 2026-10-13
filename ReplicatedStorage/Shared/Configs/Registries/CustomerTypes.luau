@@ -26,6 +26,10 @@ type CustomerTypeDefinition = {
 	unlockLevel: number,
 	-- Colour of the guest body in the world; the type is recognised across the room by it.
 	color: Color3,
+	-- Optional arrival announcement; ordinary guests and window shoppers stay quiet.
+	arrivalTitle: string?,
+	-- Optional multiplier on the whole payout of a dish (price and tip), for event guests.
+	coinMultiplier: number?,
 }
 export type CustomerTypeEntry = CustomerTypeDefinition & { id: string }
 
@@ -51,6 +55,7 @@ local list: { [string]: CustomerTypeDefinition } = {
 		color = Color3.fromRGB(168, 202, 224),
 	},
 	family = {
+		arrivalTitle = "A family has arrived!",
 		name = "Family",
 		kind = "Seated",
 		patience = 190,
@@ -61,6 +66,7 @@ local list: { [string]: CustomerTypeDefinition } = {
 		color = Color3.fromRGB(196, 214, 152),
 	},
 	big_order = {
+		arrivalTitle = "Double-order guest has arrived!",
 		name = "Double Order",
 		kind = "Seated",
 		patience = 190,
@@ -71,6 +77,7 @@ local list: { [string]: CustomerTypeDefinition } = {
 		color = Color3.fromRGB(222, 186, 232),
 	},
 	critic = {
+		arrivalTitle = "A critic has arrived!",
 		name = "Critic",
 		kind = "Seated",
 		patience = 100,
@@ -79,6 +86,20 @@ local list: { [string]: CustomerTypeDefinition } = {
 		weight = 2,
 		unlockLevel = 14,
 		color = Color3.fromRGB(148, 146, 166),
+	},
+	-- Admin abuse golden guest. Weight 0 keeps it out of the random pick: only LiveEventHandler sends
+	-- it, at the rate set in Configs/AdminAbuse.Guests.
+	event_guest = {
+		arrivalTitle = "A golden guest has arrived!",
+		name = "Golden Guest",
+		kind = "Seated",
+		patience = 190,
+		tipMultiplier = 1,
+		coinMultiplier = 5,
+		orders = 1,
+		weight = 0,
+		unlockLevel = 1,
+		color = Color3.fromRGB(255, 205, 60),
 	},
 }
 

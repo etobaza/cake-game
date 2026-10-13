@@ -95,6 +95,7 @@ function RunHandler.OnStart(self: RunHandler): ()
 	local scope = Scope.Run(function(): ()
 		Flux(function(): ()
 			local _page = Pages.Current()
+			local _presenting = Pages.Presenting()
 			self:Reset()
 		end, true)
 	end)
@@ -104,6 +105,7 @@ end
 
 function RunHandler.Refresh(self: RunHandler): ()
 	local available = Pages.Current:peek() == Pages.Names.None
+		and not Pages.Presenting:peek()
 		and not GuiService.MenuIsOpen
 		and UserInputService:GetFocusedTextBox() == nil
 		and GuiService.SelectedObject == nil

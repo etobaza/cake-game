@@ -13,8 +13,12 @@ local Pages = require(script.Parent.Stores.Pages)
 local UseData = require(script.Parent.Hooks.UseData)
 
 --[[ Constants ]]--
-local TABS: { [string]: Pages.Page } = { Report = Pages.Names.Report, Menu = Pages.Names.Inventory }
-local HEADER_BUTTONS = { "Report", "Menu", "NextDay" }
+local TABS: { [string]: Pages.Page } = {
+	Report = Pages.Names.Report,
+	Menu = Pages.Names.Inventory,
+	Upgrades = Pages.Names.Upgrades,
+}
+local HEADER_BUTTONS = { "Report", "Menu", "Upgrades", "NextDay" }
 local HEADER_LEFT_INSET = 6
 local HEADER_RIGHT_INSET = 6
 local HEADER_GAP = 8
@@ -23,6 +27,15 @@ local RIBBON_OVERHANG = 64
 local SELECTED = Color3.fromRGB(247, 233, 205)
 local IDLE = Color3.fromRGB(205, 191, 161)
 local DISABLED = Color3.fromRGB(150, 143, 127)
+-- Next Day is the evening's one forward action, so it is drawn as the primary button in the game's
+-- own warm palette: an orange-gold plate (the pop-up edge colour) with a cream dashed inset and a
+-- cocoa caption shadow, against the cream tabs.
+local NEXT_DAY_STYLE = {
+	Fill = Color3.fromRGB(255, 255, 255),
+	Gradient = ColorSequence.new(Color3.fromRGB(255, 194, 94), Color3.fromRGB(232, 136, 44)),
+	Lines = Color3.fromRGB(255, 241, 210),
+	TextShadow = Color3.fromRGB(95, 51, 51),
+}
 
 --[[ Tables ]]--
 local BakeryMenu = {}
@@ -65,7 +78,7 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	end
 	Flux.edit(screen)({
 		Enabled = function(): boolean
-			return BakeryMenu.Contains(Pages.Current())
+			return BakeryMenu.Contains(Pages.Current()) and not Pages.Presenting()
 		end,
 	})
 	-- Standalone pages use the full-size authored ribbon title, not a small tab caption.
@@ -100,7 +113,7 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 		Position = rowPosition,
 		Size = rowSize,
 	})
-	Flux.edit(upgrades)({ Visible = false, Interactable = false, Selectable = false })
+	Flux.edit(upgrades)({ Visible = isSummary })
 	local rowButtons: { GuiObject } = {}
 	for index, name in HEADER_BUTTONS do
 		local button = buttons:FindFirstChild(name) :: TextButton
@@ -137,6 +150,7 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	Flux.edit(nextDay)({
 		Visible = isSummary,
 	})
+	BakeryMenu.StyleNextDay(nextDay, janitor)
 	local close = header:FindFirstChild("Exit", true) :: GuiButton
 	bindPress(close)
 	Flux.edit(close)({
@@ -147,6 +161,33 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 			Pages.Close()
 		end,
 	})
+end
+
+-- Restyles the authored Next Day tab in place (ButtonRow has already wrapped its artwork); the
+-- added gradient belongs to the header's janitor.
+function BakeryMenu.StyleNextDay(button: GuiButton, janitor: any): ()
+	local style = NEXT_DAY_STYLE
+	local fill = button:FindFirstChild("Bg", true)
+	if fill and fill:IsA("GuiObject") then
+		fill.BackgroundColor3 = style.Fill
+		local gradient = Instance.new("UIGradient")
+		gradient.Name = "NextDayGradient"
+		gradient.Color = style.Gradient
+		gradient.Rotation = 90
+		gradient.Parent = fill
+		janitor:Add(gradient, "Destroy")
+	end
+
+	local lines = button:FindFirstChild("Lines", true)
+	if lines and lines:IsA("ImageLabel") then
+		lines.ImageColor3 = style.Lines
+	end
+
+	local caption = button:FindFirstChild("Txt", true)
+	local shadow = caption and caption:FindFirstChild("Shadow")
+	if shadow and shadow:IsA("TextLabel") then
+		shadow.TextColor3 = style.TextShadow
+	end
 end
 
 return BakeryMenu

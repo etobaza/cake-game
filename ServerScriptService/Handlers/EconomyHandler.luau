@@ -15,6 +15,8 @@ local Bus = require(_Shared.Bus)
 local AdminConfig = require(_Configs.Admin)
 local DataHandler = require(ServerScriptService.Handlers.DataHandler)
 local Economy = require(_Configs.Economy)
+local FriendBoostHandler = require(ServerScriptService.Handlers.FriendBoostHandler)
+local Friends = require(_Configs.Friends)
 local LoggerUtil = require(_Libs.Logger)
 local Products = require(_Configs.Registries.Products)
 local Progression = require(_Configs.Progression)
@@ -32,7 +34,7 @@ local Logger = LoggerUtil.new({ name = "EconomyHandler" })
 
 --[[ Tables ]]--
 local EconomyHandler = {
-	dependencies = { "DataHandler" },
+	dependencies = { "DataHandler", "FriendBoostHandler" },
 	priority = 90,
 }
 
@@ -81,9 +83,8 @@ function EconomyHandler.GetCash(_self: EconomyHandler, player: Player): number
 	return if cloud then cloud.Cash else 0
 end
 
---- Adds coins, multiplied by whatever passes the player owns.
---- The multiplier lands here rather than at the till: this is the one place coins are created, so a
---- pass that pays more pays more on everything, and there is no second path to forget about.
+--- Existing paid multipliers retain their scope. Verified server friends also multiply gameplay
+--- income, excluding code grants; rewards, purchases, support grants and refunds keep their value.
 function EconomyHandler.AddCash(
 	self: EconomyHandler,
 	player: Player,
@@ -101,13 +102,17 @@ function EconomyHandler.AddCash(
 	end
 
 	local multiplier = Products:GetCashMultiplier(cloud.Passes)
+	local cashReason: CashReason = reason or "Gameplay"
+	if cashReason == "Gameplay" and not (itemId and Friends.ExcludedGameplayItems[itemId]) then
+		multiplier *= FriendBoostHandler:GetMultiplier(player)
+	end
 	local before = cloud.Cash
 
 	cloud.Cash = math.round((before + amount * multiplier) * 100) / 100
 
 	local credited = math.round((cloud.Cash - before) * 100) / 100
 	if credited > 0 then
-		self.CashChanged:Fire(player, "Source", credited, cloud.Cash, reason or "Gameplay", itemId)
+		self.CashChanged:Fire(player, "Source", credited, cloud.Cash, cashReason, itemId)
 	end
 end
 

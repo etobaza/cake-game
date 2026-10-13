@@ -8,6 +8,11 @@
 local GameTypes = require(game:GetService("ReplicatedStorage").Shared.GameTypes)
 
 return {
+	-- A server-owned mirror of verified friends currently in this server; never saved.
+	FriendBoost = {
+		Count = 0,
+		Percent = 0,
+	},
 	Tutorial = {
 		Stage = "Cook",
 		RecipeId = "",
@@ -118,12 +123,10 @@ return {
 	-- True after the player has mopped a spill this session: the tutorial reads it.
 	HasMopped = false,
 
-	-- Playtime rewards. They reset with the session on purpose, so the screen says so.
-	-- StartedAt is workspace:GetServerTimeNow at join; the client counts up from it rather than
-	-- being told the elapsed seconds every tick.
+	-- The running part of today's playtime: workspace:GetServerTimeNow when the server last moved
+	-- played time into Cloud.Playtime.Seconds. The client counts up from it rather than being told
+	-- the elapsed seconds every tick.
 	Playtime = {
 		StartedAt = 0,
-		-- Tier indexes already taken
-		Claimed = {} :: { number },
 	},
 }

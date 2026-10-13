@@ -13,14 +13,16 @@ return {
 	TakeOrderFallbackSeconds = 25,
 	-- A ready guest whistles again at this interval until the order is taken.
 	ReadyWhistleSeconds = 8,
+	-- The speech bubble and the order card both beat at this interval while the guest is ready.
+	ReadyPulseSeconds = 1.1,
 	Slots = 4,
 	ProgressSteps = 100,
 	RefreshInterval = 0.25,
 	PonderInterval = 0.5,
 	Layout = {
-		Compact = { CardWidth = 64, Height = 110, LabelWidth = 52, Edge = 8 },
-		Wide = { CardWidth = 80, Height = 140, LabelWidth = 64, Edge = 16 },
-		MaxScale = 1.25,
+		Compact = { CardWidth = 112, Height = 160, LabelWidth = 52, Edge = 8 },
+		Wide = { CardWidth = 124, Height = 180, LabelWidth = 64, Edge = 16 },
+		MaxScale = 1.4,
 		CardGap = 6,
 		ContentPadding = 5,
 		HotbarGap = 12,
@@ -34,20 +36,22 @@ return {
 	Bubble = {
 		-- States that show a bubble; Arriving and Eating guests have their own cues.
 		States = { Queued = true, Choosing = true, Waiting = true } :: { [string]: boolean },
-		Width = 124,
+		Width = 168,
 		Padding = 6,
 		IconSize = 44,
 		IconGap = 4,
 		MaxIcons = 3,
-		CaptionHeight = 18,
-		TextSize = 14,
+		CaptionHeight = 44,
+		CaptionHeightPerDish = 40,
+		TextSize = 18,
+		MinTextSize = 16,
 		PonderSize = 36,
 		BarHeight = 10,
 		CornerRadius = 10,
 		StrokeThickness = 2,
 		TailSize = 12,
-		BadgeSize = 22,
-		BadgeTextSize = 13,
+		BadgeSize = 26,
+		BadgeTextSize = 18,
 		-- Above the head centre; the bubble grows upward from here, clear of hats.
 		Offset = Vector3.new(0, 1.7, 0),
 		MaxDistance = 70,
@@ -60,18 +64,26 @@ return {
 		-- Ready to order: a large "!" in place of the choosing dots, a call and a steady pulse.
 		ReadyText = "Take my order!",
 		ReadyMarkColor = Color3.fromRGB(255, 170, 0),
-		ReadyPulseSeconds = 1.1,
 		ReadyPulseFrom = 1.12,
 		-- New bubble words type out with the guest's NpcText blip (BattlesOfEmpires' NPC voice):
 		-- seconds per letter, the minimum time before the blip may restart, and pitch spread.
 		Voice = { CharSeconds = 0.03, Restart = 0.07, Spread = 0.05 },
 	},
 	-- Status line drawn over the top of each order card (OrderHandler/Card): what the guest needs
-	-- next, coloured by urgency. Height is a share of the card; text sizes are pixels.
+	-- next, coloured by urgency. Heights and slot placement are shares of the card; text sizes are
+	-- pixels. A two-line status (several dishes) takes the Multiple values and pushes the authored
+	-- slot (number and dish art) further down.
 	CardStatus = {
-		Height = 0.24,
-		MinTextSize = 9,
-		MaxTextSize = 15,
+		Height = 0.32,
+		MultipleHeight = 0.45,
+		SlotY = 0.64,
+		SlotHeight = 0.5,
+		MultipleSlotY = 0.7,
+		MultipleSlotHeight = 0.4,
+		-- Above the authored card art.
+		ZIndex = 10,
+		MinTextSize = 14,
+		MaxTextSize = 18,
 		StrokeThickness = 1.5,
 		StrokeColor = Color3.fromRGB(58, 32, 22),
 		Colors = {
@@ -86,7 +98,6 @@ return {
 		LowTint = Color3.fromRGB(255, 150, 140),
 		-- Eating guests keep their card, dimmed, until they leave the table.
 		EatingTransparency = 0.35,
-		ReadyPulseSeconds = 1.1,
 		ReadyPulseFrom = 1.08,
 	},
 	-- Pages the order panel stays up for: the recipe pick is where the player decides what to cook.
@@ -94,14 +105,29 @@ return {
 	-- The recipe pick marks dishes guests are waiting for and lists them first.
 	WaitingBadge = {
 		TextSize = 18,
-		Color = Color3.fromRGB(255, 120, 40),
+		-- The face runs from ColorTop down to Color.
+		ColorTop = Color3.fromRGB(255, 176, 72),
+		Color = Color3.fromRGB(240, 100, 24),
 		TextColor = Color3.fromRGB(255, 255, 255),
-		Padding = 6,
-		Height = 24,
+		-- The border, the lettering's outline and the plate under the face share the cocoa ink.
+		EdgeColor = Color3.fromRGB(95, 51, 51),
+		Edge = 2.5,
+		TextOutline = 1.5,
+		Padding = 10,
+		Height = 26,
+		-- How far the plate shows below the face.
+		Depth = 3,
+		Inset = Vector2.new(8, 6),
+		PulseSeconds = 0.9,
+		PulseScale = 1.06,
+		-- Plate, face and lettering stack upward from this ZIndex, above the row's art.
+		ZIndex = 10,
 	},
-	TooltipWidth = 280,
-	TooltipHeight = 76,
+	TooltipWidth = 300,
+	TooltipHeight = 88,
 	TooltipGap = 8,
-	TooltipMinTextSize = 14,
-	TooltipMaxTextSize = 18,
+	-- Pixels kept between the tooltip and the HUD's side edges.
+	TooltipMargin = 8,
+	TooltipMinTextSize = 18,
+	TooltipMaxTextSize = 22,
 }

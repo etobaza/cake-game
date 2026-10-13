@@ -13,6 +13,7 @@ local UIText = {
 		menu_too_large = "Pick no more than 5 recipes",
 		menu_not_ready = "Set today's menu first",
 		recipe_locked = "Recipe not unlocked yet",
+		ingredient_missing = "You can't get every ingredient of that dish yet",
 		not_on_menu = "That's not on today's menu",
 
 		-- Upgrades
@@ -63,6 +64,9 @@ local UIText = {
 		daily_done = "The whole streak is claimed",
 		playtime_not_ready = "Not played long enough for that one",
 		playtime_claimed = "Already claimed",
+		group_claimed = "Group reward already claimed",
+		group_not_member = "Join the group to claim the reward",
+		group_check_failed = "Could not check the group right now. Try again soon",
 
 		-- Garden
 		already_tended = "Already tended today",

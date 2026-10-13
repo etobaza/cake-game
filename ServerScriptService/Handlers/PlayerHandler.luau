@@ -19,7 +19,7 @@ local UpgradeHandler = require(ServerScriptService.Handlers.UpgradeHandler)
 
 --[[ Tables ]]--
 local PlayerHandler = {
-	dependencies = { "UpgradeHandler" },
+	dependencies = { "DataHandler", "UpgradeHandler" },
 	priority = 50,
 }
 

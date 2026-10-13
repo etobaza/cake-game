@@ -104,6 +104,7 @@ function NavigationHandler.OnStart(self: NavigationHandler): ()
 	local scope = Scope.Run(function(): ()
 		Flux(function(): ()
 			local page = Pages.Current()
+			local _presenting = Pages.Presenting()
 			self.Browsing = page ~= Pages.Names.None
 			task.defer(refresh)
 		end, true)
@@ -167,7 +168,7 @@ function NavigationHandler.OnStart(self: NavigationHandler): ()
 end
 
 function NavigationHandler.Refresh(self: NavigationHandler): ()
-	if GuiService.MenuIsOpen then
+	if GuiService.MenuIsOpen or Pages.Presenting:peek() then
 		return
 	end
 	local gamepad = UserInputService.PreferredInput == Enum.PreferredInput.Gamepad

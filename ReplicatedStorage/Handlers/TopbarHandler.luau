@@ -1,5 +1,6 @@
 --!strict
--- The topbar: Daily Rewards and Codes, as TopbarPlus icons sitting beside Roblox's own buttons.
+-- The topbar: Daily Rewards and Codes, as TopbarPlus icons sitting beside Roblox's own buttons, plus
+-- single-click action icons other handlers add (the group reward).
 --
 -- Daily Rewards and Codes used to be the `CoreBtns` strip drawn into the HUD. TopbarPlus owns that
 -- row now, so the icons are created here rather than authored in StarterGui: they are not part of
@@ -71,6 +72,9 @@ local TopbarHandler = {
 function TopbarHandler.OnInit(self: TopbarHandler): ()
 	self.Janitor = Janitor.new()
 	self.Icons = {}
+	self.Actions = {}
+	self.ActionShown = {}
+	self.Visible = true
 end
 
 function TopbarHandler.OnStart(self: TopbarHandler): ()
@@ -135,16 +139,72 @@ function TopbarHandler.CreateIcon(
 	return icon
 end
 
+--- A single-click icon that runs `onActivated` instead of opening a page. `key` names it for
+--- SetActionShown. It follows SetVisible like the page icons.
+function TopbarHandler.CreateAction(
+	self: TopbarHandler,
+	key: string,
+	label: string,
+	caption: string,
+	order: number,
+	onActivated: () -> ()
+): TopbarIcon.Icon
+	local icon = TopbarIcon.new()
+
+	icon:setName(key)
+	icon:setLabel(label)
+	icon:setCaption(caption)
+	icon:setOrder(order)
+	icon:align("Left")
+	icon:oneClick()
+	icon:bindEvent("selected", function(): ()
+		onActivated()
+	end)
+
+	self.Actions[key] = icon
+	self.ActionShown[key] = true
+	icon:setEnabled(self.Visible)
+
+	self.Janitor:Add(function(): ()
+		self.Actions[key] = nil
+		self.ActionShown[key] = nil
+		icon:destroy()
+	end)
+
+	return icon
+end
+
+--- Whether an action icon wants to be on the row at all, e.g. a reward that is already taken. The
+--- introduction's SetVisible still wins while it hides the row.
+function TopbarHandler.SetActionShown(self: TopbarHandler, key: string, shown: boolean): ()
+	local icon = self.Actions[key]
+	if not icon then
+		return
+	end
+
+	self.ActionShown[key] = shown
+	icon:setEnabled(self.Visible and shown)
+end
+
 --- Shows or hides every icon; the introduction keeps the row away until it ends.
 function TopbarHandler.SetVisible(self: TopbarHandler, visible: boolean): ()
+	self.Visible = visible
+
 	for _, icon in self.Icons do
 		icon:setEnabled(visible)
+	end
+
+	for key, icon in self.Actions do
+		icon:setEnabled(visible and self.ActionShown[key] == true)
 	end
 end
 
 export type TopbarHandler = typeof(TopbarHandler) & {
 	Janitor: any,
 	Icons: { [string]: TopbarIcon.Icon },
+	Actions: { [string]: TopbarIcon.Icon },
+	ActionShown: { [string]: boolean },
+	Visible: boolean,
 }
 
 return TopbarHandler :: TopbarHandler

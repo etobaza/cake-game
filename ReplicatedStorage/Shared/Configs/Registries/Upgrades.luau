@@ -45,6 +45,14 @@ type UpgradeDefinition = {
 }
 export type UpgradeEntry = UpgradeDefinition & { id: string }
 
+export type UpgradeGoal = { Id: string, Level: number, Cost: number }
+export type UpgradeProgress = {
+	AffordableCount: number,
+	Recommended: UpgradeGoal?,
+	Goal: UpgradeGoal?,
+	Complete: boolean,
+}
+
 local list: { [string]: UpgradeDefinition } = {
 	--[[ Cafe (the "Store" tab) ]]--
 	cafe_display = {
@@ -472,6 +480,13 @@ local list: { [string]: UpgradeDefinition } = {
 }
 
 type UpgradesMethods = {
+	GetPurchaseCost: (
+		self: UpgradesRegistry,
+		upgradeId: string,
+		levels: { [string]: number },
+		playerLevel: number
+	) -> number?,
+	GetProgress: (self: UpgradesRegistry, levels: { [string]: number }, playerLevel: number, cash: number) -> UpgradeProgress,
 	GetRemainingCost: (self: UpgradesRegistry, levels: { [string]: number }) -> number,
 	GetMissingRequirement: (self: UpgradesRegistry, entry: UpgradeEntry, levels: { [string]: number }) -> string?,
 	GetBranch: (self: UpgradesRegistry, category: GameTypes.UpgradeCategory) -> { UpgradeEntry },
@@ -481,6 +496,61 @@ type UpgradesMethods = {
 export type UpgradesRegistry = Registry.Registry<UpgradeEntry> & UpgradesMethods
 
 local methods: UpgradesMethods = {
+	-- The server and every progression affordance use the same next-level eligibility.
+	GetPurchaseCost = function(
+		self: UpgradesRegistry,
+		upgradeId: string,
+		levels: { [string]: number },
+		playerLevel: number
+	): number?
+		local entry = self:Get(upgradeId)
+		if not entry or playerLevel < entry.unlockLevel or self:GetMissingRequirement(entry, levels) then
+			return nil
+		end
+		return self:GetCost(upgradeId, levels[upgradeId] or 0)
+	end,
+
+	GetProgress = function(
+		self: UpgradesRegistry,
+		levels: { [string]: number },
+		playerLevel: number,
+		cash: number
+	): UpgradeProgress
+		local count = 0
+		local recommended: UpgradeGoal? = nil
+		local lockedGoal: UpgradeGoal? = nil
+		local complete = true
+		for _, entry in self:Values() do
+			local level = levels[entry.id] or 0
+			local cost = self:GetCost(entry.id, level)
+			if not cost then
+				continue
+			end
+			complete = false
+			local goal: UpgradeGoal = { Id = entry.id, Level = level + 1, Cost = cost }
+			local unlocked = self:GetPurchaseCost(entry.id, levels, playerLevel) ~= nil
+			if unlocked and cash >= cost then
+				count += 1
+			end
+			local previous = if unlocked then recommended else lockedGoal
+			if previous and (previous.Cost < cost or (previous.Cost == cost and previous.Id < entry.id)) then
+				continue
+			end
+			if unlocked then
+				recommended = goal
+			else
+				lockedGoal = goal
+			end
+		end
+		-- Cheapest unlocked is affordable whenever any unlocked purchase is affordable.
+		return {
+			AffordableCount = count,
+			Recommended = recommended,
+			Goal = recommended or lockedGoal,
+			Complete = complete,
+		}
+	end,
+
 	-- Sum in cents so an admin budget covers every remaining level without float drift.
 	GetRemainingCost = function(self: UpgradesRegistry, levels: { [string]: number }): number
 		local cents = 0

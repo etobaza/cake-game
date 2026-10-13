@@ -52,6 +52,9 @@ export type Kind = {
 	Prefix: string?,
 	Stat: string?,
 	RequiredUpgrade: string?,
+	-- Each slot stands on one bought level of this upgrade (one authored table per level): the stat
+	-- can promise more, but a slot without its table is never built.
+	TableUpgrade: string?,
 	-- Which anchor each purchase fills, when the shop order is not the anchor order: purchase N goes
 	-- to anchor `SlotOrder[N]`. Missing means purchase N fills anchor N.
 	SlotOrder: { number }?,
@@ -70,6 +73,9 @@ export type Kind = {
 	PromptTarget: { string }?,
 	-- Camera-space adjustment measured in fractions of the prompt's own width and height.
 	PromptScreenOffset: Vector2?,
+	-- MaxActivationDistance of this kind's prompt, in studs. Missing keeps BuildingHandler/View's
+	-- default. Props packed beside a station use a shorter reach so they do not take its focus.
+	PromptDistance: number?,
 	-- The artist model this kind lives on, as a path from the bakery root. Nothing is built for it:
 	-- the authored model IS the building, so it carries the prompt and it is what hides while a tool
 	-- is carried. A Single may name its own instead.
@@ -193,6 +199,8 @@ local Buildings = {
 			Facing = Vector3.new(1, 0, 0),
 			Prefix = "display",
 			Stat = "DisplaySlots",
+			-- A dish is never shown on the floor: no Display Counter table, no slot.
+			TableUpgrade = "cafe_display",
 			StateField = "Display",
 			LeftoversField = "DisplayLeftovers",
 			Hidden = true,
@@ -392,6 +400,9 @@ local Buildings = {
 			Label = "Ingredient",
 			Facing = Vector3.new(0, 0, 1),
 			Prefix = "ingredient",
+			-- The counter trays sit about four studs from the mixer. With the default reach, a camera
+			-- facing the counter gave Flour the E key while the player stood at the mixer.
+			PromptDistance = 6,
 			-- The pantry is the two trays the artist drew on the kitchen counter, and nothing else:
 			-- milk and eggs use the animal-owned kitchen baskets in Configs/Garden instead.
 			-- Both staple trays are authored models -- no block of ours is built for them.

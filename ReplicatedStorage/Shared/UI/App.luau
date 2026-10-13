@@ -38,8 +38,7 @@ local PANEL_NAME = "MainFrame"
 local CLOSE_NAMES = { "Exit", "CloseButton" }
 -- The page whose close button is lent to pages drawn without one.
 local CLOSE_DONOR = "Upgrades"
--- The status toast rides in its own screen above the pages (DisplayOrder 5 vs their 2), so a
--- message is never hidden behind an open page.
+-- StatusLayout owns the toast layer above pages and tutorial speech.
 local STATUS_SCREEN = "Status"
 local STATUS_FRAME = "StatusMessages"
 local STATUS_LABEL = "Msg"
@@ -195,18 +194,24 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 			Flux.cleanup(Responsive.Bind(screen))
 		end
 		-- The authored screen is left off in StarterGui so it does not cover the editor.
-		edit(hudScreen)({ Enabled = true })
+		edit(hudScreen)({ Enabled = function(): boolean
+			return not Pages.Presenting()
+		end })
 		HudComponent(hudRoot, deps)
 
 		-- The status strip: text and visibility follow the toast nodes, and it rides in on each show.
 		if statusScreen and statusScreen:IsA("ScreenGui") and statusFrame and statusFrame:IsA("GuiObject") then
 			local clock = hudRoot:FindFirstChild("Time")
 			local clockFrame = if clock and clock:IsA("GuiObject") then clock else nil
-			local statusLayout = StatusLayout.Bind(statusScreen, statusFrame, clockFrame)
+			local currency = hudRoot:FindFirstChild("Currency")
+			local currencyFrame = if currency and currency:IsA("GuiObject") then currency else nil
+			local statusLayout = StatusLayout.Bind(statusScreen, statusFrame, clockFrame, currencyFrame)
 			Flux.cleanup(function(): ()
 				statusLayout:Destroy()
 			end)
-			edit(statusScreen)({ Enabled = true })
+			edit(statusScreen)({ Enabled = function(): boolean
+				return not Pages.Presenting()
+			end })
 			edit(statusFrame)({ Visible = deps.StatusVisible })
 
 			local message = statusFrame:FindFirstChild(STATUS_LABEL)
@@ -225,7 +230,7 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 
 		-- Focus feedback: any open page dims the world and leans the camera in; closing undoes both.
 		local nothingOpen = Flux(function(): boolean
-			return Pages.Current() == Pages.Names.None
+			return Pages.Current() == Pages.Names.None or Pages.Presenting()
 		end)
 
 		if dim and dim:IsA("GuiObject") then
@@ -246,13 +251,14 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 		local baseFov = if camera then camera.FieldOfView else 70
 		local fov = Animate.Track(workspace, "FocusFov", baseFov, function(value: number)
 			local current = workspace.CurrentCamera
-			if current then
+			if current and not Pages.Presenting:peek() then
 				current.FieldOfView = value
 			end
 		end)
 
 		Flux(function()
-			fov:spring(if nothingOpen() then baseFov else baseFov - FOCUS_FOV_DROP)
+			-- Keep the logical page's resting FOV while a reveal temporarily owns the camera.
+			fov:spring(if Pages.Current() == Pages.Names.None then baseFov else baseFov - FOCUS_FOV_DROP)
 		end, true)
 
 		-- Every authored screen is bound the same way, whether a system drives its contents yet or not.

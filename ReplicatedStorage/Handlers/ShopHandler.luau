@@ -23,10 +23,13 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Authored = require(_Shared.UI.Authored)
 local Bus = require(_Shared.Bus)
 local DataClient = require(_Handlers.DataHandlerClient)
-local FeedbackHandler = require(_Handlers.FeedbackHandler)
+local Flux = require(ReplicatedStorage.Packages.flux)
 local GameTypes = require(_Shared.GameTypes)
 local Press = require(_Shared.UI.Press)
+local Pages = require(_Shared.UI.Stores.Pages)
+local Scope = require(_Shared.UI.Scope)
 local UIHandler = require(_Handlers.UIHandler)
+local UpgradeRevealHandler = require(_Handlers.UpgradeRevealHandler)
 local Upgrades = require(_Configs.Registries.Upgrades)
 local TreeConfig = require(_Configs.UpgradeTree)
 
@@ -97,8 +100,7 @@ local TAB_OFF = Color3.fromRGB(168, 163, 156)
 
 --[[ Tables ]]--
 local ShopHandler = {
-	-- FeedbackHandler celebrates a node the moment it is bought.
-	dependencies = { "DataClient", "UIHandler", "FeedbackHandler" },
+	dependencies = { "DataClient", "UIHandler", "UpgradeRevealHandler" },
 }
 
 --[[ Private Functions ]]--
@@ -136,7 +138,7 @@ local function GetState(
 		return "Locked"
 	end
 
-	local cost = Upgrades:GetCost(entry.id, level)
+	local cost = Upgrades:GetPurchaseCost(entry.id, levels, playerLevel)
 
 	return if cost and cash >= cost then "Ready" else "Poor"
 end
@@ -211,6 +213,8 @@ function ShopHandler.OnStart(self: ShopHandler): ()
 	end
 
 	self.Content = content
+	self.Janitor = Janitor.new()
+	self.Janitor:LinkToInstance(screen)
 	self.Bottom = bottom
 	self.Slots = {}
 	self.Tabs = {}
@@ -226,8 +230,7 @@ function ShopHandler.OnStart(self: ShopHandler): ()
 	local tree = content.Parent
 	if tree and tree:IsA("ScrollingFrame") then
 		local treeContent = content :: GuiObject
-		local lifetime = Janitor.new()
-		lifetime:LinkToInstance(tree)
+		local lifetime = self.Janitor
 		local function centerTree(): ()
 			local width = Authored.UnscaledSize(treeContent).X
 			if tree.AbsoluteSize.X <= 0 then
@@ -244,17 +247,52 @@ function ShopHandler.OnStart(self: ShopHandler): ()
 		centerTree()
 	end
 
-	DataClient:SubscribeToPath({ "Base", "Upgrades" }, function()
-		self:Refresh()
-	end, "Cloud", true)
+	-- Read the whole applied Cloud update so spending and the bought level stay coherent.
+	self.Janitor:Add(
+		DataClient:SubscribeToDataType("Cloud", function(): ()
+			local key = self.Selected[self.Category]
+			local selected = key and self.Slots[key]
+			local wasOwned = selected ~= nil and selected.State == "Owned"
+			self:Refresh()
+			if selected and not wasOwned and selected.State == "Owned" and Pages.Current:peek() == Pages.Names.Upgrades then
+				self:SelectRecommended()
+			end
+		end),
+		"Disconnect"
+	)
+	self.Janitor:Add(
+		Scope.Run(function(): ()
+			Flux(function(): ()
+				if Pages.Current() == Pages.Names.Upgrades then
+					self:SelectRecommended()
+				end
+			end, true)
+		end),
+		"Destroy"
+	)
+end
 
-	DataClient:SubscribeToPath({ "Cash" }, function()
+function ShopHandler.SelectRecommended(self: ShopHandler): ()
+	local progress = Upgrades:GetProgress(
+		DataClient:GetData({ "Base", "Upgrades" }) or {},
+		DataClient:GetData({ "Level" }) or 1,
+		DataClient:GetData({ "Cash" }) or 0
+	)
+	local goal = progress.Recommended
+	local entry = goal and Upgrades:Get(goal.Id)
+	if not goal or not entry then
+		-- A completed tree has no suggested purchase; browsing owned nodes still works.
+		self.Selected[self.Category] = nil
 		self:Refresh()
-	end, "Cloud")
-
-	DataClient:SubscribeToPath({ "Level" }, function()
-		self:Refresh()
-	end, "Cloud")
+		return
+	end
+	for index, purchase in TreeConfig.Categories[entry.category] do
+		if purchase.Id == goal.Id and purchase.Level == goal.Level then
+			self.Selected[entry.category] = SlotKey(SLOTS[index])
+			self:ShowCategory(entry.category)
+			return
+		end
+	end
 end
 
 --- Finds every authored box once and gives the ones without artwork the icon the artist drew.
@@ -294,13 +332,16 @@ function ShopHandler.CollectSlots(self: ShopHandler): ()
 		-- A box is its own click target: the drawing has no button inside it, and adding one would
 		-- be layout built in code.
 		-- Scale the whole node so sibling artwork follows the same centered motion.
-		Animate.Press(box, slot)
-		Press.BindTap(box, function()
-			local upgradeId = node.UpgradeId
-			if upgradeId then
-				self:Select(SlotKey(path))
-			end
-		end)
+		Animate.Press(box, slot, self.Janitor)
+		self.Janitor:Add(
+			Press.BindTap(box, function()
+				local upgradeId = node.UpgradeId
+				if upgradeId then
+					self:Select(SlotKey(path))
+				end
+			end),
+			"Destroy"
+		)
 
 		self.Slots[SlotKey(path)] = node
 	end
@@ -323,11 +364,14 @@ function ShopHandler.BindTabs(self: ShopHandler, main: Instance): ()
 
 		self.Tabs[tab.Category] = button
 		table.insert(rowButtons, button)
-		button.Activated:Connect(function()
-			self:ShowCategory(tab.Category)
-		end)
+		self.Janitor:Add(
+			button.Activated:Connect(function()
+				self:ShowCategory(tab.Category)
+			end),
+			"Disconnect"
+		)
 	end
-	ButtonRow.Bind(top :: GuiObject, rowButtons)
+	self.Janitor:Add(ButtonRow.Bind(top :: GuiObject, rowButtons), "Destroy")
 end
 
 --- The footer's Purchase plate is a frame, so the press is read off it directly.
@@ -340,10 +384,13 @@ function ShopHandler.BindPurchase(self: ShopHandler): ()
 
 	self.BuyPlate = buy
 
-	Animate.Press(buy)
-	Press.BindTap(buy, function()
-		self:Buy()
-	end)
+	Animate.Press(buy, nil, self.Janitor)
+	self.Janitor:Add(
+		Press.BindTap(buy, function()
+			self:Buy()
+		end),
+		"Destroy"
+	)
 end
 
 --- Puts one category's upgrades into the authored boxes and repaints everything.
@@ -405,6 +452,11 @@ function ShopHandler.Refresh(self: ShopHandler): ()
 	local playerLevel = DataClient:GetData({ "Level" }) or 1
 	local cash = DataClient:GetData({ "Cash" }) or 0
 	local selected = self.Selected[self.Category]
+	local selectedNode = selected and self.Slots[selected]
+	-- Client-only presentation facts for the first-purchase lesson; never purchase authorization.
+	self.Content:SetAttribute("UpgradeCategory", self.Category)
+	self.Content:SetAttribute("SelectedUpgradeId", if selectedNode then selectedNode.UpgradeId else nil)
+	self.Content:SetAttribute("SelectedPurchaseLevel", if selectedNode then selectedNode.PurchaseLevel else nil)
 
 	for key, node in self.Slots do
 		local entry = node.UpgradeId and Upgrades:Get(node.UpgradeId)
@@ -444,9 +496,7 @@ function ShopHandler.PaintNode(_self: ShopHandler, node: Node, state: string, is
 		Animate.Pop(node.Slot)
 	end
 	local painted = if node.UpgradeId then `{node.UpgradeId}:{node.PurchaseLevel}` else nil
-	if becameOwned and painted ~= nil and painted == node.Painted then
-		FeedbackHandler:Celebrate(node.Slot, "Purchase")
-	end
+	-- Only UpgradeBought starts purchase feedback. A data refresh can also be an admin grant.
 	node.Painted = painted
 
 	node.Selected = isSelected
@@ -487,9 +537,13 @@ function ShopHandler.RefreshFooter(
 	local node = key and self.Slots[key]
 	local entry = node and node.UpgradeId and Upgrades:Get(node.UpgradeId)
 	if not entry then
-		Authored.SetPair(resolve(bottom, { "Label1", "Txt" }), "Pick an upgrade")
+		local complete = Upgrades:GetProgress(levels, playerLevel, cash).Complete
+		Authored.SetPair(
+			resolve(bottom, { "Label1", "Txt" }),
+			if complete then "All upgrades purchased" else "Pick an upgrade"
+		)
 		Authored.SetPair(resolve(bottom, { "Label2", "Value" }), "")
-		self:SetDesc("Tap a node to see what it does.")
+		self:SetDesc(if complete then "Your bakery upgrade tree is complete." else "Tap a node to see what it does.")
 		self:ShowStatus(nil, "")
 		return
 	end
@@ -554,8 +608,15 @@ end
 function ShopHandler.Buy(self: ShopHandler): ()
 	local key = self.Selected[self.Category]
 	local node = key and self.Slots[key]
-	if node and node.UpgradeId and node.State == "Ready" then
+	if node and node.UpgradeId and node.State == "Ready" and not Pages.Presenting:peek() then
+		UpgradeRevealHandler:Prepare(node.UpgradeId, node.PurchaseLevel)
 		Bus.Progress.BuyUpgrade:Fire(node.UpgradeId, node.PurchaseLevel)
+	end
+end
+
+function ShopHandler.Destroy(self: ShopHandler): ()
+	if self.Janitor then
+		self.Janitor:Destroy()
 	end
 end
 
@@ -580,6 +641,7 @@ export type Node = {
 }
 
 export type ShopHandler = typeof(ShopHandler) & {
+	Janitor: any,
 	Content: Instance,
 	Bottom: Instance,
 	BuyPlate: GuiObject?,

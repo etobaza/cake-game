@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 --[[ Modules ]]--
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local OrderLayout = require(script.Parent.OrderLayout)
+local UpgradeReveal = require(ReplicatedStorage.Shared.Configs.UpgradeReveal)
 
 --[[ Constants ]]--
 -- Desktop artwork was sized for a 720p canvas. Keep that density on larger
@@ -43,7 +44,8 @@ function HudLayout.Apply(hud: GuiObject): ()
 		then 1
 		else math.clamp(math.min(size.X / DESKTOP_CANVAS.X, size.Y / DESKTOP_CANVAS.Y), 1, MAX_DESKTOP_SCALE)
 	local buttonSide = if compact then math.clamp(math.floor((size.Y - 108) / 3), 52, 64) else 100
-	local columnHeight = buttonSide * 3 + 16
+	local upgradeSide = buttonSide * UpgradeReveal.Hud.SizeMultiplier
+	local columnHeight = upgradeSide + buttonSide * 2 + 16
 	-- Resize the resting rectangles; UIScale remains owned by press/pop springs.
 	local function placeGroup(name: string, position: UDim2, dimensions: Vector2): ()
 		place(hud, name, position, dimensions, scale)
@@ -68,14 +70,14 @@ function HudLayout.Apply(hud: GuiObject): ()
 		UDim2.new(0.5, 0, 0, if compact then 16 else 23),
 		Vector2.new(144, 51) * (if compact then 1 else 1.25)
 	)
-	placeGroup("Hotbar", UDim2.new(0.5, 0, 1, -12), if compact then Vector2.new(76, 68) else Vector2.new(96, 86))
+	placeGroup("Hotbar", UDim2.new(0.5, 0, 1, -12), if compact then Vector2.new(108, 118) else Vector2.new(128, 126))
 	if compact then
 		placeGroup("Currency", UDim2.fromOffset(8, if portrait then 78 else 8), Vector2.new(150, 70))
 		-- The landscape column starts below the currency plate (bottom at 78).
 		placeGroup(
 			"SideBtns",
 			if portrait then UDim2.new(0, 8, 0.5, 0) else UDim2.fromOffset(8, 84 + columnHeight / 2),
-			Vector2.new(buttonSide + 4, columnHeight)
+			Vector2.new(upgradeSide + 8, columnHeight)
 		)
 		placeGroup(
 			"Quests",
@@ -84,7 +86,7 @@ function HudLayout.Apply(hud: GuiObject): ()
 		)
 	else
 		placeGroup("Currency", UDim2.new(0, 16, 1, -16), Vector2.new(250, 112))
-		placeGroup("SideBtns", UDim2.new(0, 16, 0.5, 0), Vector2.new(108, 348))
+		placeGroup("SideBtns", UDim2.new(0, 16, 0.5, 0), Vector2.new(upgradeSide + 8, columnHeight))
 		placeGroup("Quests", UDim2.new(1, -16, 0.5, 0), Vector2.new(300, 190))
 	end
 	OrderLayout.Apply(hud, compact, scale)
@@ -112,6 +114,7 @@ function HudLayout.Apply(hud: GuiObject): ()
 		local layout = buttons:FindFirstChildOfClass("UIListLayout")
 		if layout then
 			layout.FillDirection = Enum.FillDirection.Vertical
+			layout.SortOrder = Enum.SortOrder.LayoutOrder
 			layout.Padding = UDim.new(0, 8 * scale)
 			layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 			layout.VerticalAlignment = Enum.VerticalAlignment.Center
@@ -121,7 +124,9 @@ function HudLayout.Apply(hud: GuiObject): ()
 			if not button:IsA("GuiObject") then
 				continue
 			end
-			button.Size = UDim2.fromOffset(buttonSize, buttonSize)
+			local side = if button.Name == "Upgrades" then upgradeSide * scale else buttonSize
+			button.Size = UDim2.fromOffset(side, side)
+			button.LayoutOrder = if button.Name == "Upgrades" then 1 elseif button.Name == "Shop" then 2 else 3
 			local title = button:FindFirstChild(if button.Name == "Rewards" then "Title" else button.Name)
 			if title and title:IsA("GuiObject") then
 				title.AnchorPoint = Vector2.new(0.5, 0)
@@ -133,6 +138,7 @@ function HudLayout.Apply(hud: GuiObject): ()
 				hitbox.AnchorPoint = Vector2.new(0.5, 0.5)
 				hitbox.Position = UDim2.fromScale(0.5, 0.5)
 				hitbox.Size = UDim2.fromScale(1, 1)
+				hitbox.SelectionOrder = button.LayoutOrder
 			end
 		end
 	end

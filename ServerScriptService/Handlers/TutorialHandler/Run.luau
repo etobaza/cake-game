@@ -26,7 +26,7 @@ local Milestones = {
 	DisposeDish = "DisposedDish",
 	LoadCart = "LoadedCart",
 }
-local Lessons = { Place = "Display", TakeCart = "Cart", NextDay = "NextDay" }
+local Lessons = { Place = "Display", TakeCart = "Cart", NextDay = "NextDay", BuyUpgrade = "Upgrades" }
 
 --[[ Private Functions ]]--
 local function mark(self: any, name: string): ()
@@ -83,6 +83,13 @@ function Run.new(player: Player, data: any, release: (Player) -> (), prepareFloo
 		SweepJudged = false,
 	}, Run)
 	local active = Policy.IsActive(data.Cloud)
+	-- Existing upgraded saves already learned shopping; no tutorial version or schema reset.
+	for _, level in data.Cloud.Base.Upgrades do
+		if level > 0 then
+			data.Cloud.Tutorial.Lessons.Upgrades = true
+			break
+		end
+	end
 	data.Session.Tutorial.Protected = active
 	self.Machine = StateMachine.new({
 		initialState = if Policy.NeedsFloor(data.Cloud)
@@ -307,6 +314,10 @@ end
 
 -- The first unused shift makes a feature's guide due; a second unused shift retires it.
 function Run.ShiftEnded(self: Run): ()
+	local tutorial = self.Data.Cloud.Tutorial
+	if self.Data.Cloud.Day == 1 and not tutorial.Lessons.Upgrades then
+		tutorial.Lessons.UpgradesDue = true
+	end
 	local owned = self.ShiftFeatures
 	self.ShiftFeatures = nil
 	if not owned then

@@ -12,6 +12,7 @@
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 
 --[[ References ]]--
 local _Shared = ReplicatedStorage.Shared
@@ -32,14 +33,19 @@ local Ingredients = require(_Configs.Registries.Ingredients)
 local GardenSource = require(_Shared.GardenSource)
 local GuestOrders = require(_Shared.GuestOrders)
 local OrdersConfig = require(_Configs.Orders)
+local Pages = require(_Shared.UI.Stores.Pages)
 local Press = require(_Shared.UI.Press)
 local Recipes = require(_Configs.Registries.Recipes)
+local RecipeRequirements = require(_Shared.RecipeRequirements)
+local RequirementLabel = require(_Shared.UI.RecipeRequirementLabel)
 local Theme = require(_Shared.UI.Theme)
 local TutorialPolicy = require(_Shared.TutorialPolicy)
 local UIHandler = require(_Handlers.UIHandler)
 
 --[[ Constants ]]--
 local SCREEN_NAME = "RecipeToCook"
+-- Start closes the page once the server confirms the pick; a refused pick keeps it open.
+local CLOSE_WAIT_SECONDS = 5
 local ROWS_PATH = { "MainFrame", "Container", "Content" }
 local CARD_NAME = "Cooking"
 local CHIPS_NAME = "Items"
@@ -198,35 +204,98 @@ local function MixerMenu(): { Recipes.RecipeEntry }
 	return offered
 end
 
--- A pill over the row's top-left corner, above the dish icon: how many guests wait for this dish.
-local function buildWaitingBadge(row: Frame): TextLabel
+-- One layer of the waiting pill. Every layer carries the same text so they auto-size to one width;
+-- only the top layer shows it. A UIGradient tints a TextLabel's lettering too, so the gradient fill
+-- and the white text cannot share a layer.
+local function badgeLayer(name: string, fill: Color3, zIndex: number, edged: boolean): TextLabel
 	local style = OrdersConfig.WaitingBadge
-	local badge = Instance.new("TextLabel")
-	badge.Name = "Waiting"
-	badge.AutomaticSize = Enum.AutomaticSize.X
-	badge.Position = UDim2.fromOffset(4, 2)
-	badge.Size = UDim2.fromOffset(0, style.Height)
-	badge.BackgroundColor3 = style.Color
-	badge.BorderSizePixel = 0
-	badge.FontFace = Theme.Fonts.ExtraBold
-	badge.TextColor3 = style.TextColor
-	badge.TextSize = style.TextSize
-	badge.Visible = false
-	badge.ZIndex = 10
+	local layer = Instance.new("TextLabel")
+	layer.Name = name
+	layer.AutomaticSize = Enum.AutomaticSize.X
+	layer.Size = UDim2.fromOffset(0, style.Height)
+	layer.BackgroundColor3 = fill
+	layer.BorderSizePixel = 0
+	layer.FontFace = Theme.Fonts.ExtraBold
+	layer.TextSize = style.TextSize
+	layer.ZIndex = zIndex
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = Theme.Corners.Pill
-	corner.Parent = badge
+	corner.Parent = layer
 	local padding = Instance.new("UIPadding")
 	padding.PaddingLeft = UDim.new(0, style.Padding)
 	padding.PaddingRight = UDim.new(0, style.Padding)
-	padding.Parent = badge
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Theme.Colors.Cocoa
-	stroke.Thickness = 2
-	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	stroke.Parent = badge
+	padding.Parent = layer
+	if edged then
+		local edge = Instance.new("UIStroke")
+		edge.Color = style.EdgeColor
+		edge.Thickness = style.Edge
+		edge.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		edge.Parent = layer
+	end
+	return layer
+end
+
+-- A chunky pill in the row's top-left corner, above the dish icon: how many guests wait for this
+-- dish. A darker plate sits under a gradient face, the lettering is outlined, and the pill breathes
+-- so a waiting guest is hard to miss.
+local function buildWaitingBadge(row: Frame, janitor: Janitor.Janitor): Frame
+	local style = OrdersConfig.WaitingBadge
+	local badge = Instance.new("Frame")
+	badge.Name = "Waiting"
+	badge.AutomaticSize = Enum.AutomaticSize.X
+	badge.Position = UDim2.fromOffset(style.Inset.X, style.Inset.Y)
+	badge.Size = UDim2.fromOffset(0, style.Height + style.Depth)
+	badge.BackgroundTransparency = 1
+	badge.Visible = false
+	badge.ZIndex = style.ZIndex
+
+	local plate = badgeLayer("Plate", style.EdgeColor, style.ZIndex, true)
+	plate.Position = UDim2.fromOffset(0, style.Depth)
+	plate.TextTransparency = 1
+	plate.Parent = badge
+
+	local face = badgeLayer("Face", Color3.new(1, 1, 1), style.ZIndex + 1, true)
+	face.TextTransparency = 1
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new(style.ColorTop, style.Color)
+	gradient.Rotation = 90
+	gradient.Parent = face
+	face.Parent = badge
+
+	local label = badgeLayer("Label", Color3.new(1, 1, 1), style.ZIndex + 2, false)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = style.TextColor
+	local outline = Instance.new("UIStroke")
+	outline.Color = style.EdgeColor
+	outline.Thickness = style.TextOutline
+	outline.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+	outline.Parent = label
+	label.Parent = badge
+
+	local scale = Instance.new("UIScale")
+	scale.Parent = badge
+	local pulse = TweenService:Create(
+		scale,
+		TweenInfo.new(style.PulseSeconds, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+		{ Scale = style.PulseScale }
+	)
+	janitor:Add(function(): ()
+		pulse:Cancel()
+		pulse:Destroy()
+	end, true)
+	pulse:Play()
+
 	badge.Parent = row
 	return badge
+end
+
+local function setWaitingBadge(badge: Frame, count: number): ()
+	badge.Visible = count > 0
+	for _, layer in badge:GetChildren() do
+		if layer:IsA("TextLabel") then
+			layer.Text = `{count} waiting`
+		end
+	end
 end
 
 --[[ Handling ]]--
@@ -243,6 +312,7 @@ function RecipePickHandler.OnStart(self: RecipePickHandler): ()
 	self.Content = content
 	self.Rows = {}
 	self.Badges = {}
+	self.RequirementLabels = {}
 	self.Chips = {}
 	self.NeededChips = {}
 
@@ -265,7 +335,7 @@ function RecipePickHandler.OnStart(self: RecipePickHandler): ()
 		end, "Cloud", true),
 		"Disconnect"
 	)
-	for _, path in { { "Pantry" }, { "Garden" }, { "Base", "Upgrades" } } do
+	for _, path in { { "Pantry" }, { "Garden" } } do
 		self.Janitor:Add(
 			DataClient:SubscribeToPath(path, function()
 				self:RefreshCard()
@@ -273,6 +343,12 @@ function RecipePickHandler.OnStart(self: RecipePickHandler): ()
 			"Disconnect"
 		)
 	end
+	self.Janitor:Add(
+		DataClient:SubscribeToPath({ "Base", "Upgrades" }, function(): ()
+			self:Refresh()
+		end, "Cloud", true),
+		"Disconnect"
+	)
 
 	-- The tutorial's guest and progress decide whether the menu is limited to its dish.
 	-- Guests' orders reorder the list and set the waiting badges.
@@ -324,7 +400,10 @@ function RecipePickHandler.BuildRows(self: RecipePickHandler): ()
 		row.LayoutOrder = index
 		row.Visible = false
 		self.Rows[index] = row
-		self.Badges[row] = buildWaitingBadge(row)
+		local requirement = RequirementLabel.Create(row, true)
+		self.RequirementLabels[row] = requirement
+		self.Janitor:Add(requirement, "Destroy")
+		self.Badges[row] = buildWaitingBadge(row, self.Janitor)
 		self.Janitor:Add(self.Badges[row], "Destroy")
 		local foodIcon = resolve(row, { "IconAndName", "Icon" })
 		if foodIcon and foodIcon:IsA("ImageLabel") then
@@ -343,6 +422,7 @@ function RecipePickHandler.BuildRows(self: RecipePickHandler): ()
 				Press.BindTap(start, function()
 					local recipeId = row:GetAttribute("RecipeId")
 					if typeof(recipeId) == "string" then
+						self.CloseOnPick = { RecipeId = recipeId, Until = os.clock() + CLOSE_WAIT_SECONDS }
 						Bus.Kitchen.SelectRecipe:Fire(recipeId)
 					end
 				end),
@@ -449,6 +529,28 @@ end
 function RecipePickHandler.Refresh(self: RecipePickHandler): ()
 	self:RefreshRows()
 	self:RefreshCard()
+	self:CloseAfterPick()
+end
+
+-- The player only came to pick a dish: once the mixer has the one they started, the page closes and
+-- the ingredients shown above the mixer take over.
+function RecipePickHandler.CloseAfterPick(self: RecipePickHandler): ()
+	local pending = self.CloseOnPick
+	if not pending then
+		return
+	end
+	if os.clock() > pending.Until then
+		self.CloseOnPick = nil
+		return
+	end
+	local selected = SelectedRecipe()
+	if not selected or selected.id ~= pending.RecipeId then
+		return
+	end
+	self.CloseOnPick = nil
+	if Pages.Current:peek() == Pages.Names.RecipeToCook then
+		Pages.Close()
+	end
 end
 
 function RecipePickHandler.RefreshRows(self: RecipePickHandler): ()
@@ -473,8 +575,7 @@ function RecipePickHandler.RefreshRows(self: RecipePickHandler): ()
 		local badge = self.Badges[row]
 		local count = if recipe then waiting[recipe.id] or 0 else 0
 		if badge then
-			badge.Visible = count > 0
-			badge.Text = `{count} waiting`
+			setWaitingBadge(badge, count)
 		end
 		if not recipe then
 			row:SetAttribute("RecipeId", nil)
@@ -523,6 +624,10 @@ function RecipePickHandler.PaintRow(
 	end
 
 	SetPair(resolve(row, { "IconAndName", "Name" }), recipe.name)
+	RequirementLabel.Show(
+		self.RequirementLabels[row],
+		RecipeRequirements.GetMissing(recipe, DataClient:GetData({ "Base", "Upgrades" }) or {})
+	)
 	local needed = SortedIngredients(recipe)
 	for index, chip in (self.NeededChips[row] or {}) :: { Frame } do
 		local entry = needed[index]
@@ -635,11 +740,14 @@ end
 export type ChipPair = { Done: Frame, NotDone: Frame }
 
 export type RecipePickHandler = typeof(RecipePickHandler) & {
+	-- The Start press waiting for the server to select its recipe.
+	CloseOnPick: { RecipeId: string, Until: number }?,
+	RequirementLabels: { [Frame]: TextLabel },
 	Screen: ScreenGui,
 	Content: Instance,
 	Rows: { Frame },
 	-- Generated "N waiting" pill per row.
-	Badges: { [Frame]: TextLabel },
+	Badges: { [Frame]: Frame },
 	Card: ScrollingFrame?,
 	CardContent: Frame?,
 	Chips: { ChipPair },

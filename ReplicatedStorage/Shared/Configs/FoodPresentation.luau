@@ -10,7 +10,10 @@ local FoodPresentation = {
 	-- The authored oven anchors sit 0.222 studs above the mesh shelf; food uses the carried FoodSize.
 	OvenFoodOffset = CFrame.new(0, -0.222, -0.3),
 	DisplayUpgrade = "cafe_display",
+	-- The authored Display Counter tables. Display slot N stands on anchor display_{N + offset}: anchors
+	-- 2-6 sit on the tables; 1, 7 and 8 lie on the floor by the window and hold nothing.
 	DisplayPedestals = 5,
+	DisplayAnchorOffset = 1,
 	TableFoodSize = Vector3.new(1.25, 1.4, 1.25),
 	-- Food clears the thin tray floor while keeping its bottom visibly in contact.
 	TrayClearance = 0.015,

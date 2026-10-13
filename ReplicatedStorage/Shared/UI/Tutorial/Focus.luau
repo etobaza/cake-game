@@ -73,7 +73,7 @@ function Focus.Update(self: Focus, dim: boolean?): ()
 	-- that dining place's own prompt target; the table part keeps cleaning.
 	local prompt, billboard, root = PromptHandler:GetActiveView()
 	local promptPart = prompt and prompt.Parent
-	local seatTarget = if target.part and spec.seat then Interact:GetSeatProp(spec.id, spec.seat) else nil
+	local seatTarget = if target.part and spec.seat then Interact:GetProp(spec.id, spec.seat) else nil
 	if
 		prompt
 		and promptPart

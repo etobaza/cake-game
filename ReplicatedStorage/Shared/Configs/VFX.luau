@@ -278,9 +278,9 @@ local VFX = {
 		},
 		StationReady = {
 			Emitters = {
-				glow(CREAM, 3, 0.45),
-				ring(CREAM, 3),
-				stars(9, NumberRange.new(5, 9), GOLD),
+				glow(CREAM, 2, 0.4),
+				ring(CREAM, 2),
+				stars(3, NumberRange.new(2, 4), GOLD),
 			},
 		},
 		LevelUp = {

@@ -20,6 +20,7 @@ local InventoryHandler = require(Handlers.InventoryHandler)
 local UpgradeHandler = require(Handlers.UpgradeHandler)
 local TutorialHandler = require(Handlers.TutorialHandler)
 local DayCycleHandler = require(Handlers.DayCycleHandler)
+local LiveEventHandler = require(Handlers.LiveEventHandler)
 local Ingredients = require(Shared.Configs.Registries.Ingredients)
 local Upgrades = require(Shared.Configs.Registries.Upgrades)
 local Buildings = require(Shared.Configs.Buildings)
@@ -43,6 +44,7 @@ local AdminHandler = {
 		"UpgradeHandler",
 		"TutorialHandler",
 		"DayCycleHandler",
+		"LiveEventHandler",
 	},
 	priority = -10,
 }
@@ -69,7 +71,19 @@ local function inspect(target: Player): Reply
 	)
 end
 
+-- Live event actions act on every server; the selected player is irrelevant.
+local function runLiveEvent(action: string): Reply
+	if action == "liveEventStop" then
+		return reply(LiveEventHandler:Stop())
+	end
+	return reply(LiveEventHandler:Start(string.sub(action, #Config.LiveEventPrefix + 1)))
+end
+
 local function execute(action: string, target: Player, amount: number): Reply
+	local definition = Config.ById[action]
+	if definition and definition.global then
+		return runLiveEvent(action)
+	end
 	local data = DataHandler:GetData(target)
 	if not data or data.Cloud.ProgressResetPending then
 		return reply(
@@ -230,7 +244,7 @@ function AdminHandler.Request(
 		return reply(false, "This action does not accept an amount.")
 	end
 	local data = DataHandler:GetData(target)
-	if not data or data.Cloud.ProgressResetPending then
+	if not definition.global and (not data or data.Cloud.ProgressResetPending) then
 		return reply(false, "The profile is not ready or has a pending reset.")
 	end
 	if token == "" then
@@ -245,7 +259,9 @@ function AdminHandler.Request(
 		return {
 			ok = true,
 			token = issued,
-			message = `{definition.label}\nPlayer: @{target.Name} ({target.UserId}){if definition.max
+			message = `{definition.label}\n{if definition.global
+				then "Scope: every server"
+				else `Player: @{target.Name} ({target.UserId})`}{if definition.max
 				then `\nAmount: {amount}`
 				else ""}\n{definition.warning or "This change applies to the selected player."}\nConfirm within {Config.ConfirmationSeconds} seconds.`,
 		}
@@ -290,7 +306,9 @@ function AdminHandler.Request(
 	if #audit > 30 then
 		table.remove(audit, 1)
 	end
-	response.message = `@{target.Name}: {response.message}`
+	if not definition.global then
+		response.message = `@{target.Name}: {response.message}`
+	end
 	return response
 end
 

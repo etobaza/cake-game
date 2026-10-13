@@ -1,14 +1,20 @@
 --!strict
--- Rewards handed out outside the shift loop: promo codes, the daily streak and playtime tiers.
+-- Rewards handed out outside the shift loop: promo codes, the daily streak, playtime tiers and the
+-- one-off group reward.
 --
--- One handler for the three of them because they are one job -- grant cash and XP against a rule the
+-- One handler for all of them because they are one job -- grant cash and XP against a rule the
 -- server owns -- and because they share the same shape: check what the player is entitled to, write
 -- the record that stops it being taken twice, then pay.
 --
 -- The client sends intent only: a code string, "the daily", or a tier index. Every deadline is
 -- computed here from stored timestamps, so a client clock says nothing.
+--
+-- Playtime is one track per UTC day, saved with the profile. Cloud.Playtime.Seconds holds the time
+-- already banked today; Session.Playtime.StartedAt marks where the running stretch began. The server
+-- banks the running stretch every SaveInterval, before a claim, and on leave.
 
 --[[ Services ]]--
+local GroupService = game:GetService("GroupService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -46,11 +52,37 @@ local RewardHandler = {
 	-- track is this handler's to move.
 	dependencies = { "DataHandler", "EconomyHandler", "PurchaseHandler" },
 	priority = 70,
+	-- os.clock of each player's last group membership check, so repeated clicks cannot queue web
+	-- requests or race a second payout while the first check yields.
+	GroupChecks = {} :: { [Player]: number },
 }
 
 --[[ Private Functions ]]--
 local function Refuse(player: Player, reason: string): ()
 	Bus.Progress.ActionFailed:FireClient(player, reason)
+end
+
+-- Membership straight from the web: true or false, or nil when neither lookup answered.
+-- IsInGroupAsync can answer from a per-server cache, so a "no" is confirmed against the player's
+-- group list before refusing someone who joined during this session.
+local function IsGroupMember(player: Player, groupId: number): boolean?
+	local cachedOk, cached = pcall(player.IsInGroupAsync, player, groupId)
+	if cachedOk and cached == true then
+		return true
+	end
+
+	local listOk, groups = pcall(GroupService.GetGroupsAsync, GroupService, player.UserId)
+	if not listOk or typeof(groups) ~= "table" then
+		return if cachedOk then false else nil
+	end
+
+	for _, group in groups do
+		if typeof(group) == "table" and group.Id == groupId then
+			return true
+		end
+	end
+
+	return false
 end
 
 --[[ Handling ]]--
@@ -73,6 +105,14 @@ function RewardHandler.OnStart(self: RewardHandler): ()
 		end
 	end)
 
+	Bus.Progress.ClaimGroup.OnServerEvent:Connect(function(player: Player)
+		self:ClaimGroup(player)
+	end)
+
+	Players.PlayerRemoving:Connect(function(player: Player)
+		self.GroupChecks[player] = nil
+	end)
+
 	PurchaseHandler.PurchaseCompleted:Connect(function(player: Player, productId: number)
 		self:GrantSkip(player, productId)
 	end)
@@ -83,24 +123,80 @@ function RewardHandler.OnStart(self: RewardHandler): ()
 		self:StartClock(player)
 	end)
 
+	DataHandler:OnLeaving(function(player: Player)
+		self:BankPlaytime(player)
+	end)
+
 	for _, player in Players:GetPlayers() do
 		if DataHandler:GetData(player) then
 			self:StartClock(player)
 		end
 	end
+
+	-- Process-lifetime loop: banking bounds what a crashed server can lose.
+	task.spawn(function(): ()
+		while true do
+			task.wait(Rewards.Playtime.SaveInterval)
+			for _, player in Players:GetPlayers() do
+				self:BankPlaytime(player)
+			end
+		end
+	end)
 end
 
-function RewardHandler.StartClock(_self: RewardHandler, player: Player): ()
+--- Starts a new track when the saved one belongs to an earlier day: no time played, nothing taken.
+--- A rollover also restarts the running stretch, so time from before midnight does not carry over.
+function RewardHandler.RollPlaytime(_self: RewardHandler, data: DataHandler.PlayerData, now: number): ()
+	local record = data.Cloud.Playtime
+	local today = Rewards.GetPlaytimeDay(now)
+	if record.Day == today then
+		return
+	end
+
+	record.Day = today
+	record.Seconds = 0
+	record.Claimed = {}
+	if data.Session.Playtime.StartedAt > 0 then
+		data.Session.Playtime.StartedAt = now
+	end
+end
+
+function RewardHandler.StartClock(self: RewardHandler, player: Player): ()
 	local data = DataHandler:GetData(player)
 	if not data then
 		return
 	end
 
-	data.Session.Playtime.StartedAt = workspace:GetServerTimeNow()
+	local now = workspace:GetServerTimeNow()
+	self:RollPlaytime(data, now)
+	data.Session.Playtime.StartedAt = now
+end
+
+--- Moves the running stretch into today's saved total. Capped at the end of the track, where more
+--- time earns nothing.
+function RewardHandler.BankPlaytime(self: RewardHandler, player: Player): ()
+	local data = DataHandler:GetData(player)
+	if not data or data.Session.Playtime.StartedAt <= 0 then
+		return
+	end
+
+	local now = workspace:GetServerTimeNow()
+	self:RollPlaytime(data, now)
+
+	local session = data.Session.Playtime
+	local running = now - session.StartedAt
+	if running <= 0 then
+		return
+	end
+
+	local record = data.Cloud.Playtime
+	local trackEnd = Rewards.GetTierSeconds(#Rewards.Playtime.Tiers)
+	record.Seconds = math.min(record.Seconds + running, trackEnd)
+	session.StartedAt = now
 end
 
 --- Pays a reward and tells the client what it was, so the toast can name it. `kind` is the reward
---- track (Code, Daily, Playtime, PlaytimeSkip) reported to economy analytics; `source` is only for
+--- track (Code, Daily, Playtime, PlaytimeSkip, Group) reported to economy analytics; `source` is only for
 --- the player.
 function RewardHandler.Pay(
 	_self: RewardHandler,
@@ -198,10 +294,10 @@ function RewardHandler.ClaimPlaytime(self: RewardHandler, player: Player, index:
 		return false
 	end
 
-	local record = data.Session.Playtime
-	local elapsed = workspace:GetServerTimeNow() - record.StartedAt
+	self:BankPlaytime(player)
+	local record = data.Cloud.Playtime
 
-	if elapsed < Rewards.GetTierSeconds(index) then
+	if record.Seconds < Rewards.GetTierSeconds(index) then
 		Refuse(player, "playtime_not_ready")
 		return false
 	end
@@ -212,7 +308,50 @@ function RewardHandler.ClaimPlaytime(self: RewardHandler, player: Player, index:
 	end
 
 	DataList.Append(record.Claimed, index)
-	self:Pay(player, reward, `{index * Rewards.Playtime.Interval // 60} minutes played`, "Playtime")
+	self:Pay(player, reward, `{index * Rewards.Playtime.Interval // 60} minutes played today`, "Playtime")
+
+	return true
+end
+
+--- The one-off reward for joining the group. The client only asks; membership is checked here, and
+--- the claim flag is written before paying so a second request cannot pay twice.
+function RewardHandler.ClaimGroup(self: RewardHandler, player: Player): boolean
+	local data = DataHandler:GetData(player)
+	if not data then
+		return false
+	end
+
+	if data.Cloud.Rewards.GroupClaimed then
+		Refuse(player, "group_claimed")
+		return false
+	end
+
+	local now = os.clock()
+	local lastCheck = self.GroupChecks[player]
+	if lastCheck and now - lastCheck < Rewards.Group.CheckCooldown then
+		return false
+	end
+	self.GroupChecks[player] = now
+
+	local member = IsGroupMember(player, Rewards.Group.GroupId)
+
+	-- The lookup yields: the player may have left, or the profile may have been replaced meanwhile.
+	if player.Parent ~= Players or DataHandler:GetData(player) ~= data or data.Cloud.Rewards.GroupClaimed then
+		return false
+	end
+
+	if member == nil then
+		Refuse(player, "group_check_failed")
+		return false
+	end
+
+	if not member then
+		Refuse(player, "group_not_member")
+		return false
+	end
+
+	data.Cloud.Rewards.GroupClaimed = true
+	self:Pay(player, Rewards.Group.Reward, "Group reward", "Group")
 
 	return true
 end
@@ -236,7 +375,9 @@ function RewardHandler.GrantSkip(self: RewardHandler, player: Player, productId:
 	end
 
 	if meta.grant == "SkipPlaytime" then
-		local record = data.Session.Playtime
+		-- Today's track: a skip bought just after midnight pays the new day's tiers.
+		self:RollPlaytime(data, workspace:GetServerTimeNow())
+		local record = data.Cloud.Playtime
 
 		for index = 1, #Rewards.Playtime.Tiers do
 			local reward = Rewards.GetTier(index)

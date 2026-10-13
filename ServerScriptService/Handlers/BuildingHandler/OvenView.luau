@@ -18,13 +18,13 @@ local CarryConfig = require(_Configs.CarryPresentation)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local LoggerUtil = require(_Shared.Libs.Logger)
 local Motion = require(_Configs.OvenMotion)
+local CookingMotion = require(_Configs.CookingMotion)
+local CookingMetadata = require(script.Parent.CookingMetadata)
 local OvenFuel = require(_Configs.OvenFuel)
 local OvenDial = require(script.Parent.OvenDial)
 local SoundPlayer = require(_Shared.SoundPlayer)
 
 --[[ Constants ]]--
-local FULL_TURN = math.pi * 2
-
 local LEFT_DOOR_NAME = "OvenDoorLeft"
 local RIGHT_DOOR_NAME = "OvenDoorRight"
 local CLOCK_HAND_NAME = "ClockHand"
@@ -96,20 +96,6 @@ local function closedDoorPivot(openPivot: CFrame, part: BasePart, centre: Vector
 	return rotatePivot(openPivot, Vector3.yAxis, angle)
 end
 
-local function phaseProgress(state: any, now: number): number
-	if (state.HeatPausedAt or 0) > 0 then
-		now = math.min(now, state.HeatPausedAt)
-	end
-	local startedAt = state.PhaseStartedAt or 0
-	local endsAt = (if state.State == "Cooking" then state.ReadyAt else state.BurnAt) or 0
-	local duration = endsAt - startedAt
-	if startedAt <= 0 or duration <= 0 then
-		return 0
-	end
-
-	return math.clamp((now - startedAt) / duration, 0, 1)
-end
-
 local function doorsAreClosed(state: string?): boolean
 	-- Open as soon as baking finishes so the result is visible while it waits for collection.
 	return state == "Loaded" or state == "Cooking"
@@ -149,6 +135,16 @@ function OvenView.new(root: Instance, building: any): OvenView?
 	-- The imported mesh's thin local X axis is the clock-face normal; the oven body's LookVector
 	-- follows its Blender axes and does not point out of the visible front.
 	self.ClockAxis = clockHand.CFrame.RightVector
+	clockHand:SetAttribute("ClockRestPivot", self.ClockStart)
+	clockHand:SetAttribute("ClockAxis", self.ClockAxis)
+	CookingMetadata.Apply(clockHand, building.State, building.Player)
+	clockHand:AddTag(CookingMotion.ClockTag)
+	self.Janitor:Add(function(): ()
+		clockHand:RemoveTag(CookingMotion.ClockTag)
+		for _, attribute in { "ClockRestPivot", "ClockAxis", "StationState", "PhaseStartedAt", "ReadyAt", "BurnAt", "HeatPausedAt", "PausedAt" } do
+			clockHand:SetAttribute(attribute, nil)
+		end
+	end, true)
 	local dialPart, dial = OvenDial.new(clockHand, body)
 	self.Dial = dial
 	self.Janitor:Add(dialPart, "Destroy")
@@ -187,7 +183,7 @@ function OvenView.BindFire(self: OvenView, body: BasePart): ()
 		return
 	end
 	local fire = source:Clone()
-	fire.Name = `Fire_{self.Building.Id}`
+	fire.Name = OvenFuel.FirePartPrefix .. self.Building.Id
 	fire.Anchored = true
 	fire.CanCollide = false
 	fire.CanTouch = false
@@ -289,18 +285,10 @@ function OvenView.BindDoor(self: OvenView, part: BasePart, open: CFrame, closed:
 	end, true)
 end
 
-function OvenView.ApplyClock(self: OvenView, now: number): ()
+function OvenView.ApplyClock(self: OvenView, _now: number): ()
 	local state = self.Building.State
-	local fraction = 0
-	if state.State == "Cooking" or state.State == "Ready" then
-		fraction = phaseProgress(state, now)
-	elseif state.State == "Burnt" then
-		fraction = 1
-	end
 	self.Dial.Enabled = state.State == "Ready" or state.State == "Burnt"
-
-	-- Positive around the imported face normal is clockwise from the kitchen side.
-	self.ClockHand:PivotTo(rotatePivot(self.ClockStart, self.ClockAxis, FULL_TURN * fraction))
+	CookingMetadata.Apply(self.ClockHand, state, self.Building.Player)
 end
 
 function OvenView.Update(self: OvenView, _deltaTime: number, now: number): ()

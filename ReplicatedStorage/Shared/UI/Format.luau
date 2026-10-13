@@ -17,6 +17,19 @@ function Format.Number(value: number): string
 	return if value < 0 and whole > 0 then `-{formatted}` else formatted
 end
 
+--- Prices: 12.5 -> "12.50", 1500 -> "1 500". Cents only appear when there are any, so a large
+--- balance never trails ".00".
+function Format.Money(value: number): string
+	local cents = math.round(math.abs(value) * 100)
+	local sign = if value < 0 and cents > 0 then "-" else ""
+
+	if cents % 100 == 0 then
+		return sign .. Format.Number(cents // 100)
+	end
+
+	return string.format("%s%s.%02d", sign, Format.Number(cents // 100), cents % 100)
+end
+
 --- Seconds -> "M:SS", or "H:MM:SS" from an hour up so "60:32" never reads as minutes.
 function Format.Time(seconds: number): string
 	local clamped = math.max(seconds, 0)

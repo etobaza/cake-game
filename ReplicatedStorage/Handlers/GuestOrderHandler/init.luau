@@ -19,7 +19,6 @@ local DataClient = require(_Handlers.DataHandlerClient)
 local GuestOrders = require(_Shared.GuestOrders)
 local Guests = require(_Shared.Configs.Guests)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
-local OrderHandler = require(_Handlers.OrderHandler)
 local UIHandler = require(_Handlers.UIHandler)
 local World = require(_Shared.World)
 
@@ -119,7 +118,7 @@ function GuestOrderHandler.Refresh(self: GuestOrderHandler): ()
 			State = customer.State,
 			Ready = GuestOrders.IsReady(customer, now),
 			Orders = customer.Orders or {},
-			Seat = if customer.TableId then OrderHandler.SeatLabel(customer.TableId, customer.SeatIndex) else nil,
+			Seat = if customer.TableId then GuestOrders.SeatLabel(customer.TableId, customer.SeatIndex) else nil,
 			Remaining = GuestOrders.Remaining(customer, now),
 			Now = now,
 		})
