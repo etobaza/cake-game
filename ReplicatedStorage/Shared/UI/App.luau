@@ -205,7 +205,19 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 			local clockFrame = if clock and clock:IsA("GuiObject") then clock else nil
 			local currency = hudRoot:FindFirstChild("Currency")
 			local currencyFrame = if currency and currency:IsA("GuiObject") then currency else nil
-			local statusLayout = StatusLayout.Bind(statusScreen, statusFrame, clockFrame, currencyFrame)
+			-- The toast keeps clear of whichever of these panels is open.
+			local panels: { [ScreenGui]: GuiObject } = {}
+			local function addPanel(page: ScreenGui): ()
+				local panel = page:FindFirstChild(PANEL_NAME)
+				if panel and panel:IsA("GuiObject") then
+					panels[page] = panel
+				end
+			end
+			addPanel(bakeryMenu)
+			for _, page in screens do
+				addPanel(page)
+			end
+			local statusLayout = StatusLayout.Bind(statusScreen, statusFrame, clockFrame, currencyFrame, panels)
 			Flux.cleanup(function(): ()
 				statusLayout:Destroy()
 			end)

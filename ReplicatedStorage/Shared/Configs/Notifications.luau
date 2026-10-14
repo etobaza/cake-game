@@ -10,6 +10,10 @@ return {
 	CompactHeight = 500,
 	EdgePadding = 12,
 	ClockGap = 16,
+	-- An open page's panel is never covered: the toast moves above, below or beside it, keeping this gap.
+	PanelGap = 16,
+	-- Narrowest logical width worth drawing beside a page; a narrower gap leaves the toast in place.
+	MinSideWidth = 150,
 	Wide = {
 		Width = 420,
 		Height = 76,

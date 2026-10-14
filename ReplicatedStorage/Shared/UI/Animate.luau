@@ -149,6 +149,22 @@ function Animate.SetLayoutScale(element: GuiObject, scale: number): ()
 	GetScaler(element).Scale = ScaleBases[element] * scale * motion:getPosition()
 end
 
+--- Where `bounds`, screen pixels drawn under `element`, settle once its scale and rise springs rest.
+--- Nil while the element draws nothing to measure.
+function Animate.AtRest(element: GuiObject, bounds: Rect): Rect?
+	local scaler = element:FindFirstChildOfClass("UIScale")
+	local current = if scaler then scaler.Scale else 1
+	if current <= 0 or element.AbsoluteSize.X < 1 then
+		return nil
+	end
+	local base = ScaleBases[element]
+	local ratio = if base then base * GetLayoutScale(element) / current else 1
+	-- UIScale grows an element and its descendants around the element's anchor point.
+	local pivot = element.AbsolutePosition + element.AbsoluteSize * element.AnchorPoint
+	local rest = pivot - Vector2.new(0, RiseOffsets[element] or 0)
+	return Rect.new(rest + (bounds.Min - pivot) * ratio, rest + (bounds.Max - pivot) * ratio)
+end
+
 -- A punch: jumps to a smaller scale and springs back to normal.
 function Animate.Pop(element: GuiObject, from: number?): ()
 	local motion = Animate.Scale(element)

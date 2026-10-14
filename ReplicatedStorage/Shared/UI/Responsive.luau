@@ -17,6 +17,10 @@ local COMPACT_WIDTH = 700
 -- The compact artwork is a phone-width layout, not a squeezed desktop canvas.
 local COMPACT_CANVAS_WIDTH = 360
 local MARGIN = 16
+-- A landscape phone's page is height-bound, so it keeps only a sliver above and below; the bakery
+-- header rising above its panel still clears Roblox's topbar buttons.
+local SHORT_SCREEN_HEIGHT = 500
+local SHORT_SCREEN_MARGIN = 8
 local SHORT_HEIGHT = 500
 
 --[[ Tables ]]--
@@ -58,11 +62,12 @@ function Responsive.Apply(screen: ScreenGui, viewport: Vector2?): ()
 		height = math.min(height, 80)
 	end
 	width, height = math.max(width, 1), math.max(height, 1)
+	local verticalMargin = if available.Y < SHORT_SCREEN_HEIGHT then SHORT_SCREEN_MARGIN else MARGIN
 	-- Screen density keeps a short page's share of a phone screen the same as on a desktop.
 	local scale = math.min(
 		TextScale.Screen(available, Theme.TextScale.Maximum),
 		math.max(1, available.X - MARGIN * 2) / width,
-		math.max(1, available.Y - MARGIN * 2) / height
+		math.max(1, available.Y - verticalMargin * 2) / height
 	)
 	-- Authored short canvases (Codes) use their Short overrides on every screen.
 	local short = height < SHORT_HEIGHT
