@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local Config = require(ReplicatedStorage.Shared.Configs.Traffic)
+local DynamicRig = require(ReplicatedStorage.Shared.DynamicRig)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Path = require(ReplicatedStorage.Shared.TrafficPath)
 local Simulation = require(ReplicatedStorage.Shared.TrafficSimulation)
@@ -43,7 +44,7 @@ function TrafficHandler.OnStart(self: TrafficHandler): ()
 	local folder = Instance.new("Folder")
 	folder.Name = Config.VisualName
 	self.Janitor:Add(folder, "Destroy")
-	local vehicles: { { Car: BasePart, Path: Path.Path, Index: number } } = {}
+	local vehicles: { { Car: BasePart, Rig: DynamicRig.DynamicRig, Path: Path.Path, Index: number } } = {}
 	for index = 1, count do
 		-- Named slots allow late replication without losing a variant or changing the shared order.
 		local source = templates:WaitForChild(tostring(index), 10)
@@ -54,13 +55,14 @@ function TrafficHandler.OnStart(self: TrafficHandler): ()
 		local car = source:Clone()
 		local variantName = source:GetAttribute("VariantName")
 		car.Name = if typeof(variantName) == "string" then variantName else source.Name
-		car.Anchored = true
 		car.CanCollide = false
 		car.CanTouch = false
 		car.CanQuery = false
+		local rig = DynamicRig.new(car.Name, car.CFrame)
+		rig:Attach(car)
 		local path = Path.Build(roadFrame, roadSize, car.Size.Y)
-		vehicles[#vehicles + 1] = { Car = car, Path = path, Index = index }
-		car.Parent = folder
+		vehicles[#vehicles + 1] = { Car = car, Rig = rig, Path = path, Index = index }
+		rig.Model.Parent = folder
 	end
 	local lights = Lights.new()
 	self.Janitor:Add(lights, "Destroy")
@@ -102,7 +104,7 @@ function TrafficHandler.OnStart(self: TrafficHandler): ()
 		for _, vehicle in vehicles do
 			local from, to = first.Cars[vehicle.Index], last.Cars[vehicle.Index]
 			if from and to then
-				vehicle.Car.CFrame = Path.Sample(vehicle.Path, from[1] + (to[1] - from[1]) * alpha)
+				vehicle.Rig:Place(vehicle.Car, Path.Sample(vehicle.Path, from[1] + (to[1] - from[1]) * alpha))
 			end
 		end
 		lights.SetPhase(Simulation.Phase(time - startedAt))

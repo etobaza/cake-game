@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Config = require(ReplicatedStorage.Shared.Configs.AmbientMotion)
 local Reveal = require(ReplicatedStorage.Shared.Configs.UpgradeReveal)
+local DynamicRig = require(ReplicatedStorage.Shared.DynamicRig)
 local Clip = require(script.Parent.Clip)
 
 local Visual = {}
@@ -19,6 +20,7 @@ export type Visual = typeof(setmetatable(
 		Speed: number,
 		Clip: Clip.Clip?,
 		Clone: BasePart?,
+		Rig: DynamicRig.DynamicRig?,
 		Bones: { Bone },
 		Janitor: any,
 		Hidden: number,
@@ -45,6 +47,7 @@ function Visual.new(source: BasePart, parent: Instance, kind: string, clip: Clip
 		Speed = 0.85 + (math.sin(phase) + 1) * 0.15,
 		Clip = clip,
 		Clone = nil,
+		Rig = nil,
 		Bones = {},
 		Janitor = Janitor.new(),
 		Hidden = source.LocalTransparencyModifier,
@@ -58,7 +61,6 @@ function Visual.Show(self: Visual): ()
 	local clone = self.Source:Clone()
 	clone:RemoveTag(Config.Tag)
 	clone.Name = self.Kind
-	clone.Anchored = true
 	clone.CanCollide = false
 	clone.CanQuery = false
 	clone.CanTouch = false
@@ -69,9 +71,12 @@ function Visual.Show(self: Visual): ()
 			self.Bones[#self.Bones + 1] = child
 		end
 	end
-	clone.Parent = self.Parent
+	local rig = DynamicRig.new(self.Kind, self.Home)
+	rig:Attach(clone)
+	rig.Model.Parent = self.Parent
 	self.Clone = clone
-	self.Janitor:Add(clone, "Destroy")
+	self.Rig = rig
+	self.Janitor:Add(rig, "Destroy")
 	self.Source.LocalTransparencyModifier = 1
 	self.Janitor:Add(function(): ()
 		if self.Source.Parent then
@@ -86,6 +91,7 @@ function Visual.Hide(self: Visual): ()
 	end
 	self.Janitor:Cleanup()
 	self.Clone = nil
+	self.Rig = nil
 	table.clear(self.Bones)
 end
 
@@ -100,6 +106,7 @@ function Visual.Step(self: Visual, now: number, cameraPosition: Vector3): ()
 	end
 	self:Show()
 	local clone = self.Clone :: BasePart
+	local rig = self.Rig :: DynamicRig.DynamicRig
 	clone.Transparency = self.Source.Transparency
 	local alpha = self.Source:GetAttribute(Reveal.AppearanceAttribute)
 	clone.LocalTransparencyModifier = self.Hidden + (1 - self.Hidden)
@@ -112,16 +119,16 @@ function Visual.Step(self: Visual, now: number, cameraPosition: Vector3): ()
 		local position = self.Center
 			+ rotation:VectorToWorldSpace(offset)
 			+ Vector3.yAxis * (math.sin(time * 2) * Config.BeeBob)
-		clone.CFrame = CFrame.new(position)
-			* rotation
-			* self.Home.Rotation
-			* CFrame.Angles(0, 0, math.sin(time * 1.4) * Config.BeeBank)
+		rig:Place(
+			clone,
+			CFrame.new(position)
+				* rotation
+				* self.Home.Rotation
+				* CFrame.Angles(0, 0, math.sin(time * 1.4) * Config.BeeBank)
+		)
 	elseif self.Kind == "Plant" then
 		local sway = math.sin(time * Config.PlantSpeed) * Config.PlantAngle
-		clone.CFrame = CFrame.new(self.Center)
-			* CFrame.Angles(sway * 0.4, 0, sway)
-			* CFrame.new(-self.Center)
-			* self.Home
+		rig:Place(clone, CFrame.new(self.Center) * CFrame.Angles(sway * 0.4, 0, sway) * CFrame.new(-self.Center) * self.Home)
 	end
 	local clip = self.Clip
 	if clip then

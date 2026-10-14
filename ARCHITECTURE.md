@@ -73,6 +73,18 @@ The authored `StarterGui.MainGui.BakeryMenu.MainFrame.Header.Buttons.NextDay` us
 
 `Shared/UI/ButtonRow` gives the shared bakery header, recipe filters, and upgrade categories coordinated hover and selection feedback. Transparent authored controls keep their layout and hitboxes; their artwork lives in runtime `Wrap` frames centered at `AnchorPoint = (0.5, 0.5)`. The focused control stays at its authored size while its siblings shrink, and presses compress the focused artwork. `Configs/ButtonRow` owns the Ripple spring and scale tuning. Each row owns its wrappers, motions, and input connections; hidden or disabled controls and focus loss clear feedback, and cleanup restores the authored children. No place-only edits are required.
 
+## Rendering cost
+
+Roblox caches shadow maps for still world geometry. An anchored part that a script moves every frame, even one that casts no shadow, makes the cached shadows around it re-render every frame, sun cascades and shadowed point lights alike. Inside a bakery that cost about 550 extra shadow draw calls and 450,000 shadow triangles. Parts inside a `Humanoid` model render as dynamic objects, like characters, and leave the cache alone. Neither unanchoring a part nor an `AnimationController` model does this.
+
+`Shared/DynamicRig` is the one place this rule lives. A rig is a client-local `Model` containing a `Humanoid` (state machine off, no name or health display) and an anchored, invisible `Root` placed at an origin frame. `Attach` hangs a part from the root on a kinematic `AnimationConstraint` at the part's current frame. `Place` moves the part to a world frame by writing only the joint's `Transform`. Every continuously animated world visual uses a rig:
+
+- `AmbientMotionHandler/Visual` rigs each garden copy at its home frame. Bees and plants move through `Place`; bone clips (cows, chickens, bees) still write `Bone.Transform`.
+- `TrafficHandler` rigs each car and places it along its path every frame.
+- The place-only `FeuillesBalancement` Script (RunContext `Client`) in each of the 48 authored `Plant` models (`Cafe.Decoration`, `Garden.Decoration`) keeps the authored `Feuille` leaves still, with their collisions, and hides them locally. Local copies on a `LeafSway` rig inside the plant model sway with the original tuning: a 2.5° roll, a 2.2° pitch, a 0.1-stud bob, an azimuth phase lag, and a freeze beyond 300 studs. The 48 copies share one source and are edited through Studio, not on disk.
+
+Measured in Studio Play with the authored lighting, these changes took the shadow pass from about 590 to 35 draw calls inside the cafe and from about 510 to 50 from the street. With all garden visuals shown, the garden view went from 558 to about 106. New script-driven motion of world parts should go through `DynamicRig` too; one-off moves (doors, food placement) only re-render while they move.
+
 ## Dependencies
 
 Wally owns every registry package. `ReplicatedStorage/wally.toml` lists the shared-realm packages (`cmdr`, `flux`, `janitor`, `topbar-plus`, `typed-promise`) and installs into `ReplicatedStorage/Packages`; `ServerStorage/wally.toml` lists the server-realm packages (`profilestore`) and installs into `ServerStorage/ServerPackages`. Both install directories are gitignored; the manifests and lock files are committed.
