@@ -1,5 +1,6 @@
 --!strict
--- Cross-platform sprint intent. The server owns speed and movement locks.
+-- Cross-platform sprint intent: the player runs while holding Shift, L3 or the touch Run button.
+-- The server owns speed and movement locks.
 
 --[[ Services ]]--
 local ContextActionService = game:GetService("ContextActionService")
@@ -14,7 +15,6 @@ local DataClient = require(ReplicatedStorage.Handlers.DataHandlerClient)
 local Flux = require(ReplicatedStorage.Packages.flux)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Pages = require(ReplicatedStorage.Shared.UI.Stores.Pages)
-local Press = require(ReplicatedStorage.Shared.UI.Press)
 local RunControl = require(ReplicatedStorage.Shared.UI.RunControl)
 local Scope = require(ReplicatedStorage.Shared.UI.Scope)
 local UIHandler = require(ReplicatedStorage.Handlers.UIHandler)
@@ -32,8 +32,7 @@ local RunHandler = {
 function RunHandler.OnInit(self: RunHandler): ()
 	self.Janitor = Janitor.new()
 	self.Running = false
-	self.HeldKeys = {}
-	self.Toggle = false
+	self.Held = {}
 end
 
 function RunHandler.OnStart(self: RunHandler): ()
@@ -42,13 +41,19 @@ function RunHandler.OnStart(self: RunHandler): ()
 	self.Janitor:Add(self.Button:GetAttributeChangedSignal("TouchLayoutReady"):Connect(function(): ()
 		self:Refresh()
 	end), "Disconnect")
-	self.Janitor:Add(
-		Press.BindTap(self.Button, function(): ()
-			self.Toggle = not self.Toggle
+	-- A touch is held by its own InputObject, so it ends wherever the finger lifts.
+	self.Janitor:Add(self.Button.InputBegan:Connect(function(input: InputObject): ()
+		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+			self.Held[input] = true
 			self:Refresh()
-		end),
-		"Destroy"
-	)
+		end
+	end), "Disconnect")
+	self.Janitor:Add(UserInputService.InputEnded:Connect(function(input: InputObject): ()
+		if self.Held[input] then
+			self.Held[input] = nil
+			self:Refresh()
+		end
+	end), "Disconnect")
 	ContextActionService:BindAction(
 		RUN_ACTION,
 		function(_name: string, state: Enum.UserInputState, input: InputObject): Enum.ContextActionResult
@@ -56,15 +61,7 @@ function RunHandler.OnStart(self: RunHandler): ()
 				self:Reset()
 				return Enum.ContextActionResult.Sink
 			end
-			if input.KeyCode == Enum.KeyCode.ButtonL3 then
-				if state == Enum.UserInputState.Begin then
-					self.Toggle = not self.Toggle
-				end
-			elseif state == Enum.UserInputState.Begin then
-				self.HeldKeys[input.KeyCode] = true
-			else
-				self.HeldKeys[input.KeyCode] = nil
-			end
+			self.Held[input.KeyCode] = if state == Enum.UserInputState.Begin then true else nil
 			self:Refresh()
 			return Enum.ContextActionResult.Sink
 		end,
@@ -116,10 +113,9 @@ function RunHandler.Refresh(self: RunHandler): ()
 		end
 	end
 	if not available then
-		self.Toggle = false
-		table.clear(self.HeldKeys)
+		table.clear(self.Held)
 	end
-	self:SetRunning(available and (self.Toggle or next(self.HeldKeys) ~= nil))
+	self:SetRunning(available and next(self.Held) ~= nil)
 	self.Button.Visible = available
 		and UserInputService.PreferredInput == Enum.PreferredInput.Touch
 		and self.Button:GetAttribute("TouchLayoutReady") == true
@@ -127,8 +123,7 @@ function RunHandler.Refresh(self: RunHandler): ()
 end
 
 function RunHandler.Reset(self: RunHandler): ()
-	self.Toggle = false
-	table.clear(self.HeldKeys)
+	table.clear(self.Held)
 	self:Refresh()
 end
 
@@ -149,8 +144,8 @@ export type RunHandler = typeof(RunHandler) & {
 	Janitor: any,
 	Button: TextButton,
 	Running: boolean,
-	HeldKeys: { [Enum.KeyCode]: boolean },
-	Toggle: boolean,
+	-- Held keys, and the touch or click holding the Run button.
+	Held: { [Enum.KeyCode | InputObject]: boolean? },
 }
 
 return RunHandler :: RunHandler

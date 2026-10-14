@@ -125,19 +125,14 @@ function Presenter.Outline(self: Presenter, model: Instance?): ()
 	self.TargetOutline = created
 end
 
--- Screen rectangle of the step's own GUI target, in the dialog's inset-ignoring space.
+-- Absolute rectangle of the step's own GUI target.
 local function targetRect(self: Presenter): Rect?
 	local target = self.Focus.Target
 	local gui = target and target.gui
 	if not gui then
 		return nil
 	end
-	local screen = gui:FindFirstAncestorWhichIsA("LayerCollector")
-	local inset = if screen and screen:IsA("ScreenGui") and not screen.IgnoreGuiInset
-		then GuiService:GetGuiInset()
-		else Vector2.zero
-	local min = gui.AbsolutePosition + inset
-	return Rect.new(min, min + gui.AbsoluteSize)
+	return Rect.new(gui.AbsolutePosition, gui.AbsolutePosition + gui.AbsoluteSize)
 end
 
 -- A world task's toast must not sit over an unrelated window; announce it again after closing.

@@ -1,6 +1,7 @@
 --!strict
--- Covers the join with the authored ReplicatedFirst.LoadingScreen: caches the game's art and sound
--- effects behind a real progress bar, then lifts once the character stands in its bakery.
+-- Covers the join with the authored ReplicatedFirst.LoadingScreen: caches the interface art behind a
+-- real progress bar while the character spawns, lifts once it stands in its bakery, then caches the
+-- models, effects and sounds in the background.
 
 --[[ Services ]]--
 local ContentProvider = game:GetService("ContentProvider")
@@ -60,6 +61,7 @@ local started = os.clock()
 local target = 0
 local shown = 0
 local finished = false
+local interfaceReady = false
 
 --[[ Private Functions ]]--
 -- Authored lettering is a black shadow copy under the white face; both carry the same text.
@@ -85,8 +87,9 @@ local function resolve(path: { string }): Instance?
 	return current
 end
 
--- Unique content ids, plus the instances whose content scripts cannot read (SurfaceAppearance).
-local function collectContent(): { string | Instance }
+-- Unique content ids under `paths`, plus the instances whose content scripts cannot read
+-- (SurfaceAppearance); `withSounds` adds the sound effects.
+local function collectContent(paths: { { string } }, withSounds: boolean): { string | Instance }
 	local items: { string | Instance } = {}
 	local seen: { [string]: boolean } = {}
 	local function add(content: unknown): ()
@@ -96,7 +99,7 @@ local function collectContent(): { string | Instance }
 		end
 	end
 
-	for _, path in LoadingConfig.Preload do
+	for _, path in paths do
 		local source = resolve(path)
 		if not source then
 			print(`[Loading] Nothing to preload at {table.concat(path, ".")}`)
@@ -114,27 +117,30 @@ local function collectContent(): { string | Instance }
 			end
 		end
 	end
-	for _, sound in SoundsConfig.Sounds do
-		if typeof(sound) == "table" then
-			add(sound.Id)
+	if withSounds then
+		for _, sound in SoundsConfig.Sounds do
+			if typeof(sound) == "table" then
+				add(sound.Id)
+			end
 		end
 	end
 
 	return items
 end
 
-local function preload(items: { string | Instance }): ()
-	local batchSize = LoadingConfig.PreloadBatch
-	for first = 1, #items, batchSize do
-		if finished then
-			return
-		end
-
-		local last = math.min(first + batchSize - 1, #items)
-		ContentProvider:PreloadAsync(table.move(items, first, last, 1, {}))
-		target = last / #items * LoadingConfig.AssetShare
+-- One call, so the engine fetches everything in parallel; the bar follows each finished asset.
+local function preloadInterface(): ()
+	local items = collectContent(LoadingConfig.Preload, false)
+	local done = 0
+	ContentProvider:PreloadAsync(items, function(): ()
+		done += 1
+		target = math.max(target, math.min(done / math.max(#items, 1), 1) * LoadingConfig.AssetShare)
+	end)
+	interfaceReady = true
+	target = math.max(target, LoadingConfig.AssetShare)
+	if not finished then
+		setLettering(status, LoadingConfig.Status.Bakery)
 	end
-	target = LoadingConfig.AssetShare
 end
 
 local function cycleTips(): ()
@@ -160,6 +166,8 @@ local function finish(): ()
 	end
 
 	finished = true
+	-- Join timing for the F9 console, where slow first joins on real devices can be read.
+	print(`[Loading] Lifted after {string.format("%.1f", os.clock() - started)}s (interface art ready: {interfaceReady})`)
 	local fade = TweenService:Create(
 		root,
 		TweenInfo.new(LoadingConfig.FadeSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
@@ -196,14 +204,19 @@ setLettering(status, LoadingConfig.Status.Assets)
 if not game:IsLoaded() then
 	game.Loaded:Wait()
 end
-preload(collectContent())
+-- The server spawns the character once the save and bakery are ready; the art loads meanwhile.
+task.spawn(preloadInterface)
 
-setLettering(status, LoadingConfig.Status.Bakery)
 local character = player.Character or player.CharacterAdded:Wait()
 character:WaitForChild("HumanoidRootPart")
 -- StarterGui reaches PlayerGui with the first character; the HUD binds from it.
 playerGui:WaitForChild("MainGui")
+print(`[Loading] Character in its bakery after {string.format("%.1f", os.clock() - started)}s`)
 
+local graceEnds = os.clock() + LoadingConfig.AssetGraceSeconds
+while not interfaceReady and not finished and os.clock() < graceEnds do
+	task.wait(0.1)
+end
 local remaining = LoadingConfig.MinSeconds - (os.clock() - started)
 if remaining > 0 then
 	task.wait(remaining)
@@ -211,3 +224,5 @@ end
 target = 1
 task.wait(LoadingConfig.FullHoldSeconds)
 finish()
+
+ContentProvider:PreloadAsync(collectContent(LoadingConfig.Background, true))

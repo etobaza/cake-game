@@ -2,18 +2,23 @@
 -- The join loading screen: ReplicatedFirst/Loading drives the authored ReplicatedFirst.LoadingScreen.
 
 return {
-	-- Instances whose art is cached before the screen lifts, as a service name then child names.
-	-- Configs/Sounds effects are added to these; music streams on its own.
+	-- Instances whose art is cached before the screen lifts, as a service name then child names: only
+	-- the interface the first view shows, so a first join on a new device is not a full download.
 	Preload = {
 		{ "StarterGui", "MainGui" },
+	},
+	-- Cached after the screen lifts, so guests, dishes and effects are usually ready before they first
+	-- appear. Configs/Sounds effects are added to these; music streams on its own.
+	Background = {
 		{ "ReplicatedStorage", "Assets", "Models" },
 		{ "ReplicatedStorage", "Assets", "VFX" },
 		{ "ReplicatedStorage", "Assets", "Prompt" },
 	},
-	-- Assets per PreloadAsync call: small enough for a smooth bar, large enough to fetch in parallel.
-	PreloadBatch = 16,
-	-- The bar's share for cached assets; the rest fills once the character stands in its bakery.
+	-- The bar's share for the interface art; the rest fills once the character stands in its bakery.
 	AssetShare = 0.9,
+	-- Once the character stands in its bakery, the screen waits at most this long for interface art
+	-- still downloading; anything left pops in on its own.
+	AssetGraceSeconds = 3,
 	-- How quickly the drawn bar catches up with the real progress, per second.
 	BarCatchUp = 6,
 	-- A fast join still shows the screen this long, so it does not flash.
@@ -22,7 +27,7 @@ return {
 	FullHoldSeconds = 0.35,
 	FadeSeconds = 0.5,
 	-- Skip appears for slow connections and lifts the screen at once.
-	SkipAfterSeconds = 10,
+	SkipAfterSeconds = 6,
 	TipSeconds = 5,
 	-- The cake bobs and sways on its badge while loading.
 	BobPixels = 8,

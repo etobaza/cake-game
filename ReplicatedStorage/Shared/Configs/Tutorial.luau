@@ -56,10 +56,12 @@ return {
 		-- Share of the viewport width the whole dialog may use.
 		WidthRatio = 0.62,
 		-- Where MinScale binds (phones) the dialog would take a larger share of the screen than on a
-		-- desktop, so a smaller mentor and a narrower bubble keep it in the bottom band.
+		-- desktop, so a smaller mentor, title and bubble keep it in the bottom band. The title still
+		-- renders at 13 pixels or more.
 		Compact = {
-			PortraitScale = 0.67,
-			Width = 480,
+			PortraitScale = 0.6,
+			Width = 400,
+			TitleSize = 21,
 		},
 		-- Rendered pixels the Got it button keeps at any scale while touch is the input.
 		TouchButton = { Height = 44, TextSize = 16 },
@@ -106,10 +108,10 @@ return {
 				} :: { [string]: string },
 			},
 			-- The mood images' square size; her toque rises above the bubble.
-			ImageSize = 180,
+			ImageSize = 140,
 			-- Gap from the image's right edge to the copy; negative because the art has a
 			-- transparent margin on that side.
-			ImageGap = -18,
+			ImageGap = -14,
 			-- A slow bob and sway, in reference pixels and degrees, around a lean toward the
 			-- bubble (Lemon Cake tilts its speaker portrait 2.5 degrees).
 			Float = { Period = 2.8, Pixels = 3, Sway = 1.5 },

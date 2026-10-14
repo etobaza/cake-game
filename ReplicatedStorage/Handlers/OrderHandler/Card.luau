@@ -5,6 +5,7 @@
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 
 --[[ References ]]--
 local _Shared = ReplicatedStorage.Shared
@@ -122,6 +123,7 @@ function Card.new(root: Frame, tooltip: Tooltip, onTap: (customerId: string) -> 
 		RecipeId = nil :: string?,
 		Hovered = false,
 		Pinned = false,
+		PinToken = 0,
 		Motion = nil :: any,
 	}, Card)
 	self.Motion = Animate.Track(clip, "OrderRemaining", 0, function(value: number): ()
@@ -131,8 +133,19 @@ function Card.new(root: Frame, tooltip: Tooltip, onTap: (customerId: string) -> 
 	self.Janitor:Add(
 		Press.BindTap(self.Button, function(): ()
 			self.Pinned = not self.Pinned
+			self.PinToken += 1
 			if self.Pinned then
 				self.Tooltip.ActiveCard = self.Root
+			end
+			-- A touch screen never reports the finger leaving, so a tapped name hides on its own.
+			if self.Pinned and UserInputService.PreferredInput == Enum.PreferredInput.Touch then
+				local token = self.PinToken
+				task.delay(Config.TooltipTouchSeconds, function(): ()
+					if self.PinToken == token and self.Pinned then
+						self.Pinned = false
+						self:RefreshHeader()
+					end
+				end)
 			end
 			self:RefreshHeader()
 			if self.CustomerId then
@@ -143,6 +156,10 @@ function Card.new(root: Frame, tooltip: Tooltip, onTap: (customerId: string) -> 
 	)
 	self.Janitor:Add(
 		self.Button.MouseEnter:Connect(function(): ()
+			-- Touch fires MouseEnter on a tap but no MouseLeave; the tap pins the name instead.
+			if UserInputService.PreferredInput == Enum.PreferredInput.Touch then
+				return
+			end
 			self.Hovered = true
 			self.Tooltip.ActiveCard = self.Root
 			self:RefreshHeader()
@@ -341,6 +358,8 @@ export type Card = typeof(setmetatable(
 		RecipeId: string?,
 		Hovered: boolean,
 		Pinned: boolean,
+		-- Bumped by every tap, so only the latest touch pin's timer hides the name.
+		PinToken: number,
 	},
 	Card
 ))

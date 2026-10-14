@@ -14,20 +14,23 @@ return {
 	PanelGap = 16,
 	-- Narrowest logical width worth drawing beside a page; a narrower gap leaves the toast in place.
 	MinSideWidth = 150,
+	-- A slim strip: noticeable under the clock without covering the bakery.
 	Wide = {
-		Width = 420,
-		Height = 76,
+		Width = 320,
+		Height = 50,
 		Top = 64,
-		TextSize = 22,
-		MinTextSize = 18,
-		TextInset = Vector2.new(32, 16),
+		TextSize = 18,
+		MinTextSize = 14,
+		TextInset = Vector2.new(24, 10),
 	},
+	-- Phones seat the clock in the topbar row, so the strip rises to just under Roblox's buttons;
+	-- a clock still centred above it pushes it down through ClockGap.
 	Compact = {
-		Width = 400,
-		Height = 76,
-		Top = 44,
-		TextSize = 22,
-		MinTextSize = 18,
-		TextInset = Vector2.new(28, 14),
+		Width = 300,
+		Height = 50,
+		Top = 12,
+		TextSize = 18,
+		MinTextSize = 14,
+		TextInset = Vector2.new(22, 10),
 	},
 }

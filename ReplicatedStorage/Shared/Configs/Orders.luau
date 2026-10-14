@@ -140,4 +140,6 @@ return {
 	TooltipMargin = 8,
 	TooltipMinTextSize = 18,
 	TooltipMaxTextSize = 22,
+	-- How long a tapped card's name stays up on touch screens.
+	TooltipTouchSeconds = 2.5,
 }

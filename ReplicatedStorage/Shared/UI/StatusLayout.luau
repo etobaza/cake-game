@@ -13,6 +13,7 @@ local Animate = require(script.Parent.Animate)
 local Config = require(ReplicatedStorage.Shared.Configs.Notifications)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local TextScale = require(script.Parent.TextScale)
+local Theme = require(script.Parent.Theme)
 
 --[[ Tables ]]
 --
@@ -312,6 +313,7 @@ function StatusLayout.Bind(
 		local constraint = message:FindFirstChildOfClass("UITextSizeConstraint")
 		if constraint then
 			TextScale.Bound(constraint, layout.MinTextSize, layout.TextSize, scale)
+			constraint.MinTextSize = math.max(constraint.MinTextSize, Theme.ScreenScale.MinTextPixels)
 		end
 	end
 

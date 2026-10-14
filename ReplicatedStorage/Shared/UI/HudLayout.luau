@@ -30,8 +30,10 @@ local HOTBAR_BOTTOM = 12
 local XP_GAP = 16
 -- RunControl's published bottom-right area of the live touch jump/run controls.
 local TOUCH_RESERVE = "TouchReserve"
--- RunControl's published height the touch movement stick reaches in the bottom-left corner.
-local TOUCH_STICK_CLEARANCE = "TouchStickClearance"
+-- TopbarPlus's screen holding the left icon row (Daily Rewards, Codes, the group reward). Phones
+-- seat the clock at the row's end; the gap leaves room for the sun art reaching past its frame.
+local TOPBAR_SCREEN = "TopbarStandard"
+local TOPBAR_GAP = 12
 
 --[[ Tables ]]--
 local HudLayout = {}
@@ -60,10 +62,36 @@ local function touchReserve(hud: Instance): Vector2?
 	return if typeof(reserve) == "Vector2" then reserve else nil
 end
 
-local function touchStickClearance(hud: Instance): number?
-	local run = runButton(hud)
-	local clearance = run and run:GetAttribute(TOUCH_STICK_CLEARANCE)
-	return if typeof(clearance) == "number" then clearance else nil
+local function topbarRow(hud: Instance): GuiObject?
+	local playerGui = hud:FindFirstAncestorOfClass("PlayerGui")
+	local screen = playerGui and playerGui:FindFirstChild(TOPBAR_SCREEN)
+	local holders = screen and screen:FindFirstChild("Holders")
+	local row = holders and holders:FindFirstChild("Left")
+	return if row and row:IsA("GuiObject") then row else nil
+end
+
+-- The clock's resting centre just past the topbar row's last icon and level with it; nil while the
+-- row is empty or the clock would not fit before the HUD's right margin.
+local function topbarSpot(hud: GuiObject, size: Vector2, margin: number): UDim2?
+	local row = topbarRow(hud)
+	if not row then
+		return nil
+	end
+	local last: GuiObject? = nil
+	for _, icon in row:GetChildren() do
+		if icon:IsA("GuiObject") and icon.Visible and (not last or icon.AbsolutePosition.X > last.AbsolutePosition.X) then
+			last = icon
+		end
+	end
+	if not last then
+		return nil
+	end
+	local left = last.AbsolutePosition.X + last.AbsoluteSize.X + TOPBAR_GAP - hud.AbsolutePosition.X
+	if left + size.X > hud.AbsoluteSize.X - margin then
+		return nil
+	end
+	local centre = last.AbsolutePosition.Y + last.AbsoluteSize.Y / 2 - hud.AbsolutePosition.Y
+	return UDim2.fromOffset(left + size.X / 2, centre)
 end
 
 --[[ Handling ]]--
@@ -85,16 +113,12 @@ function HudLayout.Apply(hud: GuiObject): ()
 	local logical = size / scale
 	local reserve = touchReserve(hud)
 	local hotbarLeft = (logical.X - HOTBAR_SIZE.X) / 2
-	-- The plate keeps the left edge on every device; a screen too narrow for it beside the hotbar
-	-- lifts it above the hotbar, and touch screens rest it just above the movement stick.
+	-- The plate rests in the bottom-left corner on every device, as on desktop: Roblox's touch controls
+	-- never move it. Only a screen too narrow for it beside the hotbar lifts it above the hotbar.
 	local currencyLeft = EDGE
 	local currencyBottom = if currencyLeft + CURRENCY_SIZE.X > hotbarLeft
 		then HOTBAR_BOTTOM + HOTBAR_SIZE.Y + BUTTON_GAP
 		else EDGE
-	local stickClearance = touchStickClearance(hud)
-	if stickClearance then
-		currencyBottom = math.max(currencyBottom, stickClearance / scale + EDGE)
-	end
 	-- The button column fits between the top edge and the plate; short screens shrink its buttons.
 	local columnRoom = logical.Y - currencyBottom - CURRENCY_SIZE.Y - EDGE * 2
 	local fit = (columnRoom - BUTTON_GAP * 2) / (UpgradeReveal.Hud.SizeMultiplier + 2)
@@ -121,8 +145,12 @@ function HudLayout.Apply(hud: GuiObject): ()
 			group.AnchorPoint = anchor
 		end
 	end
-	-- The clock doubles as the Open button, so it keeps a usable touch height.
-	place(hud, "Time", UDim2.new(0.5, 0, 0, 23), TIME_SIZE, math.max(scale, Theme.ScreenScale.MinTouchPixels / TIME_SIZE.Y))
+	-- The clock doubles as the Open button, so it keeps a usable touch height. Phones seat it in the
+	-- topbar row when it fits there, leaving the top centre to the toasts.
+	local timeScale = math.max(scale, Theme.ScreenScale.MinTouchPixels / TIME_SIZE.Y)
+	local timeSize = TIME_SIZE * timeScale
+	local besideTopbar = if compact then topbarSpot(hud, timeSize, EDGE * scale) else nil
+	place(hud, "Time", besideTopbar or UDim2.new(0.5, 0, 0, 23 * timeScale), timeSize, 1)
 	placeGroup("Hotbar", UDim2.new(0.5, 0, 1, -HOTBAR_BOTTOM), HOTBAR_SIZE)
 	placeGroup("Currency", UDim2.new(0, currencyLeft, 1, -currencyBottom), CURRENCY_SIZE)
 	placeGroup("SideBtns", UDim2.fromOffset(EDGE, columnCentre), Vector2.new(upgradeSide + 8, columnHeight))
@@ -216,9 +244,30 @@ function HudLayout.Bind(hud: GuiObject): any
 	local run = runButton(hud)
 	if run then
 		janitor:Add(run:GetAttributeChangedSignal(TOUCH_RESERVE):Connect(apply), "Disconnect")
-		janitor:Add(run:GetAttributeChangedSignal(TOUCH_STICK_CLEARANCE):Connect(apply), "Disconnect")
 	end
 	janitor:Add(hud:GetPropertyChangedSignal("AbsoluteSize"):Connect(apply), "Disconnect")
+	-- The row shifts with Roblox's own buttons and grows or shrinks as icons come and go.
+	local topbarJanitor = Janitor.new()
+	janitor:Add(topbarJanitor, "Destroy")
+	local function watchTopbar(): ()
+		topbarJanitor:Cleanup()
+		local row = topbarRow(hud)
+		local layout = row and row:FindFirstChildOfClass("UIListLayout")
+		if row and layout then
+			topbarJanitor:Add(row:GetPropertyChangedSignal("AbsolutePosition"):Connect(apply), "Disconnect")
+			topbarJanitor:Add(layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(apply), "Disconnect")
+		end
+	end
+	local playerGui = hud:FindFirstAncestorOfClass("PlayerGui")
+	if playerGui then
+		janitor:Add(playerGui.ChildAdded:Connect(function(child: Instance): ()
+			if child.Name == TOPBAR_SCREEN then
+				watchTopbar()
+				apply()
+			end
+		end), "Disconnect")
+	end
+	watchTopbar()
 	janitor:LinkToInstance(hud)
 	HudLayout.Apply(hud)
 	return janitor

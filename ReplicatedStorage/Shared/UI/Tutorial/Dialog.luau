@@ -542,30 +542,24 @@ local function hudElement(path: string): GuiObject?
 	return element
 end
 
--- Converts a HUD element's absolute Y into this overlay's (inset-ignoring) space.
-local function hudInset(element: GuiObject): number
-	local screen = element:FindFirstAncestorWhichIsA("ScreenGui")
-	return if screen and not screen.IgnoreGuiInset then GuiService:GetGuiInset().Y else 0
-end
-
--- Screen Y of a HUD element's bottom edge, in this overlay's space.
+-- Absolute Y of a HUD element's bottom edge.
 local function hudBottom(path: string): number?
 	local element = hudElement(path)
 	if not element then
 		return nil
 	end
-	return element.AbsolutePosition.Y + element.AbsoluteSize.Y + hudInset(element)
+	return element.AbsolutePosition.Y + element.AbsoluteSize.Y
 end
 
--- A HUD group's frame in this overlay's space while it is on screen (pages slide the HUD away).
-local function hudRect(path: string, viewport: Vector2): Rect?
+-- A HUD group's absolute frame while it is inside `bounds` (pages slide the HUD away).
+local function hudRect(path: string, bounds: Rect): Rect?
 	local element = hudElement(path)
 	if not element then
 		return nil
 	end
-	local minimum = element.AbsolutePosition + Vector2.new(0, hudInset(element))
+	local minimum = element.AbsolutePosition
 	local maximum = minimum + element.AbsoluteSize
-	if maximum.X <= 0 or maximum.Y <= 0 or minimum.X >= viewport.X or minimum.Y >= viewport.Y then
+	if maximum.X <= bounds.Min.X or maximum.Y <= bounds.Min.Y or minimum.X >= bounds.Max.X or minimum.Y >= bounds.Max.Y then
 		return nil
 	end
 	return Rect.new(minimum, maximum)
@@ -611,7 +605,7 @@ local function watchEdge(watch: EdgeWatch, element: GuiObject): ()
 	end
 end
 
--- Screen Y of the highest thing drawn in a HUD group, in this overlay's space. The hotbar's slot
+-- Absolute Y of the highest thing drawn in a HUD group. The hotbar's slot
 -- numbers and item art reach above its frame; the bubble keeps clear of what is actually drawn.
 -- The descendant walk is cached in `watch`, so the per-frame read stays cheap.
 local function hudTop(path: string, watch: EdgeWatch): number?
@@ -626,11 +620,11 @@ local function hudTop(path: string, watch: EdgeWatch): number?
 		watch.Overhang = overhang(element)
 		watch.Dirty = false
 	end
-	return element.AbsolutePosition.Y - watch.Overhang + hudInset(element)
+	return element.AbsolutePosition.Y - watch.Overhang
 end
 
--- Bottom edge of the evening/page header while it is drawn on screen, else nil.
-local function menuHeaderEdge(): number?
+-- Absolute bottom edge of the evening/page header while it reaches below `screenTop`, else nil.
+local function menuHeaderEdge(screenTop: number): number?
 	local found, panel = pcall(function(): ScreenGui?
 		return UIHandler:GetPanel(MENU_PANEL)
 	end)
@@ -644,9 +638,8 @@ local function menuHeaderEdge(): number?
 	if not header or not header:IsA("GuiObject") or not header.Visible then
 		return nil
 	end
-	local inset = if panel.IgnoreGuiInset then 0 else GuiService:GetGuiInset().Y
-	local bottom = header.AbsolutePosition.Y + header.AbsoluteSize.Y + inset
-	return if bottom > 0 then bottom else nil
+	local bottom = header.AbsolutePosition.Y + header.AbsoluteSize.Y
+	return if bottom > screenTop then bottom else nil
 end
 
 -- Unwrapped width of one line of copy. Copy is measured at its rendered size (reference size times
@@ -855,7 +848,7 @@ function Dialog.Hide(self: Dialog): ()
 	end
 end
 
---- A GUI rectangle (screen pixels) the bubble must not cover, usually its own target.
+--- An absolute GUI rectangle the bubble must not cover, usually its own target.
 function Dialog.SetAvoid(self: Dialog, rect: Rect?): ()
 	self.Avoid = rect
 end
@@ -932,13 +925,14 @@ function Dialog.Layout(self: Dialog): ()
 	local portrait = if view.Portrait then math.floor(portraitSize * portraitScale) else 0
 	local bubbleX = math.floor(portrait * PORTRAIT.BubbleStart)
 	local itemSpace = if view.Item.Visible then STYLE.ItemSize + STYLE.ItemGap else 0
+	local titleSize = if compact then STYLE.Compact.TitleSize else STYLE.TitleSize
 	-- The mentor leans over the bubble's left edge; the copy starts clear of it. The image gap is
 	-- the art's own transparent margin, so it shrinks with the image.
 	local gap = if view.Face then PORTRAIT.ImageGap * portraitScale else STYLE.PortraitGap
 	local textLeft = math.max(STYLE.Padding.X, portrait - bubbleX + gap)
 	local chrome = bubbleX + textLeft + STYLE.Padding.X + itemSpace
 	local widestText = widest - chrome
-	local key = `{content.Key}@{widestText}@{textLeft}@{scale}`
+	local key = `{content.Key}@{widestText}@{textLeft}@{scale}@{titleSize}`
 
 	if self.Measured ~= key then
 		if self.Measuring == key then
@@ -946,10 +940,10 @@ function Dialog.Layout(self: Dialog): ()
 		end
 		self.Measuring = key
 		task.spawn(function(): ()
-			local titleHeight = measure(content.Title, FONT, STYLE.TitleSize, widestText, scale)
+			local titleHeight = measure(content.Title, FONT, titleSize, widestText, scale)
 			local hintHeight = measure(content.Hint, HINT_FONT, STYLE.HintSize, widestText, scale)
 			local line = math.max(
-				lineWidth(content.Title, FONT, STYLE.TitleSize, scale),
+				lineWidth(content.Title, FONT, titleSize, scale),
 				lineWidth(content.Hint, HINT_FONT, STYLE.HintSize, scale)
 			)
 			-- The badge and the Done! stamp share the top-right slot; the plate starts at the copy.
@@ -966,6 +960,7 @@ function Dialog.Layout(self: Dialog): ()
 		return
 	end
 	self.LayoutViewport = viewport
+	view.Title.TextSize = titleSize
 	local touch = touchInput()
 	self.LayoutTouch = touch
 	if view.Portrait then
@@ -1075,7 +1070,7 @@ function Dialog.Step(self: Dialog, deltaTime: number): ()
 	if self.LayoutViewport ~= viewport or self.LayoutTouch ~= touchInput() then
 		self:Layout()
 	end
-	self:Place(deltaTime, viewport, scale)
+	self:Place(deltaTime, scale)
 	self:Boing(now)
 	self:Type(deltaTime, now)
 end
@@ -1094,36 +1089,35 @@ function Dialog.Boing(self: Dialog, now: number): ()
 		UDim2.new(1, STYLE.Stroke, 1, STYLE.Stroke + STYLE.ShadowDrop - boing.Lift * wave)
 end
 
--- Bottom centre above the hotbar (left of, or else above, an order row reaching into that band); at
--- the top, below the clock and any page header, when that would cover the target. A target too
+-- Bottom centre above the hotbar (raised above an order row reaching into that band, so the mentor
+-- always talks from the middle); at the top, below the clock and any page header, when that would
+-- cover the target. A target too
 -- large to dodge (a page's whole recipe grid) is covered either way, so the bubble then stays at
 -- the bottom, clear of the header tabs and Next Day.
-function Dialog.Place(self: Dialog, deltaTime: number, viewport: Vector2, scale: number): ()
+function Dialog.Place(self: Dialog, deltaTime: number, scale: number): ()
 	local view = self.View
 	local size = view.Root.Size
 	local width, height = size.X.Offset * scale, size.Y.Offset * scale
 	local gap = STYLE.HotbarGap * scale
+	-- Worked out in absolute GUI space, like the HUD it dodges; this overlay spans the whole device
+	-- screen, which on a notched phone starts left of and above that space's origin.
+	local origin = view.Screen.AbsolutePosition
+	local bounds = Rect.new(origin, origin + view.Screen.AbsoluteSize)
 	-- The HUD slides off screen while a page is open; then the plain bottom margin applies.
 	local hotbar = hudTop(HOTBAR_PATH, self.HotbarEdge)
-	local onScreen = hotbar ~= nil and hotbar < viewport.Y
-	local bottom = if hotbar and onScreen then hotbar - gap else viewport.Y - STYLE.BottomMargin * scale
-	local centre = viewport.X / 2 - width / 2
+	local onScreen = hotbar ~= nil and hotbar < bounds.Max.Y
+	local bottom = if hotbar and onScreen then hotbar - gap else bounds.Max.Y - STYLE.BottomMargin * scale
+	local centre = (bounds.Min.X + bounds.Max.X) / 2 - width / 2
 	local left = centre
-	local side = hudRect(SIDE_PATH, viewport)
+	local side = hudRect(SIDE_PATH, bounds)
 	-- The leftmost edge that clears the side buttons beside a dialog with this bottom edge.
 	local function leftLimit(lowest: number): number
 		return if side and side.Max.Y > lowest - height and side.Min.Y < lowest then side.Max.X + gap else gap
 	end
-	-- The order row shares the bottom band and rises above the hotbar on narrow screens: slide left
-	-- of it while the side buttons leave room, else stack above it.
-	local order = hudRect(ORDER_PATH, viewport)
+	-- The order row shares the bottom band and rises above the hotbar on narrow screens: stack above it.
+	local order = hudRect(ORDER_PATH, bounds)
 	if order and overlaps(order, left, bottom, width, height) then
-		local slid = order.Min.X - gap - width
-		if slid >= leftLimit(bottom) then
-			left = slid
-		else
-			bottom = math.min(bottom, order.Min.Y - gap)
-		end
+		bottom = math.min(bottom, order.Min.Y - gap)
 	end
 	left = math.max(left, leftLimit(bottom))
 	local avoid = self.Avoid
@@ -1131,8 +1125,8 @@ function Dialog.Place(self: Dialog, deltaTime: number, viewport: Vector2, scale:
 	if avoid and overlaps(avoid, left, bottom, width, height) then
 		-- The clock slides off screen while a page is open; its off-screen edge must not count.
 		local clock = hudBottom(CLOCK_PATH)
-		local top = if clock and clock > 0 then clock else STYLE.TopFallback * scale
-		top = math.max(top, menuHeaderEdge() or 0)
+		local top = if clock and clock > bounds.Min.Y then clock else bounds.Min.Y + STYLE.TopFallback * scale
+		top = math.max(top, menuHeaderEdge(bounds.Min.Y) or top)
 		local raised = top + STYLE.TopGap * scale + height
 		if not overlaps(avoid, centre, raised, width, height) then
 			goalX, goalY = centre, raised
@@ -1142,7 +1136,7 @@ function Dialog.Place(self: Dialog, deltaTime: number, viewport: Vector2, scale:
 	local x = if self.X then self.X + (goalX - self.X) * blend else goalX
 	local y = if self.Y then self.Y + (goalY - self.Y) * blend else goalY
 	self.X, self.Y = x, y
-	view.Root.Position = UDim2.fromOffset(x + width / 2, y)
+	view.Root.Position = UDim2.fromOffset(x - origin.X + width / 2, y - origin.Y)
 end
 
 function Dialog.Type(self: Dialog, deltaTime: number, now: number): ()
