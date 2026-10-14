@@ -87,6 +87,10 @@ local function PlaytimeState(): (number, { number })
 	return played, claimed
 end
 
+local function CoinsLabel(amount: number): string
+	return `{Format.Number(amount)} {if amount == 1 then "Coin" else "Coins"}`
+end
+
 -- Tile art grows with the reward, and the last tile of a track wears the chest.
 local function SetIcon(cell: Frame, reward: Rewards.Reward?, isFinal: boolean): ()
 	local icon = cell:FindFirstChild("Icon")
@@ -369,7 +373,7 @@ function RewardHandler.RefreshPlaytime(self: RewardHandler): ()
 		local isReady = not isTaken and elapsed >= due
 
 		SetFace(cell, isTaken)
-		Authored.SetPair(cell:FindFirstChild("Reward"), if reward then `{Format.Number(reward.Cash)}` else "-")
+		Authored.SetPair(cell:FindFirstChild("Reward"), if reward then CoinsLabel(reward.Cash) else "-")
 		SetIcon(cell, reward, index == #Rewards.Playtime.Tiers)
 
 		local claim = cell:FindFirstChild("ClaimButton")

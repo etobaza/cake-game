@@ -11,6 +11,7 @@
 --[[ Services ]]--
 local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 --[[ References ]]--
 local _Shared = ReplicatedStorage.Shared
@@ -157,6 +158,7 @@ function StoreHandler.OnStart(self: StoreHandler): ()
 	self.Screen = screen
 	self.Rows = {}
 	self.Sale = {}
+	self.Shines = {}
 	local currency = Authored.Resolve(screen, CURRENCY_PATH)
 	if currency and currency:IsA("GuiObject") then
 		CardGrid.Bind(currency)
@@ -166,6 +168,7 @@ function StoreHandler.OnStart(self: StoreHandler): ()
 	self:BindSection(Authored.Resolve(screen, GAMEPASS_PATH), "Item", StoreConfig.Gamepasses)
 	self:BindSection(Authored.Resolve(screen, FEATURED_PATH), "Item", StoreConfig.Featured)
 	self:BindSkips()
+	self:SpinShines()
 
 	DataClient:WaitForData()
 	self:Refresh()
@@ -202,6 +205,11 @@ function StoreHandler.BindSection(self: StoreHandler, parent: Instance?, prefix:
 		row.Visible = true
 		self.Rows[#self.Rows + 1] = { Row = row, EntryId = entryId :: string }
 
+		local shine = row:FindFirstChild("Effect")
+		if shine and shine:IsA("GuiObject") then
+			self.Shines[#self.Shines + 1] = shine
+		end
+
 		local meta = entry.meta
 		Authored.SetPair(row:FindFirstChild("Value"), meta.value or "")
 		Authored.SetPair(row:FindFirstChild("Name"), meta.name)
@@ -236,6 +244,28 @@ function StoreHandler.BindSection(self: StoreHandler, parent: Instance?, prefix:
 			row.Selectable = false
 		end
 	end
+end
+
+--- Turns the shine rays only while the store is open; a closed screen keeps no per-frame work.
+function StoreHandler.SpinShines(self: StoreHandler): ()
+	local spin: RBXScriptConnection? = nil
+
+	local function update(): ()
+		if self.Screen.Enabled and not spin then
+			spin = RunService.PreRender:Connect(function(): ()
+				local turn = os.clock() * StoreConfig.ShineSpeed
+				for index, shine in self.Shines do
+					shine.Rotation = (turn + index * StoreConfig.ShinePhase) % 360
+				end
+			end)
+		elseif not self.Screen.Enabled and spin then
+			spin:Disconnect()
+			spin = nil
+		end
+	end
+
+	self.Screen:GetPropertyChangedSignal("Enabled"):Connect(update)
+	update()
 end
 
 --- The Skip plates on the reward screens are the same kind of purchase, so they are bound the same way.
@@ -377,6 +407,8 @@ export type StoreHandler = typeof(StoreHandler) & {
 	Rows: { StoreRow },
 	-- Sale state from the Marketplace by registry id; nil until the answer arrives.
 	Sale: { [string]: boolean },
+	-- The authored shine behind each shown product.
+	Shines: { GuiObject },
 }
 
 return StoreHandler :: StoreHandler

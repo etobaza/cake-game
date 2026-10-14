@@ -20,6 +20,11 @@ local Store = {
 
 	-- Shown in the gamepass header as "n/total Owned".
 	OwnedTotal = 2,
+
+	-- The shine rays behind each product turn while the store is open, in degrees per second; each
+	-- tile starts ShinePhase degrees on from the one before so they do not turn in lockstep.
+	ShineSpeed = 30,
+	ShinePhase = 47,
 }
 
 return Store
