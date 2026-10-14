@@ -16,6 +16,7 @@ local _Handlers = ReplicatedStorage.Handlers
 --[[ Modules ]]--
 local Bus = require(_Shared.Bus)
 local DataClient = require(_Handlers.DataHandlerClient)
+local Format = require(_Shared.UI.Format)
 local Rewards = require(_Shared.Configs.Rewards)
 local TopbarHandler = require(_Handlers.TopbarHandler)
 local UIHandler = require(_Handlers.UIHandler)
@@ -23,7 +24,7 @@ local UIHandler = require(_Handlers.UIHandler)
 --[[ Constants ]]--
 local ACTION_KEY = "GroupReward"
 local LABEL = "Group Reward"
-local CAPTION = `Join our group: +{Rewards.Group.Reward.Cash} coins`
+local CAPTION = `Join our group: +{Format.Number(Rewards.Group.Reward.Cash)} coins`
 -- After Daily Rewards (1) and Codes (2).
 local ORDER = 3
 local PENDING_TEXT = "Join request sent. Claim the reward once it is accepted"

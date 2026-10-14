@@ -2,32 +2,34 @@
 -- Number and time formatting for labels. Lifted out of UIHandler so views and their stories can use
 -- it without pulling a handler into Shared.
 
+--[[ Constants ]]--
+-- From a million up, amounts are abbreviated so a long-running balance keeps its plate width.
+local ABBREVIATIONS = {
+	{ Value = 1e9, Suffix = "B" },
+	{ Value = 1e6, Suffix = "M" },
+}
+
 --[[ Tables ]]--
 local Format = {}
 
 --[[ Handling ]]--
---- 1234567 -> "1 234 567". Thin spaces, not commas -- that is how the HUD was authored.
---- Round displayed amounts to whole numbers; stored values retain their precision.
+--- 123456 -> "123 456", 1234567 -> "1.23M". Thin spaces, not commas -- that is how the HUD was
+--- authored. Displayed amounts are whole numbers; abbreviations round down, so a balance never
+--- reads as more than it is.
 function Format.Number(value: number): string
 	local whole = math.round(math.abs(value))
-	local text = tostring(whole)
-	local grouped = text:reverse():gsub("(%d%d%d)", "%1 "):reverse()
-	local formatted = (grouped:gsub("^%s+", ""))
+	local sign = if value < 0 and whole > 0 then "-" else ""
 
-	return if value < 0 and whole > 0 then `-{formatted}` else formatted
-end
-
---- Prices: 12.5 -> "12.50", 1500 -> "1 500". Cents only appear when there are any, so a large
---- balance never trails ".00".
-function Format.Money(value: number): string
-	local cents = math.round(math.abs(value) * 100)
-	local sign = if value < 0 and cents > 0 then "-" else ""
-
-	if cents % 100 == 0 then
-		return sign .. Format.Number(cents // 100)
+	for _, step in ABBREVIATIONS do
+		if whole >= step.Value then
+			local hundredths = whole * 100 // step.Value
+			local short = string.format("%d.%02d", hundredths // 100, hundredths % 100):gsub("%.?0+$", "")
+			return `{sign}{short}{step.Suffix}`
+		end
 	end
 
-	return string.format("%s%s.%02d", sign, Format.Number(cents // 100), cents % 100)
+	local grouped = tostring(whole):reverse():gsub("(%d%d%d)", "%1 "):reverse()
+	return sign .. (grouped:gsub("^%s+", ""))
 end
 
 --- Seconds -> "M:SS", or "H:MM:SS" from an hour up so "60:32" never reads as minutes.

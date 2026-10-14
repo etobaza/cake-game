@@ -20,12 +20,12 @@ export type Action = {
 }
 
 local actions: { Action } = {
-	{ id = "addCash", label = "Add coins", section = "Resources", max = 1000000 },
+	{ id = "addCash", label = "Add coins", section = "Resources", max = 100000000 },
 	{
 		id = "setCash",
 		label = "Set balance",
 		section = "Resources",
-		max = 100000000,
+		max = 10000000000,
 		allowZero = true,
 		warning = "This replaces the current balance.",
 	},
@@ -97,7 +97,7 @@ return {
 	Actions = actions,
 	ById = byId,
 	LiveEventPrefix = LIVE_EVENT_PREFIX,
-	MaxCash = 100000000,
+	MaxCash = 10000000000,
 	MaxPantry = 100000,
 	RequestCooldown = 0.4,
 	ConfirmationSeconds = 30,

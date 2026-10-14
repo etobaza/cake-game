@@ -40,18 +40,20 @@ return {
 	Bubble = {
 		-- States that show a bubble; Arriving and Eating guests have their own cues.
 		States = { Queued = true, Choosing = true, Waiting = true } :: { [string]: boolean },
+		-- The bubble's world size relative to Theme.WorldScale, so orders read from across the room.
+		WorldScale = 1.3,
 		-- Captions never wrap (the renderer would re-wrap them as the bubble scales), so the width fits
-		-- the longest dish name (Blueberry Cheesecake, 158 pixels at TextSize) with room for the font
+		-- the longest dish name (Blueberry Cheesecake, 184 pixels at TextSize) with room for the font
 		-- snapping a UIScale causes.
-		Width = 190,
+		Width = 216,
 		Padding = 6,
 		IconSize = 44,
 		IconGap = 4,
 		MaxIcons = 3,
-		CaptionHeight = 44,
+		CaptionHeight = 50,
 		-- One caption line per dish.
-		LineHeight = 22,
-		TextSize = 18,
+		LineHeight = 25,
+		TextSize = 21,
 		PonderSize = 36,
 		BarHeight = 10,
 		CornerRadius = 10,

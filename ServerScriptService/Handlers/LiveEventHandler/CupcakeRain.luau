@@ -170,7 +170,7 @@ function CupcakeRain.Collect(self: CupcakeRain, player: Player, position: Vector
 	local before = EconomyHandler:GetCash(player)
 	EconomyHandler:AddCash(player, Config.Rain.Coins, "Gameplay", Config.Rain.AnalyticsItem)
 	local after = EconomyHandler:GetCash(player)
-	local credited = math.round((after - before) * 100) / 100
+	local credited = after - before
 	if credited > 0 then
 		Bus.LiveEvent.CupcakeCollected:FireClient(player, position, credited, after)
 	end

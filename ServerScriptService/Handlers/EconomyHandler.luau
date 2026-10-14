@@ -106,14 +106,13 @@ function EconomyHandler.AddCash(
 	if cashReason == "Gameplay" and not (itemId and Friends.ExcludedGameplayItems[itemId]) then
 		multiplier *= FriendBoostHandler:GetMultiplier(player)
 	end
-	local before = cloud.Cash
-
-	cloud.Cash = math.round((before + amount * multiplier) * 100) / 100
-
-	local credited = math.round((cloud.Cash - before) * 100) / 100
-	if credited > 0 then
-		self.CashChanged:Fire(player, "Source", credited, cloud.Cash, cashReason, itemId)
+	local credited = math.round(amount * multiplier)
+	if credited <= 0 then
+		return
 	end
+
+	cloud.Cash = cloud.Cash + credited
+	self.CashChanged:Fire(player, "Source", credited, cloud.Cash, cashReason, itemId)
 end
 
 -- Server-only support operation: exact balance, deliberately unaffected by pass multipliers.
@@ -125,7 +124,7 @@ function EconomyHandler.SetAdminCash(_self: EconomyHandler, player: Player, amou
 	if not cloud or cloud.ProgressResetPending then
 		return false
 	end
-	cloud.Cash = math.round(amount * 100) / 100
+	cloud.Cash = math.round(amount)
 	return true
 end
 
@@ -146,7 +145,7 @@ function EconomyHandler.TrySpend(
 		return false
 	end
 
-	cloud.Cash = math.round((cloud.Cash - amount) * 100) / 100
+	cloud.Cash = math.round(cloud.Cash - amount)
 	self.CashChanged:Fire(player, "Sink", amount, cloud.Cash, reason or "Shop", itemId)
 
 	return true

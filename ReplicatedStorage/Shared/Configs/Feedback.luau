@@ -89,7 +89,7 @@ return {
 	-- between them is shorter than a banner, it moves and then shrinks to fit.
 	BannerGap = 8,
 
-	-- The floating "+24$" over the guest. A pixel-sized billboard stays readable at any distance.
+	-- The floating "+240$" over the guest. A pixel-sized billboard stays readable at any distance.
 	Popup = {
 		Width = 320,
 		Offset = Vector3.new(0, 1.9, 0),
@@ -221,9 +221,9 @@ return {
 	-- Coins burst from the sale point and fly into the HUD balance, which counts up as they land.
 	Coins = {
 		Image = "rbxassetid://100304091769166",
-		-- count = clamp(round(Base + amount * PerCoin), Min, Max); dish prices run 0.75-8.
+		-- count = clamp(round(Base + amount * PerCoin), Min, Max); dish prices run 75-800.
 		Base = 2,
-		PerCoin = 1.2,
+		PerCoin = 0.012,
 		Min = 3,
 		Max = 12,
 		Size = 36,

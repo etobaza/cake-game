@@ -578,7 +578,7 @@ function DayCycleHandler.AddResult(
 	end
 	local before = data.Cloud.Cash
 	EconomyHandler:AddCash(player, coins, "Gameplay", itemId)
-	day.Summary.Coins = math.round((day.Summary.Coins + data.Cloud.Cash - before) * 100) / 100
+	day.Summary.Coins = day.Summary.Coins + data.Cloud.Cash - before
 	day.Summary.XP = day.Summary.XP + EconomyHandler:AwardXP(player, xp)
 	day.Summary.Served = day.Summary.Served + served
 	day.Summary.Lost = day.Summary.Lost + lost

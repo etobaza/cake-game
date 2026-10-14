@@ -21,7 +21,8 @@ function UpgradeLesson.Resolve(
 		or saved.Lessons.Upgrades
 		or saved.Lessons["Dismissed:Upgrades"]
 		or not saved.Lessons.UpgradesDue
-		or (session.Day.Phase ~= "Summary" and session.Day.Phase ~= "Prep")
+		-- The evening header has no Upgrades tab; the lesson waits for the HUD in the next Prep.
+		or session.Day.Phase ~= "Prep"
 	then
 		return nil
 	end
@@ -35,14 +36,11 @@ function UpgradeLesson.Resolve(
 	local title = Upgrades:GetDisplayName(entry.id, purchase.Level - 1)
 	local goal: Types.TutorialGoal?
 	if page ~= "Upgrades" then
-		local target = if session.Day.Phase == "Summary"
-			then "BakeryMenu.MainFrame.Header.Buttons.Upgrades"
-			else "UI.HUD.SideBtns.Upgrades.Btn"
 		goal = State.Gui(
 			"upgrade_open",
 			"Put your earnings into {upgrades}",
 			"Open Upgrades. The cheapest available purchase is selected for you.",
-			target
+			"UI.HUD.SideBtns.Upgrades.Btn"
 		)
 	elseif facts.upgradeCategory ~= entry.category then
 		goal = State.Gui(

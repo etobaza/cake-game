@@ -191,7 +191,7 @@ local AdminAbuse = {
 		Model = { "Cake", "CarrotCupcake" },
 		ModelScale = 2,
 		-- Coins per cupcake, paid as gameplay income (pass and friend multipliers apply).
-		Coins = 2,
+		Coins = 200,
 		-- Cupcakes one player can collect during one event.
 		MaxPerPlayer = 40,
 		-- Uncollected cupcakes around one player at the same time.

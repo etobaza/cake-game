@@ -15,6 +15,7 @@ local Store = {
 	-- The Robux buttons that live on the reward screens instead of in the store.
 	Skips = {
 		Daily = "skip_daily",
+		DailyAll = "skip_daily_all",
 		Playtime = "skip_playtime",
 	},
 

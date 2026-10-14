@@ -30,6 +30,8 @@ local HOTBAR_BOTTOM = 12
 local XP_GAP = 16
 -- RunControl's published bottom-right area of the live touch jump/run controls.
 local TOUCH_RESERVE = "TouchReserve"
+-- RunControl's published height the touch movement stick reaches in the bottom-left corner.
+local TOUCH_STICK_CLEARANCE = "TouchStickClearance"
 
 --[[ Tables ]]--
 local HudLayout = {}
@@ -58,6 +60,12 @@ local function touchReserve(hud: Instance): Vector2?
 	return if typeof(reserve) == "Vector2" then reserve else nil
 end
 
+local function touchStickClearance(hud: Instance): number?
+	local run = runButton(hud)
+	local clearance = run and run:GetAttribute(TOUCH_STICK_CLEARANCE)
+	return if typeof(clearance) == "number" then clearance else nil
+end
+
 --[[ Handling ]]--
 --- The HUD's density at `viewport`: the shared screen density, growing on large desktops.
 function HudLayout.Scale(viewport: Vector2): number
@@ -77,14 +85,17 @@ function HudLayout.Apply(hud: GuiObject): ()
 	local logical = size / scale
 	local reserve = touchReserve(hud)
 	local hotbarLeft = (logical.X - HOTBAR_SIZE.X) / 2
-	-- The touch movement stick holds the bottom-left corner, so there the plate docks beside the hotbar.
-	local currencyLeft = if reserve then math.max(EDGE, hotbarLeft - EDGE - CURRENCY_SIZE.X) else EDGE
-	-- A screen too narrow for the plate beside the hotbar lifts the plate above it.
+	-- The plate keeps the left edge on every device; a screen too narrow for it beside the hotbar
+	-- lifts it above the hotbar, and touch screens rest it just above the movement stick.
+	local currencyLeft = EDGE
 	local currencyBottom = if currencyLeft + CURRENCY_SIZE.X > hotbarLeft
 		then HOTBAR_BOTTOM + HOTBAR_SIZE.Y + BUTTON_GAP
 		else EDGE
-	-- The button column fits between the top edge and the plate, or the stick in its place; short
-	-- screens shrink its buttons.
+	local stickClearance = touchStickClearance(hud)
+	if stickClearance then
+		currencyBottom = math.max(currencyBottom, stickClearance / scale + EDGE)
+	end
+	-- The button column fits between the top edge and the plate; short screens shrink its buttons.
 	local columnRoom = logical.Y - currencyBottom - CURRENCY_SIZE.Y - EDGE * 2
 	local fit = (columnRoom - BUTTON_GAP * 2) / (UpgradeReveal.Hud.SizeMultiplier + 2)
 	local buttonSide = math.min(BUTTON_SIDE, math.max(fit, Theme.ScreenScale.MinTouchPixels / scale))
@@ -205,6 +216,7 @@ function HudLayout.Bind(hud: GuiObject): any
 	local run = runButton(hud)
 	if run then
 		janitor:Add(run:GetAttributeChangedSignal(TOUCH_RESERVE):Connect(apply), "Disconnect")
+		janitor:Add(run:GetAttributeChangedSignal(TOUCH_STICK_CLEARANCE):Connect(apply), "Disconnect")
 	end
 	janitor:Add(hud:GetPropertyChangedSignal("AbsoluteSize"):Connect(apply), "Disconnect")
 	janitor:LinkToInstance(hud)

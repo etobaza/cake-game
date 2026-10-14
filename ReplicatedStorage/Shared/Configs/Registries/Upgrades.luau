@@ -1,7 +1,8 @@
 --!strict
 -- Upgrade registry: each one moves exactly one BaseStats key by perLevel per level.
--- The buy order and every price follow the design sheet: cost gates progression, not player level,
--- so unlockLevel is 1 everywhere and `requires` chains carry the intended order.
+-- The buy order and every price (times 100, in whole coins) follow the design sheet: cost gates
+-- progression, not player level, so unlockLevel is 1 everywhere and `requires` chains carry the
+-- intended order.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -64,9 +65,9 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "DisplaySlots",
 		perLevel = 1,
 		maxLevel = 5,
-		baseCost = 5.25,
+		baseCost = 525,
 		costMultiplier = 1,
-		costs = { 5.25, 12.50, 25.00, 55.25, 75.25 },
+		costs = { 525, 1250, 2500, 5525, 7525 },
 		unlockLevel = 1,
 		blurb = "Room for one more pastry in the window.",
 		row = 0,
@@ -79,7 +80,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "WindowSlots",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 210.50,
+		baseCost = 21050,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "A pass-through shelf: leave a pastry from the kitchen, pick it up in the café.",
@@ -95,9 +96,9 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "TipMult",
 		perLevel = 0.25,
 		maxLevel = 2,
-		baseCost = 135.00,
+		baseCost = 13500,
 		costMultiplier = 1,
-		costs = { 135.00, 375.00 },
+		costs = { 13500, 37500 },
 		unlockLevel = 1,
 		blurb = "Cats in the café: happier guests, fatter tips.",
 		requires = "cafe_display",
@@ -111,7 +112,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "CoffeeCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 275.50,
+		baseCost = 27550,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "A coffee machine; coffee joins the day menu.",
@@ -126,7 +127,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "TableCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 290.50,
+		baseCost = 29050,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Another table with two independent seats for guests.",
@@ -141,7 +142,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "AssistantSlots",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 500.00,
+		baseCost = 50000,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "An assistant takes over one job for the day.",
@@ -158,7 +159,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "MixSpeedMult",
 		perLevel = 0.25,
 		maxLevel = 1,
-		baseCost = 9.50,
+		baseCost = 950,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "A proper prep counter: the mixer works through a batch faster.",
@@ -172,7 +173,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "FuelBurnSeconds",
 		perLevel = 90,
 		maxLevel = 1,
-		baseCost = 22.25,
+		baseCost = 2225,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Firewood burns twice as long before the oven needs another log.",
@@ -188,9 +189,9 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "OvenCount",
 		perLevel = 1,
 		maxLevel = 2,
-		baseCost = 85.75,
+		baseCost = 8575,
 		costMultiplier = 1,
-		costs = { 85.75, 245.50 },
+		costs = { 8575, 24550 },
 		unlockLevel = 1,
 		blurb = "One more oven, one more bake at a time.",
 		requires = "kitchen_counter",
@@ -204,7 +205,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "AnimalCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 55.25,
+		baseCost = 5525,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Chickens in the garden: fresh eggs every day.",
@@ -219,7 +220,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "AnimalCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 195.50,
+		baseCost = 19550,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "A cow of your own: milk for the cream recipes.",
@@ -234,7 +235,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "FreezerCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 225.75,
+		baseCost = 22575,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "A freezer; frozen desserts become cookable.",
@@ -249,7 +250,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "BurnTimeMult",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 210.50,
+		baseCost = 21050,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Ready food has 60 seconds before it burns instead of 30.",
@@ -264,7 +265,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "RunSpeed",
 		perLevel = 4,
 		maxLevel = 1,
-		baseCost = 230.00,
+		baseCost = 23000,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Lighter shoes: you run noticeably faster.",
@@ -279,7 +280,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "AnimalBrush",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 165.50,
+		baseCost = 16550,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Brushed animals stay clean until the next day.",
@@ -295,7 +296,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "TreeCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 7.25,
+		baseCost = 725,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Cocoa grows after watering.",
@@ -309,7 +310,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "TreeCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 25.75,
+		baseCost = 2575,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Fresh cherries from a watered tree.",
@@ -324,7 +325,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "PlotCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 12.50,
+		baseCost = 1250,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Grow strawberries in the greenhouse.",
@@ -339,7 +340,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "PlotCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 42.50,
+		baseCost = 4250,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Grow blueberries in the greenhouse.",
@@ -354,7 +355,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "WaterDurationMult",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 52.75,
+		baseCost = 5275,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Water lasts twice as long.",
@@ -369,7 +370,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "PlotCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 90.00,
+		baseCost = 9000,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Grow grapes on the vine.",
@@ -384,7 +385,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "CartEnabled",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 120.50,
+		baseCost = 12050,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Load one ingredient; collect it at the kitchen. Four delivery spaces.",
@@ -399,7 +400,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "PlotCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 180.25,
+		baseCost = 18025,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Grow carrots in the greenhouse.",
@@ -414,7 +415,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "AutoWater",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 345.50,
+		baseCost = 34550,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Keeps plants and trees watered while the bakery is active.",
@@ -429,7 +430,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "TreeCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 210.00,
+		baseCost = 21000,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Grow apples on a watered tree.",
@@ -444,7 +445,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "GrowthSpeedMult",
 		perLevel = Garden.PollinationBonus,
 		maxLevel = 1,
-		baseCost = 225.50,
+		baseCost = 22550,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Produces honey and helps plants grow 25% faster.",
@@ -459,7 +460,7 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "TreeCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 415.00,
+		baseCost = 41500,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "The final greenhouse tree. Requires all other greenhouse upgrades.",
@@ -570,18 +571,18 @@ local methods: UpgradesMethods = {
 		return self:GetProgress(inputs.Levels, inputs.PlayerLevel, inputs.Cash)
 	end,
 
-	-- Sum in cents so an admin budget covers every remaining level without float drift.
+	-- Every remaining level of every upgrade, in whole coins: the admin budget for the rest of the tree.
 	GetRemainingCost = function(self: UpgradesRegistry, levels: { [string]: number }): number
-		local cents = 0
+		local total = 0
 		for _, entry in self:Values() do
 			for level = levels[entry.id] or 0, entry.maxLevel - 1 do
 				local cost: number? = self:GetCost(entry.id, level)
 				if cost then
-					cents += math.round(cost * 100)
+					total += cost
 				end
 			end
 		end
-		return cents / 100
+		return total
 	end,
 
 	GetMissingRequirement = function(
@@ -631,7 +632,7 @@ local methods: UpgradesMethods = {
 			return costs[currentLevel + 1]
 		end
 
-		return math.round(entry.baseCost * entry.costMultiplier ^ currentLevel * 100) / 100
+		return math.round(entry.baseCost * entry.costMultiplier ^ currentLevel)
 	end,
 
 	-- Node name at this owned level: the next unbought level names it, a maxed one wears the last.

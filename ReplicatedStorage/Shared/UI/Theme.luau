@@ -38,16 +38,6 @@ Theme.ProgressGradient = ColorSequence.new({
 	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 106, 0)),
 })
 
--- The evening's primary Next Day button, in the game's own warm palette: an orange-gold plate (the
--- pop-up edge colour) with a cream dashed inset and a cocoa caption shadow, against the cream tabs.
--- BakeryMenu applies it at runtime over the authored tab art.
-Theme.NextDay = {
-	Fill = Color3.fromRGB(255, 255, 255),
-	Gradient = ColorSequence.new(Color3.fromRGB(255, 194, 94), Color3.fromRGB(232, 136, 44)),
-	Lines = Color3.fromRGB(255, 241, 210),
-	TextShadow = Theme.Colors.Cocoa,
-}
-
 -- Stroke thickness is in PIXELS, and the authored screens used values well under one — the outlines
 -- there are effectively invisible. Reproduced as measured; raise them here if they were meant to show.
 Theme.Stroke = {

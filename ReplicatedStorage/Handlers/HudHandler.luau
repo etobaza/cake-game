@@ -69,11 +69,11 @@ function HudHandler.RefreshGoal(_self: HudHandler): ()
 	end
 	local name = Upgrades:GetDisplayName(goal.Id, goal.Level - 1)
 	if progress.Recommended then
-		local costText = Format.Money(goal.Cost)
+		local costText = Format.Number(goal.Cost)
 		UIHandler.QuestCost:set(`{costText}$`)
 		UIHandler.QuestCostVisible:set(true)
 		UIHandler.QuestText:set(if cash >= goal.Cost then `Buy {name}` else `Save for {name}`)
-		UIHandler.QuestCount:set(`{Format.Money(cash)}$/{costText}$`)
+		UIHandler.QuestCount:set(`{Format.Number(cash)}$/{costText}$`)
 		UIHandler.QuestAlpha:set(math.clamp(cash / goal.Cost, 0, 1))
 		return
 	end

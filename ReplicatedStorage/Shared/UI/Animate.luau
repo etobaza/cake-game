@@ -10,6 +10,7 @@ local _Shared = ReplicatedStorage.Shared
 local _Libs = _Shared.Libs
 
 --[[ Modules ]]--
+local HoverRoom = require(script.Parent.HoverRoom)
 local Ripple = require(_Libs.Ripple)
 
 type MotionOwner = { Connection: RBXScriptConnection?, Motions: { Ripple.Motion<number> } }
@@ -24,6 +25,7 @@ local POP_FROM = 0.7
 local SWING_SPRING = { frequency = 3, dampingRatio = 0.3 }
 local SWING_DEGREES = 12
 local PRESS_SCALE = 0.92
+-- The most a hovered control grows; HoverRoom lowers it where neighbours or the background are close.
 local HOVER_SCALE = 1.12
 local ENTER_RISE = 24
 -- Remembered left edge of a bar fill: the authored bars start outside the rounded frame, so the
@@ -270,6 +272,7 @@ function Animate.Press(hitbox: GuiObject, target: GuiObject?, owner: any?): () -
 	local authoredScaler = element:FindFirstChildOfClass("UIScale")
 	local motion = Animate.Scale(element)
 	local hovering = false
+	local hoverScale = 1
 	local function own(connection: RBXScriptConnection): ()
 		if owner then
 			owner:Add(connection, "Disconnect")
@@ -301,13 +304,15 @@ function Animate.Press(hitbox: GuiObject, target: GuiObject?, owner: any?): () -
 
 	own(hitbox.InputEnded:Connect(function(input: InputObject)
 		if PRESS_INPUTS[input.UserInputType] then
-			motion:spring(if hovering then HOVER_SCALE else 1)
+			motion:spring(if hovering then hoverScale else 1)
 		end
 	end))
 
 	own(hitbox.MouseEnter:Connect(function()
 		hovering = true
-		motion:spring(HOVER_SCALE)
+		-- UIScale grows an element around its anchor point.
+		hoverScale = HoverRoom.Fit(element, HOVER_SCALE, element.AnchorPoint, motion:getPosition())
+		motion:spring(hoverScale)
 	end))
 
 	own(hitbox.MouseLeave:Connect(function()

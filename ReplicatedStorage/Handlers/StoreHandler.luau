@@ -35,9 +35,15 @@ local CURRENCY_PATH = { "MainFrame", "Container", "Content", "Currency", "Conten
 local GAMEPASS_PATH = { "MainFrame", "Container", "Content", "Gamepasses" }
 local FEATURED_PATH = { "MainFrame", "Container", "Content" }
 local OWNED_PATH = { "MainFrame", "Container", "Content", "Gamepasses", "Header", "Capacity" }
--- Where the reward screens keep their Robux buttons.
-local DAILY_SKIP = { screen = "DailyRewards", path = { "MainFrame", "Buttons" }, names = { "Skip1", "SkipAll" } }
-local PLAYTIME_SKIP = { screen = "Playtime", path = { "MainFrame", "Bottom" }, names = { "Skip" } }
+-- Where the reward screens keep their Robux buttons, and the product each one buys.
+local SKIP_PLATES: { { screen: string, path: { string }, plates: { [string]: string } } } = {
+	{
+		screen = "DailyRewards",
+		path = { "MainFrame", "Buttons" },
+		plates = { Skip1 = StoreConfig.Skips.Daily, SkipAll = StoreConfig.Skips.DailyAll },
+	},
+	{ screen = "Playtime", path = { "MainFrame", "Bottom" }, plates = { Skip = StoreConfig.Skips.Playtime } },
+}
 
 -- What the price plate says once the pass is owned, or while the Dashboard has it off sale.
 local OWNED_LABEL = "Owned"
@@ -47,6 +53,8 @@ local MUTED_FILL = ColorSequence.new(Color3.fromRGB(205, 205, 205), Color3.fromR
 local MUTED_EDGE = Color3.fromRGB(80, 80, 80)
 -- Added currency-tile art relative to the authored shine behind it.
 local ICON_TO_SHINE = 0.85
+-- Seconds between Marketplace price reads; one is made when a screen showing prices opens.
+local PRICE_REFRESH = 60
 
 --[[ Tables ]]--
 local StoreHandler = {
@@ -159,6 +167,9 @@ function StoreHandler.OnStart(self: StoreHandler): ()
 	self.Rows = {}
 	self.Sale = {}
 	self.Shines = {}
+	self.Plates = {}
+	self.PricesAt = -math.huge
+	self.Fetching = false
 	local currency = Authored.Resolve(screen, CURRENCY_PATH)
 	if currency and currency:IsA("GuiObject") then
 		CardGrid.Bind(currency)
@@ -177,10 +188,31 @@ function StoreHandler.OnStart(self: StoreHandler): ()
 		self:Refresh()
 	end, "Cloud", true)
 
-	-- Robux prices come from the Marketplace, one web call each, so they are fetched once in the
-	-- background rather than every time the screen opens.
+	self:WatchPrices(screen)
+	self:RequestPrices()
+end
+
+--- Robux prices come from the Marketplace, one web call each, so they are read in the background:
+--- on join, then again when a screen showing them opens, at most every PRICE_REFRESH seconds. A
+--- price changed on the Dashboard, or a read that failed, shows right on the next open.
+function StoreHandler.RequestPrices(self: StoreHandler): ()
+	if self.Fetching or os.clock() - self.PricesAt < PRICE_REFRESH then
+		return
+	end
+
+	self.Fetching = true
+	self.PricesAt = os.clock()
 	task.spawn(function()
 		self:FetchPrices()
+		self.Fetching = false
+	end)
+end
+
+function StoreHandler.WatchPrices(self: StoreHandler, screen: ScreenGui): ()
+	screen:GetPropertyChangedSignal("Enabled"):Connect(function()
+		if screen.Enabled then
+			self:RequestPrices()
+		end
 	end)
 end
 
@@ -268,24 +300,25 @@ function StoreHandler.SpinShines(self: StoreHandler): ()
 	update()
 end
 
---- The Skip plates on the reward screens are the same kind of purchase, so they are bound the same way.
+--- The Skip plates on the reward screens are the same kind of purchase, so they are bound the same way
+--- and show the same Marketplace price.
 function StoreHandler.BindSkips(self: StoreHandler): ()
-	for _, spec in { DAILY_SKIP, PLAYTIME_SKIP } do
+	for _, spec in SKIP_PLATES do
 		local screen = UIHandler:GetPanel(spec.screen)
 		local holder = screen and Authored.Resolve(screen, spec.path)
-		if not holder then
+		if not screen or not holder then
 			continue
 		end
+		self:WatchPrices(screen)
 
-		local entryId = if spec.screen == "DailyRewards" then StoreConfig.Skips.Daily else StoreConfig.Skips.Playtime
-
-		for _, name in spec.names do
+		for name, entryId in spec.plates do
 			local plate = holder:FindFirstChild(name)
 			if plate and plate:IsA("GuiObject") then
 				Animate.Press(plate)
 				Press.BindTap(plate, function()
 					self:Buy(entryId)
 				end)
+				self.Plates[#self.Plates + 1] = { Plate = plate, EntryId = entryId }
 			end
 		end
 	end
@@ -346,10 +379,12 @@ function StoreHandler.Refresh(self: StoreHandler): ()
 	Authored.SetPair(Authored.Resolve(self.Screen, OWNED_PATH), `{owned}/{StoreConfig.OwnedTotal} Owned`)
 end
 
---- Robux prices and sale state, read once per session, so a price changed on the Dashboard shows
---- from the next join. A missing id or a failed call leaves the drawn placeholder alone.
+--- Robux prices and sale state. A missing id or a failed call leaves the last shown price alone.
 function StoreHandler.FetchPrices(self: StoreHandler): ()
-	local entryIds = { StoreConfig.Skips.Daily, StoreConfig.Skips.Playtime }
+	local entryIds = {}
+	for _, plate in self.Plates do
+		entryIds[#entryIds + 1] = plate.EntryId
+	end
 	for _, row in self.Rows do
 		entryIds[#entryIds + 1] = row.EntryId
 	end
@@ -359,7 +394,7 @@ function StoreHandler.FetchPrices(self: StoreHandler): ()
 
 	for _, entryId in entryIds do
 		local entry = Products:Get(entryId)
-		if not entry or entry.productId <= 0 or self.Sale[entryId] ~= nil then
+		if not entry or entry.productId <= 0 then
 			continue
 		end
 
@@ -391,6 +426,14 @@ function StoreHandler.FetchPrices(self: StoreHandler): ()
 		row.Price = prices[row.EntryId] or row.Price
 	end
 
+	-- The reward screens' plates were drawn with placeholder prices; an unanswered call keeps them.
+	for _, plate in self.Plates do
+		local label = if self.Sale[plate.EntryId] == false then OFF_SALE_LABEL else prices[plate.EntryId]
+		if label then
+			Authored.SetPair(Authored.Resolve(plate.Plate, { "Price" }), label)
+		end
+	end
+
 	self:Refresh()
 end
 
@@ -402,6 +445,12 @@ export type StoreRow = {
 	Drawn: { [Instance]: any }?,
 }
 
+-- A Robux plate on a reward screen and the product it buys.
+export type SkipPlate = {
+	Plate: GuiObject,
+	EntryId: string,
+}
+
 export type StoreHandler = typeof(StoreHandler) & {
 	Screen: ScreenGui,
 	Rows: { StoreRow },
@@ -409,6 +458,10 @@ export type StoreHandler = typeof(StoreHandler) & {
 	Sale: { [string]: boolean },
 	-- The authored shine behind each shown product.
 	Shines: { GuiObject },
+	Plates: { SkipPlate },
+	-- os.clock of the last Marketplace read, and whether one is still running.
+	PricesAt: number,
+	Fetching: boolean,
 }
 
 return StoreHandler :: StoreHandler

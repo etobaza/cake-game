@@ -3,6 +3,7 @@
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 
 --[[ Modules ]]--
 local Animate = require(script.Parent.Animate)
@@ -10,16 +11,14 @@ local ButtonRow = require(script.Parent.ButtonRow)
 local Flux = require(ReplicatedStorage.Packages.flux)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Pages = require(script.Parent.Stores.Pages)
-local Theme = require(script.Parent.Theme)
 local UseData = require(script.Parent.Hooks.UseData)
 
 --[[ Constants ]]--
 local TABS: { [string]: Pages.Page } = {
 	Report = Pages.Names.Report,
 	Menu = Pages.Names.Inventory,
-	Upgrades = Pages.Names.Upgrades,
 }
-local HEADER_BUTTONS = { "Report", "Menu", "Upgrades", "NextDay" }
+local TAB_BUTTONS = { "Report", "Menu" }
 local HEADER_LEFT_INSET = 6
 local HEADER_RIGHT_INSET = 6
 local HEADER_GAP = 8
@@ -28,8 +27,18 @@ local RIBBON_OVERHANG = 64
 local SELECTED = Color3.fromRGB(247, 233, 205)
 local IDLE = Color3.fromRGB(205, 191, 161)
 local DISABLED = Color3.fromRGB(150, 143, 127)
--- Next Day is the evening's one forward action, so it is drawn as the primary button (Theme.NextDay).
-local NEXT_DAY_STYLE = Theme.NextDay
+-- Next Day is the evening's one forward action: wider than a tab (in tab widths) and set further apart
+-- from them. Its authored art (the tabs' stitched plate in green, sunrise, arrows) lives in the place.
+local NEXT_DAY_SHARE = 1.15
+local NEXT_DAY_GAP = 24
+-- Kept from the ribbon's end so the hovered button still shows a red rim there.
+local NEXT_DAY_INSET = 16
+-- A light band sweeps across the face between pauses, and the sunrise bobs.
+local NEXT_DAY_SHINE = TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, false, 2.4)
+local NEXT_DAY_SHINE_FROM = Vector2.new(-1, 0)
+local NEXT_DAY_SHINE_TO = Vector2.new(1, 0)
+local NEXT_DAY_BOB = TweenInfo.new(1.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+local NEXT_DAY_BOB_RISE = 2
 
 --[[ Tables ]]--
 local BakeryMenu = {}
@@ -76,7 +85,6 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 		end,
 	})
 	-- Standalone pages use the full-size authored ribbon title, not a small tab caption.
-	local upgrades = buttons:FindFirstChild("Upgrades") :: TextButton
 	local title = header:FindFirstChild("Title") :: Frame
 	Flux.edit(title)({
 		Visible = function(): boolean
@@ -107,18 +115,25 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 		Position = rowPosition,
 		Size = rowSize,
 	})
-	Flux.edit(upgrades)({ Visible = isSummary })
 	local rowButtons: { GuiObject } = {}
-	for index, name in HEADER_BUTTONS do
+	local tabShare = 1 / (#TAB_BUTTONS + NEXT_DAY_SHARE)
+	for index, name in TAB_BUTTONS do
 		local button = buttons:FindFirstChild(name) :: TextButton
 		button.AnchorPoint = Vector2.new(0.5, 0.5)
-		button.Position = UDim2.fromScale((index - 0.5) / #HEADER_BUTTONS, 0.5)
-		button.Size = UDim2.new(1 / #HEADER_BUTTONS, -HEADER_GAP, 1, 0)
+		button.Position = UDim2.fromScale((index - 0.5) * tabShare, 0.5)
+		button.Size = UDim2.new(tabShare, -HEADER_GAP, 1, 0)
 		local lines = button:FindFirstChild("Lines") :: ImageLabel
 		lines.AnchorPoint = Vector2.new(0.5, 0.5)
 		lines.Position = UDim2.fromScale(0.5, 0.5)
 		table.insert(rowButtons, button)
 	end
+	-- Next Day fills the rest of the row, stopping NEXT_DAY_INSET short of the ribbon's end.
+	local nextDay = buttons:FindFirstChild("NextDay") :: TextButton
+	local nextDayShift = NEXT_DAY_INSET - HEADER_RIGHT_INSET
+	nextDay.AnchorPoint = Vector2.new(1, 0.5)
+	nextDay.Position = UDim2.new(1, -HEADER_GAP / 2 - nextDayShift, 0.5, 0)
+	nextDay.Size = UDim2.new(1 - #TAB_BUTTONS * tabShare, -NEXT_DAY_GAP - nextDayShift, 1, 0)
+	table.insert(rowButtons, nextDay)
 	janitor:Add(ButtonRow.Bind(buttons, rowButtons), "Destroy")
 	for name, page in TABS do
 		local button = buttons:FindFirstChild(name) :: TextButton
@@ -140,11 +155,10 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 			end,
 		})
 	end
-	local nextDay = buttons:FindFirstChild("NextDay") :: TextButton
 	Flux.edit(nextDay)({
 		Visible = isSummary,
 	})
-	BakeryMenu.StyleNextDay(nextDay, janitor)
+	BakeryMenu.AnimateNextDay(nextDay, isSummary, janitor)
 	local close = header:FindFirstChild("Exit", true) :: GuiButton
 	bindPress(close)
 	Flux.edit(close)({
@@ -157,32 +171,35 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	})
 end
 
--- Restyles the authored Next Day tab in place (ButtonRow has already wrapped its artwork); the
--- added gradient belongs to the header's janitor. Styled at runtime because the header is authored
--- in place-only StarterGui, which source changes cannot redraw.
-function BakeryMenu.StyleNextDay(button: GuiButton, janitor: any): ()
-	local style = NEXT_DAY_STYLE
-	local fill = button:FindFirstChild("Bg", true)
-	if fill and fill:IsA("GuiObject") then
-		fill.BackgroundColor3 = style.Fill
-		local gradient = Instance.new("UIGradient")
-		gradient.Name = "NextDayGradient"
-		gradient.Color = style.Gradient
-		gradient.Rotation = 90
-		gradient.Parent = fill
-		janitor:Add(gradient, "Destroy")
+-- Runs only while the button shows; hiding it returns the shine and the sunrise to rest.
+function BakeryMenu.AnimateNextDay(button: GuiButton, shown: () -> boolean, janitor: any): ()
+	local shine = button:FindFirstChild("Shine", true)
+	local gradient = shine and shine:FindFirstChildOfClass("UIGradient")
+	local sun = button:FindFirstChild("Sun", true)
+	assert(gradient and sun and sun:IsA("GuiObject"), "[BakeryMenu] Next Day needs its authored Shine gradient and Sun")
+	local sunRest = sun.Position
+	local sweep = TweenService:Create(gradient, NEXT_DAY_SHINE, { Offset = NEXT_DAY_SHINE_TO })
+	local bob = TweenService:Create(sun, NEXT_DAY_BOB, { Position = sunRest - UDim2.fromOffset(0, NEXT_DAY_BOB_RISE) })
+	local function rest(): ()
+		sweep:Cancel()
+		bob:Cancel()
+		gradient.Offset = NEXT_DAY_SHINE_FROM
+		sun.Position = sunRest
 	end
-
-	local lines = button:FindFirstChild("Lines", true)
-	if lines and lines:IsA("ImageLabel") then
-		lines.ImageColor3 = style.Lines
-	end
-
-	local caption = button:FindFirstChild("Txt", true)
-	local shadow = caption and caption:FindFirstChild("Shadow")
-	if shadow and shadow:IsA("TextLabel") then
-		shadow.TextColor3 = style.TextShadow
-	end
+	rest()
+	janitor:Add(function(): ()
+		rest()
+		sweep:Destroy()
+		bob:Destroy()
+	end, true)
+	Flux(function(): ()
+		if shown() then
+			sweep:Play()
+			bob:Play()
+		else
+			rest()
+		end
+	end, true)
 end
 
 return BakeryMenu

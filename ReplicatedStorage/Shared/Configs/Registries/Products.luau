@@ -10,8 +10,8 @@ export type ProductType = "gamepass" | "permanent_devproduct" | "devproduct"
 -- What buying the thing actually does.
 -- Cash: a one-off pile of coins. Stat: a permanent bonus on top of the upgrade for that stat, for as
 -- long as the pass is owned. CashMultiplier: every coin the player earns, times this.
--- SkipDaily / SkipPlaytime: moves a reward track forward; the reward handler owns those.
-export type GrantKind = "Cash" | "Stat" | "CashMultiplier" | "SkipDaily" | "SkipPlaytime"
+-- SkipDaily / SkipDailyAll / SkipPlaytime: moves a reward track forward; the reward handler owns those.
+export type GrantKind = "Cash" | "Stat" | "CashMultiplier" | "SkipDaily" | "SkipDailyAll" | "SkipPlaytime"
 
 export type ProductMeta = {
 	-- What the store shows. `value` is the big number on a currency tile.
@@ -48,35 +48,37 @@ end
 
 local list: { [string]: ProductDefinition } = {
 	--[[ Currency packages ]]--
+	-- Sized against a shift (6 000-8 000 coins early on) for 49/99/249/499/999 Robux on the Creator
+	-- Dashboard, so each bigger pack pays clearly more coins per Robux (153 up to 275).
 	cash_1 = {
 		productId = 3715828865,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "350$", grant = "Cash", amount = 350, icon = "rbxassetid://96216232687018" },
+		meta = { name = "Cash", value = "7 500$", grant = "Cash", amount = 7500, icon = "rbxassetid://96216232687018" },
 	},
 	cash_2 = {
 		productId = 3715828878,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "1 000$", grant = "Cash", amount = 1000, icon = "rbxassetid://114454707057271" },
+		meta = { name = "Cash", value = "17 500$", grant = "Cash", amount = 17500, icon = "rbxassetid://114454707057271" },
 	},
 	cash_3 = {
 		productId = 3715828888,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "3 000$", grant = "Cash", amount = 3000, icon = "rbxassetid://71273978435843" },
+		meta = { name = "Cash", value = "50 000$", grant = "Cash", amount = 50000, icon = "rbxassetid://71273978435843" },
 	},
 	cash_4 = {
 		productId = 3715828897,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "8 000$", grant = "Cash", amount = 8000, icon = "rbxassetid://127494963095045" },
+		meta = { name = "Cash", value = "120 000$", grant = "Cash", amount = 120000, icon = "rbxassetid://127494963095045" },
 	},
 	cash_5 = {
 		productId = 3715828907,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "25 000$", grant = "Cash", amount = 25000, icon = "rbxassetid://110097182380053" },
+		meta = { name = "Cash", value = "275 000$", grant = "Cash", amount = 275000, icon = "rbxassetid://110097182380053" },
 	},
 
 	--[[ Gamepasses ]]--
 	-- Both plug into systems that already exist: the multiplier into every coin the player earns,
-	-- the stat bonus into the same sum the upgrades feed.
+	-- the stat bonus into the same sum the upgrades feed. VIP is 199 Robux, Bigger Window 149.
 	pass_vip = {
 		productId = 2002796698,
 		productType = "gamepass",
@@ -102,22 +104,30 @@ local list: { [string]: ProductDefinition } = {
 	},
 
 	--[[ Featured ]]--
+	-- 99 Robux, once per player: about twice the coins per Robux of the biggest pack.
 	starter_pack = {
 		productId = 3715828914,
 		productType = "permanent_devproduct",
 		meta = {
 			name = "Starter Pack",
-			blurb = "Contains $500 cash to get the bakery going.",
+			blurb = "Contains 50 000$ to get the bakery going.",
 			grant = "Cash",
-			amount = 500,
+			amount = 50000,
 		},
 	},
 
 	--[[ Reward track skips ]]--
+	-- 29, 149 and 49 Robux: one day is a small top-up, the whole streak (up to 38 500$) and the whole
+	-- playtime track (up to 12 200$) pay about as well per Robux as the mid-size cash packs.
 	skip_daily = {
 		productId = 3715828918,
 		productType = "devproduct",
 		meta = { name = "Skip 1 Day", grant = "SkipDaily", amount = 1 },
+	},
+	skip_daily_all = {
+		productId = 3718628937,
+		productType = "devproduct",
+		meta = { name = "Skip All Days", grant = "SkipDailyAll", amount = 0 },
 	},
 	skip_playtime = {
 		productId = 3715828921,

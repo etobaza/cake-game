@@ -4,7 +4,10 @@
 return {
 	CurrentClass = "warrior",
 
-	Cash = 25,
+	Cash = 2500,
+	-- Coin scale of this save (ServerScriptService/EconomyMigration). New profiles start at the current
+	-- version; a save without the key predates the x100 rescale and is migrated once on load.
+	EconomyVersion = 1,
 	-- Admin reset is consumed before gameplay handlers receive the next loaded profile.
 	ProgressResetPending = false,
 

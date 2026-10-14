@@ -64,10 +64,9 @@ end
 
 function UIHandler.OnStart(self: UIHandler): ()
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
-	local screensRoot = playerGui:WaitForChild(SCREENS_FOLDER, SCREENS_TIMEOUT)
-	if not screensRoot then
-		error(`[UIHandler] StarterGui.{SCREENS_FOLDER} never arrived in PlayerGui`)
-	end
+	-- StarterGui is copied in with the first character, which the server spawns only once the
+	-- profile has loaded; like the data wait below, this has no deadline.
+	local screensRoot = playerGui:WaitForChild(SCREENS_FOLDER)
 
 	-- The first snapshot arrives as one push and does not ring the per-path signals, so a node bound
 	-- before it lands keeps its placeholder until something happens to change that field. Waiting

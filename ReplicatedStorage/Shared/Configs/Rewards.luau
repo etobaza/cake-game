@@ -5,11 +5,12 @@
 -- four over a row of three) and the playtime screen with fifteen (three rows of five), so the tables
 -- below are exactly that long. Adding a tile in StarterGui means adding a row here, and nothing else.
 --
--- The numbers are scaled to the shift: dishes sell for 0.75-4 coins plus tips, a day's shift (about
--- nine minutes with the evening) earns roughly 60-80 coins and 80 XP, and the whole upgrade tree
--- costs 5133 coins, about seventy shifts. Free rewards stay a bonus on top of that pace:
---   * the 7-day streak pays 385 coins in total, from a third of a shift to two shifts a day;
---   * a full day's playtime track (75 minutes, about eight shifts of earnings) adds about 120 coins;
+-- The numbers are scaled to the shift: dishes sell for 75-400 coins (coffee 800) plus tips, a day's
+-- shift (about nine minutes with the evening) earns roughly 6 000-8 000 coins and 80 XP, and the
+-- whole upgrade tree costs 513 275 coins, about seventy shifts. Free rewards stay a bonus on top of
+-- that pace:
+--   * the 7-day streak pays 38 500 coins in total, from a third of a shift to two shifts a day;
+--   * a full day's playtime track (75 minutes, about eight shifts of earnings) adds 12 200 coins;
 --   * the welcome code and the group reward together buy the first few cheap upgrades.
 
 --[[ Tables ]]--
@@ -19,18 +20,18 @@ local Rewards = {
 	-- Every other tile grows with its cash: the first step whose Max covers the amount wins. These are
 	-- the store's cash-pack images, from a handful of coins up to a coin-filled chest.
 	CashIcons = {
-		{ Max = 5, Icon = "rbxassetid://96216232687018" },
-		{ Max = 10, Icon = "rbxassetid://114454707057271" },
-		{ Max = 25, Icon = "rbxassetid://71273978435843" },
-		{ Max = 60, Icon = "rbxassetid://127494963095045" },
+		{ Max = 500, Icon = "rbxassetid://96216232687018" },
+		{ Max = 1000, Icon = "rbxassetid://114454707057271" },
+		{ Max = 2500, Icon = "rbxassetid://71273978435843" },
+		{ Max = 6000, Icon = "rbxassetid://127494963095045" },
 		{ Max = math.huge, Icon = "rbxassetid://110097182380053" },
 	} :: { { Max: number, Icon: string } },
 
 	-- Promo codes, lowercased. The player types one in and it can be redeemed once per account.
-	-- Real campaign codes go here; `welcome` is the one that ships. 25 coins buys the first two
+	-- Real campaign codes go here; `welcome` is the one that ships. 2 500 coins buys the first two
 	-- Display Counter levels.
 	Codes = {
-		welcome = { Cash = 25, XP = 10 },
+		welcome = { Cash = 2500, XP = 10 },
 	} :: { [string]: Reward },
 	-- Per-player cap on failed code attempts (unknown or already used): after MaxFailures in one
 	-- window, further codes are refused until WindowSeconds have passed since the window opened.
@@ -43,7 +44,7 @@ local Rewards = {
 	-- shift.
 	Group = {
 		GroupId = 712136202,
-		Reward = { Cash = 40, XP = 15 } :: Reward,
+		Reward = { Cash = 4000, XP = 15 } :: Reward,
 		-- Seconds between membership checks per player: each check is a web request.
 		CheckCooldown = 5,
 	},
@@ -54,13 +55,13 @@ local Rewards = {
 		Grace = 48 * 60 * 60,
 
 		Days = {
-			{ Cash = 20, XP = 5 },
-			{ Cash = 25, XP = 8 },
-			{ Cash = 35, XP = 10 },
-			{ Cash = 45, XP = 12 },
-			{ Cash = 60, XP = 15 },
-			{ Cash = 80, XP = 20 },
-			{ Cash = 120, XP = 30 },
+			{ Cash = 2000, XP = 5 },
+			{ Cash = 2500, XP = 8 },
+			{ Cash = 3500, XP = 10 },
+			{ Cash = 4500, XP = 12 },
+			{ Cash = 6000, XP = 15 },
+			{ Cash = 8000, XP = 20 },
+			{ Cash = 12000, XP = 30 },
 		} :: { Reward },
 	},
 
@@ -76,23 +77,23 @@ local Rewards = {
 		-- at once; this only bounds the loss from a crashed server.
 		SaveInterval = 30,
 
-		-- 122 coins and 80 XP (about one shift of XP) in total.
+		-- 12 200 coins and 80 XP (about one shift of XP) in total.
 		Tiers = {
-			{ Cash = 4, XP = 3 },
-			{ Cash = 4, XP = 3 },
-			{ Cash = 5, XP = 3 },
-			{ Cash = 5, XP = 4 },
-			{ Cash = 6, XP = 4 },
-			{ Cash = 6, XP = 4 },
-			{ Cash = 7, XP = 5 },
-			{ Cash = 7, XP = 5 },
-			{ Cash = 8, XP = 5 },
-			{ Cash = 8, XP = 6 },
-			{ Cash = 9, XP = 6 },
-			{ Cash = 10, XP = 6 },
-			{ Cash = 11, XP = 7 },
-			{ Cash = 12, XP = 7 },
-			{ Cash = 20, XP = 12 },
+			{ Cash = 400, XP = 3 },
+			{ Cash = 400, XP = 3 },
+			{ Cash = 500, XP = 3 },
+			{ Cash = 500, XP = 4 },
+			{ Cash = 600, XP = 4 },
+			{ Cash = 600, XP = 4 },
+			{ Cash = 700, XP = 5 },
+			{ Cash = 700, XP = 5 },
+			{ Cash = 800, XP = 5 },
+			{ Cash = 800, XP = 6 },
+			{ Cash = 900, XP = 6 },
+			{ Cash = 1000, XP = 6 },
+			{ Cash = 1100, XP = 7 },
+			{ Cash = 1200, XP = 7 },
+			{ Cash = 2000, XP = 12 },
 		} :: { Reward },
 	},
 }

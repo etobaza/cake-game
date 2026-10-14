@@ -509,7 +509,8 @@ function MenuHandler.PaintCell(self: MenuHandler, cell: Frame, recipe: Recipes.R
 	SetPair(cell:FindFirstChild("Txt"), recipe.name)
 	local missing = RecipeRequirements.GetMissing(recipe, DataClient:GetData({ "Base", "Upgrades" }) or {})
 	RequirementLabel.Show(self.RequirementLabels[cell], missing)
-	SetPair(resolve(cell, { "Price", "Price" }), UIHandler:FormatNumber(recipe.price))
+	-- What one sale earns: a green "+" amount, so it is not read as the dish's cost.
+	SetPair(resolve(cell, { "Price", "Price" }), `+{UIHandler:FormatNumber(recipe.price)}`)
 
 	local icon = cell:FindFirstChild("Icon")
 	if icon and icon:IsA("ImageLabel") then

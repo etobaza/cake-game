@@ -193,6 +193,32 @@ local function ApplyArt(node: Node, entry: Upgrades.UpgradeEntry?): ()
 	end
 end
 
+-- A line drawn at a fractional screen scale renders one pixel thicker or thinner depending on where
+-- its edges land, so each line is widened to whole pixels. Offsets are integers; the fraction rides on Scale.
+local function SnapConnectors(content: GuiObject): ()
+	local logical = Authored.UnscaledSize(content)
+	if logical.X <= 0 or logical.Y <= 0 then
+		return
+	end
+	local scale = content.AbsoluteSize.X / logical.X
+	for _, folder in content:GetChildren() do
+		if folder:GetAttribute("UpgradeCategory") == nil then
+			continue
+		end
+		for _, line in folder:GetChildren() do
+			if not line:IsA("GuiObject") then
+				continue
+			end
+			local size, position = line.Size, line.Position
+			local thickness = math.min(size.X.Offset, size.Y.Offset)
+			local extra = math.max(1, math.round(thickness * scale)) / scale - thickness
+			local x, y = extra / logical.X, extra / logical.Y
+			line.Size = UDim2.new(x, size.X.Offset, y, size.Y.Offset)
+			line.Position = UDim2.new(-x / 2, position.X.Offset, -y / 2, position.Y.Offset)
+		end
+	end
+end
+
 --[[ Handling ]]--
 function ShopHandler.OnStart(self: ShopHandler): ()
 	local screen = UIHandler:GetPanel(SCREEN_NAME)
@@ -227,14 +253,22 @@ function ShopHandler.OnStart(self: ShopHandler): ()
 	local tree = content.Parent
 	if tree and tree:IsA("ScrollingFrame") then
 		local treeContent = content :: GuiObject
+		local fit = treeContent:FindFirstChild("Fit") :: UIScale?
 		local lifetime = self.Janitor
 		local function centerTree(): ()
-			local width = Authored.UnscaledSize(treeContent).X
 			if tree.AbsoluteSize.X <= 0 then
 				return
 			end
-			local viewportWidth = Authored.UnscaledSize(tree).X * tree.AbsoluteWindowSize.X / tree.AbsoluteSize.X
-			local fits = width <= viewportWidth
+			local viewport = Authored.UnscaledSize(tree) * tree.AbsoluteWindowSize / tree.AbsoluteSize
+			local size = Authored.UnscaledSize(treeContent)
+			-- A short (portrait) tree shrinks to its height, keeping the authored inset above and below.
+			if fit then
+				fit.Scale = math.min(1, (viewport.Y - treeContent.Position.Y.Offset * 2) / size.Y)
+			end
+			local width = size.X * (if fit then fit.Scale else 1)
+			local viewportWidth = viewport.X
+			-- Float noise in the measured window must not turn a fitting tree into a scrolling one.
+			local fits = width <= viewportWidth + 1
 			local left = if fits then (viewportWidth - width) / 2 else TREE_SCROLL_PADDING
 			local position = treeContent.Position
 			treeContent.Position = UDim2.new(0, left, position.Y.Scale, position.Y.Offset)
@@ -242,6 +276,13 @@ function ShopHandler.OnStart(self: ShopHandler): ()
 		end
 		lifetime:Add(tree:GetPropertyChangedSignal("AbsoluteWindowSize"):Connect(centerTree), "Disconnect")
 		centerTree()
+		lifetime:Add(
+			treeContent:GetPropertyChangedSignal("AbsoluteSize"):Connect(function(): ()
+				SnapConnectors(treeContent)
+			end),
+			"Disconnect"
+		)
+		SnapConnectors(treeContent)
 	end
 
 	-- Read the whole applied Cloud update so spending and the bought level stay coherent.
@@ -536,6 +577,7 @@ function ShopHandler.RefreshFooter(
 		)
 		Authored.SetPair(resolve(bottom, { "Label2", "Value" }), "")
 		self:SetDesc(if complete then "Your bakery upgrade tree is complete." else "Tap a node to see what it does.")
+		self:SetPreview(nil)
 		self:ShowStatus(nil, "")
 		return
 	end
@@ -548,6 +590,7 @@ function ShopHandler.RefreshFooter(
 	Authored.SetPair(resolve(bottom, { "Label1", "Txt" }), Upgrades:GetDisplayName(entry.id, targetLevel - 1))
 	Authored.SetPair(resolve(bottom, { "Label2", "Value" }), if cost then UIHandler:FormatNumber(cost) else "-")
 	self:SetDesc(GetDetail(entry, state, level, targetLevel, levels))
+	self:SetPreview(entry.icon)
 
 	if state == "Owned" then
 		self:ShowStatus("Purchased", "Purchased")
@@ -566,6 +609,14 @@ function ShopHandler.SetDesc(self: ShopHandler, text: string): ()
 	local desc = self.Bottom:FindFirstChild("Desc")
 	if desc and desc:IsA("TextLabel") then
 		desc.Text = text
+	end
+end
+
+-- The wide layout's sidebar shows the selected upgrade's art large; compact layouts hide it.
+function ShopHandler.SetPreview(self: ShopHandler, art: string?): ()
+	local icon = resolve(self.Bottom, { "Preview", "Icon" })
+	if icon and icon:IsA("ImageLabel") then
+		icon.Image = art or ""
 	end
 end
 

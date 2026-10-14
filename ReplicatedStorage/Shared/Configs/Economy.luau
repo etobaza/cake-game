@@ -1,5 +1,6 @@
 --!strict
--- Shift economy: what the coins and XP for a served customer are made of.
+-- Shift economy: what the coins and XP for a served customer are made of. Coins are whole numbers;
+-- every payout rounds to the nearest coin.
 
 --[[ Tables ]]--
 local Economy = {
@@ -18,8 +19,9 @@ local Economy = {
 	GlutenFreeBonus = 0.05,
 
 	-- XP per dish follows its price instead of being flat: a lemon cake is four times the work
-	-- of a loaf of bread, and a flat reward makes the whole late menu pointless to cook.
-	XPPerCoin = 0.35,
+	-- of a loaf of bread, and a flat reward makes the whole late menu pointless to cook. Prices are in
+	-- whole coins (a baguette is 150), so this is 0.35 XP per 100 coins.
+	XPPerCoin = 0.0035,
 	XPMinPerDish = 2,
 
 	XPShiftComplete = 20,

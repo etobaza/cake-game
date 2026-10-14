@@ -84,15 +84,6 @@ local function resolveAnchor(template: Instance, anchorName: string): CFrame?
 	return if part and part:IsA("BasePart") then part.CFrame else nil
 end
 
-local function requireAnchor(template: Instance, anchorName: string): CFrame
-	local anchor = resolveAnchor(template, anchorName)
-	if not anchor then
-		error(`[BaseHandler] Missing anchor {anchorName} in {template:GetFullName()}.{BaseConfig.AnchorsFolderName}`)
-	end
-
-	return anchor
-end
-
 local function resolveSignLabel(bakery: Instance): TextLabel?
 	local sign = resolvePath(bakery, BaseConfig.SignPath)
 	local surface = sign and sign:FindFirstChildWhichIsA("SurfaceGui", true)
@@ -120,22 +111,42 @@ local function labelSign(bakery: Instance, player: Player, baseJanitor: any): ()
 	end, true)
 end
 
-local function teleportToBase(player: Player, template: Instance, transform: CFrame, isCurrent: () -> boolean): ()
-	local character = player.Character
-	if not character then
-		return
+-- Every bakery carries its own spawn pad, so RespawnLocation places each character before it appears.
+local function resolveSpawn(bakery: Instance): SpawnLocation
+	local spawn = resolvePath(bakery, { BaseConfig.AnchorsFolderName, BaseConfig.SpawnAnchorName })
+	if not spawn or not spawn:IsA("SpawnLocation") then
+		error(`[BaseHandler] Missing SpawnLocation {bakery:GetFullName()}.{BaseConfig.AnchorsFolderName}.{BaseConfig.SpawnAnchorName}`)
 	end
 
-	if not character:FindFirstChild("HumanoidRootPart") then
-		character:WaitForChild("HumanoidRootPart", BaseConfig.CharacterTimeout)
-	end
-	if not isCurrent() or player.Character ~= character or not character.Parent then
-		return
-	end
+	return spawn
+end
 
-	character:PivotTo(
-		transform * requireAnchor(template, BaseConfig.SpawnAnchorName) * CFrame.new(0, BaseConfig.CharacterLift, 0)
-	)
+-- Characters do not auto-load: the first one waits for the bakery, so it never appears anywhere else.
+local function spawnCharacter(player: Player): ()
+	local spawn = player.RespawnLocation
+	if spawn then
+		player:RequestStreamAroundAsync(spawn.Position, BaseConfig.StreamTimeout)
+	end
+	if player.Parent == Players and not player.Character then
+		player:LoadCharacterAsync()
+	end
+end
+
+local function respawnOnDeath(player: Player): ()
+	player.CharacterAdded:Connect(function(character: Model)
+		local humanoid = character:WaitForChild("Humanoid", BaseConfig.CharacterTimeout)
+		if not humanoid or not humanoid:IsA("Humanoid") then
+			return
+		end
+
+		humanoid.Died:Once(function()
+			task.delay(Players.RespawnTime, function()
+				if player.Parent == Players and player.Character == character then
+					player:LoadCharacterAsync()
+				end
+			end)
+		end)
+	end)
 end
 
 --[[ Handling ]]--
@@ -151,10 +162,12 @@ function BaseHandler.OnStart(self: BaseHandler): ()
 		self:LoadBase(player)
 	end)
 	Players.PlayerAdded:Connect(function(player: Player)
+		respawnOnDeath(player)
 		self:LoadBase(player)
 	end)
 
 	for _, player in Players:GetPlayers() do
+		respawnOnDeath(player)
 		task.spawn(function()
 			self:LoadBase(player)
 		end)
@@ -188,31 +201,24 @@ function BaseHandler.LoadBase(self: BaseHandler, player: Player): Folder?
 
 	local bakery = PlotHandler:Claim(player)
 	if not bakery then
+		-- A full server has no bakery to give; the character still loads, on any bakery's pad.
+		task.spawn(spawnCharacter, player)
 		return nil
 	end
 
 	local transform = resolveOrigin(bakery) * self.TemplateOrigin:Inverse()
 	bakery:SetAttribute(BaseConfig.OwnerAttribute, player.UserId)
+	player.RespawnLocation = resolveSpawn(bakery)
 
 	local baseJanitor = Janitor.new()
 	labelSign(bakery, player, baseJanitor)
 
 	local base: PlayerBase = { Model = bakery, Janitor = baseJanitor, Transform = transform }
 	self.Bases[player] = base
-	local function isCurrent(): boolean
-		return player.Parent == Players and self.Bases[player] == base and not base.Unloading
-	end
-
-	baseJanitor:Add(
-		player.CharacterAdded:Connect(function()
-			teleportToBase(player, self.Template, transform, isCurrent)
-		end),
-		"Disconnect"
-	)
 
 	Logger:Info(`Base loaded for {player.Name} in {bakery.Name}`)
 	self.BaseReady:Fire(player, bakery)
-	task.spawn(teleportToBase, player, self.Template, transform, isCurrent)
+	task.spawn(spawnCharacter, player)
 
 	return bakery
 end

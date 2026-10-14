@@ -5,6 +5,7 @@
 local Config = require(script.Parent.Parent.Configs.Tutorial)
 local Buildings = require(script.Parent.Parent.Configs.Buildings)
 local Cooking = require(script.Parent.Cooking)
+local Format = require(script.Parent.Parent.UI.Format)
 local Lessons = require(script.Parent.Lessons)
 local Navigation = require(script.Parent.Navigation)
 local Policy = require(script.Parent.Parent.TutorialPolicy)
@@ -73,7 +74,7 @@ local function clean(session: any, now: number): Types.TutorialGoal
 	if customer then
 		local paid = now - context.SaleAt < Config.SuccessSeconds
 		local title = if paid
-			then string.format("First sale! +$%.2f", context.LastSale)
+			then `First sale! +{Format.Number(context.LastSale)}$`
 			else "Your guest is enjoying the food"
 		local goal = State.SeatGoal(
 			"eating",

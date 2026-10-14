@@ -61,7 +61,7 @@ function Tips.GetSaleValue(params: SaleParams): number
 	local tip = recipe.price * rate * params.customerMultiplier * params.tipStat
 	tip *= 1 + (params.streakBonus or 0)
 
-	return math.round((recipe.price + tip) * 100) / 100
+	return math.round(recipe.price + tip)
 end
 
 return Tips

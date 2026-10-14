@@ -24,6 +24,8 @@ local Base = {
 	-- Parts named after a building (or Entrance / Spawn) live here. CFrame is the floor point.
 	AnchorsFolderName = "Anchors",
 	EntranceAnchorName = "Entrance",
+	-- Unlike the other anchors, every bakery authors its own Spawn, as a SpawnLocation: the owner's
+	-- RespawnLocation, so characters appear there instead of being moved after spawning.
 	SpawnAnchorName = "Spawn",
 	-- Spill spots: spill_1, spill_2, ...
 	SpillAnchorPrefix = "spill",
@@ -43,11 +45,10 @@ local Base = {
 	SignPath = { "1ndFloor", " exterior", "Sign" },
 	SignOwnedFormat = "%s's Bakery",
 
-	-- PivotTo on a character places the rig centre, not the feet.
-	CharacterLift = 3,
-
 	DataTimeout = 10,
 	CharacterTimeout = 5,
+	-- Longest wait for the spawn pad's surroundings to stream in before the character loads.
+	StreamTimeout = 5,
 }
 
 return Base

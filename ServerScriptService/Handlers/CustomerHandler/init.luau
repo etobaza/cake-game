@@ -770,7 +770,7 @@ function CustomerHandler.PayForDish(
 	coins *= entry.coinMultiplier or 1
 	DayCycleHandler:AddResult(player, coins, Economy.GetDishXP(recipe.price), 0, 0, recipeId)
 	-- What actually reached the wallet, pass multipliers included; zero once the shift has closed.
-	local credited = math.round((data.Cloud.Cash - before) * 100) / 100
+	local credited = data.Cloud.Cash - before
 	if customer.TutorialProtected then
 		data.Session.Tutorial.LastSale = credited
 		data.Session.Tutorial.SaleAt = now

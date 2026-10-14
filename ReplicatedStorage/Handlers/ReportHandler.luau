@@ -20,7 +20,7 @@ local UIHandler = require(_Handlers.UIHandler)
 local Upgrades = require(_Shared.Configs.Registries.Upgrades)
 
 --[[ Constants ]]--
-local EVENING_PAGES: { [string]: boolean } = { Report = true, Inventory = true, Upgrades = true }
+local EVENING_PAGES: { [string]: boolean } = { Report = true, Inventory = true }
 local REPORT_ROWS = table.clone(Config.Rows)
 table.insert(REPORT_ROWS, Config.UpgradeRow)
 local ROW_GAP = 8

@@ -42,6 +42,7 @@ local DataConfig = ReplicatedStorage.Handlers.DataHandlerClient.Config
 
 local Bus = require(ReplicatedStorage.Shared.Bus)
 local K = require(DataConfig.Kinds)
+local EconomyMigration = require(script.Parent.Parent.EconomyMigration)
 local GardenSave = require(script.Parent.BuildingHandler.GardenSave)
 local ProgressReset = require(script.Parent.Parent.ProgressReset)
 local TutorialPolicy = require(ReplicatedStorage.Shared.TutorialPolicy)
@@ -423,6 +424,9 @@ function DataHandler.OnInit(self: DataHandler)
 		end
 
 		profile:AddUserId(player.UserId)
+		-- Reconcile adds the template's current EconomyVersion; a save from before the coin rescale is
+		-- only recognisable by the key it is still missing here.
+		local savedEconomyVersion = profile.Data.EconomyVersion or 0
 		profile:Reconcile()
 
 		-- Deep-clone session template so players never share nested tables
@@ -437,6 +441,10 @@ function DataHandler.OnInit(self: DataHandler)
 			SpecificPathUpdated = Signal() :: Signal.Signal<DataPath, any, DataKind>,
 		}
 		self.Data[player] = playerData
+		-- Before a pending reset, so the reset's fresh template balance is never rescaled.
+		if EconomyMigration.Migrate(playerData, savedEconomyVersion) then
+			Logger:Info(`Coins rescaled to the current economy for {player.Name}`)
+		end
 		if playerData.Cloud.ProgressResetPending then
 			ProgressReset.Apply(playerData.Cloud, deepClone(cloudDataTemplate))
 			Logger:Info(`Progress reset applied for {player.Name}`)

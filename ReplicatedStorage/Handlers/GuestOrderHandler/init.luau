@@ -43,7 +43,7 @@ local function findGuests(userId: number): Instance?
 end
 
 local function worldScale(head: BasePart): number
-	return TextScale.World(workspace.CurrentCamera, head.Position + Config.Bubble.Offset)
+	return TextScale.World(workspace.CurrentCamera, head.Position + Config.Bubble.Offset) * Config.Bubble.WorldScale
 end
 
 --[[ Handling ]]--

@@ -42,10 +42,13 @@ function RunControl.Bind(button: TextButton, playerGui: PlayerGui): Janitor.Jani
 	RunControl.SetRunning(button, false)
 
 	-- TouchReserve is the bottom-right area the visible jump and run controls cover, measured from
-	-- the container's bottom-right corner; HudLayout keeps HUD groups out of it.
-	local function publish(reserve: Vector2?): ()
+	-- the container's bottom-right corner; HudLayout keeps HUD groups out of it. Roblox mirrors the
+	-- movement stick's resting spot across from the jump button, so TouchStickClearance (the jump
+	-- button's top above the container's bottom edge) is how high the stick reaches in the left corner.
+	local function publish(reserve: Vector2?, stickClearance: number?): ()
 		button:SetAttribute("TouchLayoutReady", reserve ~= nil)
 		button:SetAttribute("TouchReserve", reserve)
+		button:SetAttribute("TouchStickClearance", stickClearance)
 	end
 	publish(nil)
 
@@ -81,7 +84,11 @@ function RunControl.Bind(button: TextButton, playerGui: PlayerGui): Janitor.Jani
 			and targetParent:IsA("GuiObject")
 			and targetParent.Visible
 		local topLeft = jumpCorner:Min(center - Vector2.one * diameter / 2)
-		publish(if ready then bounds - topLeft else nil)
+		if ready then
+			publish(bounds - topLeft, bounds.Y - jumpCorner.Y)
+		else
+			publish(nil)
+		end
 	end
 
 	local function findJump(): ()

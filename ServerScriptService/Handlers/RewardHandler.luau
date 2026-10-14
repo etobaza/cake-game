@@ -29,6 +29,7 @@ local Bus = require(_Shared.Bus)
 local DataHandler = require(ServerScriptService.Handlers.DataHandler)
 local DataList = require(_Shared.DataList)
 local EconomyHandler = require(ServerScriptService.Handlers.EconomyHandler)
+local Format = require(_Shared.UI.Format)
 local LoggerUtil = require(_Libs.Logger)
 local Products = require(_Configs.Registries.Products)
 local PurchaseHandler = require(ServerScriptService.Handlers.PurchaseHandler)
@@ -43,6 +44,7 @@ local MAX_CODE_LENGTH = 32
 -- Economy reason per reward track; the rest are timed rewards. Skipped tiers are bought with Robux.
 local REASONS: { [string]: EconomyHandler.CashReason } = {
 	Code = "Gameplay",
+	DailySkip = "IAP",
 	PlaytimeSkip = "IAP",
 }
 
@@ -207,7 +209,7 @@ function RewardHandler.BankPlaytime(self: RewardHandler, player: Player): ()
 end
 
 --- Pays a reward and tells the client what it was, so the toast can name it. `kind` is the reward
---- track (Code, Daily, Playtime, PlaytimeSkip, Group) reported to economy analytics; `source` is only for
+--- track (Code, Daily, DailySkip, Playtime, PlaytimeSkip, Group) reported to economy analytics; `source` is only for
 --- the player.
 function RewardHandler.Pay(
 	_self: RewardHandler,
@@ -224,7 +226,7 @@ function RewardHandler.Pay(
 		EconomyHandler:AwardXP(player, reward.XP)
 	end
 
-	Bus.Progress.RewardGranted:FireClient(player, `{source}: +{reward.Cash} coins, +{reward.XP} XP`)
+	Bus.Progress.RewardGranted:FireClient(player, `{source}: +{Format.Number(reward.Cash)} coins, +{reward.XP} XP`)
 	Logger:Info(`{player.Name} took {source} for {reward.Cash} coins and {reward.XP} XP`)
 end
 
@@ -391,8 +393,8 @@ function RewardHandler.ClaimGroup(self: RewardHandler, player: Player): boolean
 	return true
 end
 
---- The two Robux buttons on these screens: one clears the wait on the daily, the other pays out
---- every playtime tier that has not been taken yet.
+--- The Robux buttons on these screens: one clears the wait on the daily, one pays out every day left
+--- in the streak, and one pays out every playtime tier that has not been taken yet.
 function RewardHandler.GrantSkip(self: RewardHandler, player: Player, productId: number): ()
 	local entry = Products:GetByProductId(productId)
 	local meta = entry and entry.meta
@@ -406,6 +408,30 @@ function RewardHandler.GrantSkip(self: RewardHandler, player: Player, productId:
 		-- streak stays inside its grace window.
 		data.Cloud.Rewards.ClaimedAt = os.time() - Rewards.Daily.Cooldown
 		Logger:Info(`{player.Name} skipped the wait on the daily`)
+		return
+	end
+
+	if meta.grant == "SkipDailyAll" then
+		-- Starts where a claim would, ignoring the wait; a broken or finished streak pays a new one,
+		-- so the purchase never pays nothing.
+		local record = data.Cloud.Rewards
+		local last = #Rewards.Daily.Days
+		local since = os.time() - record.ClaimedAt
+		local first = if record.ClaimedAt == 0 or since > Rewards.Daily.Grace then 1 else record.Day + 1
+		if first > last then
+			first = 1
+		end
+
+		local total: Rewards.Reward = { Cash = 0, XP = 0 }
+		for day = first, last do
+			local reward = Rewards.Daily.Days[day]
+			total.Cash += reward.Cash
+			total.XP += reward.XP
+		end
+
+		record.Day = last
+		record.ClaimedAt = os.time()
+		self:Pay(player, total, if first == last then `Day {last}` else `Days {first}-{last}`, "DailySkip")
 		return
 	end
 
