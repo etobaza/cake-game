@@ -65,7 +65,7 @@ local BaseStats = {
 
 	-- Player
 	HandsLimit = 1,
-	WalkSpeed = 16,
+	WalkSpeed = 13,
 	RunSpeed = 24,
 }
 

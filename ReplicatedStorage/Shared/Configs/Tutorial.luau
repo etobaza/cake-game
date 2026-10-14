@@ -69,6 +69,9 @@ return {
 		-- portrait phone it also keeps the bubble above the thumbstick and jump button beside the
 		-- hotbar. BottomMargin applies when no hotbar is on screen.
 		HotbarGap = 28,
+		-- Above the order cards' labels (plain text, no plate) the bubble clears only its drop shadow,
+		-- so on phones, where that row sits beside the hotbar, it stays low.
+		OrderGap = 14,
 		BottomMargin = 110,
 		-- Gap below the clock when the dialog moves to the top to clear its own target.
 		TopGap = 14,
@@ -173,7 +176,7 @@ return {
 		-- ResponseText blip.
 		Voice = {
 			Sound = "TextSay" :: Sounds.SoundName?,
-			Pitch = { Min = 0.95, Max = 1.1 },
+			Pitch = { Min = 1.2, Max = 1.35 },
 			ReplySpread = 0.15,
 		},
 		AppearSeconds = 0.32,

@@ -3,6 +3,11 @@
 registry = "test"
 
 [[package]]
+name = "evaera/cmdr"
+version = "1.13.1"
+dependencies = []
+
+[[package]]
 name = "lm-loleris/profilestore"
 version = "1.0.3"
 dependencies = []
@@ -10,4 +15,4 @@ dependencies = []
 [[package]]
 name = "miscliq/cake-game-server"
 version = "0.0.0"
-dependencies = [["profilestore", "lm-loleris/profilestore@1.0.3"]]
+dependencies = [["cmdr", "evaera/cmdr@1.13.1"], ["profilestore", "lm-loleris/profilestore@1.0.3"]]

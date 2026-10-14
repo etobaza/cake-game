@@ -7,4 +7,5 @@ realm = "server"
 private = true
 
 [server-dependencies]
+cmdr = "evaera/cmdr@=1.13.1"
 profilestore = "lm-loleris/profilestore@=1.0.3"

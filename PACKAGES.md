@@ -8,11 +8,11 @@ From the repository root, run `rokit install` for pinned tools and `scripts/inst
 
 | Wally link | Manifest pin | Use / reference |
 | --- | --- | --- |
-| `ReplicatedStorage.Packages.cmdr` | `evaera/cmdr@=1.12.0` | Server bootstrap registers `ServerScriptService/Cmdr`; client requires runtime `ReplicatedStorage.CmdrClient`. Preserve `Cmdr/Admin` and `Hooks/BeforeRun` authorization. |
 | `ReplicatedStorage.Packages.flux` | `kohltastrophe/flux@=0.2.0` | Reactive UI nodes, bindings, scopes, springs. See `Handlers/UIHandler` and `Shared/UI/Motion`, `App`, `Scope`. |
 | `ReplicatedStorage.Packages.janitor` | `howmanysmall/janitor@=1.18.3` | Transient resource ownership. See `Handlers/CharacterAnimationHandler/Character` and `Handlers/VFXHandler/Effect`. |
 | `ReplicatedStorage.Packages["topbar-plus"]` | `1foreverhd/topbarplus@=3.4.0` | Topbar icons; see `Handlers/TopbarHandler`. |
 | `ReplicatedStorage.Packages["typed-promise"]` | `howmanysmall/typed-promise@=4.0.6` | Promise-based async work; Crystal wraps startup with `Promise.promisify`. |
+| `ServerStorage.ServerPackages.cmdr` | `evaera/cmdr@=1.13.1` | Server-only: 1.13 warns when its server library sits in a replicated container. Server bootstrap registers `ServerScriptService/Cmdr` through `Cmdr.Registry` (the `Cmdr:Register*In` proxies are deprecated); client requires runtime `ReplicatedStorage.CmdrClient`. Preserve `Cmdr/Admin` and `Hooks/BeforeRun` authorization. |
 | `ServerStorage.ServerPackages.profilestore` | `lm-loleris/profilestore@=1.0.3` | Server-only persistence owned by `ServerScriptService/Handlers/DataHandler`. |
 
 Pins above come from `ReplicatedStorage/wally.toml` and `ServerStorage/wally.toml`; manifests/lock files are authoritative. Install directories are ignored, while both manifests and lock files belong in Git.

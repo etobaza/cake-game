@@ -2,9 +2,10 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
+local ServerStorage = game:GetService("ServerStorage")
 
 local _Bus = require(ReplicatedStorage.Shared.Bus)
-local Cmdr = require(ReplicatedStorage.Packages.cmdr)
+local Cmdr = require(ServerStorage.ServerPackages.cmdr)
 local Crystal = require(ReplicatedStorage.Shared.Crystal)
 
 local cmdrRoot = ServerScriptService:FindFirstChild("Cmdr")
@@ -14,13 +15,13 @@ if cmdrRoot then
 	local commands = cmdrRoot:FindFirstChild("Commands")
 
 	if hooks then
-		Cmdr:RegisterHooksIn(hooks)
+		Cmdr.Registry:RegisterHooksIn(hooks)
 	end
 	if types then
-		Cmdr:RegisterTypesIn(types)
+		Cmdr.Registry:RegisterTypesIn(types)
 	end
 	if commands then
-		Cmdr:RegisterCommandsIn(commands)
+		Cmdr.Registry:RegisterCommandsIn(commands)
 	end
 end
 

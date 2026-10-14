@@ -153,6 +153,7 @@ export type Dialog = typeof(setmetatable(
 		Y: number?,
 		Avoid: Rect?,
 		HotbarEdge: EdgeWatch,
+		OrderEdge: EdgeWatch,
 	},
 	Dialog
 ))
@@ -570,15 +571,45 @@ local function overlaps(rect: Rect, left: number, bottom: number, width: number,
 	return rect.Max.X > left and rect.Min.X < left + width and rect.Max.Y > bottom - height and rect.Min.Y < bottom
 end
 
--- How far the highest visible descendant reaches above `element`'s frame, in pixels.
+-- Absolute Y where `gui` itself draws, or nil when it draws nothing. Text counts from its line: the
+-- order cards' status labels keep a tall box above bottom-aligned text.
+local function drawnTop(gui: GuiObject): number?
+	local y = gui.AbsolutePosition.Y
+	if gui.AbsoluteSize.Y <= 1 then
+		return nil
+	end
+	if gui.BackgroundTransparency < 1 then
+		return y
+	end
+	if (gui:IsA("TextLabel") or gui:IsA("TextButton")) and gui.Text ~= "" and gui.TextTransparency < 1 then
+		local spare = math.max(0, gui.AbsoluteSize.Y - gui.TextBounds.Y)
+		local alignment = gui.TextYAlignment
+		return y
+			+ if alignment == Enum.TextYAlignment.Bottom
+				then spare
+				elseif alignment == Enum.TextYAlignment.Center then spare / 2
+				else 0
+	end
+	if (gui:IsA("ImageLabel") or gui:IsA("ImageButton")) and gui.Image ~= "" and gui.ImageTransparency < 1 then
+		return y
+	end
+	return nil
+end
+
+-- How far the highest drawn pixel of `element`'s shown content reaches above its frame, in pixels
+-- (negative when the art starts below the frame's top).
 local function overhang(element: GuiObject): number
-	local top = element.AbsolutePosition.Y
-	for _, child in element:GetDescendants() do
-		if child:IsA("GuiObject") and child.Visible and child.AbsoluteSize.Y > 1 then
-			top = math.min(top, child.AbsolutePosition.Y)
+	local top = math.huge
+	local function visit(gui: GuiObject): ()
+		top = math.min(top, drawnTop(gui) or top)
+		for _, child in gui:GetChildren() do
+			if child:IsA("GuiObject") and child.Visible then
+				visit(child)
+			end
 		end
 	end
-	return element.AbsolutePosition.Y - top
+	visit(element)
+	return if top < math.huge then element.AbsolutePosition.Y - top else 0
 end
 
 local function watchEdge(watch: EdgeWatch, element: GuiObject): ()
@@ -601,12 +632,22 @@ local function watchEdge(watch: EdgeWatch, element: GuiObject): ()
 			for _, property in OVERHANG_PROPERTIES do
 				owner:Add(child:GetPropertyChangedSignal(property):Connect(dirty), "Disconnect")
 			end
+			if child:IsA("TextLabel") or child:IsA("TextButton") then
+				owner:Add(child:GetPropertyChangedSignal("TextBounds"):Connect(dirty), "Disconnect")
+			end
 		end
 	end
 end
 
--- Absolute Y of the highest thing drawn in a HUD group. The hotbar's slot
--- numbers and item art reach above its frame; the bubble keeps clear of what is actually drawn.
+local function newEdgeWatch(janitor: any): EdgeWatch
+	local owner = Janitor.new()
+	janitor:Add(owner, "Destroy")
+	return { Janitor = owner, Element = nil, Overhang = 0, Dirty = true, Rebind = false }
+end
+
+-- Absolute Y of the highest thing drawn in a HUD group. The hotbar's slot numbers and item art
+-- reach above its frame, the order row draws well inside its own; the bubble keeps clear of what
+-- is actually drawn.
 -- The descendant walk is cached in `watch`, so the per-frame read stays cheap.
 local function hudTop(path: string, watch: EdgeWatch): number?
 	local element = hudElement(path)
@@ -727,8 +768,6 @@ end
 function Dialog.new(acknowledge: (string) -> ()): Dialog
 	local janitor = Janitor.new()
 	local view = build(janitor)
-	local edgeOwner = Janitor.new()
-	janitor:Add(edgeOwner, "Destroy")
 	local self = setmetatable({
 		Janitor = janitor,
 		View = view,
@@ -753,7 +792,8 @@ function Dialog.new(acknowledge: (string) -> ()): Dialog
 		X = nil,
 		Y = nil,
 		Avoid = nil,
-		HotbarEdge = { Janitor = edgeOwner, Element = nil, Overhang = 0, Dirty = true, Rebind = false },
+		HotbarEdge = newEdgeWatch(janitor),
+		OrderEdge = newEdgeWatch(janitor),
 	}, Dialog) :: Dialog
 
 	janitor:Add(
@@ -1114,10 +1154,16 @@ function Dialog.Place(self: Dialog, deltaTime: number, scale: number): ()
 	local function leftLimit(lowest: number): number
 		return if side and side.Max.Y > lowest - height and side.Min.Y < lowest then side.Max.X + gap else gap
 	end
-	-- The order row shares the bottom band and rises above the hotbar on narrow screens: stack above it.
+	-- The order row shares the bottom band and rises above the hotbar on narrow screens: stack just
+	-- above its cards' labels, not above the empty top of its frame.
 	local order = hudRect(ORDER_PATH, bounds)
-	if order and overlaps(order, left, bottom, width, height) then
-		bottom = math.min(bottom, order.Min.Y - gap)
+	local orderTop = hudTop(ORDER_PATH, self.OrderEdge)
+	if order and orderTop then
+		order = Rect.new(order.Min.X, orderTop, order.Max.X, order.Max.Y)
+	end
+	local orderGap = STYLE.OrderGap * scale
+	if order and overlaps(order, left, bottom + orderGap, width, height) then
+		bottom = math.min(bottom, order.Min.Y - orderGap)
 	end
 	left = math.max(left, leftLimit(bottom))
 	local avoid = self.Avoid
