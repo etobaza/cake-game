@@ -14,6 +14,9 @@ local State = require(script.Parent.State)
 local Types = require(script.Parent.Parent.GameTypes)
 local UpgradeLesson = require(script.Parent.UpgradeLesson)
 
+--[[ Constants ]]--
+local DOOR = "door"
+
 --[[ Tables ]]--
 local Scenario = {}
 
@@ -157,6 +160,23 @@ local function serve(session: any, now: number, facts: Types.TutorialContext): T
 	)
 end
 
+-- Back in the Prep they joined into, the player is shown where the bakery opens whenever nothing is
+-- in hand or cooking.
+local function reopen(session: any, page: string, facts: Types.TutorialContext): Types.TutorialGoal?
+	if not facts.joinedPrep or page ~= "None" or session.Day.Phase ~= "Prep" or session.Hands[1] then
+		return nil
+	end
+	for _, station in session.Stations do
+		if station.State ~= "Idle" then
+			return nil
+		end
+	end
+	local goal = State.Goal("reopen", "Open your {bakery}", "Open the entrance when you are ready for guests.", DOOR)
+	-- Announced once, not on the reminder timer.
+	goal.topic = "Open"
+	return goal
+end
+
 --[[ Handling ]]--
 local function resolve(
 	cloud: any,
@@ -199,7 +219,7 @@ local function resolve(
 	if not active then
 		-- Dough left in a cold oven never bakes, so the firewood route shows at once, every time.
 		local fire = if page == "None" then Cooking.Fire(session, props) else nil
-		return fire or Lessons.Resolve(cloud, session, props, page, facts.room)
+		return fire or Lessons.Resolve(cloud, session, props, page, facts.room) or reopen(session, page, facts)
 	end
 	local context = session.Tutorial
 	if context.Stage == "Sweep" then

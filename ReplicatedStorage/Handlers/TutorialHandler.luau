@@ -179,6 +179,7 @@ function TutorialHandler.OnStart(self: TutorialHandler): ()
 	self.Janitor = Janitor.new()
 	self.Page = Pages.Current:peek()
 	self.Elapsed = 0
+	self.JoinedPrep = true
 	if not Config.Enabled then
 		local screen = UIHandler:GetPanel("Tutorial")
 		if screen then
@@ -292,6 +293,9 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 		self.Janitor:Remove("Frame")
 		return
 	end
+	if session.Day.Phase ~= "Prep" then
+		self.JoinedPrep = false
+	end
 	local guestId = incomingGuest(cloud, session)
 	self.GuestHighlight:Update(guestId)
 	local props = Interact:GetOwnedIds()
@@ -310,6 +314,7 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 		orderSeen = self.OrderSeen,
 		room = room,
 		gamepad = UserInputService.PreferredInput == Enum.PreferredInput.Gamepad,
+		joinedPrep = self.JoinedPrep,
 		upgradeCategory = if tree then tree:GetAttribute("UpgradeCategory") :: string? else nil,
 		upgradeSelectedId = if tree then tree:GetAttribute("SelectedUpgradeId") :: string? else nil,
 		upgradeSelectedLevel = if tree then tree:GetAttribute("SelectedPurchaseLevel") :: number? else nil,
@@ -390,6 +395,8 @@ export type TutorialHandler = typeof(TutorialHandler) & {
 	HudShown: { [string]: boolean }?,
 	-- The guest whose order card the player tapped.
 	OrderSeen: string?,
+	-- Still in the Prep the player joined into.
+	JoinedPrep: boolean,
 	-- The cart lesson's load prompt was shown, and its dismissal was sent.
 	CartPrompted: boolean?,
 	CartDismissed: boolean?,

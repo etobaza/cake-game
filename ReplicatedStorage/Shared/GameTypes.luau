@@ -41,6 +41,8 @@ export type TutorialContext = {
 	room: string?,
 	-- The player is on a gamepad, where the order card cannot be tapped.
 	gamepad: boolean?,
+	-- The Prep the player joined into, until the bakery opens: the door gets a reminder.
+	joinedPrep: boolean?,
 	-- Presentation facts from the authored upgrade tree; the server still validates every purchase.
 	upgradeCategory: string?,
 	upgradeSelectedId: string?,
