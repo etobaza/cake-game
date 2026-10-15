@@ -21,6 +21,8 @@ local CatsConfig = require(ReplicatedStorage.Shared.Configs.Cats)
 local Config = require(ReplicatedStorage.Shared.Configs.Tutorial)
 local Ease = require(script.Parent.Parent.Ease)
 local FoodPreview = require(script.Parent.Parent.FoodPreview)
+local InputCue = require(script.Parent.Parent.InputCue)
+local InputCues = require(ReplicatedStorage.Shared.Configs.InputCues)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Pages = require(script.Parent.Parent.Stores.Pages)
 local Press = require(script.Parent.Parent.Press)
@@ -796,15 +798,26 @@ function Dialog.new(acknowledge: (string) -> ()): Dialog
 		OrderEdge = newEdgeWatch(janitor),
 	}, Dialog) :: Dialog
 
+	local function acknowledgeCurrent(): ()
+		local current = self.Current
+		if current then
+			self:Reply()
+			self.Acknowledge(current.Goal.id)
+		end
+	end
+	janitor:Add(view.Button.Activated:Connect(acknowledgeCurrent), "Disconnect")
 	janitor:Add(
-		view.Button.Activated:Connect(function(): ()
-			local current = self.Current
-			if current then
-				self:Reply()
-				self.Acknowledge(current.Goal.id)
-			end
-		end),
-		"Disconnect"
+		InputCue.Bind({
+			Name = "TutorialAcknowledge",
+			Target = view.Button,
+			Key = InputCues.Keys.Acknowledge,
+			Action = acknowledgeCurrent,
+			-- A line appears by itself; Y pressed for the menu just then must not dismiss it.
+			Available = function(): boolean
+				return InputCue.OnScreen(view.Button) and os.clock() - self.ShownAt >= InputCues.SettleSeconds
+			end,
+		}),
+		"Destroy"
 	)
 	-- A tap on the bubble finishes the typing at once.
 	janitor:Add(

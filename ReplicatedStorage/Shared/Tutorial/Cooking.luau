@@ -59,11 +59,16 @@ local function putBack(session: any, page: string): Types.TutorialGoal?
 	return goal
 end
 
+-- A batch waiting for fire: loaded into a cold oven, or its log burned out mid-bake.
+local function needsFire(station: any): boolean
+	return station.State == "Loaded" or (station.State == "Cooking" and (station.HeatPausedAt or 0) > 0)
+end
+
 local function stationGoal(session: any, props: any, id: string, station: any, discard: boolean): Types.TutorialGoal?
 	if station.State == "Idle" then
 		return nil
 	end
-	if station.State == "Loaded" or (station.State == "Cooking" and (station.HeatPausedAt or 0) > 0) then
+	if needsFire(station) then
 		local held = session.Hands[1]
 		if held and held.Kind == "Fuel" then
 			return State.Goal(
@@ -235,6 +240,28 @@ local function ingredient(cloud: any, session: any, props: any, id: string, mixe
 end
 
 --[[ Handling ]]--
+Cooking.NeedsFire = needsFire
+
+--- A batch waiting for fire: the woodpile, then the oven once the log is in hand. Nil while the
+--- hands hold something that has to be put away first.
+function Cooking.Fire(session: any, props: any): Types.TutorialGoal?
+	local ids = {}
+	for id, station in session.Stations do
+		if needsFire(station) then
+			ids[#ids + 1] = id
+		end
+	end
+	table.sort(ids)
+	for _, id in ids do
+		local goal = stationGoal(session, props, id, session.Stations[id], false)
+		if goal and not goal.recovery then
+			goal.recipeId = session.Stations[id].RecipeId
+			return goal
+		end
+	end
+	return nil
+end
+
 function Cooking.AtStation(session: any, props: any, id: string, station: any, discard: boolean): Types.TutorialGoal?
 	return stationGoal(session, props, id, station, discard)
 end

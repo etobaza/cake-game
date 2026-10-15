@@ -13,6 +13,7 @@ local UserInputService = game:GetService("UserInputService")
 local Bus = require(ReplicatedStorage.Shared.Bus)
 local DataClient = require(ReplicatedStorage.Handlers.DataHandlerClient)
 local Flux = require(ReplicatedStorage.Packages.flux)
+local InputCues = require(ReplicatedStorage.Shared.Configs.InputCues)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Pages = require(ReplicatedStorage.Shared.UI.Stores.Pages)
 local RunControl = require(ReplicatedStorage.Shared.UI.RunControl)
@@ -68,7 +69,7 @@ function RunHandler.OnStart(self: RunHandler): ()
 		false,
 		Enum.KeyCode.LeftShift,
 		Enum.KeyCode.RightShift,
-		Enum.KeyCode.ButtonL3
+		InputCues.Hints.Keys.Run
 	)
 	self.Janitor:Add(function(): ()
 		ContextActionService:UnbindAction(RUN_ACTION)

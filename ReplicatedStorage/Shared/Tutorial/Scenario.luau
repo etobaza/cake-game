@@ -141,7 +141,7 @@ local function serve(session: any, now: number, facts: Types.TutorialContext): T
 	if previewing(session, customer, now, facts) then
 		local goal = State.Goal(
 			"order_card",
-			"Tap your guest's {order card}",
+			"Check your guest's {order card}",
 			"It shows the dish they want. Its number is the seat to bring that dish to.",
 			nil
 		)
@@ -197,7 +197,9 @@ local function resolve(
 		return urgent
 	end
 	if not active then
-		return Lessons.Resolve(cloud, session, props, page, facts.room)
+		-- Dough left in a cold oven never bakes, so the firewood route shows at once, every time.
+		local fire = if page == "None" then Cooking.Fire(session, props) else nil
+		return fire or Lessons.Resolve(cloud, session, props, page, facts.room)
 	end
 	local context = session.Tutorial
 	if context.Stage == "Sweep" then

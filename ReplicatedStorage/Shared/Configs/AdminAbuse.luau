@@ -179,8 +179,9 @@ local AdminAbuse = {
 	-- `TypeId` in Configs/Registries/CustomerTypes; this table only says how often they come.
 	Guests = {
 		TypeId = "event_guest",
-		-- Chance that a seated arrival during the event is a golden guest instead.
-		Chance = 0.35,
+		-- Chance that a seated arrival during the event is a golden guest instead. High because the
+		-- Lemon Cake arrival gaps (13-35 seconds early on) send few guests in a 5 minute event.
+		Chance = 0.8,
 		-- Golden guests in one bakery at the same time.
 		MaxActive = 1,
 	},

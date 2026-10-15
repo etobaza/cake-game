@@ -1,7 +1,7 @@
 --!strict
--- Creator Dashboard analytics: coin economy, day and store funnels, level and day progression, and
--- per-shift results. It only observes other handlers' signals; it never gates gameplay or rewards.
--- The introduction's onboarding funnel stays with TutorialHandler/Analytics.
+-- Creator Dashboard analytics: coin economy, the introduction's onboarding funnel, day, store,
+-- first-session and days-finished funnels, level and day progression, and per-shift results. It
+-- only observes other handlers' signals; it never gates gameplay or rewards.
 
 --[[ Services ]]--
 local AnalyticsService = game:GetService("AnalyticsService")
@@ -27,16 +27,23 @@ local TutorialEvents = require(ServerScriptService.TutorialEvents)
 
 --[[ Types ]]--
 type FunnelRun = { Id: string, Step: number }
+type FirstSessionRun = { Id: string, Step: number, Outcome: string, Upgraded: boolean }
 type PlayerState = {
 	Day: FunnelRun?,
 	-- One open store funnel per product: a second prompt restarts it.
 	Store: { [number]: FunnelRun },
+	-- Opened when the introduction ends; it lasts until the player leaves.
+	FirstSession: FirstSessionRun?,
+	Days: FunnelRun,
 }
 
 --[[ Private Variables ]]--
 local Logger = LoggerUtil.new({ name = "AnalyticsHandler" })
 local DayFunnel = AnalyticsConfig.Funnels.Day
 local StoreFunnel = AnalyticsConfig.Funnels.Store
+local FirstSessionFunnel = AnalyticsConfig.Funnels.FirstSession
+local DaysFunnel = AnalyticsConfig.Funnels.Days
+local Onboarding = AnalyticsConfig.Onboarding
 
 --[[ Tables ]]--
 local AnalyticsHandler = {
@@ -96,6 +103,11 @@ local function newRun(): FunnelRun
 	return { Id = HttpService:GenerateGUID(false), Step = 0 }
 end
 
+-- The days run spans sessions, so its id is the player's own.
+local function newState(player: Player): PlayerState
+	return { Day = nil, Store = {}, FirstSession = nil, Days = { Id = tostring(player.UserId), Step = 0 } }
+end
+
 -- Funnel steps only move forward: a repeated or late step is dropped instead of muddying the funnel.
 local function step(player: Player, funnel: string, run: FunnelRun, index: number, name: string, field01: string?): ()
 	if index <= run.Step then
@@ -110,10 +122,10 @@ end
 --[[ Handling ]]--
 function AnalyticsHandler.OnStart(self: AnalyticsHandler): ()
 	for _, player in Players:GetPlayers() do
-		self.States[player] = { Day = nil, Store = {} }
+		self.States[player] = newState(player)
 	end
 	Players.PlayerAdded:Connect(function(player: Player)
-		self.States[player] = { Day = nil, Store = {} }
+		self.States[player] = newState(player)
 	end)
 	Players.PlayerRemoving:Connect(function(player: Player)
 		self.States[player] = nil
@@ -131,22 +143,38 @@ function AnalyticsHandler.OnStart(self: AnalyticsHandler): ()
 	end)
 	DayCycleHandler.ShiftStarted:Connect(function(player: Player)
 		self:DayStep(player, "Opened")
+		self:FirstSessionStep(player, "SecondShiftOpened")
 	end)
 	CustomerHandler.DishSold:Connect(function(player: Player)
 		self:DayStep(player, "FirstSale")
 	end)
 	DayCycleHandler.ShiftEnded:Connect(function(player: Player)
 		self:DayStep(player, "Closed")
+		-- Only the run's next step counts, so at most one of these applies.
+		self:FirstSessionStep(player, "FirstShiftClosed")
+		self:FirstSessionStep(player, "SecondShiftClosed")
 		self:LogShift(player)
 	end)
 
-	TutorialEvents.Action:Connect(function(player: Player, action: string)
+	TutorialEvents.Action:Connect(function(player: Player, action: string, id: string)
 		if action == "NextDay" then
 			self:DayStep(player, "NextDay")
+			self:FirstSessionStep(player, "NextDay")
+		elseif action == "BuyUpgrade" then
+			self:LogFirstSessionUpgrade(player, id)
 		end
 		local event = AnalyticsConfig.ActionEvents[action]
 		if event then
 			self:LogCustom(player, event, 1, dayBucket(getDay(player)))
+		end
+	end)
+	TutorialEvents.Milestone:Connect(function(player: Player, name: string, stage: string)
+		self:OnboardingStep(player, name, stage)
+		if name == "Skipped" then
+			self:LogCustom(player, Onboarding.SkippedEvent, 1, stage)
+		end
+		if name == "Completed" or name == "Skipped" then
+			self:StartFirstSession(player, name)
 		end
 	end)
 
@@ -240,6 +268,73 @@ function AnalyticsHandler.StoreStep(self: AnalyticsHandler, player: Player, prod
 	end
 end
 
+-- The one-time onboarding funnel moves through done steps only: a step is logged once every
+-- earlier one is done (saved tutorial actions), then any later step done early follows at once.
+function AnalyticsHandler.OnboardingStep(_self: AnalyticsHandler, player: Player, name: string, stage: string): ()
+	local data = DataHandler:GetData(player)
+	local index = table.find(Onboarding.Steps, name)
+	if not data or not index then
+		return
+	end
+	local actions = data.Cloud.Tutorial.Actions
+	for earlier = 1, index - 1 do
+		local earlierName = Onboarding.Steps[earlier]
+		local skipped = stage ~= "Sweep" and Onboarding.SweepSteps[earlierName] == true
+		if not actions[earlierName] and not skipped then
+			return
+		end
+	end
+
+	for current = index, #Onboarding.Steps do
+		local currentName = Onboarding.Steps[current]
+		if current > index and not actions[currentName] then
+			break
+		end
+		send(`Onboarding {current} {currentName}`, function()
+			AnalyticsService:LogOnboardingFunnelStepEvent(player, current, currentName)
+		end)
+	end
+end
+
+function AnalyticsHandler.StartFirstSession(self: AnalyticsHandler, player: Player, outcome: string): ()
+	local state = self.States[player]
+	if not state then
+		return
+	end
+	state.FirstSession = { Id = HttpService:GenerateGUID(false), Step = 0, Outcome = outcome, Upgraded = false }
+	self:FirstSessionStep(player, FirstSessionFunnel.Steps[1])
+end
+
+-- A shift opened before the first close (an introduction skipped in the morning) or a third day
+-- never lands on a later step, because only the run's next step counts.
+function AnalyticsHandler.FirstSessionStep(self: AnalyticsHandler, player: Player, name: string): ()
+	local state = self.States[player]
+	local run = state and state.FirstSession
+	if not run or FirstSessionFunnel.Steps[run.Step + 1] ~= name then
+		return
+	end
+	step(player, FirstSessionFunnel.Name, run, run.Step + 1, name, run.Outcome)
+end
+
+-- The run's step tells when it was bought: which day, and before or after closing.
+function AnalyticsHandler.LogFirstSessionUpgrade(self: AnalyticsHandler, player: Player, upgradeId: string): ()
+	local state = self.States[player]
+	local run = state and state.FirstSession
+	if not run or run.Upgraded then
+		return
+	end
+	run.Upgraded = true
+	self:LogCustom(player, FirstSessionFunnel.UpgradeEvent, 1, FirstSessionFunnel.Steps[run.Step], upgradeId)
+end
+
+function AnalyticsHandler.DaysStep(self: AnalyticsHandler, player: Player, day: number): ()
+	local state = self.States[player]
+	if not state or day < 1 or day > DaysFunnel.MaxDay then
+		return
+	end
+	step(player, DaysFunnel.Name, state.Days, day, `Day{day}`)
+end
+
 -- One event per day total: what the shift earned, how many guests were served and how many left.
 function AnalyticsHandler.LogShift(self: AnalyticsHandler, player: Player): ()
 	local data = DataHandler:GetData(player)
@@ -248,6 +343,7 @@ function AnalyticsHandler.LogShift(self: AnalyticsHandler, player: Player): ()
 	end
 	local day = data.Session.Day
 	self:LogProgression(player, "Day", day.Number)
+	self:DaysStep(player, day.Number)
 
 	local bucket = dayBucket(day.Number)
 	local summary = day.Summary

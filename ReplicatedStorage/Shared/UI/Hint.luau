@@ -38,11 +38,10 @@ export type Options = {
 	Beam: boolean?,
 	TargetPoint: Vector2?,
 	WorldOffset: Vector3?,
-	Occlusion: boolean?,
 	Route: boolean?,
 }
 type Target = GuiObject | WorldTarget
-type WorldResolved = { kind: "World", point: Vector3, instance: Instance? }
+type WorldResolved = { kind: "World", point: Vector3 }
 type Resolved = { kind: "Gui", rect: Geometry.Rect } | WorldResolved
 type Frame = {
 	camera: Camera,
@@ -75,17 +74,12 @@ export type View = typeof(setmetatable(
 		Key: string?,
 		Enabled: boolean,
 		Closed: boolean,
-		Visible: boolean,
-		OnScreen: boolean,
-		Occluded: boolean,
-		Bounds: Geometry.Rect?,
 		Since: number,
 		Age: number,
 		Animation: HintAnimation.Animation,
 		Rotation: number?,
 		Sequence: number,
 		ResolverFailed: boolean,
-		LastOcclusion: number,
 		Connection: RBXScriptConnection?,
 	},
 	Hint
@@ -103,8 +97,6 @@ local function hideSurface(self: View): ()
 	self.Surface.Focus.Visible = false
 	self.Surface.Finger.Visible = false
 	self.Beam:Hide()
-
-	self.Visible, self.OnScreen, self.Occluded, self.Bounds = false, false, false, nil
 end
 
 local function readTarget(self: View): Target?
@@ -145,7 +137,7 @@ end
 
 local function resolveWorld(target: Target): Resolved?
 	if typeof(target) == "Vector3" then
-		return { kind = "World", point = target, instance = nil }
+		return { kind = "World", point = target }
 	end
 
 	if typeof(target) ~= "Instance" or not target:IsDescendantOf(workspace) then
@@ -153,16 +145,16 @@ local function resolveWorld(target: Target): Resolved?
 	end
 
 	if target:IsA("BasePart") then
-		local resolved: WorldResolved = { kind = "World", point = target.Position, instance = target }
+		local resolved: WorldResolved = { kind = "World", point = target.Position }
 		return resolved
 	end
 
 	if target:IsA("Attachment") then
-		return { kind = "World", point = target.WorldPosition, instance = target.Parent }
+		return { kind = "World", point = target.WorldPosition }
 	end
 
 	if target:IsA("Model") then
-		local resolved: WorldResolved = { kind = "World", point = WorldPose.Pivot(target).Position, instance = target }
+		local resolved: WorldResolved = { kind = "World", point = WorldPose.Pivot(target).Position }
 		return resolved
 	end
 
@@ -188,44 +180,9 @@ local function resolve(self: View): Resolved?
 	-- A target in another room points at the doorway first.
 	local point, door = HintRoute.Waypoint(resolved.point)
 	if door then
-		return { kind = "World", point = point, instance = door }
+		return { kind = "World", point = point }
 	end
 	return resolved
-end
-
-local function obstructed(point: Vector3, target: Instance?, camera: Camera): boolean
-	local excluded: { Instance } = {}
-	local character = Players.LocalPlayer.Character
-	if character then
-		table.insert(excluded, character)
-	end
-
-	local direction = point - camera.CFrame.Position
-	if direction.Magnitude < Config.OcclusionMinRayLength then
-		return false
-	end
-
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.IgnoreWater = true
-	for _ = 1, Config.OcclusionMaxHits do
-		params.FilterDescendantsInstances = excluded
-		local hit = workspace:Raycast(camera.CFrame.Position, direction, params)
-		if not hit or (hit.Position - point).Magnitude < Config.OcclusionTargetRadius then
-			return false
-		end
-
-		if target and (hit.Instance == target or hit.Instance:IsDescendantOf(target)) then
-			return false
-		end
-
-		if hit.Instance.Transparency < Config.OcclusionTransparency then
-			return true
-		end
-		table.insert(excluded, hit.Instance)
-	end
-
-	return false
 end
 
 local function fingerSize(options: Options, viewport: Vector2): number
@@ -245,7 +202,6 @@ end
 local function drawGui(self: View, rect: Geometry.Rect, frame: Frame): (Vector2, number)
 	local surface, options = self.Surface, self.Options
 	self.Beam:Hide()
-	self.Occluded = false
 
 	local anchor = options.TargetPoint or Vector2.one / 2
 	local point = rect.min + (rect.max - rect.min) * anchor
@@ -261,12 +217,10 @@ local function drawGui(self: View, rect: Geometry.Rect, frame: Frame): (Vector2,
 	local padding = Vector2.one * math.max(0, options.Padding or Config.Padding) * frame.density
 	-- HUD artwork may extend above the finger's safe region. Clip the hole only at the
 	-- viewport edge; otherwise a top-aligned clock gets a visibly lowered spotlight.
-	self.Bounds = Geometry.Intersect(
+	local bounds = Geometry.Intersect(
 		{ min = rect.min - padding, max = rect.max + padding },
 		{ min = Vector2.zero, max = frame.viewport }
-	)
-
-	local bounds = self.Bounds or rect
+	) or rect
 	local minimum = frame.safe.min:Lerp(bounds.min, frame.progress)
 	local maximum = frame.safe.max:Lerp(bounds.max, frame.progress)
 	surface.Focus.Position = Geometry.ToScreen(surface.Screen, minimum)
@@ -295,28 +249,11 @@ local function playerDirection(camera: Camera, point: Vector2, fallback: Vector2
 	return point - Vector2.new(origin.X, origin.Y)
 end
 
-local function updateOcclusion(self: View, point: Vector3, target: Instance?, camera: Camera): ()
-	if self.Options.Occlusion == false then
-		self.Occluded = false
-		return
-	end
-
-	local now = os.clock()
-	if now - self.LastOcclusion < Config.OcclusionInterval then
-		return
-	end
-
-	self.LastOcclusion = now
-	self.Occluded = obstructed(point, target, camera)
-end
-
-local function drawWorld(self: View, point: Vector3, target: Instance?, frame: Frame): (Vector2, number, boolean)
+local function drawWorld(self: View, point: Vector3, frame: Frame): (Vector2, number)
 	local worldPoint = point + (self.Options.WorldOffset or Vector3.zero)
 	local markerSafe = Geometry.Inset(frame.safe, frame.side, 1)
 	local projected, onScreen, direction = Geometry.Project(frame.camera, worldPoint, markerSafe)
 	direction = playerDirection(frame.camera, projected, direction, onScreen)
-
-	updateOcclusion(self, worldPoint, target, frame.camera)
 
 	if self.Options.Beam == false then
 		self.Beam:Hide()
@@ -324,10 +261,9 @@ local function drawWorld(self: View, point: Vector3, target: Instance?, frame: F
 		self.Beam:Show(worldPoint)
 	end
 
-	self.Bounds = { min = projected, max = projected }
 	self.Surface.Focus.Visible = false
 
-	return projected, Geometry.Angle(direction), onScreen
+	return projected, Geometry.Angle(direction)
 end
 
 local function drawFinger(self: View, point: Vector2, desired: number, frame: Frame, delta: number): ()
@@ -374,17 +310,14 @@ local function draw(self: View, resolved: Resolved, delta: number): ()
 
 	local point: Vector2
 	local rotation: number
-	local onScreen = true
 
 	if resolved.kind == "Gui" then
 		point, rotation = drawGui(self, resolved.rect, frame)
 	else
-		point, rotation, onScreen = drawWorld(self, resolved.point, resolved.instance, frame)
+		point, rotation = drawWorld(self, resolved.point, frame)
 	end
 
 	drawFinger(self, point, rotation, frame, delta)
-	self.Visible = true
-	self.OnScreen = onScreen
 end
 
 local function step(delta: number): ()
@@ -448,7 +381,7 @@ local function set(self: View, mode: string, target: GuiTarget | WorldResolver, 
 	Sequence += 1
 	self.Sequence, self.Since, self.Age = Sequence, os.clock(), 0
 	self.Animation:Reset()
-	self.Rotation, self.ResolverFailed, self.LastOcclusion = nil, false, 0
+	self.Rotation, self.ResolverFailed = nil, false
 	hideSurface(self)
 end
 
@@ -462,15 +395,11 @@ function Hint.new(defaults: Options?): View
 		Options = {},
 		Enabled = true,
 		Closed = false,
-		Visible = false,
-		OnScreen = false,
-		Occluded = false,
 		Since = os.clock(),
 		Age = 0,
 		Animation = HintAnimation.new(),
 		Sequence = 0,
 		ResolverFailed = false,
-		LastOcclusion = 0,
 	}, Hint) :: View
 
 	Views[self] = true
@@ -492,18 +421,6 @@ end
 
 function Hint.World(self: View, target: WorldResolver, options: Options?): ()
 	set(self, "World", target, options)
-end
-
-function Hint.GetBounds(self: View): Geometry.Rect?
-	return self.Bounds
-end
-
-function Hint.IsOnScreen(self: View): boolean
-	return self.Visible and self.OnScreen
-end
-
-function Hint.IsVisible(self: View): boolean
-	return self.Visible
 end
 
 function Hint.SetEnabled(self: View, enabled: boolean): ()

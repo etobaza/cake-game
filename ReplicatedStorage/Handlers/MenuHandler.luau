@@ -28,6 +28,9 @@ local BuildingsConfig = require(_Configs.Buildings)
 local Bus = require(_Shared.Bus)
 local DataClient = require(_Handlers.DataHandlerClient)
 local DayCycleConfig = require(_Configs.DayCycle)
+local Flux = require(ReplicatedStorage.Packages.flux)
+local InputCue = require(_Shared.UI.InputCue)
+local InputCues = require(_Configs.InputCues)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Press = require(_Shared.UI.Press)
 local Recipes = require(_Configs.Registries.Recipes)
@@ -35,6 +38,7 @@ local RecipeRequirements = require(_Shared.RecipeRequirements)
 local RequirementLabel = require(_Shared.UI.RecipeRequirementLabel)
 local GuidanceConfig = require(_Configs.RecipeGuidance)
 local Responsive = require(_Shared.UI.Responsive)
+local Scope = require(_Shared.UI.Scope)
 local UIHandler = require(_Handlers.UIHandler)
 
 --[[ Constants ]]--
@@ -411,6 +415,41 @@ function MenuHandler.BindHeader(self: MenuHandler): ()
 			self:NextDay()
 		end),
 		"Disconnect"
+	)
+	-- Next Day appears with the evening on its own: a press meant for the day's last prompt must not
+	-- skip the report.
+	local shownAt = os.clock()
+	self.Janitor:Add(
+		nextDay:GetPropertyChangedSignal("Visible"):Connect(function(): ()
+			shownAt = os.clock()
+		end),
+		"Disconnect"
+	)
+	-- On the evening's Upgrades tab the same button buys the selected upgrade.
+	local function free(): boolean
+		return Pages.Current:peek() ~= Pages.Names.Upgrades
+	end
+	local cue = InputCue.Bind({
+		Name = "NextDay",
+		Target = nextDay,
+		Key = InputCues.Keys.PageAction,
+		Action = function(): ()
+			self:NextDay()
+		end,
+		Available = function(): boolean
+			return free() and InputCue.OnScreen(nextDay) and os.clock() - shownAt >= InputCues.SettleSeconds
+		end,
+		Shown = free,
+	})
+	self.Janitor:Add(cue, "Destroy")
+	self.Janitor:Add(
+		Scope.Run(function(): ()
+			Flux(function(): ()
+				Pages.Current()
+				cue:Refresh()
+			end, true)
+		end),
+		"Destroy"
 	)
 end
 

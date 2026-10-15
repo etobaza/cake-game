@@ -288,7 +288,7 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 		self.TargetId = nil
 		self.GuestHighlight:Clear()
 		self.Coach:Reset()
-		self.View:Set(nil, cloud.Tutorial)
+		self.View:Set(nil, cloud.Tutorial, false)
 		self.Janitor:Remove("Frame")
 		return
 	end
@@ -340,11 +340,15 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 	local stage = if TutorialPolicy.IsActive(cloud) then Config.Stages[session.Tutorial.Stage] else nil
 	local progress = if stage then `{stage}/{Config.Stages.Clean}` else nil
 	local line = if goal and not coaching then stageLine(cloud, session, goal) else nil
+	-- Nana talks through the introduction and the rest of the first day, its evening included; later
+	-- guidance, and coaching unless a guest waits, uses the short toast.
+	local voiced = TutorialPolicy.IsActive(cloud) or cloud.Day == 1
+	local speaking = goal ~= nil and voiced and (not coaching or goal.persistent == true)
 	-- Other guides stay quiet while the tutorial is showing the player what to do.
 	self.Guiding = goal ~= nil and not cloud.Tutorial.Collapsed
 	self.TargetId = if goal and goal.target and goal.target.kind == "World" then goal.target.id else nil
 	applyHud(self, cloud, session, goal)
-	self.View:Set(goal, cloud.Tutorial, coaching, progress, line)
+	self.View:Set(goal, cloud.Tutorial, speaking, progress, line)
 	local needsFrame = goal ~= nil or guestId ~= nil or self.Coach:IsPending()
 	if needsFrame and not self.Janitor:Get("Frame") then
 		self.Janitor:Add(

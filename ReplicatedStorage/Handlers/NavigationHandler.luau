@@ -1,15 +1,19 @@
 --!strict
 -- Gamepad page focus and back navigation. Pages remains the owner of modal state;
--- Roblox handles directional selection and scrolls selected descendants into view.
+-- Roblox handles directional selection and scrolls selected descendants into view. Also draws the
+-- themed focus ring and the HUD's controller glyph row.
 
 --[[ Services ]]--
 local ContextActionService = game:GetService("ContextActionService")
 local GuiService = game:GetService("GuiService")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
 --[[ Modules ]]--
 local Flux = require(ReplicatedStorage.Packages.flux)
+local InputCue = require(ReplicatedStorage.Shared.UI.InputCue)
+local InputCues = require(ReplicatedStorage.Shared.Configs.InputCues)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Pages = require(ReplicatedStorage.Shared.UI.Stores.Pages)
 local Scope = require(ReplicatedStorage.Shared.UI.Scope)
@@ -19,6 +23,9 @@ local UIHandler = require(ReplicatedStorage.Handlers.UIHandler)
 local MENU_ACTION = "CakeMenu"
 local BACK_ACTION = "CakeBack"
 local WORLD_ACTION = "CakeModalInteraction"
+-- First HUD focus: Upgrades is where the loop leads, not the Robux shop. The tutorial hides it, so
+-- the next visible side button takes over.
+local HUD_FOCUS = { "SideBtns.Upgrades.Btn", "SideBtns.Shop.Btn", "SideBtns.Rewards" }
 
 --[[ Tables ]]--
 local NavigationHandler = {
@@ -27,21 +34,9 @@ local NavigationHandler = {
 }
 
 --[[ Private Functions ]]--
+-- Checked up to PlayerGui, not just to root: a disabled screen above root hides it too.
 local function visible(object: GuiObject, root: Instance): boolean
-	if not object:IsDescendantOf(root) or not object.Selectable or not object.Interactable then
-		return false
-	end
-	local current: Instance? = object
-	while current and current ~= root do
-		if current:IsA("GuiObject") and not current.Visible then
-			return false
-		end
-		if current:IsA("LayerCollector") and not current.Enabled then
-			return false
-		end
-		current = current.Parent
-	end
-	return true
+	return object:IsDescendantOf(root) and object.Selectable and object.Interactable and InputCue.OnScreen(object)
 end
 
 local function inView(object: GuiObject): boolean
@@ -101,6 +96,11 @@ function NavigationHandler.OnStart(self: NavigationHandler): ()
 		"Disconnect"
 	)
 	self.Janitor:Add(GuiService.MenuClosed:Connect(refresh), "Disconnect")
+	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui") :: PlayerGui
+	local ring = InputCue.SelectionRing()
+	self.Janitor:Add(ring, "Destroy")
+	self.Ring = ring
+	playerGui.SelectionImageObject = ring
 	local scope = Scope.Run(function(): ()
 		Flux(function(): ()
 			local page = Pages.Current()
@@ -123,7 +123,7 @@ function NavigationHandler.OnStart(self: NavigationHandler): ()
 			return Enum.ContextActionResult.Sink
 		end,
 		false,
-		Enum.KeyCode.ButtonY
+		InputCues.Hints.Keys.Menu
 	)
 	ContextActionService:BindAction(
 		BACK_ACTION,
@@ -151,19 +151,22 @@ function NavigationHandler.OnStart(self: NavigationHandler): ()
 			return Enum.ContextActionResult.Sink
 		end,
 		false,
-		Enum.KeyCode.ButtonB
+		InputCues.Keys.Close
 	)
 	ContextActionService:BindActionAtPriority(WORLD_ACTION, function(): Enum.ContextActionResult
 		return if Pages.Current:peek() ~= Pages.Names.None or GuiService.SelectedObject ~= nil
 			then Enum.ContextActionResult.Sink
 			else Enum.ContextActionResult.Pass
-	end, false, Enum.ContextActionPriority.High.Value, Enum.KeyCode.ButtonX)
+	end, false, Enum.ContextActionPriority.High.Value, InputCues.Hints.Keys.Interact)
 	self.Janitor:Add(function(): ()
 		for _, action in { MENU_ACTION, BACK_ACTION, WORLD_ACTION } do
 			ContextActionService:UnbindAction(action)
 		end
 		GuiService.SelectedObject = nil
+		-- The engine type omits nil, which restores the default ring.
+		playerGui.SelectionImageObject = nil :: any
 	end)
+	self:BindHints()
 	self:Refresh()
 end
 
@@ -172,10 +175,7 @@ function NavigationHandler.Refresh(self: NavigationHandler): ()
 		return
 	end
 	local gamepad = UserInputService.PreferredInput == Enum.PreferredInput.Gamepad
-	local hint = UIHandler:GetHud("Controls.GamepadHint") :: TextLabel
-	local menuKey = string.gsub(UserInputService:GetStringForKeyCode(Enum.KeyCode.ButtonY), "^Button", "")
-	local interactKey = string.gsub(UserInputService:GetStringForKeyCode(Enum.KeyCode.ButtonX), "^Button", "")
-	hint.Text = `{menuKey}: Menu   {interactKey}: Interact   L3: Run`
+	local hint = UIHandler:GetHud("Controls.GamepadHint") :: GuiObject
 	hint.Visible = gamepad and Pages.Current:peek() == Pages.Names.None
 	if not gamepad or not self.Browsing then
 		GuiService.SelectedObject = nil
@@ -207,9 +207,12 @@ function NavigationHandler.Refresh(self: NavigationHandler): ()
 			GuiService.SelectedObject = help
 			return
 		end
-		local shop = UIHandler:GetHud("SideBtns.Shop.Btn") :: GuiObject
-		if visible(shop, root) and inView(shop) then
-			GuiService.SelectedObject = shop
+		for _, path in HUD_FOCUS do
+			local button = UIHandler:GetHud(path) :: GuiObject
+			if visible(button, root) and inView(button) then
+				GuiService.SelectedObject = button
+				return
+			end
 		end
 		return
 	end
@@ -236,12 +239,32 @@ function NavigationHandler.Refresh(self: NavigationHandler): ()
 	GuiService.SelectedObject = target
 end
 
+-- Fills each authored hint entry's badge with the connected controller's glyph.
+function NavigationHandler.BindHints(self: NavigationHandler): ()
+	local hint = UIHandler:GetHud("Controls.GamepadHint")
+	local function render(): ()
+		for name, key in InputCues.Hints.Keys :: { [string]: Enum.KeyCode } do
+			local entry = hint:FindFirstChild(name)
+			local badge = entry and entry:FindFirstChild("Badge")
+			local glyph = badge and badge:FindFirstChild("Glyph")
+			if badge and badge:IsA("Frame") and glyph and glyph:IsA("ImageLabel") then
+				InputCue.Render(badge, key, InputCues.Hints.BadgeSize)
+			else
+				print(`[NavigationHandler] the gamepad hint has no '{name}.Badge.Glyph'`)
+			end
+		end
+	end
+	render()
+	self.Janitor:Add(UserInputService.GamepadConnected:Connect(render), "Disconnect")
+end
+
 function NavigationHandler.WatchSelection(self: NavigationHandler): ()
 	self.Selection:Cleanup()
 	local selected = GuiService.SelectedObject
 	if not selected then
 		return
 	end
+	InputCue.FitRing(self.Ring, selected)
 	local function refresh(): ()
 		task.defer(function(): ()
 			self:Refresh()
@@ -265,6 +288,7 @@ end
 export type NavigationHandler = typeof(NavigationHandler) & {
 	Janitor: any,
 	Selection: any,
+	Ring: Frame,
 	Browsing: boolean,
 }
 

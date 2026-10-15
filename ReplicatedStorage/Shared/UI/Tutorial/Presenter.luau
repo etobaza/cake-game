@@ -1,6 +1,6 @@
 --!strict
--- Tutorial presentation: a target hint plus the guide's speech bubble (Dialog), which stays up for
--- as long as its step is active. Post-introduction coaching keeps the brief status toast.
+-- Tutorial presentation: a target hint plus either the guide's speech bubble (Dialog), which stays
+-- up for as long as its step is active, or the brief status toast.
 
 --[[ Services ]]
 --
@@ -27,8 +27,8 @@ export type Presenter = typeof(setmetatable(
 		Focus: Focus.Focus,
 		Dialog: Dialog.Dialog,
 		Goal: Types.TutorialGoal?,
-		-- Coaching goals keep the short status toast instead of the bubble.
-		Coaching: boolean,
+		-- The step speaks through the bubble; otherwise the short status toast announces it.
+		Speaking: boolean,
 		Progress: string?,
 		-- The bubble's line for this step: the stage line during the introduction.
 		Line: string?,
@@ -60,7 +60,7 @@ function Presenter.new(
 		Screen = screen,
 		Focus = Focus.new(screen),
 		Dialog = Dialog.new(acknowledge),
-		Coaching = false,
+		Speaking = false,
 		Collapsed = false,
 		Announced = "",
 		GoalKey = "",
@@ -75,7 +75,7 @@ function Presenter.Set(
 	self: Presenter,
 	goal: Types.TutorialGoal?,
 	saved: { Collapsed: boolean },
-	coaching: boolean?,
+	speaking: boolean,
 	progress: string?,
 	line: string?
 ): ()
@@ -85,7 +85,7 @@ function Presenter.Set(
 		self.EligibleSince = os.clock()
 	end
 	self.Goal = goal
-	self.Coaching = coaching == true
+	self.Speaking = speaking
 	self.Progress = progress
 	self.Line = line
 	self.Collapsed = saved.Collapsed
@@ -180,9 +180,8 @@ function Presenter.Draw(self: Presenter, _deltaTime: number, page: string): ()
 
 	local target = self.Focus.Target
 	local message = if target and target.message then target.message else goal.title
-	if not self.Coaching or goal.persistent then
-		-- The bubble owns the step: it stays up, so it never waits behind other toasts. Coaching
-		-- uses it too while a guest waits, so the shift never goes silent.
+	if self.Speaking then
+		-- The bubble owns the step: it stays up, so it never waits behind other toasts.
 		hideToast(self)
 		local shown = table.clone(goal)
 		shown.title = self.Line or goal.title

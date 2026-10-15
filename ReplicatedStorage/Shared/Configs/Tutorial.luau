@@ -222,8 +222,8 @@ return {
 		-- Cooldown = true makes the nudge wait for `Cooldown` seconds after the previous one.
 		Delays = {
 			Stuck = { Nudge = 30, Point = 50, Cooldown = true },
-			-- Stuck or Idle while a seated guest chooses or waits for food: the line comes sooner and
-			-- stays in the guide's bubble until no guest waits (Coach).
+			-- Stuck or Idle while a seated guest chooses or waits for food: the line comes sooner and,
+			-- on the first day, stays in the guide's bubble until no guest waits (Coach).
 			Guest = { Nudge = 6, Point = 20, Cooldown = false },
 			Urgent = { Nudge = 8, Point = 15, Cooldown = false },
 			Prep = { Nudge = 60, Point = 90, Cooldown = true },
@@ -317,13 +317,6 @@ return {
 			station = "Coffee",
 			intro = "Make coffee at the coffee machine",
 		},
-		{
-			id = "assistant",
-			upgrade = "cafe_assistant",
-			-- Used once the evening plan gives the assistant any job.
-			task = true,
-			intro = "Your assistant works the job you chose",
-		},
 	} :: {
 		{
 			id: string,
@@ -332,7 +325,6 @@ return {
 			minIndex: number?,
 			actions: { [string]: boolean }?,
 			station: string?,
-			task: boolean?,
 			intro: string,
 		}
 	},
@@ -345,7 +337,7 @@ return {
 		{
 			id = "Cooking",
 			title = "Cooking",
-			text = "Choose a recipe at the mixer. Carry one ingredient at a time, mix, then move the dough to its next station. Firewood burns over time, even in an empty oven. Add a log whenever needed; baking and burning pause without fire. Collect baked food before it burns.",
+			text = "Choose a recipe at the mixer. Carry one ingredient at a time, mix, then bake the dough in the oven. Firewood burns over time, even in an empty oven. Add a log whenever needed; baking and burning pause without fire. Collect baked food before it burns.",
 		},
 		{
 			id = "Serving",

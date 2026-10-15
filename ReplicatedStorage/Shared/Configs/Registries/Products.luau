@@ -1,6 +1,5 @@
 --!strict
 
-local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Registry = require(ReplicatedStorage.Shared.Registry)
@@ -36,15 +35,6 @@ type ProductDefinition = {
 	meta: ProductMeta?,
 }
 export type ProductEntry = ProductDefinition & { id: string }
-
--- Gamepasses are priced through a different InfoType; anything else reads as a dev product.
-local function GetInfoType(productType: ProductType): Enum.InfoType
-	if productType == "gamepass" then
-		return Enum.InfoType.GamePass
-	end
-
-	return Enum.InfoType.Product
-end
 
 local list: { [string]: ProductDefinition } = {
 	--[[ Currency packages ]]--
@@ -141,7 +131,6 @@ type ProductsMethods = {
 	GetByGiftId: (self: ProductsRegistry, giftId: number) -> ProductEntry?,
 	GetCashMultiplier: (self: ProductsRegistry, owned: { string }?) -> number,
 	GetStatBonus: (self: ProductsRegistry, owned: { string }?, statKey: string) -> number,
-	GetRobuxPrice: (self: ProductsRegistry, entryId: string) -> number?,
 }
 export type ProductsRegistry = Registry.Registry<ProductEntry> & ProductsMethods
 
@@ -193,25 +182,6 @@ local methods: ProductsMethods = {
 		end
 
 		return bonus
-	end,
-
-	GetRobuxPrice = function(self: ProductsRegistry, entryId: string): number?
-		local entry = self:Get(entryId)
-		if not entry then
-			print(`[Products] Attempted to get price for unknown product: {entryId}`)
-			return nil
-		end
-
-		local success, info = pcall(function()
-			return MarketplaceService:GetProductInfoAsync(entry.productId, GetInfoType(entry.productType))
-		end)
-
-		if not success then
-			print(`[Products] Failed to fetch product info for {entryId}: {info}`)
-			return nil
-		end
-
-		return info and info.PriceInRobux
 	end,
 }
 

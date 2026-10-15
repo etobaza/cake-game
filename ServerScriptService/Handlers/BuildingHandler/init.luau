@@ -100,8 +100,6 @@ export type PlayerBuildings = {
 	Folder: Folder,
 	Transform: CFrame,
 	Buildings: { [string]: Building.Building },
-	-- Artist copies hidden for spawned slots, restored when the base unloads.
-	Hidden: { Furniture.Hidden },
 	GardenWorld: GardenWorld.GardenWorld?,
 }
 
@@ -215,7 +213,6 @@ function BuildingHandler.Build(self: BuildingHandler, player: Player, root: Fold
 		Folder = folder,
 		Transform = transform,
 		Buildings = {},
-		Hidden = {},
 		GardenWorld = if data then GardenWorld.new(root, folder, data, BaseHandler.Template, transform) else nil,
 	}
 
@@ -236,11 +233,9 @@ function BuildingHandler.Unload(self: BuildingHandler, player: Player): ()
 		building:Destroy()
 	end
 
-	-- The bakery itself stays in the world: put the artist copies back.
 	if base.GardenWorld then
 		base.GardenWorld:Destroy()
 	end
-	Furniture.Restore(base.Hidden)
 	base.Folder:Destroy()
 
 	self.Bases[player] = nil
@@ -638,7 +633,7 @@ function BuildingHandler.ToggleDoor(self: BuildingHandler, player: Player, doorI
 		return false
 	end
 
-	return DayCycleHandler:ToggleBakery(player)
+	return DayCycleHandler:OpenBakery(player)
 end
 
 function BuildingHandler.Discard(self: BuildingHandler, player: Player, trashId: string): boolean
@@ -781,22 +776,6 @@ function BuildingHandler.TakeReadyDish(self: BuildingHandler, player: Player): s
 
 		if recipeId then
 			return recipeId
-		end
-	end
-
-	return
-end
-
--- First building of a kind whose machine sits in one of the wanted states.
-function BuildingHandler.FindInState(
-	self: BuildingHandler,
-	player: Player,
-	kindName: string,
-	stateName: string
-): Building.Building?
-	for _, building in self:GetBuildings(player) do
-		if building.Kind == kindName and building:GetState() == stateName then
-			return building
 		end
 	end
 

@@ -27,7 +27,8 @@ export type TutorialGoal = {
 	topic: string?,
 	-- The world target glows while this step is shown (a spill to find).
 	highlight: boolean?,
-	-- A coaching line that stays in the guide's bubble instead of a one-off toast (a guest waits).
+	-- A coaching line that stays in the guide's bubble instead of a one-off toast (a guest waits on
+	-- the first day).
 	persistent: boolean?,
 }
 

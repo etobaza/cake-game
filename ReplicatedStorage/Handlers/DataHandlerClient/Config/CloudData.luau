@@ -2,8 +2,6 @@
 -- This data gets saved in to the cloud
 
 return {
-	CurrentClass = "warrior",
-
 	Cash = 2500,
 	-- Coin scale of this save (ServerScriptService/EconomyMigration). New profiles start at the current
 	-- version; a save without the key predates the x100 rescale and is migrated once on load.
@@ -73,9 +71,6 @@ return {
 		Trees = {} :: { [string]: any },
 		Animals = {} :: { [string]: any },
 	},
-
-	-- Assistant task for the day: "None" | "Tables" | "Coffee" | "Display"
-	AssistantTask = "None",
 
 	-- Rewards handed out outside the shift: promo codes and the daily streak.
 	-- Days is how far the streak has gone; ClaimedAt is os.time of the last claim, and the two

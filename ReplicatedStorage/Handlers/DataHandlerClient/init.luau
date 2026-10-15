@@ -254,16 +254,6 @@ function DataHandlerClient.GetData(self: DataHandlerClient, path: DataPath, data
 	return getValueByPath(self.Data[dataType], path)
 end
 
---- Full snapshot `{ Cloud, Session }` (not the signal fields on the server). Nil if not :IsReady().
-function DataHandlerClient.GetDataAll(self: DataHandlerClient): PlayerData?
-	if not self._initialDataReceived then
-		print("[DataClient] Data not yet received from server")
-		return
-	end
-
-	return self.Data
-end
-
 function DataHandlerClient.IsReady(self: DataHandlerClient)
 	return self._initialDataReceived
 end
@@ -315,15 +305,6 @@ function DataHandlerClient.SubscribeToAll(
 	callback: (PlayerData) -> ()
 ): Signal.Connection<PlayerData>
 	return self.DataUpdated:Connect(callback)
-end
-
-function DataHandlerClient.DebugPrint(self: DataHandlerClient)
-	print("=== Client Data ===")
-	print("Cloud Data:", self.Data.Cloud)
-	print("Session Data:", self.Data.Session)
-	print("Initial Data Received:", self._initialDataReceived)
-	print("Revision:", self._revision)
-	print("===================")
 end
 
 export type DataHandlerClient = typeof(DataHandlerClient)

@@ -167,11 +167,10 @@ local function trackRobuxSpent(player: Player, spent: number)
 	stats.RobuxSpent = (stats.RobuxSpent or 0) + spent
 end
 
--- Grant after durable receipt/ownership writes. Side effects (signals/client) are last.
+-- Grant after durable receipt/ownership writes. Side effects (signals) are last.
 local function grantProduct(player: Player, productId: number, isGift: boolean)
 	PurchaseHandler.PurchaseCompleted:Fire(player, productId, isGift)
 	resolvePromise(player, productId)
-	Bus.Purchase.Completed:FireClient(player, productId, isGift)
 end
 
 -- Permanent dev products are owned once; ownership lives in the durable product cache.
@@ -367,57 +366,6 @@ function PurchaseHandler.PurchaseProduct(_self: PurchaseHandler, player: Player,
 	return promise
 end
 
-function PurchaseHandler.GiftProduct(
-	_self: PurchaseHandler,
-	sender: Player,
-	recipient: Player,
-	productId: number
-): PurchasePromise
-	local product = Products:GetByProductId(productId)
-	if not product then
-		local key = `{sender.UserId}_{productId}`
-		local promise = createPurchasePromise(key)
-		rejectLater(key, "Product not found")
-		return promise
-	end
-
-	if not product.giftId then
-		local key = `{sender.UserId}_{productId}`
-		local promise = createPurchasePromise(key)
-		rejectLater(key, "This product cannot be gifted")
-		return promise
-	end
-
-	pendingGifts[sender.UserId] = recipient.UserId
-
-	local key = `{sender.UserId}_{product.productId}`
-	local promise = createPurchasePromise(key)
-
-	MarketplaceService:PromptProductPurchase(sender, product.giftId)
-	return promise
-end
-
-function PurchaseHandler.OwnsProduct(_self: PurchaseHandler, player: Player, productId: number): boolean
-	local product = Products:GetByProductId(productId)
-	if not product then
-		return false
-	end
-
-	if product.productType == "gamepass" then
-		return MarketplaceService:UserOwnsGamePassAsync(player.UserId, productId)
-	end
-
-	if product.productType == "permanent_devproduct" then
-		return ownsPermanent(player, product)
-	end
-
-	return false
-end
-
-function PurchaseHandler.GetProductById(_self: PurchaseHandler, productId: number)
-	return Products:GetByProductId(productId)
-end
-
 function PurchaseHandler.OnStart(self: PurchaseHandler)
 	Bus.Purchase.RequestPurchase.OnServerEvent:Connect(function(player: Player, productId: number)
 		-- Only prompt for products this game sells; the client cannot open arbitrary prompts.
@@ -426,16 +374,6 @@ function PurchaseHandler.OnStart(self: PurchaseHandler)
 		end
 
 		self:PurchaseProduct(player, productId)
-	end)
-
-	Bus.Purchase.RequestGift.OnServerEvent:Connect(function(sender: Player, productId: number, recipientUserId: number)
-		local recipient = Players:GetPlayerByUserId(recipientUserId)
-		if not recipient then
-			Bus.Purchase.Failed:FireClient(sender, productId, "Recipient not found")
-			return
-		end
-
-		self:GiftProduct(sender, recipient, productId)
 	end)
 end
 

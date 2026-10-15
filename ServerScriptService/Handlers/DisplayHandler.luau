@@ -150,7 +150,7 @@ function DisplayHandler.HasFreeSlot(self: DisplayHandler, player: Player): boole
 		return false
 	end
 
-	for slotIndex = 2, self:GetGuestCapacity(player) + 1 do
+	for slotIndex = 1, self:GetGuestCapacity(player) do
 		if not display[slotIndex] then
 			return true
 		end
@@ -159,7 +159,7 @@ function DisplayHandler.HasFreeSlot(self: DisplayHandler, player: Player): boole
 	return false
 end
 
--- Puts a dish into the first free slot past the player's hands: used by the assistant.
+-- Puts a dish on the first free guest pedestal: used by the assistant.
 function DisplayHandler.PlaceDish(self: DisplayHandler, player: Player, recipeId: string, leftover: boolean?): boolean
 	local display = GetDisplay(player)
 	local leftovers = GetLeftovers(player)
@@ -167,7 +167,7 @@ function DisplayHandler.PlaceDish(self: DisplayHandler, player: Player, recipeId
 		return false
 	end
 
-	for slotIndex = 2, self:GetGuestCapacity(player) + 1 do
+	for slotIndex = 1, self:GetGuestCapacity(player) do
 		if not display[slotIndex] then
 			if leftover then
 				leftovers[slotIndex] = true
@@ -209,25 +209,6 @@ function DisplayHandler.RemoveDish(self: DisplayHandler, player: Player, recipeI
 	display[slotIndex] = nil
 
 	return true
-end
-
--- Fresh stock available for recipe-based consumers.
-function DisplayHandler.GetDishes(_self: DisplayHandler, player: Player): { string }
-	local display = GetDisplay(player)
-	local leftovers = GetLeftovers(player)
-	local dishes: { string } = {}
-
-	if not display or not leftovers then
-		return dishes
-	end
-
-	for index, dishId in display do
-		if not leftovers[index] then
-			dishes[#dishes + 1] = dishId
-		end
-	end
-
-	return dishes
 end
 
 export type DisplayHandler = typeof(DisplayHandler)

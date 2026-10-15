@@ -92,7 +92,7 @@ local function showDemo(hint: Hint.View, _path: string): boolean
 				Config.Debug.DemoHeight,
 				math.sin(angle) * Config.Debug.DemoRadius
 			)
-	end, { Occlusion = false })
+	end)
 
 	return true
 end

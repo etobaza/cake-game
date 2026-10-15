@@ -26,8 +26,6 @@ export type Furniture = {
 	ChairYaw: number?,
 	-- Height of the seat above the floor inside the chair model.
 	SeatLift: number?,
-	-- Artist copies near this building: only those come down, extras stay until their slot spawns.
-	Clear: { { string } }?,
 }
 
 export type Single = {
@@ -47,7 +45,6 @@ export type Kind = {
 	Size: Vector3,
 	Color: Color3,
 	Label: string,
-	Facing: Vector3,
 	-- Group building: Stat decides how many exist, slot N is the anchor `<Prefix>_N`.
 	Prefix: string?,
 	Stat: string?,
@@ -114,16 +111,6 @@ export type Kind = {
 	LoadFeedback: { Missing: string, WrongRecipe: string }?,
 	-- Session field holding the state of this kind, e.g. Stations or Tables.
 	StateField: string?,
-	-- Garden rules: where the nodes live in the save, which field marks the care and the produce list.
-	Group: string?,
-	CareField: string?,
-	Produce: string?,
-	-- Label of the care action, also picks the packet the client fires.
-	CareAction: string?,
-	-- Stat that takes the care over on a new day. Missing means it is always done by hand.
-	AutoCareStat: string?,
-	-- Tool the player must hold to tend this node: the watering can, the hay.
-	CareTool: string?,
 }
 
 local Buildings = {
@@ -132,7 +119,6 @@ local Buildings = {
 	KindAttribute = "PropKind",
 	-- Hands id of one log. Logs are all alike, so there is no registry row for them.
 	FuelItemId = "firewood",
-	HarvestAttribute = "HarvestBit",
 	LiveModelName = "Live",
 	DryModelName = "Dry",
 
@@ -143,7 +129,6 @@ local Buildings = {
 			Size = Vector3.new(3, 3, 2.5),
 			Color = Color3.fromRGB(214, 200, 180),
 			Label = "Mixer",
-			Facing = Vector3.new(1, 0, 0),
 			Prefix = "mixer",
 			Stat = "MixerCount",
 			StateField = "Stations",
@@ -158,7 +143,6 @@ local Buildings = {
 			Size = Vector3.new(3.5, 3.5, 3),
 			Color = Color3.fromRGB(120, 82, 62),
 			Label = "Oven",
-			Facing = Vector3.new(1, 0, 0),
 			Prefix = "oven",
 			Stat = "OvenCount",
 			StateField = "Stations",
@@ -173,7 +157,6 @@ local Buildings = {
 			Size = Vector3.new(2.5, 3.5, 2.5),
 			Color = Color3.fromRGB(160, 205, 220),
 			Label = "Freezer",
-			Facing = Vector3.new(1, 0, 0),
 			Prefix = "freezer",
 			Stat = "FreezerCount",
 			StateField = "Stations",
@@ -185,7 +168,6 @@ local Buildings = {
 			Size = Vector3.new(2.5, 3, 2),
 			Color = Color3.fromRGB(90, 70, 60),
 			Label = "Coffee machine",
-			Facing = Vector3.new(1, 0, 0),
 			Prefix = "coffee",
 			Stat = "CoffeeCount",
 			StateField = "Stations",
@@ -196,7 +178,6 @@ local Buildings = {
 			Size = Vector3.new(2.5, 2.5, 2.5),
 			Color = Color3.fromRGB(240, 220, 170),
 			Label = "Display",
-			Facing = Vector3.new(1, 0, 0),
 			Prefix = "display",
 			Stat = "DisplaySlots",
 			-- A dish is never shown on the floor: no Display Counter table, no slot.
@@ -212,7 +193,6 @@ local Buildings = {
 			Size = Vector3.new(2.5, 2.5, 2.5),
 			Color = Color3.fromRGB(240, 220, 170),
 			Label = "Kitchen Window",
-			Facing = Vector3.new(1, 0, 0),
 			Prefix = "window",
 			Stat = "WindowSlots",
 			StateField = "Window",
@@ -232,8 +212,6 @@ local Buildings = {
 			Size = Vector3.new(5, 5, 5),
 			Color = Color3.fromRGB(190, 150, 110),
 			Label = "Table",
-			-- Facing runs toward the doorway, so the guest chair is on the side they come from.
-			Facing = Vector3.new(0, 0, 1),
 			Prefix = "table",
 			Stat = "TableCount",
 			StateField = "Tables",
@@ -250,15 +228,8 @@ local Buildings = {
 			Size = Vector3.new(4, 2, 4),
 			Color = Color3.fromRGB(110, 84, 56),
 			Label = "Garden plot",
-			Facing = Vector3.new(-1, 0, 0),
 			Prefix = "plot",
 			Stat = "PlotCount",
-			Group = "Plots",
-			CareField = "Watered",
-			Produce = "PlotCrops",
-			CareAction = "Water",
-			AutoCareStat = "AutoWater",
-			CareTool = "watering_can",
 			Hidden = true,
 		},
 		Tree = {
@@ -266,18 +237,11 @@ local Buildings = {
 			Size = Vector3.new(5, 8, 5),
 			Color = Color3.fromRGB(96, 138, 72),
 			Label = "Fruit tree",
-			Facing = Vector3.new(-1, 0, 0),
 			Prefix = "tree",
 			Stat = "TreeCount",
 			-- Shop order is cocoa, cherry, apple, lemon; the artist's trees stand apple, cherry,
 			-- lemon, cocoa. Each purchase goes to the anchor its own species was drawn at.
 			SlotOrder = { 4, 2, 1, 3 },
-			Group = "Trees",
-			CareField = "Watered",
-			Produce = "TreeCrops",
-			CareAction = "Water",
-			AutoCareStat = "AutoWater",
-			CareTool = "watering_can",
 			Hidden = true,
 		},
 		Animal = {
@@ -285,15 +249,10 @@ local Buildings = {
 			Size = Vector3.new(3, 3, 3.5),
 			Color = Color3.fromRGB(235, 235, 225),
 			Label = "Animal",
-			Facing = Vector3.new(-1, 0, 0),
 			Prefix = "animal",
 			Stat = "AnimalCount",
 			-- Chickens are bought first but the artist drew the cow at animal_1.
 			SlotOrder = { 2, 1, 3 },
-			Group = "Animals",
-			CareField = "Fed",
-			Produce = "AnimalProduce",
-			CareAction = "Brush",
 			-- The chicken coop, the cow and the hive are the artist's upgrade models shown by
 			-- UpgradeViewHandler; the node block only carries the feed/harvest prompt.
 			Hidden = true,
@@ -305,7 +264,6 @@ local Buildings = {
 			Size = Vector3.new(3, 3, 3),
 			Color = Color3.fromRGB(140, 105, 65),
 			Label = "Rail cart",
-			Facing = Vector3.new(0, 0, 1),
 			RequiredUpgrade = "garden_cart",
 			Singles = { { Id = "rail_cart" } },
 		},
@@ -316,7 +274,6 @@ local Buildings = {
 			Size = Vector3.new(3, 3, 3),
 			Color = Color3.fromRGB(140, 105, 65),
 			Label = "Deliveries",
-			Facing = Vector3.new(0, 0, 1),
 			RequiredUpgrade = "garden_cart",
 			Singles = {
 				{ Id = "rail_output" },
@@ -331,7 +288,6 @@ local Buildings = {
 			Size = Vector3.new(3, 2.5, 3),
 			Color = Color3.fromRGB(140, 105, 65),
 			Label = "Firewood",
-			Facing = Vector3.new(1, 0, 0),
 			-- The artist's woodpile already stands on this anchor (Kitchen Upgrades/FireWood).
 			Hidden = true,
 			GivesFuel = true,
@@ -344,7 +300,6 @@ local Buildings = {
 			Size = Vector3.new(5, 6, 5),
 			Color = Color3.fromRGB(90, 95, 100),
 			Label = "Trash",
-			Facing = Vector3.new(0, 0, 1),
 			-- The usable bin is the artist's can beside the broom, not a spawned replacement.
 			WorldModel = { "1ndFloor", "Kitchen", "Decoration", "Cube.006" },
 			Singles = { { Id = "trash" } },
@@ -355,7 +310,6 @@ local Buildings = {
 			Size = Vector3.new(1, 4, 1),
 			Color = Color3.fromRGB(140, 105, 65),
 			Label = "Broom",
-			Facing = Vector3.new(0, 0, -1),
 			ToolId = "broom",
 			-- Nothing is spawned here: the broom on the kitchen floor is the one the artist drew, and
 			-- the block beside it only carries the prompt. Taking the broom hides that model.
@@ -371,7 +325,6 @@ local Buildings = {
 			Size = Vector3.new(1.5, 2.5, 1.5),
 			Color = Color3.fromRGB(120, 160, 175),
 			Label = "Watering can",
-			Facing = Vector3.new(0, 0, -1),
 			ToolId = "watering_can",
 			-- The can stays at the artist's sink, independently of the Crystal Water upgrade.
 			WorldModel = { "1ndFloor", "Garden", "Decoration", "WateringCan" },
@@ -385,7 +338,6 @@ local Buildings = {
 			Size = Vector3.new(2.5, 2, 2.5),
 			Color = Color3.fromRGB(214, 176, 92),
 			Label = "Hay",
-			Facing = Vector3.new(0, 0, -1),
 			ToolId = "hay",
 			HeldScale = 0.5,
 			Grip = CFrame.new(),
@@ -398,7 +350,6 @@ local Buildings = {
 			Size = Vector3.new(1.5, 3, 1.5),
 			Color = Color3.fromRGB(206, 174, 122),
 			Label = "Ingredient",
-			Facing = Vector3.new(0, 0, 1),
 			Prefix = "ingredient",
 			-- The counter trays sit about four studs from the mixer. With the default reach, a camera
 			-- facing the counter gave Flour the E key while the player stood at the mixer.
@@ -427,8 +378,6 @@ local Buildings = {
 			Size = Vector3.new(6, 6, 1),
 			Color = Color3.new(1, 1, 1),
 			Label = "Entrance",
-			-- Faces OUTWARDS: the guide uses this direction to tell whether the player is inside yet.
-			Facing = Vector3.new(0, 0, 1),
 			Hidden = true,
 			PromptLift = 0,
 			PromptTarget = { "1ndFloor", " exterior", "Door" },
@@ -441,7 +390,6 @@ local Buildings = {
 			Size = Vector3.new(1, 1, 1),
 			Color = Color3.new(1, 1, 1),
 			Label = "Decor",
-			Facing = Vector3.new(0, 0, 1),
 			Marker = true,
 			Singles = {},
 		},
@@ -452,7 +400,6 @@ local Buildings = {
 			Size = Vector3.new(4, 0.2, 4),
 			Color = Color3.fromRGB(90, 70, 40),
 			Label = "Spill",
-			Facing = Vector3.new(0, 0, 1),
 		},
 	} :: { [string]: Kind },
 }

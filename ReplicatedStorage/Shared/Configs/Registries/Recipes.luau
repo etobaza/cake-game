@@ -8,7 +8,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --[[ References ]]--
 local _Shared = ReplicatedStorage.Shared
-local _Configs = _Shared.Configs
 
 --[[ Modules ]]--
 local GameTypes = require(_Shared.GameTypes)

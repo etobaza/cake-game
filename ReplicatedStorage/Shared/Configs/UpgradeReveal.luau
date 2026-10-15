@@ -161,7 +161,7 @@ return {
 		},
 		cafe_assistant = {
 			Paths = { "1ndFloor.Cafe.Upgrades.KitchenWindow.Upgrade" },
-			Benefit = "A helping hand. Choose tomorrow's job in Next Menu.",
+			Benefit = "A helping hand with the window, coffee, tables and display.",
 		},
 		kitchen_counter = {
 			Paths = {

@@ -2,6 +2,7 @@
 -- Drives the selected mixer's authored world-space ingredient card. Guest orders belong to OrderHandler.
 
 --[[ Services ]]--
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
@@ -13,6 +14,8 @@ local _Handlers = ReplicatedStorage.Handlers
 --[[ Modules ]]--
 local FoodPreview = require(_Shared.UI.FoodPreview)
 local IngredientCard = require(_Shared.UI.IngredientCard)
+local InputCue = require(_Shared.UI.InputCue)
+local InputCues = require(_Configs.InputCues)
 local Authored = require(_Shared.UI.Authored)
 local Buildings = require(_Configs.Buildings)
 local DataClient = require(_Handlers.DataHandlerClient)
@@ -42,6 +45,17 @@ local SetPair = Authored.SetPair
 
 local function PantryCount(ingredientId: string): number
 	return DataClient:GetData({ "Pantry", ingredientId }) or 0
+end
+
+-- The floating card shows from across the kitchen; the gamepad shortcut works only at the mixer.
+local function InMixerReach(): boolean
+	local character = Players.LocalPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local mixer = InteractHandler:GetProp(MIXER_ID)
+	return root ~= nil
+		and root:IsA("BasePart")
+		and mixer ~= nil
+		and (root.Position - mixer.Position).Magnitude <= InputCues.MixerReach
 end
 
 --[[ Handling ]]--
@@ -124,16 +138,44 @@ function MixHandler.BuildBillboard(self: MixHandler): ()
 	self.BillboardCard = card
 	-- One chip per required unit mirrors the reference: flour x4 becomes four separate flour chips.
 	-- The billboard floats in the world, so its chips press on contact and leave the camera alone.
+	local chipOptions: IngredientCard.ChipOptions = { StationId = MIXER_ID, PantryCount = PantryCount, Floating = true }
 	self.BillboardChips = IngredientCard.BuildChips(
 		holder,
 		doneTemplate,
 		notDoneTemplate,
 		IngredientCard.MostUnits(),
 		self.Janitor,
-		{ StationId = MIXER_ID, PantryCount = PantryCount, Floating = true }
+		chipOptions
 	)
 	doneTemplate:Destroy()
 	notDoneTemplate:Destroy()
+
+	-- A gamepad cannot point at the floating chips: its shoulder button loads the next pantry chip,
+	-- and the glyph shows on the card only while there is one and no page covers the world.
+	local function nextChip(): Frame?
+		if Pages.Current:peek() ~= Pages.Names.None then
+			return nil
+		end
+		return IngredientCard.NextPantryChip(self.BillboardChips, chipOptions)
+	end
+	self.PantryCue = InputCue.Bind({
+		Name = "MixerPantry",
+		Target = card,
+		Key = InputCues.Keys.MixerPantry,
+		Action = function(): ()
+			local chip = nextChip()
+			if chip then
+				IngredientCard.TakeFromPantry(chip, chipOptions)
+			end
+		end,
+		Available = function(): boolean
+			return billboard.Enabled and InMixerReach() and nextChip() ~= nil
+		end,
+		Shown = function(): boolean
+			return nextChip() ~= nil
+		end,
+	})
+	self.Janitor:Add(self.PantryCue, "Destroy")
 end
 
 -- The card is sized in studs; a short screen grows it to the pixel size it has on a
@@ -204,6 +246,9 @@ function MixHandler.RefreshBillboard(self: MixHandler): ()
 		end
 	end
 	IngredientCard.ShowHints(card:FindFirstChild("SourceHint"), hints)
+	if self.PantryCue then
+		self.PantryCue:Refresh()
+	end
 end
 
 function MixHandler.Destroy(self: MixHandler): ()
@@ -224,6 +269,8 @@ export type MixHandler = typeof(MixHandler) & {
 	AuthoredOffset: Vector3?,
 	BillboardCard: Frame?,
 	BillboardChips: { IngredientCard.ChipPair },
+	-- The gamepad shortcut onto the next pantry chip.
+	PantryCue: InputCue.Cue?,
 	Accumulator: number,
 }
 

@@ -32,18 +32,6 @@ local methods = {
 			return e.userId == userId
 		end)
 	end,
-
-	GetAdmin = function(self: AdminRegistry, userId: number): AdminEntry?
-		return self:Query()
-			:Where(function(e: AdminEntry)
-				return e.userId == userId
-			end)
-			:FirstOrDefault()
-	end,
-
-	GetAdmins = function(self: AdminRegistry): { AdminEntry }
-		return self:Query():ToArray()
-	end,
 }
 
 local AdminRegistry = Registry.Build("Admin", list, methods)

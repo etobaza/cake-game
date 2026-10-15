@@ -39,18 +39,32 @@ export type ChipOptions = {
 local IngredientCard = {}
 
 --[[ Private Functions ]]--
-local function takeFromPantry(chip: Frame, options: ChipOptions): ()
+local function pantryIngredient(chip: Frame, options: ChipOptions): string?
 	local ingredientId = chip:GetAttribute("IngredientId")
 	if typeof(ingredientId) ~= "string" or Ingredients:IsInfinite(ingredientId) then
-		return
+		return nil
 	end
-	if options.PantryCount(ingredientId) <= 0 then
-		return
-	end
-	Bus.Kitchen.TakePantry:Fire(options.StationId, ingredientId)
+	return if options.PantryCount(ingredientId) > 0 then ingredientId else nil
 end
 
 --[[ Handling ]]--
+--- The first shown, unlit chip that loads from the pantry: what a gamepad shortcut presses.
+function IngredientCard.NextPantryChip(chips: { ChipPair }, options: ChipOptions): Frame?
+	for _, chip in chips do
+		if chip.NotDone.Visible and pantryIngredient(chip.NotDone, options) then
+			return chip.NotDone
+		end
+	end
+	return nil
+end
+
+function IngredientCard.TakeFromPantry(chip: Frame, options: ChipOptions): ()
+	local ingredientId = pantryIngredient(chip, options)
+	if ingredientId then
+		Bus.Kitchen.TakePantry:Fire(options.StationId, ingredientId)
+	end
+end
+
 function IngredientCard.Name(ingredientId: string): string
 	local ingredient = Ingredients:Get(ingredientId)
 
@@ -186,7 +200,7 @@ function IngredientCard.BuildChips(
 		notDone.Parent = holder
 		janitor:Add(notDone, "Destroy")
 		local function take(): ()
-			takeFromPantry(notDone, options)
+			IngredientCard.TakeFromPantry(notDone, options)
 		end
 		if options.Floating then
 			janitor:Add(Press.Bind(notDone, take), "Destroy")

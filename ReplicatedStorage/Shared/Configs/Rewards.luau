@@ -5,12 +5,12 @@
 -- four over a row of three) and the playtime screen with fifteen (three rows of five), so the tables
 -- below are exactly that long. Adding a tile in StarterGui means adding a row here, and nothing else.
 --
--- The numbers are scaled to the shift: dishes sell for 75-400 coins (coffee 800) plus tips, a day's
--- shift (about nine minutes with the evening) earns roughly 6 000-8 000 coins and 80 XP, and the
--- whole upgrade tree costs 513 275 coins, about seventy shifts. Free rewards stay a bonus on top of
--- that pace:
---   * the 7-day streak pays 38 500 coins in total, from a third of a shift to two shifts a day;
---   * a full day's playtime track (75 minutes, about eight shifts of earnings) adds 12 200 coins;
+-- The numbers are scaled to the shift: dishes sell for 75-400 coins (coffee 800) plus tips, and an
+-- early Lemon Cake-paced shift (about 4.5 minutes with the evening) admits 10-12 guests and earns
+-- roughly 2 000-3 500 coins and 40-50 XP, about 30 000-40 000 coins an hour. The whole upgrade tree
+-- costs 513 275 coins. Free rewards stay a bonus on top of that pace:
+--   * the 7-day streak pays 38 500 coins in total, from one shift to five shifts a day;
+--   * a full day's playtime track (75 minutes of play) adds 12 200 coins, under half an hour's income;
 --   * the welcome code and the group reward together buy the first few cheap upgrades.
 
 --[[ Tables ]]--

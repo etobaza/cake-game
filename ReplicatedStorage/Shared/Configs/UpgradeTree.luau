@@ -1,6 +1,7 @@
 --!strict
 -- DAT_Shop ItemNumber positions from Lemon Cake. Repeated purchases keep their saved upgrade ID.
--- Outfit Upgrade and Speed Boost have no corresponding system here, so their cells stay empty.
+-- Outfit Upgrade has no corresponding system and Magic Broom is not built, so their cells stay empty.
+-- Speed Boost's run speed lives on the Quick Sprint node: there is no sprint stamina to recharge.
 export type Purchase = { Id: string, Level: number }
 
 return {

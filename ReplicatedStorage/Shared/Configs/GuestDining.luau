@@ -6,7 +6,6 @@ local GuestDining = {
 	EndsAttribute = "EatingEndsAt",
 	HeldAttribute = "EatingHeldRecipe",
 	PlateAttribute = "EatingPlatePosition",
-	HandAnimationId = "rbxassetid://74582433457576",
 	HandSequence = "EatHand",
 	HandJoints = {
 		RightUpperArm = "RightShoulder",
@@ -72,15 +71,12 @@ local GuestDining = {
 	Grip = CFrame.new(0, -0.12, -0.3),
 	FadeSeconds = 0.25,
 	PoseFadeSeconds = 0.65,
-	IKSmoothTime = 0.18,
 	-- Horizontal/vertical offsets from the head center; depth includes the food's full radius.
 	MouthOffset = Vector2.new(0.3, -0.4),
 	FaceClearance = 0.18,
 	-- Furthest held food may slide off its grip to clear the face, so it stays in the hand.
 	MaxFacePush = 0.2,
 	HeadBoundsRefreshSeconds = 0.25,
-	TargetUpdateDistance = 0.12,
-	ElbowOffset = Vector3.new(1.8, -0.3, -0.15),
 	-- Progress card layout pixels, drawn at a constant world size (Theme.WorldScale) like the guest's bubble.
 	BarSize = Vector2.new(176, 60),
 	BarOffset = Vector3.new(0, 1.65, 0),

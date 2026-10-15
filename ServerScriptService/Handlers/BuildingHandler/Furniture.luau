@@ -1,6 +1,6 @@
 --!strict
 -- Real props for a building: the room's own table and chairs instead of a placeholder block.
--- Models clone from the template. Artist copies near the spawned slot come down; extras stay.
+-- Models clone from the template.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -18,8 +18,6 @@ local LoggerUtil = require(_Libs.Logger)
 --[[ Constants ]]--
 local SEAT_NAME = "Seat"
 local SEAT_SIZE = Vector3.new(2, 0.2, 2)
--- Tables in the room sit ~24 studs apart; this only takes the copies that this building replaces.
-local CLEAR_RADIUS = 10
 
 --[[ Private Variables ]]--
 local Logger = LoggerUtil.new({ name = "Furniture" })
@@ -35,16 +33,6 @@ export type Hidden = {
 }
 
 --[[ Private Functions ]]--
-local function WorldPoint(inst: Instance): Vector3?
-	if inst:IsA("Model") then
-		return inst:GetPivot().Position
-	elseif inst:IsA("BasePart") then
-		return inst.Position
-	end
-
-	return nil
-end
-
 -- The point on the floor right under a model. GetBoundingBox measures in the pivot's frame, which on
 -- these imported meshes reads a table as eleven studs tall, so the parts are measured directly.
 local function GroundPoint(model: Model): Vector3
@@ -149,8 +137,7 @@ local function AddChair(
 end
 
 --[[ Handling ]]--
--- Hides every part under a model, remembering what to put back. Used both for the artist copies a
--- spawned building replaces and for a tool that has been picked up off its stand.
+-- Hides every part under a model, remembering what to put back.
 function Furniture.Hide(root: Instance, hidden: { Hidden }): ()
 	local pieces: { BasePart } = if root:IsA("BasePart") then { root } else {}
 	for _, piece in root:GetDescendants() do
@@ -214,38 +201,6 @@ function Furniture.Attach(part: BasePart, spec: BuildingsConfig.Furniture, templ
 		-- Only the first chair carries a seat: one guest sits at a table, the others are dressing.
 		AddChair(part, chairSource, floor, offset, spec, if index == 1 then spec.SeatLift else nil)
 	end
-end
-
--- The artist's extra tables stay until their own slot is spawned. Folders are skipped: Decoration
--- keeps a Chair folder of several models, and wiping the folder took every chair in the room.
--- The bakery is a live place instance, not a clone, so nothing is destroyed: the copies are hidden
--- and the returned list restores them through Furniture.Restore when the base unloads.
-function Furniture.ClearNear(room: Instance, worldPosition: Vector3, spec: BuildingsConfig.Furniture): { Hidden }
-	local hidden: { Hidden } = {}
-
-	for _, path in (spec.Clear or {}) :: { { string } } do
-		local holder = BuildingsConfig.ResolvePath(room, table.move(path, 1, #path - 1, 1, {}))
-		if not holder then
-			continue
-		end
-
-		local name = path[#path]
-		for _, child in holder:GetDescendants() do
-			if child.Name ~= name or child:IsA("Folder") then
-				continue
-			end
-
-			local point = WorldPoint(child)
-			if
-				point
-				and Vector3.new(point.X - worldPosition.X, 0, point.Z - worldPosition.Z).Magnitude <= CLEAR_RADIUS
-			then
-				Furniture.Hide(child, hidden)
-			end
-		end
-	end
-
-	return hidden
 end
 
 function Furniture.Restore(hidden: { Hidden }): ()

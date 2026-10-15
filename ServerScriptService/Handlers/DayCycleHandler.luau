@@ -62,6 +62,14 @@ local function getDay(player: Player): any?
 	return data and data.Session.Day
 end
 
+-- The shift's length is fixed by the level when its clock starts, so a level-up mid-shift cannot
+-- move the clock.
+local function startClock(data: any): ()
+	local day = data.Session.Day
+	day.ShiftSeconds = DayCycleConfig.GetShiftSeconds(data.Cloud.Level)
+	day.EndsAt = workspace:GetServerTimeNow() + day.ShiftSeconds
+end
+
 local function copyList(source: any): { string }
 	local copy = {}
 
@@ -305,9 +313,11 @@ function DayCycleHandler.EnterShift(self: DayCycleHandler, player: Player): ()
 
 	day.Phase = "Shift"
 	local data = DataHandler:GetData(player)
-	day.EndsAt = if data and TutorialPolicy.IsActive(data.Cloud)
-		then 0
-		else workspace:GetServerTimeNow() + DayCycleConfig.ShiftSeconds
+	day.EndsAt = 0
+	day.ShiftSeconds = 0
+	if data and not TutorialPolicy.IsActive(data.Cloud) then
+		startClock(data)
+	end
 
 	Logger:Info(`{player.Name} opened the bakery, day {day.Number}`)
 	self.PhaseChanged:Fire(player, "Shift")
@@ -404,7 +414,6 @@ function DayCycleHandler.EnterSummary(self: DayCycleHandler, player: Player): ()
 	Logger:Info(`{player.Name} closed day {day.Number}: {day.Summary.Served} served, {day.Summary.Coins} coins`)
 	self.PhaseChanged:Fire(player, "Summary")
 	self.ShiftEnded:Fire(player)
-	Bus.Day.ShiftEnded:FireClient(player)
 end
 
 function DayCycleHandler.GetPhase(_self: DayCycleHandler, player: Player): GameTypes.DayPhase?
@@ -419,7 +428,8 @@ end
 
 function DayCycleHandler.CanAcceptCustomers(_self: DayCycleHandler, player: Player): boolean
 	local day = getDay(player)
-	return day ~= nil and DayCycleConfig.CanAcceptCustomers(day.Phase, day.EndsAt, workspace:GetServerTimeNow())
+	return day ~= nil
+		and DayCycleConfig.CanAcceptCustomers(day.Phase, day.EndsAt, day.ShiftSeconds, workspace:GetServerTimeNow())
 end
 
 function DayCycleHandler.GetShiftProgress(_self: DayCycleHandler, player: Player): number
@@ -428,7 +438,7 @@ function DayCycleHandler.GetShiftProgress(_self: DayCycleHandler, player: Player
 		return 0
 	end
 
-	return DayCycleConfig.GetShiftProgress(day.EndsAt, workspace:GetServerTimeNow())
+	return DayCycleConfig.GetShiftProgress(day.EndsAt, day.ShiftSeconds, workspace:GetServerTimeNow())
 end
 
 -- The evening screen edits only tomorrow's draft; today's menu remains immutable.
@@ -480,6 +490,7 @@ function DayCycleHandler.OpenBakery(self: DayCycleHandler, player: Player): bool
 	return true
 end
 
+-- Admin only: an opened bakery stays open until closing time.
 function DayCycleHandler.EndShift(self: DayCycleHandler, player: Player): boolean
 	local machine = self.Machines[player]
 	if not machine or machine:GetCurrentState() ~= "Shift" then
@@ -488,19 +499,6 @@ function DayCycleHandler.EndShift(self: DayCycleHandler, player: Player): boolea
 
 	machine:SetState("Summary")
 	return true
-end
-
--- The door prompt opens during Prep, closes during Shift and is disabled by its view in Summary.
-function DayCycleHandler.ToggleBakery(self: DayCycleHandler, player: Player): boolean
-	local phase = self:GetPhase(player)
-	if phase == "Prep" then
-		return self:OpenBakery(player)
-	end
-	if phase ~= "Shift" then
-		return false
-	end
-
-	return self:EndShift(player)
 end
 
 function DayCycleHandler.NextDay(self: DayCycleHandler, player: Player): boolean
@@ -547,9 +545,9 @@ end
 
 -- Releasing tutorial protection starts the clock once, without restarting the guest system.
 function DayCycleHandler.ReleaseTutorialClock(_self: DayCycleHandler, player: Player): ()
-	local day = getDay(player)
-	if day and day.Phase == "Shift" and day.EndsAt == 0 then
-		day.EndsAt = workspace:GetServerTimeNow() + DayCycleConfig.ShiftSeconds
+	local data = DataHandler:GetData(player)
+	if data and data.Session.Day.Phase == "Shift" and data.Session.Day.EndsAt == 0 then
+		startClock(data)
 	end
 end
 

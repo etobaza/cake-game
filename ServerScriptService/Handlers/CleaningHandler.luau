@@ -359,7 +359,6 @@ function CleaningHandler.Clean(self: CleaningHandler, player: Player, spillId: s
 
 	local data = DataHandler:GetData(player)
 	if data then
-		data.Session.HasMopped = true
 		TutorialEvents.Action:Fire(player, "Mopped", spillId)
 	end
 	Bus.Player.PlayAction:FireClient(player, "Sweep")
@@ -389,6 +388,7 @@ function CleaningHandler.PrepareSpills(self: CleaningHandler, player: Player): (
 		if runtime and not runtime.Homes[part] then
 			runtime.Homes[part] = part.CFrame
 			self:OwnSpill(runtime, part)
+			part.Size *= Vector3.new(DayCycleConfig.SpillScale, 1, DayCycleConfig.SpillScale)
 		end
 
 		View.Dress(part, `{BaseConfig.SpillAnchorPrefix}_{index}`, KIND_NAME, kind, player.UserId)
@@ -403,10 +403,12 @@ end
 
 function CleaningHandler.OwnSpill(_self: CleaningHandler, runtime: Runtime, part: BasePart): ()
 	local transparency = part.Transparency
+	local size = part.Size
 	local canCollide, canQuery, canTouch = part.CanCollide, part.CanQuery, part.CanTouch
 	runtime.Janitor:Add(function(): ()
 		View.Undress(part)
 		MoveProp(part, runtime.Homes[part])
+		part.Size = size
 		part.Transparency = transparency
 		part.CanCollide, part.CanQuery, part.CanTouch = canCollide, canQuery, canTouch
 	end, true)
@@ -495,17 +497,13 @@ function CleaningHandler.UpdateSlow(self: CleaningHandler, player: Player): ()
 		return
 	end
 
-	local radius = BuildingsConfig.Kinds[KIND_NAME].Size.X / 2
-	local pos = root.Position
 	local slowed = false
-
 	for _, part in runtime.Parts do
-		if part.Parent then
-			local delta = Vector3.new(pos.X - part.Position.X, 0, pos.Z - part.Position.Z)
-			if delta.Magnitude <= radius then
-				slowed = true
-				break
-			end
+		-- The drawn puddle's own rotated X/Z ellipse, already widened by SpillScale.
+		local offset = part.CFrame:PointToObjectSpace(root.Position)
+		if part.Parent and (offset.X / (part.Size.X / 2)) ^ 2 + (offset.Z / (part.Size.Z / 2)) ^ 2 <= 1 then
+			slowed = true
+			break
 		end
 	end
 

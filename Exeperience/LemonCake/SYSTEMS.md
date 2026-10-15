@@ -48,7 +48,7 @@ The `Blueprints/` prefix is omitted. Exact paths and the full function inventory
 
 ## Day and preparation
 
-Stage enum: `Start Day`, `Morning`, `Lunch`, `Evening`. `BP_DailyCycle` manages timers and broadcasts events through `INT_Daily`; the HUD displays time. Initial preparation and tutorial transitions have separate branches. After customer spawning stops, remaining customers are checked every 3 seconds. Do not reduce all states to one fixed eight-minute timer: that is a cake-game adaptation.
+Stage enum: `Start Day`, `Morning`, `Lunch`, `Evening`. `BP_DailyCycle` manages timers and broadcasts events through `INT_Daily`; the HUD displays time. Initial preparation and tutorial transitions have separate branches. After customer spawning stops, remaining customers are checked every 3 seconds. Stage order: `SetDayStage` fires immediately on `DailyReset` (Start Day: 08:00, no guests) and then every `StageLength`; Morning and Lunch set the spawner gap and run `AddTime` (one game minute per `StageLength / 240` seconds); Evening clears spawning, sets 16:00 and polls `CheckClients`, which opens the daily overview once no `BP_Client` remains. cake-game mirrors Morning and Lunch; its prep stays untimed.
 
 ## Cooking and carrying
 

@@ -57,12 +57,6 @@ return {
 	ShadeTransparency = 0.48,
 	EdgePadding = 14,
 
-	OcclusionInterval = 0.2,
-	OcclusionMinRayLength = 0.1,
-	OcclusionMaxHits = 4,
-	OcclusionTargetRadius = 2,
-	OcclusionTransparency = 0.8,
-
 	Beam = {
 		Template = "ArrowBeam",
 		PlayerOffset = Vector3.new(0, -2, 0),
@@ -97,5 +91,4 @@ return {
 		-- Doorways are re-read this often: streaming may load a bakery's floors after the first read.
 		RefreshSeconds = 3,
 	},
-	Accent = Color3.fromRGB(255, 223, 141),
 }

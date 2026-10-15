@@ -24,7 +24,6 @@ local Bus = require(_Shared.Bus)
 local DataClient = require(_Handlers.DataHandlerClient)
 local Flux = require(_Packages.flux)
 local Format = require(_Shared.UI.Format)
-local Pages = require(_Shared.UI.Stores.Pages)
 local UIText = require(_Configs.UIText)
 
 --[[ Constants ]]--
@@ -140,57 +139,6 @@ function UIHandler.GetPanel(self: UIHandler, panelName: string): ScreenGui?
 	return screen
 end
 
---- Outlined labels come as a pair: the outer label wears the stroke, the `Inside` child repeats the
---- same text on top of it. Writing only one makes the outline drift from the text.
---- Prefer writing to a node; this stays for code that still holds a label directly.
-function UIHandler.SetLabel(_self: UIHandler, label: TextLabel, text: string): ()
-	label.Text = text
-
-	local inside = label:FindFirstChild("Inside")
-	if inside and inside:IsA("TextLabel") then
-		inside.Text = text
-	end
-end
-
---- Opens `pageName`, or closes it if it is already open. Pages are mutually exclusive.
-function UIHandler.TogglePanel(_self: UIHandler, pageName: string): ()
-	Pages.Toggle(pageName)
-end
-
-function UIHandler.ShowPanel(_self: UIHandler, pageName: string): ()
-	Pages.Open(pageName)
-end
-
---- Closes whatever page is open.
-function UIHandler.CloseAll(_self: UIHandler): ()
-	Pages.Close()
-end
-
---- List row by id: created from a template once, only updated afterwards.
---- onCreate runs on first creation, which is where row button handlers get connected.
-function UIHandler.GetOrCreateRow(
-	_self: UIHandler,
-	rows: { [string]: Frame },
-	template: Frame,
-	id: string,
-	onCreate: (Frame) -> ()
-): Frame
-	local existing = rows[id]
-	if existing then
-		return existing
-	end
-
-	local row = template:Clone()
-	row.Name = id
-	row.Visible = true
-	row.Parent = template.Parent
-
-	onCreate(row)
-	rows[id] = row
-
-	return row
-end
-
 --- Short message in the HUD status strip. Returns a token for `ClearToast`.
 function UIHandler.Toast(self: UIHandler, text: string): number
 	self.ToastToken += 1
@@ -240,11 +188,6 @@ end
 --- 1234 -> "1 234": long amounts are unreadable otherwise.
 function UIHandler.FormatNumber(_self: UIHandler, value: number): string
 	return Format.Number(value)
-end
-
---- Seconds -> "M:SS", or "H:MM:SS" from an hour up.
-function UIHandler.FormatTime(_self: UIHandler, seconds: number): string
-	return Format.Time(seconds)
 end
 
 export type UIHandler = typeof(UIHandler) & {

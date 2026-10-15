@@ -1,5 +1,7 @@
 --!strict
--- First-shift shopping guidance stays optional, affordable and out of the running shift.
+-- First-shift shopping guidance stays optional, affordable and out of the running shift: the first
+-- evening offers an upgrade before tomorrow's menu, and a later Prep repeats the offer until one is
+-- bought.
 local State = require(script.Parent.State)
 local Types = require(script.Parent.Parent.GameTypes)
 local Tree = require(script.Parent.Parent.Configs.UpgradeTree)
@@ -7,6 +9,11 @@ local UpgradeTabs = require(script.Parent.Parent.Configs.UpgradeTabs)
 local Upgrades = require(script.Parent.Parent.Configs.Registries.Upgrades)
 
 local UpgradeLesson = {}
+
+local OPEN_TARGETS = {
+	Prep = "UI.HUD.SideBtns.Upgrades.Btn",
+	Summary = "BakeryMenu.MainFrame.Header.Buttons.Upgrades",
+}
 
 function UpgradeLesson.Resolve(
 	cloud: any,
@@ -21,8 +28,9 @@ function UpgradeLesson.Resolve(
 		or saved.Lessons.Upgrades
 		or saved.Lessons["Dismissed:Upgrades"]
 		or not saved.Lessons.UpgradesDue
-		-- The evening header has no Upgrades tab; the lesson waits for the HUD in the next Prep.
-		or session.Day.Phase ~= "Prep"
+		or not OPEN_TARGETS[session.Day.Phase]
+		-- An evening player who went on to plan the menu has turned the offer down for now.
+		or page == "Inventory"
 	then
 		return nil
 	end
@@ -40,7 +48,7 @@ function UpgradeLesson.Resolve(
 			"upgrade_open",
 			"Put your earnings into {upgrades}",
 			"Open Upgrades. The cheapest available purchase is selected for you.",
-			"UI.HUD.SideBtns.Upgrades.Btn"
+			OPEN_TARGETS[session.Day.Phase]
 		)
 	elseif facts.upgradeCategory ~= entry.category then
 		goal = State.Gui(
@@ -64,7 +72,7 @@ function UpgradeLesson.Resolve(
 				goal = State.Gui(
 					"upgrade_pick",
 					"Pick {" .. title .. "}",
-					"Tap this available node to see its benefit and price.",
+					"Choose this available node to see its benefit and price.",
 					`Upgrades.MainFrame.Main.Tree.Content.{table.concat(Tree.Slots[index], ".")}`
 				)
 				break

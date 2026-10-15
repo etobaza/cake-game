@@ -95,4 +95,4 @@ For gameplay/UI changes, also restart Studio Play after source sync, inspect ser
 - Keep edits within the requested feature/fix; do not reformat or rename unrelated code to match the new guide.
 - Update `ARCHITECTURE.md` when modifying project behavior, layout, tooling, or rules. Update `CODE_STYLE.md` / `PACKAGES.md` when their contracts change. Keep AI entry files as pointers/imports, and avoid conflicting copies of the rules.
 - Report what changed, what was actually checked, and any remaining verification limits. Never label static inspection as a Studio test.
-- [AI_INSTRUCTIONS.md](AI_INSTRUCTIONS.md) documents supported AI discovery, overrides, and a repeatable new-chat verification procedure. Instruction loading is not a guarantee of perfect model compliance.
+- Instruction loading is not a guarantee of perfect model compliance.

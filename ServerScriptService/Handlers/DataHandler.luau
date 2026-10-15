@@ -86,9 +86,6 @@ local cloudDataTemplate = require(DataConfig.CloudData)
 local sessionDataTemplate = require(DataConfig.SessionData)
 
 export type PlayerSignals = {
-	CloudDataUpdated: Signal.Signal<typeof(cloudDataTemplate)>,
-	SessionDataUpdated: Signal.Signal<typeof(sessionDataTemplate)>,
-	DataUpdated: Signal.Signal<PlayerData>,
 	SpecificPathUpdated: Signal.Signal<DataPath, any, DataKind>,
 }
 
@@ -124,8 +121,6 @@ local UPDATE_QUEUE: { [Player]: boolean } = {}
 local REVISION: { [Player]: number } = {}
 
 local DataUpdateRemote: any
-
-local initialSent: { [Player]: { Session: boolean, Cloud: boolean } } = {}
 
 local function deepClone(value: any, seen: { [any]: any }?): any
 	if type(value) ~= "table" then
@@ -279,19 +274,6 @@ local function processUpdateQueue()
 	end
 end
 
--- Fans one write out to the per-path, per-store and whole-profile signals.
-local function notifyDataChanged(playerData: PlayerData, dataType: DataKind, path: DataPath, value: any)
-	playerData.SpecificPathUpdated:Fire(path, value, dataType)
-
-	if dataType == K.Cloud then
-		playerData.CloudDataUpdated:Fire(playerData.Cloud)
-	elseif dataType == K.Session then
-		playerData.SessionDataUpdated:Fire(playerData.Session)
-	end
-
-	playerData.DataUpdated:Fire(playerData)
-end
-
 --[[
 	Proxy wrapper around ProfileStore.Data / SessionData.
 	Metatable tracks nested writes and flags them for client sync.
@@ -339,7 +321,7 @@ local function createProxy(t: any, player: Player, dataType: DataKind, basePath:
 
 		local playerData = handler.Data[player]
 		if playerData then
-			notifyDataChanged(playerData, dataType, fullPath, value)
+			playerData.SpecificPathUpdated:Fire(fullPath, value, dataType)
 		end
 	end
 
@@ -405,11 +387,6 @@ function DataHandler.OnInit(self: DataHandler)
 	self.Data = {} :: { [Player]: PlayerData }
 
 	local function PlayerAdded(player: Player)
-		initialSent[player] = {
-			Session = false,
-			Cloud = false,
-		}
-
 		-- ProfileStore keeps retrying the session until this says the player is gone.
 		local function cancelSession(): boolean
 			return player.Parent ~= Players
@@ -435,9 +412,6 @@ function DataHandler.OnInit(self: DataHandler)
 		local playerData: PlayerData = {
 			Cloud = createProxy(profile.Data, player, K.Cloud, {}, self),
 			Session = createProxy(sessionData, player, K.Session, {}, self),
-			CloudDataUpdated = Signal() :: Signal.Signal<typeof(cloudDataTemplate)>,
-			SessionDataUpdated = Signal() :: Signal.Signal<typeof(sessionDataTemplate)>,
-			DataUpdated = Signal() :: Signal.Signal<PlayerData>,
 			SpecificPathUpdated = Signal() :: Signal.Signal<DataPath, any, DataKind>,
 		}
 		self.Data[player] = playerData
@@ -495,7 +469,6 @@ function DataHandler.OnInit(self: DataHandler)
 		PENDING_UPDATES[player] = nil
 		UPDATE_QUEUE[player] = nil
 		REVISION[player] = nil
-		initialSent[player] = nil
 		self.Data[player] = nil
 	end)
 
@@ -505,7 +478,6 @@ function DataHandler.OnInit(self: DataHandler)
 	getSession.OnServerInvoke = function(plr)
 		local profile = self:GetData(plr)
 		if profile then
-			initialSent[plr].Session = true
 			return originalOf(profile.Session)
 		end
 		return nil
@@ -514,7 +486,6 @@ function DataHandler.OnInit(self: DataHandler)
 	getCloud.OnServerInvoke = function(plr)
 		local profile = self:GetData(plr)
 		if profile then
-			initialSent[plr].Cloud = true
 			return originalOf(profile.Cloud)
 		end
 		return nil
@@ -605,98 +576,10 @@ function DataHandler.OnLeaving(_self: DataHandler, callback: (Player, PlayerData
 	table.insert(LeavingCallbacks, callback)
 end
 
-function DataHandler.WipeData(self: DataHandler, player: Player)
-	local profile_key = `{player.UserId}`
-	local profile = Profiles[player]
-	if profile then
-		profile:EndSession()
-	end
-	PlayerStore:RemoveAsync(profile_key)
-	PENDING_UPDATES[player] = nil
-	UPDATE_QUEUE[player] = nil
-	REVISION[player] = nil
-	self.Data[player] = nil
-end
-
-function DataHandler:SetUpdateThrottle(throttle: number): ()
-	UPDATE_THROTTLE = throttle
-	Logger:Info(`Update throttle set to {throttle} seconds`)
-end
-
-function DataHandler.ForceSync(_self: DataHandler, player: Player?): ()
-	if player then
-		flushPlayerUpdates(player)
-		return
-	end
-
-	for playerKey in UPDATE_QUEUE do
-		if playerKey and playerKey.Parent == Players then
-			flushPlayerUpdates(playerKey)
-		end
-	end
-end
-
 -- Flush older deltas before sending the current full state through the existing revision channel.
 function DataHandler.ResendSnapshot(self: DataHandler, player: Player): ()
 	flushPlayerUpdates(player)
 	sendInitialSnapshot(self, player)
-end
-
-function DataHandler.GetSyncStats(_self: DataHandler)
-	local stats = {
-		totalPlayers = 0,
-		playersWithUpdates = 0,
-		totalPendingUpdates = 0,
-	}
-
-	for player, data in PENDING_UPDATES do
-		if not player or player.Parent ~= Players then
-			continue
-		end
-
-		stats.totalPlayers += 1
-		if #data.updates == 0 then
-			continue
-		end
-
-		stats.playersWithUpdates += 1
-		stats.totalPendingUpdates += #data.updates
-	end
-
-	return stats
-end
-
-function DataHandler.SubscribeToDataType(
-	self: DataHandler,
-	player: Player,
-	channel: DataKind,
-	callback: (any) -> ()
-): Signal.Connection<typeof(cloudDataTemplate)>? | Signal.Connection<typeof(sessionDataTemplate)>?
-	local playerData = self:GetData(player)
-	if not playerData then
-		return nil
-	end
-
-	if channel == K.Cloud then
-		return playerData.CloudDataUpdated:Connect(callback)
-	elseif channel == K.Session then
-		return playerData.SessionDataUpdated:Connect(callback)
-	else
-		error(`Data type must be '{K.Cloud}' or '{K.Session}'`)
-	end
-end
-
-function DataHandler.SubscribeToAll(
-	self: DataHandler,
-	player: Player,
-	callback: (PlayerData) -> ()
-): Signal.Connection<PlayerData>?
-	local playerData = self:GetData(player)
-	if not playerData then
-		return nil
-	end
-
-	return playerData.DataUpdated:Connect(callback)
 end
 
 --- @param dataType `K.Any` (default), `K.Cloud`, or `K.Session` — which store to match.

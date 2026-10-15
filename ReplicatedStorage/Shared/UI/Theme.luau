@@ -1,6 +1,6 @@
 --!strict
--- The HUD's design language, measured off the authored StarterGui screens before the UI moved into
--- code. Every screen reads its colours, type and stroke weights from here so a change lands once.
+-- The HUD's design language, measured off the authored StarterGui screens. UI built in code reads its
+-- colours, type and scaling from here so it matches the authored screens.
 
 --[[ Constants ]]--
 -- The game's one type family. Every label in the authored HUD used it; only a handful of stray
@@ -11,7 +11,6 @@ local FAMILY = "rbxassetid://12187374954"
 local Theme = {}
 
 Theme.Fonts = {
-	Medium = Font.new(FAMILY, Enum.FontWeight.Medium),
 	SemiBold = Font.new(FAMILY, Enum.FontWeight.SemiBold),
 	Bold = Font.new(FAMILY, Enum.FontWeight.Bold),
 	ExtraBold = Font.new(FAMILY, Enum.FontWeight.ExtraBold),
@@ -19,11 +18,7 @@ Theme.Fonts = {
 }
 
 Theme.Colors = {
-	-- Every label is a dark plate with a lighter face lifted a few percent above it.
 	TextFace = Color3.fromRGB(255, 255, 255),
-	TextShadow = Color3.fromRGB(0, 0, 0),
-	-- Gains and boosts.
-	Positive = Color3.fromRGB(43, 255, 0),
 	-- The XP/quest accent, and the stroke on the quest bar.
 	Gold = Color3.fromRGB(191, 140, 0),
 	Cocoa = Color3.fromRGB(95, 51, 51),
@@ -38,22 +33,8 @@ Theme.ProgressGradient = ColorSequence.new({
 	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 106, 0)),
 })
 
--- Stroke thickness is in PIXELS, and the authored screens used values well under one — the outlines
--- there are effectively invisible. Reproduced as measured; raise them here if they were meant to show.
-Theme.Stroke = {
-	Hairline = 0.02,
-	Thin = 0.04,
-	Medium = 0.05,
-	Thick = 0.06,
-}
-
--- How far the light face sits above its shadow plate, in scale.
-Theme.ShadowLift = 0.47
-
 Theme.Corners = {
 	Pill = UDim.new(1, 0),
-	Bar = UDim.new(0.2678, 0),
-	Button = UDim.new(0.1951, 0),
 }
 
 -- Logical UI pixels grow on desktop; each surface still fits its own safe rectangle.

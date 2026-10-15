@@ -4,7 +4,7 @@ Verified in Cake Funset Dev, place `85619104317376`, on 2026-09-23.
 
 ## Scope and changes
 
-The edited assets are in `StarterGui.MainGui`. `StarterGui.Mikey` remains the visual reference; its ScreenGuis are disabled to prevent sample HUD elements from appearing over the game.
+The edited assets are in `StarterGui.MainGui`. `StarterGui.Mikey` was the visual reference; it has since been removed from the place.
 
 Outer sizes of all nine `MainFrame` panels are unchanged. Internal artwork, label placement, Funds spacing, reward cards, recipe cards, ribbon titles, and icon aspect ratios were repaired. Gameplay content and existing responsive layouts remain adaptations rather than pixel-identical copies of the designer's static screens.
 

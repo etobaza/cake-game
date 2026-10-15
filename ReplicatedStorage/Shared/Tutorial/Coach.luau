@@ -98,7 +98,7 @@ local function stepKind(step: Types.TutorialGoal): string
 end
 
 -- A seated guest is choosing or waiting for food during the shift. While this holds, the coach
--- speaks sooner and keeps its line in the bubble instead of a one-off toast.
+-- speaks sooner and, on the first day, keeps its line in the bubble instead of a one-off toast.
 local function guestWaiting(session: any): boolean
 	if session.Day.Phase ~= "Shift" then
 		return false

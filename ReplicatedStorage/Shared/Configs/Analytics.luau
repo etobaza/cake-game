@@ -19,6 +19,43 @@ return {
 			Name = "Store",
 			Steps = { "Prompted", "Purchased" },
 		},
+		-- The rest of the session the introduction ends in, through the next day. "Completed" or
+		-- "Skipped" goes in the first custom field. Only the run's next step counts.
+		FirstSession = {
+			Name = "FirstSession",
+			Steps = { "TutorialDone", "FirstShiftClosed", "NextDay", "SecondShiftOpened", "SecondShiftClosed" },
+			-- Buying is optional, so the run's first upgrade is a custom event instead of a step.
+			UpgradeEvent = "FirstSessionUpgrade",
+		},
+		-- Days finished: one run per player across sessions, step N ("DayN") when day N's shift ends.
+		Days = {
+			Name = "Days",
+			MaxDay = 14,
+		},
+	},
+
+	-- The introduction's one-time onboarding funnel, in play order (TutorialEvents.Milestone). A step
+	-- is logged only once every earlier step is done, so an early action (the door opened before
+	-- baking) waits instead of auto-completing the steps before it.
+	Onboarding = {
+		Steps = {
+			"Started",
+			"Mopped",
+			"PreparedFloor",
+			"RecipeSelected",
+			"Mixed",
+			"CollectedDough",
+			"FueledOven",
+			"CollectedDish",
+			"Opened",
+			"OrderTaken",
+			"Served",
+			"CleanedTable",
+			"Completed",
+		},
+		-- Past the Sweep stage these count as done: old saves and restarted introductions skip it.
+		SweepSteps = { Mopped = true, PreparedFloor = true } :: { [string]: boolean },
+		SkippedEvent = "TutorialSkipped",
 	},
 
 	-- Accepted kitchen actions (TutorialEvents) reported as custom events with value 1.

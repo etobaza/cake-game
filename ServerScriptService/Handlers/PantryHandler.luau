@@ -117,42 +117,6 @@ function PantryHandler.Add(_self: PantryHandler, player: Player, ingredientId: s
 	pantry[ingredientId] = (pantry[ingredientId] or 0) + amount
 end
 
-function PantryHandler.HasAll(self: PantryHandler, player: Player, ingredients: { [string]: number }): boolean
-	for ingredientId, amount in ingredients do
-		if Ingredients:IsInfinite(ingredientId) then
-			continue
-		end
-
-		if self:GetAmount(player, ingredientId) < amount then
-			return false
-		end
-	end
-
-	return true
-end
-
--- Spends the whole ingredient list at once or spends nothing.
-function PantryHandler.ConsumeAll(self: PantryHandler, player: Player, ingredients: { [string]: number }): boolean
-	if not self:HasAll(player, ingredients) then
-		return false
-	end
-
-	local pantry = GetPantry(player)
-	if not pantry then
-		return false
-	end
-
-	for ingredientId, amount in ingredients do
-		if Ingredients:IsInfinite(ingredientId) then
-			continue
-		end
-
-		SetAmount(pantry, ingredientId, (pantry[ingredientId] or 0) - amount)
-	end
-
-	return true
-end
-
 export type PantryHandler = typeof(PantryHandler)
 
 return PantryHandler :: PantryHandler

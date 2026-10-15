@@ -34,6 +34,8 @@ local TOUCH_RESERVE = "TouchReserve"
 -- seat the clock at the row's end; the gap leaves room for the sun art reaching past its frame.
 local TOPBAR_SCREEN = "TopbarStandard"
 local TOPBAR_GAP = 12
+-- The controller hint row (Controls.GamepadHint) keeps this far from the hotbar and the coin plate.
+local HINT_GAP = 16
 
 --[[ Tables ]]--
 local HudLayout = {}
@@ -60,6 +62,33 @@ local function touchReserve(hud: Instance): Vector2?
 	local run = runButton(hud)
 	local reserve = run and run:GetAttribute(TOUCH_RESERVE)
 	return if typeof(reserve) == "Vector2" then reserve else nil
+end
+
+local function gamepadHint(hud: Instance): GuiObject?
+	local controls = hud:FindFirstChild("Controls")
+	local hint = controls and controls:FindFirstChild("GamepadHint")
+	return if hint and hint:IsA("GuiObject") then hint else nil
+end
+
+-- Left of the hotbar and level with it, never over the coin plate: the row shrinks to the gap
+-- between them, up to the HUD's density.
+local function placeHint(hud: GuiObject): ()
+	local hint = gamepadHint(hud)
+	local scaler = hint and hint:FindFirstChildOfClass("UIScale")
+	local layout = hint and hint:FindFirstChildOfClass("UIListLayout")
+	if not hint or not scaler or not layout then
+		return
+	end
+	local scale = HudLayout.Scale(hud.AbsoluteSize)
+	local logical = hud.AbsoluteSize / scale
+	local right = (logical.X - HOTBAR_SIZE.X) / 2 - HINT_GAP
+	local plateRight = EDGE + CURRENCY_SIZE.X
+	-- A plate lifted above the hotbar (narrow screens) leaves the corner free.
+	local left = if plateRight > right + HINT_GAP then EDGE else plateRight + HINT_GAP
+	local natural = layout.AbsoluteContentSize.X / scaler.Scale
+	scaler.Scale = if natural > 0 then math.min(scale, (right - left) * scale / natural) else scale
+	hint.AnchorPoint = Vector2.new(1, 0.5)
+	hint.Position = UDim2.new(0, right * scale, 1, -(HOTBAR_BOTTOM + HOTBAR_SIZE.Y / 2) * scale)
 end
 
 local function topbarRow(hud: Instance): GuiObject?
@@ -230,6 +259,7 @@ function HudLayout.Apply(hud: GuiObject): ()
 			end
 		end
 	end
+	placeHint(hud)
 end
 
 function HudLayout.Bind(hud: GuiObject): any
@@ -244,6 +274,16 @@ function HudLayout.Bind(hud: GuiObject): any
 	local run = runButton(hud)
 	if run then
 		janitor:Add(run:GetAttributeChangedSignal(TOUCH_RESERVE):Connect(apply), "Disconnect")
+	end
+	local hint = gamepadHint(hud)
+	local hintLayout = hint and hint:FindFirstChildOfClass("UIListLayout")
+	if hint and hintLayout and hint:FindFirstChildOfClass("UIScale") then
+		-- The row measures itself only once its entries have laid out.
+		janitor:Add(hintLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function(): ()
+			placeHint(hud)
+		end), "Disconnect")
+	elseif hint then
+		print("[HudLayout] Controls.GamepadHint needs a UIScale and a UIListLayout")
 	end
 	janitor:Add(hud:GetPropertyChangedSignal("AbsoluteSize"):Connect(apply), "Disconnect")
 	-- The row shifts with Roblox's own buttons and grows or shrinks as icons come and go.

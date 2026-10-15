@@ -1,5 +1,6 @@
 --!strict
--- Drives StarterGui.Report and owns the evening modal across report, menu and upgrades.
+-- Drives StarterGui.Report and owns the evening modal across report, menu and upgrades. Also
+-- announces the lunch rush and closing time, like Lemon Cake's stage notifications.
 -- Counters are read from the server snapshot; opening this page never grants rewards.
 
 --[[ Services ]]--
@@ -13,6 +14,7 @@ local _Handlers = ReplicatedStorage.Handlers
 local Authored = require(_Shared.UI.Authored)
 local Config = require(_Shared.Configs.DayReport)
 local DataClient = require(_Handlers.DataHandlerClient)
+local DayCycleConfig = require(_Shared.Configs.DayCycle)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Responsive = require(_Shared.UI.Responsive)
@@ -20,9 +22,10 @@ local UIHandler = require(_Handlers.UIHandler)
 local Upgrades = require(_Shared.Configs.Registries.Upgrades)
 
 --[[ Constants ]]--
-local EVENING_PAGES: { [string]: boolean } = { Report = true, Inventory = true }
+local EVENING_PAGES: { [string]: boolean } = { Report = true, Upgrades = true, Inventory = true }
 local REPORT_ROWS = table.clone(Config.Rows)
 table.insert(REPORT_ROWS, Config.UpgradeRow)
+local LUNCH_TEXT = "Lunch rush! Guests arrive faster now."
 local ROW_GAP = 8
 local ROW_SIDE_PADDING = 20
 local ROW_NUMBER_WIDTH = 72
@@ -178,12 +181,44 @@ function ReportHandler.OnStart(self: ReportHandler): ()
 		end, "Session", true),
 		"Disconnect"
 	)
+	for _, field in { "EndsAt", "ShiftSeconds" } do
+		self.Janitor:Add(
+			DataClient:SubscribeToPath({ "Day", field }, function(): ()
+				self:ScheduleLunch()
+			end, "Session"),
+			"Disconnect"
+		)
+	end
 	self.Janitor:Add(function(): ()
 		if self.Modal then
 			Pages.SetLocked(false)
 		end
+		if self.LunchTask then
+			task.cancel(self.LunchTask)
+		end
 	end, true)
 	self:RefreshPhase(DataClient:GetData({ "Day", "Phase" }, "Session"))
+	self:ScheduleLunch()
+end
+
+-- Toasts the start of the lunch rush (Configs/DayCycle); a changed clock reschedules it.
+function ReportHandler.ScheduleLunch(self: ReportHandler): ()
+	if self.LunchTask then
+		task.cancel(self.LunchTask)
+		self.LunchTask = nil
+	end
+	local day = DataClient:GetData({ "Day" }, "Session")
+	if not day or day.Phase ~= "Shift" or day.EndsAt <= 0 or day.ShiftSeconds <= 0 then
+		return
+	end
+	local delay = day.EndsAt - day.ShiftSeconds * (1 - DayCycleConfig.LunchProgress) - workspace:GetServerTimeNow()
+	if delay <= 0 then
+		return
+	end
+	self.LunchTask = task.delay(delay, function(): ()
+		self.LunchTask = nil
+		UIHandler:Toast(LUNCH_TEXT)
+	end)
 end
 
 function ReportHandler.Refresh(self: ReportHandler): ()
@@ -241,5 +276,6 @@ export type ReportHandler = typeof(ReportHandler) & {
 	Panel: Instance,
 	Content: Instance,
 	Modal: boolean,
+	LunchTask: thread?,
 }
 return ReportHandler :: ReportHandler

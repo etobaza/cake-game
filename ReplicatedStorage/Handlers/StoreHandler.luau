@@ -1,5 +1,6 @@
 --!strict
--- The Store screen, and the two Robux buttons that live on the reward screens.
+-- The Store screen, the two Robux buttons that live on the reward screens, and the coin pack
+-- offered when a coin purchase falls short.
 --
 -- Drives the Store screen authored in StarterGui: five currency tiles, two gamepass rows and one
 -- featured row, each already drawn with a price plate and a Buy button. Nothing is built here; the
@@ -156,6 +157,11 @@ local function SetMuted(row: StoreRow, muted: boolean): ()
 end
 
 --[[ Handling ]]--
+function StoreHandler.OnInit(self: StoreHandler): ()
+	-- Coin offers from other screens read it even when the Store screen is missing.
+	self.Sale = {}
+end
+
 function StoreHandler.OnStart(self: StoreHandler): ()
 	local screen = UIHandler:GetPanel(SCREEN_NAME)
 	if not screen then
@@ -165,7 +171,6 @@ function StoreHandler.OnStart(self: StoreHandler): ()
 
 	self.Screen = screen
 	self.Rows = {}
-	self.Sale = {}
 	self.Shines = {}
 	self.Plates = {}
 	self.PricesAt = -math.huge
@@ -343,6 +348,39 @@ function StoreHandler.Buy(self: StoreHandler, entryId: string): ()
 	end
 
 	Bus.Purchase.RequestPurchase:Fire(entry.productId)
+end
+
+--- Prompts the smallest coin pack that covers `shortfall`, or the largest one when none does.
+--- Packs without an id or off sale on the Marketplace are passed over.
+function StoreHandler.BuyCoins(self: StoreHandler, shortfall: number): ()
+	-- Passes multiply bought coins as well (EconomyHandler.AddCash).
+	local multiplier = Products:GetCashMultiplier(DataClient:GetData({ "Passes" }, "Cloud"))
+	local fit: string?, fitAmount = nil, math.huge
+	local largest: string?, largestAmount = nil, 0
+
+	for _, entryId in StoreConfig.Currency do
+		local entry = Products:Get(entryId)
+		local meta = entry and entry.meta
+		if not entry or not meta or meta.grant ~= "Cash" or entry.productId <= 0 or self.Sale[entryId] == false then
+			continue
+		end
+
+		local amount = math.round(meta.amount * multiplier)
+		if amount >= shortfall and amount < fitAmount then
+			fit, fitAmount = entryId, amount
+		end
+		if amount > largestAmount then
+			largest, largestAmount = entryId, amount
+		end
+	end
+
+	local entryId = fit or largest
+	if not entryId then
+		UIHandler:Toast("Coin packs are not on sale yet")
+		return
+	end
+
+	self:Buy(entryId)
 end
 
 --- Every plate shows its Marketplace price; owned passes and off-sale products read grey, and the

@@ -1,6 +1,6 @@
 --!strict
--- Entrance prompt: opens the prepared bakery, closes an active shift, and disappears while the
--- evening Summary owns the player. The server re-checks range, ownership and phase.
+-- Entrance prompt: opens the prepared bakery. An open bakery stays open until closing time, so the
+-- shift only shows its sign. The server re-checks range, ownership and phase.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -30,13 +30,7 @@ function Door.Describe(context: Types.Context): Types.PromptState
 	end
 
 	if phase == "Shift" then
-		return {
-			Label = "Open",
-			Action = "Close Restaurant",
-			Fire = function()
-				Bus.Day.ToggleDoor:Fire(context.PropId)
-			end,
-		}
+		return { Label = "Open" }
 	end
 
 	return { Label = "Closed" }

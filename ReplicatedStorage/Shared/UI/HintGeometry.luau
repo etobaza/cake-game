@@ -1,5 +1,5 @@
 --!strict
--- Screen geometry shared by focus and card placement. Projection clips edges at the camera near plane.
+-- Screen geometry shared by focus and card placement.
 
 --[[ Services ]]
 --
@@ -8,37 +8,12 @@ local GuiService = game:GetService("GuiService")
 -- Pixel/projection tolerances, not gameplay or visual tuning.
 local MIN_VISIBLE_SPAN = 2
 local HIDDEN_GROUP_TRANSPARENCY = 0.99
-local MIN_NEAR_PLANE = 0.05
 local DIRECTION_EPSILON = 0.01
 local DIVISION_EPSILON = 0.001
 
 --[[ Tables ]]
 --
 local Geometry = {}
-local Signs = {
-	Vector3.new(-1, -1, -1),
-	Vector3.new(-1, -1, 1),
-	Vector3.new(-1, 1, -1),
-	Vector3.new(-1, 1, 1),
-	Vector3.new(1, -1, -1),
-	Vector3.new(1, -1, 1),
-	Vector3.new(1, 1, -1),
-	Vector3.new(1, 1, 1),
-}
-local Edges = {
-	{ 1, 2 },
-	{ 1, 3 },
-	{ 1, 5 },
-	{ 2, 4 },
-	{ 2, 6 },
-	{ 3, 4 },
-	{ 3, 7 },
-	{ 4, 8 },
-	{ 5, 6 },
-	{ 5, 7 },
-	{ 6, 8 },
-	{ 7, 8 },
-}
 
 export type Rect = { min: Vector2, max: Vector2 }
 
@@ -175,42 +150,6 @@ function Geometry.Union(a: Rect?, b: Rect?): Rect?
 		min = Vector2.new(math.min(a.min.X, b.min.X), math.min(a.min.Y, b.min.Y)),
 		max = Vector2.new(math.max(a.max.X, b.max.X), math.max(a.max.Y, b.max.Y)),
 	}
-end
-
-function Geometry.Box(camera: Camera, frame: CFrame, size: Vector3): Rect?
-	local points: { Vector3 } = {}
-	local projected: { Vector3 } = {}
-	local near = math.max(MIN_NEAR_PLANE, -camera.NearPlaneZ)
-	for index, sign in Signs do
-		local world = frame:PointToWorldSpace(sign * size / 2)
-		points[index] = camera.CFrame:PointToObjectSpace(world)
-		if -points[index].Z >= near then
-			projected[#projected + 1] = world
-		end
-	end
-
-	for _, edge in Edges do
-		local a, b = points[edge[1]], points[edge[2]]
-		if (-a.Z >= near) == (-b.Z >= near) then
-			continue
-		end
-
-		local alpha = (-near - a.Z) / (b.Z - a.Z)
-		projected[#projected + 1] = camera.CFrame:PointToWorldSpace(a:Lerp(b, alpha))
-	end
-
-	local low, high = Vector2.new(math.huge, math.huge), Vector2.new(-math.huge, -math.huge)
-	for _, world in projected do
-		local point = camera:WorldToViewportPoint(world)
-		low = Vector2.new(math.min(low.X, point.X), math.min(low.Y, point.Y))
-		high = Vector2.new(math.max(high.X, point.X), math.max(high.Y, point.Y))
-	end
-
-	return if #projected > 0 then { min = low, max = high } else nil
-end
-
-function Geometry.Area(rect: Rect?): number
-	return if rect then (rect.max.X - rect.min.X) * (rect.max.Y - rect.min.Y) else 0
 end
 
 function Geometry.Safe(viewport: Vector2, padding: number): Rect

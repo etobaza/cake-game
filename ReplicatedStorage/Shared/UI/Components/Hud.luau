@@ -23,6 +23,8 @@ local Bus = require(_Shared.Bus)
 local DayCycleConfig = require(_Configs.DayCycle)
 local Format = require(_Shared.UI.Format)
 local HydrateHud = require(_Shared.UI.HydrateHud)
+local InputCue = require(_Shared.UI.InputCue)
+local InputCues = require(_Configs.InputCues)
 local Motion = require(_Shared.UI.Motion)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Progression = require(_Configs.Progression)
@@ -34,6 +36,12 @@ local Wallet = require(_Shared.UI.Stores.Wallet)
 --[[ Constants ]]--
 -- The shift countdown turns urgent this many seconds before the doors close.
 local URGENT_SECONDS = 10
+-- Side buttons with a controller shortcut: the authored button, its page and its key.
+local SIDE_CUES: { { Button: string, Page: string, Key: Enum.KeyCode } } = {
+	{ Button = "Upgrades", Page = Pages.Names.Upgrades, Key = InputCues.Keys.Upgrades },
+	{ Button = "Shop", Page = Pages.Names.Store, Key = InputCues.Keys.Shop },
+	{ Button = "Rewards", Page = Pages.Names.Playtime, Key = InputCues.Keys.Rewards },
+}
 
 --[[ Types ]]--
 export type Deps = {
@@ -77,9 +85,10 @@ return function(hud: Instance, deps: Deps): ()
 	Flux.cleanup(data:SubscribeToDataType("Cloud", refreshUpgradeCount))
 	local phase = UseData.Path(data, { "Day", "Phase" }, "Session", "Prep")
 	local endsAt = UseData.Path(data, { "Day", "EndsAt" }, "Session", 0)
+	local shiftSeconds = UseData.Path(data, { "Day", "ShiftSeconds" }, "Session", 0)
 	local now = UseClock.Now()
 	local clockMinutes = Flux(function(): number
-		return DayCycleConfig.GetClockMinutes(phase(), endsAt(), now())
+		return DayCycleConfig.GetClockMinutes(phase(), endsAt(), shiftSeconds(), now())
 	end)
 
 	-- Every client sees the atmosphere of their own bakery day. The HUD scope lives for the session;
@@ -175,4 +184,29 @@ return function(hud: Instance, deps: Deps): ()
 			questsCollapsed:set(not questsCollapsed:peek())
 		end,
 	})
+
+	-- Controller badges on the side buttons. An open page owns the D-pad for its selection, and B closes it.
+	local sideButtons = hud:FindFirstChild("SideBtns")
+	for _, cue in SIDE_CUES do
+		local target = sideButtons and sideButtons:FindFirstChild(cue.Button)
+		if not target or not target:IsA("GuiObject") then
+			print(`[Hud] no side button '{cue.Button}' for its input cue`)
+			continue
+		end
+		local binding = InputCue.Bind({
+			Name = cue.Button,
+			Target = target,
+			Key = cue.Key,
+			Placement = "Edge",
+			Action = function(): ()
+				Pages.Open(cue.Page)
+			end,
+			Available = function(): boolean
+				return Pages.Current:peek() == Pages.Names.None and InputCue.OnScreen(target)
+			end,
+		})
+		Flux.cleanup(function(): ()
+			binding:Destroy()
+		end)
+	end
 end

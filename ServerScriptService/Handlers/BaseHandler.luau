@@ -269,22 +269,6 @@ function BaseHandler.CountAnchors(self: BaseHandler, prefix: string): number
 	return count
 end
 
--- Base owner by any instance inside it.
-function BaseHandler.GetOwnerOf(_self: BaseHandler, instance: Instance): Player?
-	local current: Instance? = instance
-
-	while current do
-		local userId = current:GetAttribute(BaseConfig.OwnerAttribute)
-		if userId then
-			return Players:GetPlayerByUserId(userId :: number)
-		end
-
-		current = current.Parent
-	end
-
-	return nil
-end
-
 export type BaseHandler = typeof(BaseHandler) & {
 	Template: Instance,
 	TemplateOrigin: CFrame,

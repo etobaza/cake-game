@@ -53,22 +53,4 @@ function Authored.SetPair(holder: Instance?, text: string): ()
 	end
 end
 
---- Every element under `parent` that carries `name`, left to right as drawn. Screens repeat a name
---- for elements that were meant to differ later, and position is the only thing telling them apart.
-function Authored.NamedInOrder(parent: Instance, name: string): { GuiObject }
-	local found = {}
-
-	for _, child in parent:GetChildren() do
-		if child:IsA("GuiObject") and child.Name == name then
-			found[#found + 1] = child
-		end
-	end
-
-	table.sort(found, function(left: GuiObject, right: GuiObject): boolean
-		return left.Position.X.Scale < right.Position.X.Scale
-	end)
-
-	return found
-end
-
 return Authored

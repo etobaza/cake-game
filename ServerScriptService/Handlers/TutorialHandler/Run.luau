@@ -3,11 +3,12 @@
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 --[[ Modules ]]--
-local Analytics = require(script.Parent.Analytics)
 local Buildings = require(ReplicatedStorage.Shared.Configs.Buildings)
 local Config = require(ReplicatedStorage.Shared.Configs.Tutorial)
+local Events = require(ServerScriptService.TutorialEvents)
 local Features = require(ReplicatedStorage.Shared.Tutorial.Features)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Policy = require(ReplicatedStorage.Shared.TutorialPolicy)
@@ -36,7 +37,7 @@ local function mark(self: any, name: string): ()
 	end
 	actions[name] = true
 	if Policy.IsActive(self.Data.Cloud) or name == "Completed" or name == "Skipped" then
-		Analytics.Record(self.Player, name, self.Data.Session.Tutorial.Stage)
+		Events.Milestone:Fire(self.Player, name, self.Data.Session.Tutorial.Stage)
 	end
 end
 
@@ -300,11 +301,11 @@ end
 -- Only features owned for the whole shift can be judged unused at its end.
 function Run.ShiftStarted(self: Run): ()
 	local cloud = self.Data.Cloud
+	if Policy.IsActive(cloud) then
+		mark(self, "Opened")
+	end
 	local owned = {}
 	for _, feature in Config.Features do
-		if feature.task and Features.Used(cloud, feature) and not cloud.Tutorial.Actions[`Use:{feature.id}`] then
-			cloud.Tutorial.Actions[`Use:{feature.id}`] = true
-		end
 		if Features.Owned(cloud, feature) then
 			owned[feature.id] = true
 		end

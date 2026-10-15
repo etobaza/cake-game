@@ -74,14 +74,6 @@ function PlotHandler.Release(self: PlotHandler, player: Player): ()
 	self.Assigned[player] = nil
 end
 
-function PlotHandler.GetPlot(self: PlotHandler, player: Player): Folder?
-	return self.Assigned[player]
-end
-
-function PlotHandler.GetOwner(self: PlotHandler, bakery: Folder): Player?
-	return self.Owners[bakery]
-end
-
 export type PlotHandler = typeof(PlotHandler) & {
 	Folder: Folder,
 	Owners: { [Folder]: Player },

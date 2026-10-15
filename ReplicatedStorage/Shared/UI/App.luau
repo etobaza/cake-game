@@ -21,6 +21,8 @@ local Animate = require(_Shared.UI.Animate)
 local BakeryMenu = require(_Shared.UI.BakeryMenu)
 local Flux = require(_Packages.flux)
 local HudComponent = require(_Shared.UI.Components.Hud)
+local InputCue = require(_Shared.UI.InputCue)
+local InputCues = require(_Shared.Configs.InputCues)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Responsive = require(_Shared.UI.Responsive)
 local Scope = require(_Shared.UI.Scope)
@@ -110,6 +112,8 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 	-- Pages drawn without a close button, and the first button that can be lent to them.
 	local needClose: { ScreenGui } = {}
 	local donor: GuiButton? = nil
+	-- Every page close button, own or lent, for its B badge.
+	local closes: { GuiButton } = {}
 
 	--- Every authored screen, waited for rather than looked up: StarterGui is copied into PlayerGui
 	--- one screen at a time, and on a slow boot the last of them is not there yet when this runs.
@@ -175,6 +179,7 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 		end
 
 		donor = donor or close
+		closes[#closes + 1] = close
 
 		Animate.Press(close)
 		edit(close)({
@@ -290,6 +295,7 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 			end
 
 			local lent = borrowClose(screen, donor)
+			closes[#closes + 1] = lent
 
 			Animate.Press(lent)
 			edit(lent)({
@@ -300,6 +306,17 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 					Pages.Close()
 				end,
 			})
+		end
+
+		-- B closes a page (NavigationHandler). Its glyph is added after the lending above, so no
+		-- borrowed copy carries a stale badge.
+		for _, close in closes do
+			-- B presses it, so gamepad focus stays on the page's content.
+			close.Selectable = false
+			local cue = InputCue.Bind({ Target = close, Key = InputCues.Keys.Close })
+			Flux.cleanup(function(): ()
+				cue:Destroy()
+			end)
 		end
 	end)
 

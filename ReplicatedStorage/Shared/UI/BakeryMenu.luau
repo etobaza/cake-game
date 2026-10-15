@@ -9,6 +9,8 @@ local TweenService = game:GetService("TweenService")
 local Animate = require(script.Parent.Animate)
 local ButtonRow = require(script.Parent.ButtonRow)
 local Flux = require(ReplicatedStorage.Packages.flux)
+local InputCue = require(script.Parent.InputCue)
+local InputCues = require(ReplicatedStorage.Shared.Configs.InputCues)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Pages = require(script.Parent.Stores.Pages)
 local UseData = require(script.Parent.Hooks.UseData)
@@ -16,9 +18,10 @@ local UseData = require(script.Parent.Hooks.UseData)
 --[[ Constants ]]--
 local TABS: { [string]: Pages.Page } = {
 	Report = Pages.Names.Report,
+	Upgrades = Pages.Names.Upgrades,
 	Menu = Pages.Names.Inventory,
 }
-local TAB_BUTTONS = { "Report", "Menu" }
+local TAB_BUTTONS = { "Report", "Upgrades", "Menu" }
 local HEADER_LEFT_INSET = 6
 local HEADER_RIGHT_INSET = 6
 local HEADER_GAP = 8
@@ -135,6 +138,66 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	nextDay.Size = UDim2.new(1 - #TAB_BUTTONS * tabShare, -NEXT_DAY_GAP - nextDayShift, 1, 0)
 	table.insert(rowButtons, nextDay)
 	janitor:Add(ButtonRow.Bind(buttons, rowButtons), "Destroy")
+	-- The shoulder buttons walk the evening tabs, skipping any the lock refuses.
+	local function step(direction: number): ()
+		local index = 1
+		for position, name in TAB_BUTTONS do
+			if TABS[name] == Pages.Current:peek() then
+				index = position
+			end
+		end
+		for offset = 1, #TAB_BUTTONS - 1 do
+			local page = TABS[TAB_BUTTONS[(index - 1 + direction * offset) % #TAB_BUTTONS + 1]]
+			if Pages.CanOpen(page) then
+				Pages.Open(page)
+				return
+			end
+		end
+	end
+	-- The upgrade tree uses the same shoulder buttons for its categories, so it keeps them.
+	local function shoulders(): boolean
+		return Pages.Current:peek() ~= Pages.Names.Upgrades
+	end
+	local previousTab = buttons:FindFirstChild(TAB_BUTTONS[1]) :: GuiObject
+	local nextTab = buttons:FindFirstChild(TAB_BUTTONS[#TAB_BUTTONS]) :: GuiObject
+	local tabCues = {
+		InputCue.Bind({
+			Name = "EveningPreviousTab",
+			Target = previousTab,
+			Key = InputCues.Keys.PreviousTab,
+			-- On the tabs' outer edges: the row leaves no room beside them, Next Day sits close by.
+			Placement = "LeftEdge",
+			Action = function(): ()
+				step(-1)
+			end,
+			Available = function(): boolean
+				return shoulders() and InputCue.OnScreen(previousTab)
+			end,
+			Shown = shoulders,
+		}),
+		InputCue.Bind({
+			Name = "EveningNextTab",
+			Target = nextTab,
+			Key = InputCues.Keys.NextTab,
+			Placement = "Edge",
+			Action = function(): ()
+				step(1)
+			end,
+			Available = function(): boolean
+				return shoulders() and InputCue.OnScreen(nextTab)
+			end,
+			Shown = shoulders,
+		}),
+	}
+	for _, cue in tabCues do
+		janitor:Add(cue, "Destroy")
+	end
+	Flux(function(): ()
+		Pages.Current()
+		for _, cue in tabCues do
+			cue:Refresh()
+		end
+	end, true)
 	for name, page in TABS do
 		local button = buttons:FindFirstChild(name) :: TextButton
 		local available = Flux(function(): boolean
@@ -160,7 +223,10 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	})
 	BakeryMenu.AnimateNextDay(nextDay, isSummary, janitor)
 	local close = header:FindFirstChild("Exit", true) :: GuiButton
+	-- B presses it, so gamepad focus stays on the page's content.
+	close.Selectable = false
 	bindPress(close)
+	janitor:Add(InputCue.Bind({ Target = close, Key = InputCues.Keys.Close }), "Destroy")
 	Flux.edit(close)({
 		Visible = function(): boolean
 			return not Pages.Locked()

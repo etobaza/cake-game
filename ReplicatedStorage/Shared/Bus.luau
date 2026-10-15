@@ -46,12 +46,6 @@ return {
 	Purchase = {
 		-- Client -> Server: Request purchase prompt
 		RequestPurchase = Packet("PurchaseRequest", Packet.NumberU32), -- productId
-		-- Client -> Server: Request gift purchase
-		RequestGift = Packet("PurchaseRequestGift", Packet.NumberU32, Packet.NumberU32), -- productId, recipientUserId
-		-- Server -> Client: Purchase completed notification
-		Completed = Packet("PurchaseCompleted", Packet.NumberU32, Packet.Boolean8), -- productId, isGift
-		-- Server -> Client: Purchase failed notification
-		Failed = Packet("PurchaseFailed", Packet.NumberU32, Packet.String), -- productId, errorMessage
 	},
 
 	-- GAMEPLAY
@@ -61,12 +55,10 @@ return {
 		SelectMenu = Packet("DaySelectMenu", { Packet.String }), -- recipeIds
 		-- Client -> Server: open the bakery, start the shift
 		Open = Packet("DayOpen", Packet.Nil),
-		-- Client -> Server: toggle the bakery from its owned entrance prompt
+		-- Client -> Server: open the bakery from its owned entrance prompt (it cannot close early)
 		ToggleDoor = Packet("DayToggleDoor", Packet.String), -- doorId
 		-- Client -> Server: commit tomorrow's menu and enter its untimed prep
 		Next = Packet("DayNext", Packet.Nil),
-		-- Server -> Client: the shift ended, the summary is in Session.Day.Summary
-		ShiftEnded = Packet("DayShiftEnded", Packet.Nil),
 		-- Server -> Client: new level
 		LevelUp = Packet("DayLevelUp", Packet.NumberU8), -- level
 		-- Server -> Client: the level unlocked a new story chapter
@@ -162,8 +154,6 @@ return {
 		BuyUpgrade = Packet("ProgressBuyUpgrade", Packet.String, Packet.NumberU8), -- upgradeId, purchaseLevel
 		-- Server -> Client: a successful coin purchase, after the saved level and stats agree.
 		UpgradeBought = Packet("ProgressUpgradeBought", Packet.String, Packet.NumberU8, Packet.NumberF64), -- upgradeId, purchasedLevel, paidCost
-		-- Client -> Server: assign the assistant task for the next day during Summary
-		SetAssistantTask = Packet("ProgressSetAssistantTask", Packet.String), -- taskId
 		-- Client -> Server: redeem a promo code typed into the codes screen
 		RedeemCode = Packet("ProgressRedeemCode", Packet.String), -- code
 		-- Client -> Server: take today's daily reward

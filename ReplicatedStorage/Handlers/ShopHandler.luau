@@ -9,6 +9,8 @@
 -- The registry remains responsible for saved IDs, prices, stats and purchase requirements.
 
 --[[ Services ]]--
+local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --[[ References ]]--
@@ -25,9 +27,12 @@ local Bus = require(_Shared.Bus)
 local DataClient = require(_Handlers.DataHandlerClient)
 local Flux = require(ReplicatedStorage.Packages.flux)
 local GameTypes = require(_Shared.GameTypes)
+local InputCue = require(_Shared.UI.InputCue)
+local InputCues = require(_Configs.InputCues)
 local Press = require(_Shared.UI.Press)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Scope = require(_Shared.UI.Scope)
+local StoreHandler = require(_Handlers.StoreHandler)
 local UIHandler = require(_Handlers.UIHandler)
 local UpgradeRevealHandler = require(_Handlers.UpgradeRevealHandler)
 local Upgrades = require(_Configs.Registries.Upgrades)
@@ -39,6 +44,9 @@ local SCREEN_NAME = "Upgrades"
 local MAIN_PATH = { "MainFrame", "Main" }
 -- Keep the authored edge spacing only while the wider tree needs horizontal scrolling.
 local TREE_SCROLL_PADDING = 12
+-- A coin pack bought for an upgrade buys that upgrade when its coins land within this many seconds
+-- of the offer, while Upgrades stays open.
+local PACK_WAIT = 120
 
 -- Category tabs, in the order they are drawn.
 local TABS = UpgradeTabs.Tabs
@@ -71,6 +79,7 @@ local ART_CAPTIONED_Y = 0.42
 local CAPTION_HEIGHT = 0.3
 
 -- Node paint per state. The cream and the green are the authored ones, the rest follow from them.
+-- Short of coins (Poor) looks buyable: Purchase offers the coin pack that covers it.
 local BOX_COLOR: { [string]: Color3 } = {
 	Owned = Color3.fromRGB(253, 234, 195),
 	Ready = Color3.fromRGB(253, 234, 195),
@@ -81,14 +90,14 @@ local BOX_COLOR: { [string]: Color3 } = {
 local STROKE_COLOR: { [string]: Color3 } = {
 	Owned = Color3.fromRGB(34, 169, 0),
 	Ready = Color3.fromRGB(240, 176, 76),
-	Poor = Color3.fromRGB(168, 78, 62),
+	Poor = Color3.fromRGB(240, 176, 76),
 	Locked = Color3.fromRGB(120, 116, 108),
 	Empty = Color3.fromRGB(120, 116, 108),
 }
 local ICON_TRANSPARENCY: { [string]: number } = {
 	Owned = 0,
 	Ready = 0,
-	Poor = 0.2,
+	Poor = 0,
 	Locked = 0.6,
 	Empty = 1,
 }
@@ -97,7 +106,7 @@ local TAB_OFF = Color3.fromRGB(168, 163, 156)
 
 --[[ Tables ]]--
 local ShopHandler = {
-	dependencies = { "DataClient", "UIHandler", "UpgradeRevealHandler" },
+	dependencies = { "DataClient", "StoreHandler", "UIHandler", "UpgradeRevealHandler" },
 }
 
 --[[ Private Functions ]]--
@@ -138,6 +147,12 @@ local function GetState(
 	local cost = Upgrades:GetPurchaseCost(entry.id, levels, playerLevel)
 
 	return if cost and cash >= cost then "Ready" else "Poor"
+end
+
+-- The server still checks the wallet; the reveal is armed for the reply.
+local function requestUpgrade(upgradeId: string, level: number): ()
+	UpgradeRevealHandler:Prepare(upgradeId, level)
+	Bus.Progress.BuyUpgrade:Fire(upgradeId, level)
 end
 
 -- The line under the name: what the upgrade does, plus how far it has been taken or why it is shut.
@@ -292,6 +307,7 @@ function ShopHandler.OnStart(self: ShopHandler): ()
 			local selected = key and self.Slots[key]
 			local wasOwned = selected ~= nil and selected.State == "Owned"
 			self:Refresh()
+			self:CompletePending()
 			if selected and not wasOwned and selected.State == "Owned" and Pages.Current:peek() == Pages.Names.Upgrades then
 				self:SelectRecommended()
 			end
@@ -303,10 +319,22 @@ function ShopHandler.OnStart(self: ShopHandler): ()
 			Flux(function(): ()
 				if Pages.Current() == Pages.Names.Upgrades then
 					self:SelectRecommended()
+				else
+					self.Pending = nil
 				end
 			end, true)
 		end),
 		"Destroy"
+	)
+	self.Janitor:Add(
+		MarketplaceService.PromptProductPurchaseFinished:Connect(
+			function(userId: number, _productId: number, purchased: boolean): ()
+				if userId == Players.LocalPlayer.UserId and not purchased then
+					self.Pending = nil
+				end
+			end
+		),
+		"Disconnect"
 	)
 end
 
@@ -406,6 +434,42 @@ function ShopHandler.BindTabs(self: ShopHandler, main: Instance): ()
 		)
 	end
 	self.Janitor:Add(ButtonRow.Bind(top :: GuiObject, rowButtons), "Destroy")
+
+	-- The shoulder buttons walk the tabs; their glyphs sit beside the row's ends.
+	local function bindStep(
+		name: string,
+		key: Enum.KeyCode,
+		target: GuiObject?,
+		step: number,
+		placement: InputCue.Placement
+	): ()
+		if not target then
+			return
+		end
+		self.Janitor:Add(
+			InputCue.Bind({
+				Name = name,
+				Target = target,
+				Key = key,
+				Placement = placement,
+				Action = function(): ()
+					self:StepCategory(step)
+				end,
+			}),
+			"Destroy"
+		)
+	end
+	bindStep("UpgradesPreviousTab", InputCues.Keys.PreviousTab, rowButtons[1], -1, "Left")
+	bindStep("UpgradesNextTab", InputCues.Keys.NextTab, rowButtons[#rowButtons], 1, "Right")
+end
+
+function ShopHandler.StepCategory(self: ShopHandler, step: number): ()
+	for index, tab in TABS do
+		if tab.Category == self.Category then
+			self:ShowCategory(TABS[(index - 1 + step) % #TABS + 1].Category)
+			return
+		end
+	end
 end
 
 --- The footer's Purchase plate is a frame, so the press is read off it directly.
@@ -424,6 +488,29 @@ function ShopHandler.BindPurchase(self: ShopHandler): ()
 			self:Buy()
 		end),
 		"Destroy"
+	)
+	-- Buys the selected node without walking the gamepad focus down to the footer.
+	self.Janitor:Add(
+		InputCue.Bind({
+			Name = "UpgradesPurchase",
+			Target = buy,
+			Key = InputCues.Keys.PageAction,
+			Action = function(): ()
+				self:Buy()
+			end,
+		}),
+		"Destroy"
+	)
+	-- The replicated balance can lag a spend, so a press that looked affordable may still be refused.
+	self.Janitor:Add(
+		Bus.Progress.ActionFailed.OnClientEvent:Connect(function(reason: string): ()
+			local key = self.Selected[self.Category]
+			local node = key and self.Slots[key]
+			if reason == "not_enough_coins" and node and node.UpgradeId then
+				self:OfferCoins(node.UpgradeId, node.PurchaseLevel)
+			end
+		end),
+		"Disconnect"
 	)
 end
 
@@ -576,7 +663,7 @@ function ShopHandler.RefreshFooter(
 			if complete then "All upgrades purchased" else "Pick an upgrade"
 		)
 		Authored.SetPair(resolve(bottom, { "Label2", "Value" }), "")
-		self:SetDesc(if complete then "Your bakery upgrade tree is complete." else "Tap a node to see what it does.")
+		self:SetDesc(if complete then "Your bakery upgrade tree is complete." else "Choose a node to see what it does.")
 		self:SetPreview(nil)
 		self:ShowStatus(nil, "")
 		return
@@ -594,10 +681,8 @@ function ShopHandler.RefreshFooter(
 
 	if state == "Owned" then
 		self:ShowStatus("Purchased", "Purchased")
-	elseif state == "Ready" then
+	elseif state == "Ready" or state == "Poor" then
 		self:ShowStatus("Prchased", "Purchase")
-	elseif state == "Poor" then
-		self:ShowStatus("Locked", "Not enough")
 	else
 		local blockedByParent = Upgrades:GetMissingRequirement(entry, levels) ~= nil or level + 1 < targetLevel
 
@@ -651,9 +736,43 @@ end
 function ShopHandler.Buy(self: ShopHandler): ()
 	local key = self.Selected[self.Category]
 	local node = key and self.Slots[key]
-	if node and node.UpgradeId and node.State == "Ready" and not Pages.Presenting:peek() then
-		UpgradeRevealHandler:Prepare(node.UpgradeId, node.PurchaseLevel)
-		Bus.Progress.BuyUpgrade:Fire(node.UpgradeId, node.PurchaseLevel)
+	if not node or not node.UpgradeId or Pages.Presenting:peek() then
+		return
+	end
+
+	if node.State == "Ready" then
+		requestUpgrade(node.UpgradeId, node.PurchaseLevel)
+	elseif node.State == "Poor" then
+		self:OfferCoins(node.UpgradeId, node.PurchaseLevel)
+	end
+end
+
+--- Short of coins, Purchase prompts the coin pack that covers the rest. Upgrades are still paid in
+--- coins only: the server refuses whatever the wallet cannot cover.
+function ShopHandler.OfferCoins(self: ShopHandler, upgradeId: string, level: number): ()
+	local inputs = Upgrades:ReadInputs(DataClient)
+	local cost = Upgrades:GetPurchaseCost(upgradeId, inputs.Levels, inputs.PlayerLevel)
+	if cost then
+		self.Pending = { UpgradeId = upgradeId, Level = level, Until = os.clock() + PACK_WAIT }
+		-- A server refusal can arrive while the replicated balance still reads as enough.
+		StoreHandler:BuyCoins(math.max(cost - inputs.Cash, 1))
+	end
+end
+
+--- Buys the upgrade a coin pack was bought for once its coins have landed.
+function ShopHandler.CompletePending(self: ShopHandler): ()
+	local pending = self.Pending
+	local entry = pending and Upgrades:Get(pending.UpgradeId)
+	if not pending or not entry then
+		return
+	end
+	local inputs = Upgrades:ReadInputs(DataClient)
+	local state = GetState(entry, pending.Level, inputs.Levels, inputs.PlayerLevel, inputs.Cash)
+	if os.clock() > pending.Until or (state ~= "Poor" and state ~= "Ready") then
+		self.Pending = nil
+	elseif state == "Ready" and not Pages.Presenting:peek() then
+		self.Pending = nil
+		requestUpgrade(pending.UpgradeId, pending.Level)
 	end
 end
 
@@ -692,6 +811,8 @@ export type ShopHandler = typeof(ShopHandler) & {
 	Tabs: { [string]: GuiButton },
 	Selected: { [string]: string? },
 	Category: GameTypes.UpgradeCategory,
+	-- The upgrade a coin pack offer was made for.
+	Pending: { UpgradeId: string, Level: number, Until: number }?,
 }
 
 return ShopHandler :: ShopHandler

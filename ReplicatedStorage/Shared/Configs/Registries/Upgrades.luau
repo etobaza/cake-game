@@ -1,5 +1,6 @@
 --!strict
--- Upgrade registry: each one moves exactly one BaseStats key by perLevel per level.
+-- Upgrade registry: each one moves one BaseStats key by perLevel per level. Buildings an upgrade
+-- adds (garden sources, animals, the rail cart) are placed by its ID, so their stat only counts them.
 -- The buy order and every price (times 100, in whole coins) follow the design sheet: cost gates
 -- progression, not player level, so unlockLevel is 1 everywhere and `requires` chains carry the
 -- intended order.
@@ -37,12 +38,10 @@ type UpgradeDefinition = {
 	unlockLevel: number,
 	-- One line for the shop: what the player actually gets.
 	blurb: string,
-	-- Upgrade tree: the node this one grows from, and where it sits in its category grid.
-	-- A node with no parent is a root. Rows go down, columns left to right.
+	-- Upgrade tree: the node this one grows from; a node with no parent is a root. Configs/UpgradeTree
+	-- places each purchase in its Lemon Cake cell.
 	requires: string?,
 	prerequisites: { string }?,
-	row: number,
-	col: number,
 }
 export type UpgradeEntry = UpgradeDefinition & { id: string }
 
@@ -70,8 +69,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costs = { 525, 1250, 2500, 5525, 7525 },
 		unlockLevel = 1,
 		blurb = "Room for one more pastry in the window.",
-		row = 0,
-		col = 1,
 	},
 	cafe_window = {
 		name = "Kitchen Window",
@@ -85,8 +82,6 @@ local list: { [string]: UpgradeDefinition } = {
 		unlockLevel = 1,
 		blurb = "A pass-through shelf: leave a pastry from the kitchen, pick it up in the café.",
 		requires = "cafe_display",
-		row = 1,
-		col = 0,
 	},
 	cafe_catcafe = {
 		name = "Cat Café",
@@ -102,8 +97,6 @@ local list: { [string]: UpgradeDefinition } = {
 		unlockLevel = 1,
 		blurb = "Cats in the café: happier guests, fatter tips.",
 		requires = "cafe_display",
-		row = 1,
-		col = 2,
 	},
 	cafe_coffee = {
 		name = "Coffee Machine",
@@ -117,8 +110,6 @@ local list: { [string]: UpgradeDefinition } = {
 		unlockLevel = 1,
 		blurb = "A coffee machine; coffee joins the day menu.",
 		requires = "cafe_window",
-		row = 2,
-		col = 0,
 	},
 	cafe_tables = {
 		name = "Two Seats & Table",
@@ -132,8 +123,6 @@ local list: { [string]: UpgradeDefinition } = {
 		unlockLevel = 1,
 		blurb = "Another table with two independent seats for guests.",
 		requires = "cafe_catcafe",
-		row = 2,
-		col = 2,
 	},
 	cafe_assistant = {
 		name = "Assistant",
@@ -145,10 +134,8 @@ local list: { [string]: UpgradeDefinition } = {
 		baseCost = 50000,
 		costMultiplier = 1,
 		unlockLevel = 1,
-		blurb = "An assistant takes over one job for the day.",
+		blurb = "An assistant carries window pastries, serves coffee, clears tables and stocks the display.",
 		requires = "cafe_coffee",
-		row = 3,
-		col = 0,
 	},
 
 	--[[ Kitchen ]]--
@@ -163,8 +150,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "A proper prep counter: the mixer works through a batch faster.",
-		row = 0,
-		col = 1,
 	},
 	kitchen_fuel = {
 		name = "Firewood Upgrade",
@@ -178,8 +163,6 @@ local list: { [string]: UpgradeDefinition } = {
 		unlockLevel = 1,
 		blurb = "Firewood burns twice as long before the oven needs another log.",
 		requires = "kitchen_counter",
-		row = 1,
-		col = 0,
 	},
 	kitchen_oven = {
 		name = "Second Oven",
@@ -195,8 +178,6 @@ local list: { [string]: UpgradeDefinition } = {
 		unlockLevel = 1,
 		blurb = "One more oven, one more bake at a time.",
 		requires = "kitchen_counter",
-		row = 1,
-		col = 2,
 	},
 	kitchen_chickens = {
 		name = "Chickens",
@@ -210,8 +191,6 @@ local list: { [string]: UpgradeDefinition } = {
 		unlockLevel = 1,
 		blurb = "Chickens in the garden: fresh eggs every day.",
 		requires = "kitchen_fuel",
-		row = 2,
-		col = 0,
 	},
 	kitchen_cow = {
 		name = "Cow",
@@ -225,8 +204,6 @@ local list: { [string]: UpgradeDefinition } = {
 		unlockLevel = 1,
 		blurb = "A cow of your own: milk for the cream recipes.",
 		requires = "kitchen_fuel",
-		row = 2,
-		col = 1,
 	},
 	kitchen_freezer = {
 		name = "Freezer",
@@ -240,8 +217,6 @@ local list: { [string]: UpgradeDefinition } = {
 		unlockLevel = 1,
 		blurb = "A freezer; frozen desserts become cookable.",
 		requires = "kitchen_oven",
-		row = 2,
-		col = 2,
 	},
 	kitchen_burnguard = {
 		name = "Oven Upgrade",
@@ -255,8 +230,6 @@ local list: { [string]: UpgradeDefinition } = {
 		unlockLevel = 1,
 		blurb = "Ready food has 60 seconds before it burns instead of 30.",
 		requires = "kitchen_oven",
-		row = 2,
-		col = 3,
 	},
 	kitchen_sprint = {
 		name = "Quick Sprint",
@@ -270,8 +243,6 @@ local list: { [string]: UpgradeDefinition } = {
 		unlockLevel = 1,
 		blurb = "Lighter shoes: you run noticeably faster.",
 		requires = "kitchen_cow",
-		row = 3,
-		col = 1,
 	},
 	kitchen_brush = {
 		name = "Animal Brush",
@@ -285,8 +256,6 @@ local list: { [string]: UpgradeDefinition } = {
 		unlockLevel = 1,
 		blurb = "Brushed animals stay clean until the next day.",
 		requires = "kitchen_chickens",
-		row = 3,
-		col = 0,
 	},
 	--[[ Greenhouse: the twelve individual Lemon Cake purchases. ]]--
 	garden_cocoa = {
@@ -300,8 +269,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Cocoa grows after watering.",
-		row = 0,
-		col = 1,
 	},
 	garden_cherry = {
 		name = "Cherry Tree",
@@ -314,8 +281,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Fresh cherries from a watered tree.",
-		row = 1,
-		col = 0,
 		requires = "garden_cocoa",
 	},
 	garden_strawberry = {
@@ -329,8 +294,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Grow strawberries in the greenhouse.",
-		row = 1,
-		col = 2,
 		requires = "garden_cocoa",
 	},
 	garden_blueberry = {
@@ -344,8 +307,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Grow blueberries in the greenhouse.",
-		row = 2,
-		col = 0,
 		requires = "garden_cherry",
 	},
 	garden_water = {
@@ -359,8 +320,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Water lasts twice as long.",
-		row = 2,
-		col = 1,
 		requires = "garden_cherry",
 	},
 	garden_grape = {
@@ -374,8 +333,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Grow grapes on the vine.",
-		row = 2,
-		col = 2,
 		requires = "garden_strawberry",
 	},
 	garden_cart = {
@@ -389,8 +346,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Load one ingredient; collect it at the kitchen. Four delivery spaces.",
-		row = 2,
-		col = 3,
 		requires = "garden_strawberry",
 	},
 	garden_carrot = {
@@ -404,8 +359,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Grow carrots in the greenhouse.",
-		row = 3,
-		col = 0,
 		requires = "garden_blueberry",
 	},
 	garden_sprinkler = {
@@ -419,8 +372,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Keeps plants and trees watered while the bakery is active.",
-		row = 3,
-		col = 1,
 		requires = "garden_water",
 	},
 	garden_apple = {
@@ -434,8 +385,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Grow apples on a watered tree.",
-		row = 3,
-		col = 2,
 		requires = "garden_grape",
 	},
 	garden_beehive = {
@@ -449,8 +398,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Produces honey and helps plants grow 25% faster.",
-		row = 3,
-		col = 3,
 		requires = "garden_cart",
 	},
 	garden_lemon = {
@@ -464,8 +411,6 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "The final greenhouse tree. Requires all other greenhouse upgrades.",
-		row = 4,
-		col = 1,
 		prerequisites = {
 			"garden_cocoa",
 			"garden_cherry",
@@ -494,7 +439,6 @@ type UpgradesMethods = {
 	ReadProgress: (self: UpgradesRegistry, data: any) -> UpgradeProgress,
 	GetRemainingCost: (self: UpgradesRegistry, levels: { [string]: number }) -> number,
 	GetMissingRequirement: (self: UpgradesRegistry, entry: UpgradeEntry, levels: { [string]: number }) -> string?,
-	GetBranch: (self: UpgradesRegistry, category: GameTypes.UpgradeCategory) -> { UpgradeEntry },
 	GetCost: (self: UpgradesRegistry, upgradeId: string, currentLevel: number) -> number?,
 	GetDisplayName: (self: UpgradesRegistry, upgradeId: string, currentLevel: number) -> string,
 }
@@ -599,25 +543,6 @@ local methods: UpgradesMethods = {
 			end
 		end
 		return nil
-	end,
-
-	-- Every upgrade of one category, in drawing order: top row first, left to right.
-	GetBranch = function(self: UpgradesRegistry, category: GameTypes.UpgradeCategory): { UpgradeEntry }
-		local branch = self:Query()
-			:Where(function(entry: UpgradeEntry)
-				return entry.category == category
-			end)
-			:ToArray()
-
-		table.sort(branch, function(left: UpgradeEntry, right: UpgradeEntry)
-			if left.row == right.row then
-				return left.col < right.col
-			end
-
-			return left.row < right.row
-		end)
-
-		return branch
 	end,
 
 	-- Price of the next level; nil if the upgrade is already maxed.

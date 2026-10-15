@@ -285,7 +285,7 @@ function CustomerHandler.StartShift(self: CustomerHandler, player: Player): ()
 		NextSpawnAt = workspace:GetServerTimeNow() + DayCycleConfig.FirstSpawnDelay,
 		FirstGuest = true,
 		Rush = 0,
-		Ramp = 0,
+		Lunch = false,
 		-- Ids never restart: a guest walking out still owns their body while the next shift spawns.
 		NextId = if previous then previous.NextId else 1,
 		ScriptedGuest = data ~= nil and TutorialPolicy.IsActive(data.Cloud),
@@ -898,22 +898,14 @@ function CustomerHandler.ReleaseTutorial(self: CustomerHandler, player: Player):
 		runtime.ScriptedGuest = false
 		runtime.NextSpawnAt = now + DayCycleConfig.FirstSpawnDelay
 		runtime.Rush = DayCycleConfig.TutorialRushGuests
-		runtime.Ramp = 1
 	end
 end
 
--- After the introduction the shift ramps up instead of rushing (DayCycle.IntroRampGaps). Returns
--- the ramp's next arrival gap, advancing it only when a guest actually arrived; nil once it is over.
-local function rampGap(runtime: any, spawned: boolean): number?
-	if runtime.Ramp <= 0 then
-		return nil
-	end
-	local gaps = DayCycleConfig.IntroRampGaps
-	local gap = gaps[runtime.Ramp]
-	if spawned then
-		runtime.Ramp = if runtime.Ramp < #gaps then runtime.Ramp + 1 else 0
-	end
-	return gap
+-- Seconds until the next arrival at this point of the shift, display flow included.
+local function arrivalGap(player: Player, runtime: any): number
+	local data = DataHandler:GetData(player)
+	local level = if data then data.Cloud.Level else 1
+	return DayCycleConfig.GetSpawnInterval(level, DayCycleHandler:GetShiftProgress(player)) * runtime.DisplayFlow
 end
 
 function CustomerHandler.UpdateCustomers(self: CustomerHandler): ()
@@ -956,6 +948,15 @@ function CustomerHandler.UpdatePlayerCustomers(self: CustomerHandler, player: Pl
 		end
 	end
 
+	-- Like Lemon Cake's stage restart, lunch brings the pending arrival forward on its shorter gap.
+	if not runtime.Lunch and DayCycleConfig.IsLunch(DayCycleHandler:GetShiftProgress(player)) then
+		runtime.Lunch = true
+		runtime.NextSpawnAt = math.min(
+			runtime.NextSpawnAt,
+			now + arrivalGap(player, runtime) * DayCycleConfig.StageFirstSpawnShare
+		)
+	end
+
 	local count = CountCustomers(customers)
 	if count == 0 then
 		-- Nobody to serve is the dullest moment of a shift: bring the next arrival forward.
@@ -963,7 +964,6 @@ function CustomerHandler.UpdatePlayerCustomers(self: CustomerHandler, player: Pl
 	end
 	local capacity = self:GetCapacity(player)
 	local hasCapacity = count < DayCycleConfig.GetMaxActive(capacity)
-		and (runtime.Ramp <= 0 or count < DayCycleConfig.IntroRampMaxGuests)
 	if hasCapacity and now >= runtime.NextSpawnAt - GuestsConfig.Street.AdmissionLeadSeconds then
 		Street.Prepare(player, runtime.FirstGuest or runtime.Rush > 0 or count == 0)
 	end
@@ -984,11 +984,8 @@ function CustomerHandler.UpdatePlayerCustomers(self: CustomerHandler, player: Pl
 		end
 	end
 
-	local ramp = if runtime.Rush > 0 then nil else rampGap(runtime, hasCapacity)
 	runtime.NextSpawnAt = now
-		+ if runtime.Rush > 0
-			then DayCycleConfig.RushSpawnInterval
-			else ramp or DayCycleConfig.GetSpawnInterval() * runtime.DisplayFlow
+		+ if runtime.Rush > 0 then DayCycleConfig.RushSpawnInterval else arrivalGap(player, runtime)
 end
 
 function CustomerHandler.UpdateOneCustomer(
@@ -1094,8 +1091,8 @@ export type CustomerHandler = typeof(CustomerHandler) & {
 			FirstGuest: boolean,
 			-- Guests still owed a quick arrival after the introduction ends.
 			Rush: number,
-			-- Next DayCycle.IntroRampGaps entry after the introduction; 0 once the ramp is over.
-			Ramp: number,
+			-- The lunch rush already restarted the arrival timer this shift.
+			Lunch: boolean,
 			ScriptedGuest: boolean,
 			DisplayFlow: number,
 			RecordShown: boolean,

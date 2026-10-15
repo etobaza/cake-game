@@ -1,6 +1,6 @@
 --!strict
 -- This data gets reset each session
--- Data gets initialized and edited with other systems durning runtime
+-- Data gets initialized and edited with other systems during runtime
 
 -- All gameplay state of the day lives here: it replicates itself, no separate state packets needed.
 -- Timers are stored as phase timestamps (workspace:GetServerTimeNow), not as progress — the oven
@@ -31,6 +31,8 @@ return {
 		Phase = "Prep",
 		-- End of the shift; 0 during untimed prep and summary
 		EndsAt = 0,
+		-- Length of the running shift, fixed by the level when its clock started.
+		ShiftSeconds = 0,
 		-- Frozen local simulation time during the evening report/menu.
 		SummaryStartedAt = 0,
 		-- Recipes picked for the day
@@ -119,9 +121,6 @@ return {
 
 	-- [spillId] = true
 	Spills = {} :: { [string]: boolean },
-
-	-- True after the player has mopped a spill this session: the tutorial reads it.
-	HasMopped = false,
 
 	-- The running part of today's playtime: workspace:GetServerTimeNow when the server last moved
 	-- played time into Cloud.Playtime.Seconds. The client counts up from it rather than being told

@@ -242,7 +242,7 @@ end
 --- OnStart runs in topological order and is awaited so dependencies finish before dependents.
 local function startAll()
 	if not TOPOLOGICAL_ORDER then
-		error("Handlers not initialized. Call Crystal.InitAll() first")
+		error("Handlers not initialized. Start them through Crystal.Run()")
 	end
 
 	Logger:Debug("Starting handlers in topological order")

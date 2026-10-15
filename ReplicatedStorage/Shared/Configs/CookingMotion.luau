@@ -104,7 +104,6 @@ CookingMotion.Mixer = {
 	SlotCount = 4,
 	SlotRadius = 0.8,
 	SlotHeight = 0.12,
-	PortionSize = Vector3.new(1.1, 0.9, 1.1),
 	-- Full dough footprint. It is the server's Ready dough size on a station surface, so the server
 	-- result takes over from the local dough without a size pop.
 	DoughMaxSize = FoodPresentation.SurfaceFoodSize,

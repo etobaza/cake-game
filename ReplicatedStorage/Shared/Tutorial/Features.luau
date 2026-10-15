@@ -16,7 +16,6 @@ export type Feature = typeof(Config.Features[1])
 --[[ Constants ]]--
 local MENU_BUTTON = "BakeryMenu.MainFrame.Header.Buttons.Menu"
 local MENU_GRID = "Inventory.MainFrame.Container.Content"
-local ASSISTANT_PLATE = "Inventory.MainFrame.Header.TopSection.Assistant"
 
 --[[ Tables ]]--
 local Features = {}
@@ -70,10 +69,7 @@ function Features.Owned(cloud: any, feature: Feature): boolean
 end
 
 function Features.Used(cloud: any, feature: Feature): boolean
-	if cloud.Tutorial.Actions[`Use:{feature.id}`] then
-		return true
-	end
-	return feature.task == true and (cloud.AssistantTask or "None") ~= "None"
+	return cloud.Tutorial.Actions[`Use:{feature.id}`] == true
 end
 
 -- Owned, unused through a whole shift, and not yet retired.
@@ -95,20 +91,12 @@ function Features.Matches(feature: Feature, action: string, buildingId: string):
 	return name == prefix and (tonumber(index) or 0) >= (feature.minIndex or 1)
 end
 
--- The evening plan: features that need tomorrow's menu or the assistant's job.
+-- The evening plan: features that need tomorrow's menu.
 function Features.Summary(cloud: any, session: any, page: string): Types.CoachSituation?
 	if page ~= "Inventory" and page ~= "Report" then
 		return nil
 	end
 	local onReport = page == "Report"
-	local assistant = find("assistant")
-	if assistant and Features.Due(cloud, assistant) then
-		local result = situation(assistant, page, "Give your assistant a job for tomorrow", nil)
-		result.step = if onReport
-			then State.Gui("coach_menu", "Open the menu to plan tomorrow", "", MENU_BUTTON)
-			else State.Gui("coach_assistant", "Choose your assistant's job", "", ASSISTANT_PLATE)
-		return result
-	end
 	for _, feature in Config.Features do
 		local station = feature.station
 		if not station or not Features.Due(cloud, feature) or onMenu(session.Day.NextMenu, station) then
@@ -134,7 +122,7 @@ end
 function Features.Intros(cloud: any, session: any): { Types.CoachSituation }
 	local list = {}
 	for _, feature in Config.Features do
-		if not Features.Due(cloud, feature) or feature.task then
+		if not Features.Due(cloud, feature) then
 			continue
 		end
 		-- A station feature only helps today when its recipe is on today's menu.

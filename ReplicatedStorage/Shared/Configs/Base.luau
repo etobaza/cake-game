@@ -1,6 +1,6 @@
 --!strict
 -- Pre-built bakeries: one per player, claimed on join, released on leave.
--- Anchors (building/entrance/spawn/spill points) are authored ONCE, in the reference bakery's
+-- Anchors (building/spawn/spill points) are authored ONCE, in the reference bakery's
 -- Anchors folder: drag parts in Studio, every bakery follows. The other bakeries are rigid copies;
 -- BaseHandler maps anchors onto them through the origin part transform.
 
@@ -21,22 +21,13 @@ local Base = {
 	-- Owner attribute on the claimed bakery; systems find the owner of an object through it.
 	OwnerAttribute = "OwnerUserId",
 
-	-- Parts named after a building (or Entrance / Spawn) live here. CFrame is the floor point.
+	-- Parts named after a building (or Spawn) live here. CFrame is the floor point.
 	AnchorsFolderName = "Anchors",
-	EntranceAnchorName = "Entrance",
 	-- Unlike the other anchors, every bakery authors its own Spawn, as a SpawnLocation: the owner's
 	-- RespawnLocation, so characters appear there instead of being moved after spawning.
 	SpawnAnchorName = "Spawn",
 	-- Spill spots: spill_1, spill_2, ...
 	SpillAnchorPrefix = "spill",
-
-	-- Folders inside a bakery hidden while it is owned: artist previews of upgrades that
-	-- BuildingHandler spawns for real from the player's stats.
-	PreviewFolders = {
-		{ "1ndFloor", "Cafe", "Upgrades" },
-		{ "1ndFloor", "Kitchen", "Upgrades" },
-		{ "1ndFloor", "Garden", "Upgrades" },
-	},
 
 	-- The board above the entrance. Note the authored leading space in " exterior".
 	-- Its label reads "Player's Bakery" while the place is free; a claimed one takes the owner's name.

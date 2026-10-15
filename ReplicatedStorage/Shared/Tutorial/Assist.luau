@@ -84,9 +84,8 @@ local function cook(
 		return nil
 	end
 	local cause = Causes[step.id] or Causes[word(step.id)]
-	-- Dough's next station is named by the step itself.
 	if step.id == "load_dough" then
-		cause = "Dough goes to its next station"
+		cause = "Dough bakes in the oven"
 	end
 	-- The introduction's mixer copy ("Go to your mixer… Let's start with…") reads like a restart in
 	-- the middle of a shift; name the dish instead.
@@ -338,17 +337,12 @@ function Assist.Resolve(cloud: any, session: any, props: { [string]: boolean }, 
 	if held and held.Kind == "Dough" then
 		local recipe = Recipes:Get(held.Id)
 		if recipe then
-			return cook(cloud, session, props, "dough", recipe, "Dough goes to its next station")
+			return cook(cloud, session, props, "dough", recipe, "Dough bakes in the oven")
 		end
 	end
 
 	-- Without fire a loaded oven never bakes; a burnt batch blocks its station.
-	local _, fire = stationNeeds(session, props, function(station: any): boolean
-		local kind = Buildings.Kinds[station.Kind]
-		return kind ~= nil
-			and kind.UsesFuel == true
-			and (station.State == "Loaded" or (station.State == "Cooking" and (station.HeatPausedAt or 0) > 0))
-	end)
+	local _, fire = stationNeeds(session, props, Cooking.NeedsFire)
 	if fire then
 		return stuck("fire", "The oven fire went out", fire)
 	end
