@@ -17,6 +17,18 @@ function CleaningAction.Begin(player: Player, target: BasePart, action: string, 
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	-- A player standing against a chair the guest just left is seated by touch, and cleaning was
+	-- then refused with no feedback until they walked away. Stand them up and clean instead.
+	local stoodUp = false
+	if seconds and humanoid and humanoid.Health > 0 and humanoid.Sit then
+		local seat = humanoid.SeatPart
+		humanoid.Sit = false
+		local weld = seat and seat:FindFirstChild("SeatWeld")
+		if weld then
+			weld:Destroy()
+		end
+		stoodUp = true
+	end
 	if
 		not seconds
 		or not character
@@ -24,8 +36,7 @@ function CleaningAction.Begin(player: Player, target: BasePart, action: string, 
 		or not root:IsA("BasePart")
 		or not humanoid
 		or humanoid.Health <= 0
-		or humanoid.Sit
-		or not Config.GroundStates[humanoid:GetState()]
+		or (not stoodUp and not Config.GroundStates[humanoid:GetState()])
 		or root.Anchored
 		or not target:IsDescendantOf(workspace)
 		or PlayerHandler.MovementLocks[player]

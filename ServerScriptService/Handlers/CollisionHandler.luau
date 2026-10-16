@@ -102,9 +102,28 @@ function CollisionHandler.OpenBase(self: CollisionHandler, player: Player, root:
 	local janitor = Janitor.new()
 	self.BaseJanitors[player] = janitor
 	local saved: { [BasePart]: string } = {}
+	local solid: { Instance } = {}
+	for _, path in CollisionConfig.SolidPaths do
+		local holder = BuildingsConfig.ResolvePath(root, path)
+		if holder then
+			table.insert(solid, holder)
+		end
+	end
+	local function isSolid(piece: Instance): boolean
+		for _, holder in solid do
+			if piece == holder or piece:IsDescendantOf(holder) then
+				return true
+			end
+		end
+		return false
+	end
 	local function apply(holder: Instance): ()
 		for _, piece in holder:GetDescendants() do
-			if not piece:IsA("BasePart") or piece.CollisionGroup == CollisionConfig.Groups.Door then
+			if
+				not piece:IsA("BasePart")
+				or piece.CollisionGroup == CollisionConfig.Groups.Door
+				or isSolid(piece)
+			then
 				continue
 			end
 			saved[piece] = saved[piece] or piece.CollisionGroup

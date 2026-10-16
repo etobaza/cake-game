@@ -3,6 +3,7 @@
 -- Orders and patience use the owner's HUD; GuestDiningHandler presents meal progress overhead.
 
 --[[ Services ]]--
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local TweenService = game:GetService("TweenService")
@@ -643,6 +644,16 @@ function Guest.UpdateSeating(self: Guest, now: number, deltaTime: number): ()
 		self:Play(SIT)
 		pending.OnSeated()
 		return
+	end
+	-- A player sitting in this guest's chair would make the guest give up and vanish; the chair is
+	-- booked, so the player stands up.
+	local occupant = seat.Occupant
+	if occupant and occupant ~= self.Humanoid and Players:GetPlayerFromCharacter(occupant.Parent) then
+		occupant.Sit = false
+		local playerWeld = seat:FindFirstChild("SeatWeld")
+		if playerWeld then
+			playerWeld:Destroy()
+		end
 	end
 	if not seat.Parent or now >= pending.Deadline then
 		self.Seating = nil

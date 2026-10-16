@@ -115,6 +115,25 @@ local function itemsFor(building: any): { { Id: string, Kind: string, SeatIndex:
 	return { { Id = recipe.id, Kind = kind } }
 end
 
+-- A plate placed exactly on a table's food point clipped into the decorative cup beside it. The
+-- frame steps straight away from the nearest cup until the two clear; the shift stays on the top.
+-- Cups are found by name, not by a spatial query: TableMenuView hides them with CanQuery off while
+-- the menu stands on the table.
+local function clearOfCups(cups: { Vector3 }, frame: CFrame): CFrame
+	local away: Vector3? = nil
+	local distance = math.huge
+	for _, cup in cups do
+		local offset = (frame.Position - cup) * Vector3.new(1, 0, 1)
+		if offset.Magnitude < distance then
+			away, distance = offset, offset.Magnitude
+		end
+	end
+	if not away or distance >= TableConfig.CupClearance or distance < 0.01 then
+		return frame
+	end
+	return frame + away.Unit * (TableConfig.CupClearance - distance)
+end
+
 --[[ Handling ]]--
 function FoodSurfaceView.new(root: Instance, building: any): FoodSurfaceView?
 	local anchors = BaseHandler.Template:FindFirstChild("Anchors")
@@ -134,6 +153,22 @@ function FoodSurfaceView.new(root: Instance, building: any): FoodSurfaceView?
 	local second = if anchor then anchor:FindFirstChild(`{Config.SurfaceAttachment}2`) else nil
 	if second and second:IsA("Attachment") and transform then
 		frames[2] = transform * second.WorldCFrame
+	end
+	local bakery = if building.Kind == "Table" then BaseHandler:GetBase(building.Player) else nil
+	if bakery then
+		local cups: { Vector3 } = {}
+		for _, descendant in bakery:GetDescendants() do
+			if descendant:IsA("Model") and descendant.Name == TableConfig.CupModelName then
+				local position = descendant:GetPivot().Position
+				local fromTable = position - building.Part.Position
+				if Vector3.new(fromTable.X, 0, fromTable.Z).Magnitude <= TableConfig.Radius and math.abs(fromTable.Y) <= 4 then
+					table.insert(cups, position)
+				end
+			end
+		end
+		for index, frame in frames do
+			frames[index] = clearOfCups(cups, frame)
+		end
 	end
 	local folder = Instance.new("Folder")
 	folder.Name = `Food_{building.Id}`

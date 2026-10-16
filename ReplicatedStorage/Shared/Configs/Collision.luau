@@ -38,6 +38,23 @@ local Collision = {
 		{ "1ndFloor", "Cafe", "Upgrades", "TwoSeatsTable" },
 	},
 
+	-- Holders inside a passable folder that stay solid for guests. The cafe's bay-window glass is
+	-- authored under Decoration, but it is the room's outer shell: a guest leaving an empty display
+	-- walked straight out through it.
+	SolidPaths = {
+		{ "1ndFloor", "Cafe", "Decoration", "Window" },
+	},
+
+	-- Interactions do not reach through the room's shell (Shared/WallReach): folders whose parts are
+	-- the bakery's walls, matched by name anywhere under the bakery.
+	WallFolders = { "WallStructure", "BrickStructure" },
+	-- Some stations stand against a wall, so their prompt point sits this close behind its surface;
+	-- a wall hit within this distance of the target still counts as clear.
+	WallEmbedTolerance = 1.5,
+	-- Building kinds meant to be used across a wall: the kitchen window serves both rooms, and the
+	-- entrance door stands in the facade's opening and works from either side.
+	WallExemptKinds = { "Window", "Door" },
+
 	-- Models that ARE the doorway rather than stand next to it, matched lowercased on the whole name.
 	-- Every bakery gets this at boot, not only a claimed one: a shut front door blocks the map itself.
 	-- Whole-name matching on purpose — the oven's OvenDoorLeft/Right must keep colliding.

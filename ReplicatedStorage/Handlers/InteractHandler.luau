@@ -26,6 +26,7 @@ local Recipes = require(_Configs.Registries.Recipes)
 local StationStatusConfig = require(_Configs.StationStatus)
 local TablesConfig = require(_Configs.TableMenus)
 local Types = require(_Views.Types)
+local WallReach = require(_Shared.WallReach)
 
 --[[ Constants ]]--
 -- Prompts redraw on the next frame after replicated data changes, so an accepted action shows at
@@ -271,7 +272,7 @@ function InteractHandler.RefreshProp(self: InteractHandler, part: BasePart): ()
 		-- PromptHandler draws an alert status as StationStatusHandler's icon instead of words. Set
 		-- before the texts: their change signals redraw the plate.
 		prompt:SetAttribute(StationStatusConfig.AlertAttribute, state.Alert == true)
-		prompt.Enabled = state.Action ~= nil or status
+		prompt.Enabled = (state.Action ~= nil or status) and self:CanReach(part, prompt, kindName)
 		prompt.ActionText = state.Action or ""
 		prompt.ObjectText = state.Label
 		prompt.HoldDuration = 0
@@ -282,6 +283,26 @@ function InteractHandler.RefreshProp(self: InteractHandler, part: BasePart): ()
 	end
 
 	self:HideHeldTool(part, kind)
+end
+
+-- A prompt behind one of the bakery's walls stays hidden (Shared/WallReach). Only props within
+-- the prompt's reach are cast, so the refresh tick stays cheap.
+function InteractHandler.CanReach(_self: InteractHandler, part: BasePart, prompt: ProximityPrompt, kindName: string): boolean
+	if WallReach.IsExempt(kindName) then
+		return true
+	end
+	local character = Players.LocalPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not root then
+		return true
+	end
+	local origin = root.Position
+	local target = part.Position
+	if (target - origin).Magnitude > prompt.MaxActivationDistance + 2 then
+		return true
+	end
+	local bakery = WallReach.BakeryOf(part)
+	return bakery == nil or WallReach.Clear(bakery, origin, target)
 end
 
 -- The stand's mesh hides while that tool is in the player's hands, so it looks taken.

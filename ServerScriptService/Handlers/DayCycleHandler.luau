@@ -89,6 +89,16 @@ local function returnLoadedProduce(data: any, station: any): ()
 	station.Loaded = {}
 end
 
+-- Iterates rather than calling next(): station data is a DataHandler proxy.
+local function hasLoaded(station: any): boolean
+	for _, amount in station.Loaded or {} do
+		if amount > 0 then
+			return true
+		end
+	end
+	return false
+end
+
 local function isStationAvailable(player: Player, station: GameTypes.StationKind): boolean
 	local kind = BuildingsConfig.Kinds[station]
 	if not kind or not kind.Stat then
@@ -283,14 +293,25 @@ function DayCycleHandler.EnterPrep(self: DayCycleHandler, player: Player): ()
 	day.EndsAt = 0
 	day.Menu = copyList(data.Cloud.DayMenu)
 	day.NextMenu = {}
-	data.Session.Cooking.SelectedRecipeId = nil
 
-	-- A partial idle batch belongs to yesterday. Completed or running work remains collectible.
+	-- An idle batch whose dish is still on today's menu stays in the bowl with its selection: the
+	-- player may have carried it from the garden just before closing. Completed or running work
+	-- remains collectible. A batch for a dish that left the menu goes back to the pantry.
+	local selected = data.Session.Cooking.SelectedRecipeId
+	local keepBatch = selected ~= nil and DataList.Contains(day.Menu, selected)
+	local keptAny = false
 	for stationId in data.Session.Stations do
 		local station = data.Session.Stations[stationId]
 		if station.Kind == "Mixer" and station.State == "Idle" then
-			returnLoadedProduce(data, station)
+			if keepBatch and hasLoaded(station) then
+				keptAny = true
+			else
+				returnLoadedProduce(data, station)
+			end
 		end
+	end
+	if not keptAny then
+		data.Session.Cooking.SelectedRecipeId = nil
 	end
 
 	day.Summary.Coins = 0

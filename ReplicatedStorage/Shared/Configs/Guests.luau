@@ -105,9 +105,11 @@ local Guests = {
 	-- A seated guest approaches behind their own chair; other guests approach the display's edge.
 	SeatGap = 1.5,
 	DisplayGap = 2,
-	-- Shoppers stay in the aisle, on the room side of the pastry display.
-	DisplayApproachDistance = 7,
-	DisplayStandDistance = 5,
+	-- Shoppers stay in the aisle, on the room side of the pastry display. Measured from the food
+	-- centre: the bay's rock ledge ends 5.8 studs out, and a guest's body needs about 1.2 more, so a
+	-- closer stand point sits on the ledge and the guest pushes into it until the walk times out.
+	DisplayApproachDistance = 9,
+	DisplayStandDistance = 7.2,
 	-- A queued guest (only the protected introduction guest waits for a table) stands inside, along
 	-- the wall beside the entrance lane, facing the room. Measured in the door's space.
 	QueueSide = 5.5,

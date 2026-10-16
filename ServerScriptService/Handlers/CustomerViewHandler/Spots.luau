@@ -85,7 +85,8 @@ local function DisplaySpot(player: Player, customer: any, door: BasePart): Spot?
 	local shopping = customer.State == "Shopping"
 	local building = BuildingHandler:GetBuilding(player, BuildingsConfig.GetId(DISPLAY_KIND, slot))
 	if not building then
-		return nil
+		-- The queue spot beside the entrance wall is no place for a browser; roam instead.
+		return RoamSpot(player, door)
 	end
 	local part = building.Part
 	local food = building.FoodVisual

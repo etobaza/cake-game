@@ -29,6 +29,7 @@ local InputCues = require(_Configs.InputCues)
 local Motion = require(_Shared.UI.Motion)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Progression = require(_Configs.Progression)
+local Sunbeams = require(_Shared.Sunbeams)
 local UseClock = require(_Shared.UI.Hooks.UseClock)
 local UseData = require(_Shared.UI.Hooks.UseData)
 local Upgrades = require(_Configs.Registries.Upgrades)
@@ -95,13 +96,15 @@ return function(hud: Instance, deps: Deps): ()
 	-- Every client sees the atmosphere of their own bakery day. The HUD scope lives for the session;
 	-- if it is ever remounted, put the place's authored time back before the new owner takes over.
 	local authoredClockTime = Lighting.ClockTime
+	local sunbeams = Sunbeams.new()
 	Flux.cleanup(function()
 		Lighting.ClockTime = authoredClockTime
+		sunbeams:Destroy()
 	end)
 	Flux(function()
-		Lighting.ClockTime = if phase() == "Summary" or phase() == "Closing"
-			then DayCycleConfig.EveningLightingHour
-			else clockMinutes() / 60
+		local evening = phase() == "Summary" or phase() == "Closing"
+		Lighting.ClockTime = if evening then DayCycleConfig.EveningLightingHour else clockMinutes() / 60
+		sunbeams:SetEvening(evening)
 	end, true)
 
 	-- The level bar eases the way Animate.Fill used to.

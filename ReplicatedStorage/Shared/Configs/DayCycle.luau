@@ -35,6 +35,9 @@ local DayCycle = {
 	-- Stop admitting guests five shop-clock minutes before closing (15:55).
 	LastAdmissionMinutesBeforeClose = 5,
 	EveningLightingHour = 18.25,
+	-- Authored Fx parts whose unlit Beams fake sunlight through the bakery windows; the evening
+	-- lighting switches them off (Shared/Sunbeams).
+	SunbeamPartName = "RayPart",
 
 	MenuMin = 3,
 	MenuMax = 5,

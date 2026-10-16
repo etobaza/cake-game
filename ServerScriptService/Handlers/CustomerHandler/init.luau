@@ -853,6 +853,26 @@ function CustomerHandler.FinishCustomer(
 	end
 	customers[customerId] = nil
 	self.CustomerLeft:Fire(player, customerId, served)
+	if customer.TutorialProtected and not served then
+		-- The scripted guest was removed without being served (a blocked walk or a failed seat).
+		-- The tutorial would otherwise wait for them forever, since no other guest spawns while its
+		-- guest id is set: clear the guest context and bring the scripted guest back.
+		local data = DataHandler:GetData(player)
+		local runtime = self.Runtime[player]
+		if data and data.Session.Tutorial.GuestId == customerId then
+			local context = data.Session.Tutorial
+			context.GuestId = ""
+			context.TableId = ""
+			context.SeatIndex = 0
+		end
+		if runtime and data and TutorialPolicy.IsActive(data.Cloud) then
+			runtime.ScriptedGuest = true
+			runtime.FirstGuest = true
+			runtime.NextSpawnAt = workspace:GetServerTimeNow() + DayCycleConfig.FirstSpawnDelay
+		end
+		Logger:Warn(`{player.Name}: tutorial guest {customerId} left unserved; respawning the scripted guest`)
+		return
+	end
 	if isDisplay then
 		local runtime = self.Runtime[player]
 		-- Roamers in a bakery without pedestals never saw a display, so they say nothing about its stock.

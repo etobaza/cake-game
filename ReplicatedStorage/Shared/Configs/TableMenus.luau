@@ -24,6 +24,9 @@ return {
 	DirtyPlateSize = Vector3.new(2.05, 0.3, 2.05),
 	ModelName = "Menuonta",
 	CupModelName = "cofee",
+	-- The authored cups stand close to the plate points; a table plate keeps its centre at least
+	-- this far from a cup's centre (plate radius 1.03 + cup radius 0.52 + a small gap).
+	CupClearance = 1.6,
 	Radius = 4,
 	Paths = {
 		[1] = { "1ndFloor", "Cafe", "Upgrades", "TwoSeatsTable", "Upgrade" },

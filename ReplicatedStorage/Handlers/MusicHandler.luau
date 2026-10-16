@@ -33,6 +33,7 @@ end
 function MusicHandler.OnStart(self: MusicHandler): ()
 	self.Janitor = Janitor.new()
 	self.Sounds = {}
+	self.Failed = {}
 	self.Index = 0
 	self.StartedAt = 0
 
@@ -69,13 +70,24 @@ function MusicHandler.OnStart(self: MusicHandler): ()
 	self:Next()
 end
 
--- Starts the following track from its beginning; the previous one has already faded out.
+-- Starts the following track from its beginning; the previous one has already faded out. Tracks
+-- that already failed to load are skipped, so a missing asset does not cost a timeout every loop.
 function MusicHandler.Next(self: MusicHandler): ()
 	local previous = self.Sounds[self.Index]
 	if previous then
 		previous:Stop()
 	end
-	self.Index = self.Index % #self.Sounds + 1
+	for _ = 1, #self.Sounds do
+		self.Index = self.Index % #self.Sounds + 1
+		if not self.Failed[self.Sounds[self.Index]] then
+			break
+		end
+	end
+	if self.Failed[self.Sounds[self.Index]] then
+		-- Every track failed; stay silent instead of retrying.
+		self.Index = 0
+		return
+	end
 	self.StartedAt = os.clock()
 	local sound = self.Sounds[self.Index]
 	sound.Volume = 0
@@ -91,7 +103,8 @@ function MusicHandler.Step(self: MusicHandler): ()
 	-- A track that never loads (moderated, network failure) would otherwise silence the playlist.
 	if not sound.IsLoaded then
 		if os.clock() - self.StartedAt > Config.LoadTimeoutSeconds then
-			print(`[MusicHandler] {sound.Name} did not load in {Config.LoadTimeoutSeconds}s; skipping it`)
+			warn(`[MusicHandler] {sound.Name} did not load in {Config.LoadTimeoutSeconds}s; skipping it for this session`)
+			self.Failed[sound] = true
 			self:Next()
 		end
 		return
@@ -110,6 +123,8 @@ end
 export type MusicHandler = typeof(MusicHandler) & {
 	Janitor: any,
 	Sounds: { Sound },
+	-- Tracks that timed out while loading this session.
+	Failed: { [Sound]: true? },
 	Index: number,
 	StartedAt: number,
 }

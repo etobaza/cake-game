@@ -50,6 +50,7 @@ local TrashView = require(script.TrashView)
 local TableMenuView = require(script.TableMenuView)
 local UpgradeHandler = require(_Handlers.UpgradeHandler)
 local View = require(script.View)
+local WallReach = require(_Shared.WallReach)
 
 --[[ Constants ]]--
 local FOLDER_NAME = "Props"
@@ -615,6 +616,12 @@ function BuildingHandler.ValidateRemoteBuilding(
 		or not target
 		or (root.Position - target.Position).Magnitude > REMOTE_DISTANCE
 	then
+		Bus.Progress.ActionFailed:FireClient(player, "too_far")
+		return nil
+	end
+	-- The prompt is hidden behind a wall on the client; a packet sent anyway is refused the same way.
+	local bakery = WallReach.BakeryOf(target)
+	if bakery and not WallReach.IsExempt(building.Kind) and not WallReach.Clear(bakery, root.Position, target.Position) then
 		Bus.Progress.ActionFailed:FireClient(player, "too_far")
 		return nil
 	end

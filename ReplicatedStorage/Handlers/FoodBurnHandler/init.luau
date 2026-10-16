@@ -105,13 +105,23 @@ function FoodBurnHandler.Prepare(self: FoodBurnHandler, entry: Entry, source: Su
 		end)
 		entry.Loading = false
 		self.Busy = false
+		if not ok then
+			-- A disabled EditableImage API fails for every dish and the engine logs its own errors on
+			-- each attempt, so later dishes go straight to the tint fallback.
+			local blocked = string.find(tostring(message), "not accessible", 1, true) ~= nil
+			if blocked and not self.Blocked then
+				self.Blocked = true
+				Logger:Warn(`Food color textures disabled for this session; using tint fallback: {message}`)
+			elseif not blocked and entry.Alive then
+				Logger:Warn(`Food color texture unavailable; using tint fallback: {message}`)
+			end
+		end
 		if not ok and entry.Alive then
 			entry.Failed = true
 			if entry.Image then
 				entry.Image:Destroy()
 				entry.Image = nil
 			end
-			Logger:Warn(`Food color texture unavailable; using tint fallback: {message}`)
 		end
 	end)
 end
@@ -191,7 +201,10 @@ function FoodBurnHandler.Update(self: FoodBurnHandler): ()
 	if not source then
 		return
 	end
-	if entry.Failed then
+	if entry.Failed or self.Blocked then
+		entry.Original = source
+		entry.Tint = entry.Tint or source.Color
+		entry.Failed = true
 		applyTint(source, entry.Tint or Color3.new(1, 1, 1), target)
 		entry.Fade = target
 	elseif entry.Image and entry.Palette and entry.Material then
@@ -217,6 +230,7 @@ function FoodBurnHandler.OnInit(self: FoodBurnHandler): ()
 	self.Entries = {}
 	self.Palettes = {}
 	self.Busy = false
+	self.Blocked = false
 end
 
 function FoodBurnHandler.OnStart(self: FoodBurnHandler): ()
@@ -258,6 +272,8 @@ export type FoodBurnHandler = typeof(FoodBurnHandler) & {
 	Entries: { [Instance]: Entry },
 	Palettes: { [string]: Texture.Palette },
 	Busy: boolean,
+	-- The experience has EditableImage disabled; every dish uses the tint fallback.
+	Blocked: boolean,
 }
 
 return FoodBurnHandler :: FoodBurnHandler
