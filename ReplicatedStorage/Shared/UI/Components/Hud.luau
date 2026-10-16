@@ -23,6 +23,7 @@ local Bus = require(_Shared.Bus)
 local DayCycleConfig = require(_Configs.DayCycle)
 local Format = require(_Shared.UI.Format)
 local HydrateHud = require(_Shared.UI.HydrateHud)
+local HudReveal = require(_Shared.UI.Stores.HudReveal)
 local InputCue = require(_Shared.UI.InputCue)
 local InputCues = require(_Configs.InputCues)
 local Motion = require(_Shared.UI.Motion)
@@ -118,6 +119,13 @@ return function(hud: Instance, deps: Deps): ()
 		levelAlpha(if toNext then math.clamp(xp() / toNext, 0, 1) else 1)
 	end, true)
 
+	-- The clock plate's sign opens the bakery while it still reads Closed.
+	local function openBakery(): ()
+		if phase:peek() == "Prep" then
+			Bus.Day.Open:Fire()
+		end
+	end
+
 	HydrateHud(hud, {
 		BalanceValue = shownCash,
 		FormatBalance = function(value: number): string
@@ -162,11 +170,7 @@ return function(hud: Instance, deps: Deps): ()
 		OnShop = function()
 			Pages.Toggle(Pages.Names.Store)
 		end,
-		OnTime = function()
-			if phase:peek() == "Prep" then
-				Bus.Day.Open:Fire()
-			end
-		end,
+		OnTime = openBakery,
 		OnUpgrades = function()
 			Pages.Toggle(Pages.Names.Upgrades)
 		end,
@@ -208,5 +212,35 @@ return function(hud: Instance, deps: Deps): ()
 		Flux.cleanup(function(): ()
 			binding:Destroy()
 		end)
+	end
+
+	-- The clock sits far from the side buttons, so a controller opens the bakery with its own key
+	-- instead of walking the selection up to it. The badge shows only while the sign reads Closed and
+	-- the introduction has revealed the clock (a hidden group is slid off screen, still Visible).
+	local clock = hud:FindFirstChild("Time")
+	if clock and clock:IsA("GuiObject") then
+		local function closed(): boolean
+			return phase:peek() == "Prep" and HudReveal.Shown("Time")
+		end
+		local clockCue = InputCue.Bind({
+			Name = "OpenBakery",
+			Target = clock,
+			Key = InputCues.Keys.OpenBakery,
+			Action = openBakery,
+			Available = function(): boolean
+				return closed() and Pages.Current:peek() == Pages.Names.None and InputCue.OnScreen(clock)
+			end,
+			Shown = closed,
+		})
+		Flux(function()
+			local _phase = phase()
+			local _revealed = HudReveal.Shown("Time")
+			clockCue:Refresh()
+		end, true)
+		Flux.cleanup(function(): ()
+			clockCue:Destroy()
+		end)
+	else
+		print("[Hud] no clock plate 'Time' for its input cue")
 	end
 end

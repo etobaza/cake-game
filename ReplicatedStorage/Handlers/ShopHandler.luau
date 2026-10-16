@@ -435,7 +435,8 @@ function ShopHandler.BindTabs(self: ShopHandler, main: Instance): ()
 	end
 	self.Janitor:Add(ButtonRow.Bind(top :: GuiObject, rowButtons), "Destroy")
 
-	-- The shoulder buttons walk the tabs; their glyphs sit beside the row's ends.
+	-- The shoulder buttons walk the tabs. Their glyphs sit on the row's outer edges: beside the row
+	-- they would land on the panel's dashed border.
 	local function bindStep(
 		name: string,
 		key: Enum.KeyCode,
@@ -459,8 +460,8 @@ function ShopHandler.BindTabs(self: ShopHandler, main: Instance): ()
 			"Destroy"
 		)
 	end
-	bindStep("UpgradesPreviousTab", InputCues.Keys.PreviousTab, rowButtons[1], -1, "Left")
-	bindStep("UpgradesNextTab", InputCues.Keys.NextTab, rowButtons[#rowButtons], 1, "Right")
+	bindStep("UpgradesPreviousTab", InputCues.Keys.PreviousTab, rowButtons[1], -1, "LeftEdge")
+	bindStep("UpgradesNextTab", InputCues.Keys.NextTab, rowButtons[#rowButtons], 1, "Edge")
 end
 
 function ShopHandler.StepCategory(self: ShopHandler, step: number): ()

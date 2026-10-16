@@ -20,6 +20,8 @@ return {
 		Acknowledge = Enum.KeyCode.ButtonY,
 		-- Loads the next missing pantry ingredient shown on the mixer's floating card.
 		MixerPantry = Enum.KeyCode.ButtonR1,
+		-- Opens the bakery from the HUD clock's Closed sign. Roblox gives R2 to tools; the game has none.
+		OpenBakery = Enum.KeyCode.ButtonR2,
 	},
 
 	-- A cue on something that appears by itself (the evening's Next Day, a tutorial line) ignores
@@ -54,8 +56,15 @@ return {
 		Fill = 0.9,
 	},
 
+	-- A click of the Run hint's key toggles running; it ends after the character stands still this long.
+	RunToggle = {
+		StopSeconds = 0.35,
+		-- Humanoid.MoveDirection length below which the character counts as standing still.
+		MoveThreshold = 0.1,
+	},
+
 	-- The HUD's glyph row on gamepad: the badge in each authored entry of HUD.Controls.GamepadHint,
-	-- by entry name. NavigationHandler binds Menu and sinks Interact, RunHandler binds Run.
+	-- by entry name. NavigationHandler binds Menu and sinks Interact, RunHandler binds Run as a toggle.
 	Hints = {
 		BadgeSize = 28,
 		Keys = {

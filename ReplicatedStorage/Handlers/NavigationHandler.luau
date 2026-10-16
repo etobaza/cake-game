@@ -23,6 +23,7 @@ local UIHandler = require(ReplicatedStorage.Handlers.UIHandler)
 local MENU_ACTION = "CakeMenu"
 local BACK_ACTION = "CakeBack"
 local WORLD_ACTION = "CakeModalInteraction"
+local JUMP_ACTION = "CakeSelectionJump"
 -- First HUD focus: Upgrades is where the loop leads, not the Robux shop. The tutorial hides it, so
 -- the next visible side button takes over.
 local HUD_FOCUS = { "SideBtns.Upgrades.Btn", "SideBtns.Shop.Btn", "SideBtns.Rewards" }
@@ -158,8 +159,28 @@ function NavigationHandler.OnStart(self: NavigationHandler): ()
 			then Enum.ContextActionResult.Sink
 			else Enum.ContextActionResult.Pass
 	end, false, Enum.ContextActionPriority.High.Value, InputCues.Hints.Keys.Interact)
+	-- A presses the selected interface, so the character must not jump with it. Press and GuiButton
+	-- activation read the press before ContextActionService, so sinking it here keeps both. The release
+	-- follows its press, so a jump that began before a selection still ends.
+	local jumpSunk = false
+	ContextActionService:BindActionAtPriority(
+		JUMP_ACTION,
+		function(_name: string, state: Enum.UserInputState): Enum.ContextActionResult
+			if state == Enum.UserInputState.Begin then
+				jumpSunk = GuiService.SelectedObject ~= nil or Pages.Current:peek() ~= Pages.Names.None
+			end
+			local result = if jumpSunk then Enum.ContextActionResult.Sink else Enum.ContextActionResult.Pass
+			if state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
+				jumpSunk = false
+			end
+			return result
+		end,
+		false,
+		Enum.ContextActionPriority.High.Value,
+		Enum.KeyCode.ButtonA
+	)
 	self.Janitor:Add(function(): ()
-		for _, action in { MENU_ACTION, BACK_ACTION, WORLD_ACTION } do
+		for _, action in { MENU_ACTION, BACK_ACTION, WORLD_ACTION, JUMP_ACTION } do
 			ContextActionService:UnbindAction(action)
 		end
 		GuiService.SelectedObject = nil

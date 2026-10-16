@@ -1,12 +1,14 @@
 --!strict
--- Cross-platform sprint intent: the player runs while holding Shift, L3 or the touch Run button.
--- The server owns speed and movement locks.
+-- Cross-platform sprint intent: the player runs while holding Shift or the touch Run button. On a
+-- controller a click of L3 toggles running, the console convention, so the stick is never held down;
+-- it ends once the player stops moving. The server owns speed and movement locks.
 
 --[[ Services ]]--
 local ContextActionService = game:GetService("ContextActionService")
 local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 --[[ Modules ]]--
@@ -22,6 +24,7 @@ local UIHandler = require(ReplicatedStorage.Handlers.UIHandler)
 
 --[[ Constants ]]--
 local RUN_ACTION = "CakeSprint"
+local TOGGLE_ACTION = "CakeSprintToggle"
 
 --[[ Tables ]]--
 local RunHandler = {
@@ -34,6 +37,8 @@ function RunHandler.OnInit(self: RunHandler): ()
 	self.Janitor = Janitor.new()
 	self.Running = false
 	self.Held = {}
+	self.Toggled = false
+	self.Still = 0
 end
 
 function RunHandler.OnStart(self: RunHandler): ()
@@ -68,12 +73,28 @@ function RunHandler.OnStart(self: RunHandler): ()
 		end,
 		false,
 		Enum.KeyCode.LeftShift,
-		Enum.KeyCode.RightShift,
+		Enum.KeyCode.RightShift
+	)
+	ContextActionService:BindAction(
+		TOGGLE_ACTION,
+		function(_name: string, state: Enum.UserInputState): Enum.ContextActionResult
+			if state == Enum.UserInputState.Begin then
+				self.Toggled = not self.Toggled
+				self.Still = 0
+				self:Refresh()
+			end
+			return Enum.ContextActionResult.Sink
+		end,
+		false,
 		InputCues.Hints.Keys.Run
 	)
 	self.Janitor:Add(function(): ()
 		ContextActionService:UnbindAction(RUN_ACTION)
+		ContextActionService:UnbindAction(TOGGLE_ACTION)
 	end)
+	self.Janitor:Add(RunService.Heartbeat:Connect(function(deltaTime: number): ()
+		self:StepToggle(deltaTime)
+	end), "Disconnect")
 	local function reset(): ()
 		self:Reset()
 	end
@@ -115,8 +136,9 @@ function RunHandler.Refresh(self: RunHandler): ()
 	end
 	if not available then
 		table.clear(self.Held)
+		self.Toggled = false
 	end
-	self:SetRunning(available and next(self.Held) ~= nil)
+	self:SetRunning(available and (self.Toggled or next(self.Held) ~= nil))
 	self.Button.Visible = available
 		and UserInputService.PreferredInput == Enum.PreferredInput.Touch
 		and self.Button:GetAttribute("TouchLayoutReady") == true
@@ -125,7 +147,26 @@ end
 
 function RunHandler.Reset(self: RunHandler): ()
 	table.clear(self.Held)
+	self.Toggled = false
 	self:Refresh()
+end
+
+-- A toggled run ends once the character has stood still for a moment, as in console games.
+function RunHandler.StepToggle(self: RunHandler, deltaTime: number): ()
+	if not self.Toggled then
+		return
+	end
+	local character = Players.LocalPlayer.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid and humanoid.MoveDirection.Magnitude > InputCues.RunToggle.MoveThreshold then
+		self.Still = 0
+		return
+	end
+	self.Still += deltaTime
+	if self.Still >= InputCues.RunToggle.StopSeconds then
+		self.Toggled = false
+		self:Refresh()
+	end
 end
 
 function RunHandler.SetRunning(self: RunHandler, isRunning: boolean): ()
@@ -147,6 +188,9 @@ export type RunHandler = typeof(RunHandler) & {
 	Running: boolean,
 	-- Held keys, and the touch or click holding the Run button.
 	Held: { [Enum.KeyCode | InputObject]: boolean? },
+	-- The controller's L3 toggle, and how long the character has stood still since.
+	Toggled: boolean,
+	Still: number,
 }
 
 return RunHandler :: RunHandler
