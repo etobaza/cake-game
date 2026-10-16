@@ -12,8 +12,8 @@ local Groups = {
 	Player = "Players",
 	-- Everything standing inside the room: stations, display, tables, chairs, garden, decorations.
 	Prop = "Props",
-	-- Door leaves and the arches between zones. They fill their opening, so anyone who walks the
-	-- bakery has to pass through them; nothing here ever opens or swings.
+	-- Door leaves. They fill their opening, so anyone who walks the bakery has to pass through
+	-- them. The open arches between zones are not doors here (see DoorFrameHolders).
 	Door = "Doors",
 }
 
@@ -59,6 +59,13 @@ local Collision = {
 	-- Every bakery gets this at boot, not only a claimed one: a shut front door blocks the map itself.
 	-- Whole-name matching on purpose — the oven's OvenDoorLeft/Right must keep colliding.
 	PassableModels = { "door" },
+	-- Holders whose "door" models are only a frame around an open passage (the kitchen's arches to
+	-- the cafe and the garden), as paths relative to the bakery. Their mesh's own collision already
+	-- leaves the opening walkable, so they stay out of the door group: the posts keep blocking
+	-- players, and claimed bakeries put them in the prop group like the rest of Decoration.
+	DoorFrameHolders = {
+		{ "1ndFloor", "Kitchen", "Decoration" },
+	},
 }
 
 return Collision

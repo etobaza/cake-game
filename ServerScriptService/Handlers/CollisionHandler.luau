@@ -81,16 +81,31 @@ end
 
 -- Doors are the doorway, not something beside it: their slab fills the opening and never swings, so
 -- a player or a guest has to walk straight through. Done for EVERY bakery once at boot rather than
--- per claimed base — an unclaimed bakery still has to be walkable to reach.
+-- per claimed base — an unclaimed bakery still has to be walkable to reach. Door models that only
+-- frame an open passage keep colliding, or players walk through their posts.
 function CollisionHandler.OpenDoors(self: CollisionHandler): ()
 	local bakeries = World.Bakeries()
 	if not bakeries then
 		return
 	end
 
-	for _, piece in bakeries:GetDescendants() do
-		if piece:IsA("Model") and table.find(CollisionConfig.PassableModels, string.lower(piece.Name)) then
-			self:Apply(piece, CollisionConfig.Groups.Door)
+	for _, bakery in bakeries:GetChildren() do
+		local frameHolders: { Instance } = {}
+		for _, path in CollisionConfig.DoorFrameHolders do
+			local holder = BuildingsConfig.ResolvePath(bakery, path)
+			if holder then
+				table.insert(frameHolders, holder)
+			end
+		end
+
+		for _, piece in bakery:GetDescendants() do
+			if
+				piece:IsA("Model")
+				and table.find(CollisionConfig.PassableModels, string.lower(piece.Name))
+				and not (piece.Parent and table.find(frameHolders, piece.Parent))
+			then
+				self:Apply(piece, CollisionConfig.Groups.Door)
+			end
 		end
 	end
 end
@@ -160,8 +175,8 @@ end
 
 function CollisionHandler.Apply(_self: CollisionHandler, root: Instance, group: string): ()
 	for _, piece in root:GetDescendants() do
-		-- A door keeps the group it was given at boot: the kitchen arches sit inside Decoration, and
-		-- the prop pass runs over the very same parts when a base is claimed.
+		-- A door keeps the group it was given at boot: a door can sit inside Decoration, and the prop
+		-- pass runs over the very same parts when a base is claimed.
 		if piece:IsA("BasePart") and piece.CollisionGroup ~= CollisionConfig.Groups.Door then
 			piece.CollisionGroup = group
 		end
