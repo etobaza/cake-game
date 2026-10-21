@@ -35,6 +35,8 @@ function Navigation.Resolve(goal: Types.TutorialGoal?, page: string, canClose: b
 	)
 	recovery.recovery = true
 	recovery.urgent = goal.urgent
+	-- An optional lesson's detour stays optional: announced once, never dimming the screen.
+	recovery.topic = goal.topic
 	return recovery
 end
 

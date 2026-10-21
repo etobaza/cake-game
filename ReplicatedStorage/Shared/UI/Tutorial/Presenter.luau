@@ -167,7 +167,8 @@ function Presenter.Draw(self: Presenter, _deltaTime: number, page: string): ()
 	-- A pressing finger promises an action. Cooking/eating need no repeated clicks. World targets
 	-- (props, their prompt plates, the mixer card) get the arrows and finger at once; on a screen
 	-- target the player first gets a moment to find it alone: the finger follows after PointDelay
-	-- and the dimming spotlight after FocusDelay (urgent steps point at once).
+	-- and, for introduction steps only, the dimming spotlight after FocusDelay (urgent steps point
+	-- and dim at once). Optional lessons and coaching (steps with a topic) never dim the screen.
 	local waited = os.clock() - self.EligibleSince
 	local kind = goal.target and goal.target.kind
 	local onScreen = kind == "Gui" or kind == "Recipe" or kind == "Order"
@@ -175,7 +176,7 @@ function Presenter.Draw(self: Presenter, _deltaTime: number, page: string): ()
 	if goal.waiting or waited < pointAfter then
 		self.Focus:Hide()
 	else
-		self.Focus:Update(goal.urgent == true or waited >= Config.FocusDelay)
+		self.Focus:Update(goal.urgent == true or (goal.topic == nil and waited >= Config.FocusDelay))
 	end
 
 	local target = self.Focus.Target

@@ -242,6 +242,8 @@ function Guest.new(customerId: string, name: string, rig: Model, position: Vecto
 	self.Heading = root.CFrame.LookVector
 	self.Speed = 0
 	self.SpeedLimit = GuestsConfig.CafeWalkSpeed
+	-- Streams as one unit, so a client never draws the body without its accessories and clothing.
+	rig.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 	rig.Parent = parent
 
 	-- Server owned: a guest walking under a client's control would be one more thing to trust.

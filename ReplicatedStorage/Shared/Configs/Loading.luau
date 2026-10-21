@@ -49,5 +49,6 @@ return {
 		"Every friend playing with you boosts your earnings.",
 		"Upgrades unlock new ingredients and faster stations.",
 		"Claim free playtime rewards from the Rewards button.",
+		"Hold Shift to run, or tap the Run button on touch screens.",
 	},
 }

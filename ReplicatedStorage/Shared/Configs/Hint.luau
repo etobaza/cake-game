@@ -26,6 +26,9 @@ return {
 	},
 
 	FingerTip = Vector2.new(0.4, 0.18),
+	-- The hand hangs below its tip, so on a prompt plate the tip rests on the bottom edge and the
+	-- hand stays clear of the text.
+	PromptTargetPoint = Vector2.new(0.5, 1),
 	-- Hand size when the viewport's shorter side is ReferenceHeight; it follows that side down to
 	-- MinFingerSize.
 	FingerSize = 88,

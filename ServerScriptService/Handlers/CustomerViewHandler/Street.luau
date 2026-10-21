@@ -1,7 +1,9 @@
 --!strict
 -- One server crowd; cafes reserve existing bodies before committing orders.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 local Appearance = require(script.Parent.Appearance)
+local DayCycleHandler = require(ServerScriptService.Handlers.DayCycleHandler)
 local Guest = require(script.Parent.Guest)
 local StreetRoute = require(script.Parent.StreetRoute)
 local GuestsConfig = require(ReplicatedStorage.Shared.Configs.Guests)
@@ -23,6 +25,8 @@ type Base = {
 	Reserved: { [string]: Pedestrian },
 	DemandUntil: number,
 	OpeningDemand: boolean,
+	-- Mirrors DayCycleHandler:CanAcceptCustomers once per Update.
+	Admitting: boolean,
 }
 local Street = {}
 local Bases: { [Player]: Base } = {}
@@ -33,13 +37,18 @@ local Loading: {}? = nil
 local NextSpawnAt = 0
 local SourceIndex = 0
 
+-- An idle bakery must not hold bodies at the population cap; with none admitting, the crowd stays ambient.
 local function HasDestination(entry: Pedestrian): boolean
-	for player in Bases do
-		if Appearance.CanVisit(player, entry.Identity) then
+	local anyAdmitting, anyVisitable = false, false
+	for player, base in Bases do
+		local visitable = Appearance.CanVisit(player, entry.Identity)
+		if base.Admitting and visitable then
 			return true
 		end
+		anyAdmitting = anyAdmitting or base.Admitting
+		anyVisitable = anyVisitable or visitable
 	end
-	return false
+	return anyVisitable and not anyAdmitting
 end
 
 local function Patrol(entry: Pedestrian, node: number): ()
@@ -106,7 +115,14 @@ function Street.Open(player: Player, folder: Folder, door: BasePart, porch: Vect
 		created.Parent = workspace
 		Folder = created
 	end
-	Bases[player] = { Folder = folder, Route = route, Reserved = {}, DemandUntil = 0, OpeningDemand = false }
+	Bases[player] = {
+		Folder = folder,
+		Route = route,
+		Reserved = {},
+		DemandUntil = 0,
+		OpeningDemand = false,
+		Admitting = DayCycleHandler:CanAcceptCustomers(player),
+	}
 end
 
 -- CustomerHandler refreshes demand shortly before a due arrival, only while admission is open.
@@ -236,7 +252,8 @@ function Street.Update(): ()
 		end
 	end
 	local sources: { Player } = {}
-	for player in Bases do
+	for player, base in Bases do
+		base.Admitting = DayCycleHandler:CanAcceptCustomers(player)
 		sources[#sources + 1] = player
 	end
 	if #sources == 0 then
@@ -302,7 +319,8 @@ function Street.Take(player: Player, customerId: string, opening: boolean?): boo
 		if entry.Owner or entry.Retiring or entry.Guest.Destroyed or (not opening and os.clock() < entry.ReadyAt) then
 			continue
 		end
-		if not entry.Guest.Model.Parent then
+		-- A body fading out after a blocked walk is gone within FadeSeconds and would strand its customer.
+		if not entry.Guest.Model.Parent or entry.Guest.FadeEndsAt then
 			continue
 		end
 		if not Appearance.CanVisit(player, entry.Identity) then

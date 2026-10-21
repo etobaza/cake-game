@@ -55,7 +55,7 @@ local sounds: { [SoundName]: Definition } = {
 	Put = { Id = "rbxassetid://136151656235659", Volume = 0.5 },
 	UiOpen = { Id = "rbxassetid://73574670346128", Volume = 0.5 },
 	UiClose = { Id = "rbxassetid://97979022375379", Volume = 0.5 },
-	WaiterWhistle = { Id = "rbxassetid://74906107284599", Volume = 0.6 },
+	WaiterWhistle = { Id = "rbxassetid://74906107284599", Volume = 0.35 },
 	GuestHappy = { Id = "rbxassetid://94829056430888", Volume = 0.6 },
 	GuestSad = { Id = "rbxassetid://107122932837050", Volume = 0.6 },
 	Mixing = { Id = "rbxassetid://108542822843617", Volume = 0.5, Looped = true, MaxDistance = 40 },
@@ -69,7 +69,7 @@ local sounds: { [SoundName]: Definition } = {
 	-- Played once per coin landing in the HUD balance, with a rising pitch.
 	Coin = { Id = "rbxassetid://120543211338337", Volume = 0.22 },
 	Sparkle = { Id = "rbxassetid://2609981431", Volume = 0.35 },
-	LevelUp = { Id = "rbxassetid://128460880879263", Volume = 0.55 },
+	LevelUp = { Id = "rbxassetid://128460880879263", Volume = 0.3 },
 	StationReady = { Id = "rbxassetid://110253665387820", Volume = 0.6, MaxDistance = 45 },
 	-- Reuse the accessible short bell for one gentle chime when the bakery opens.
 	DoorBell = { Id = "rbxassetid://110253665387820", Volume = 0.24, MaxDistance = 35 },

@@ -106,7 +106,10 @@ local function ItemName(item: any): string
 end
 
 local function Seconds(deadline: number): number
-	return math.max(math.ceil(deadline - workspace:GetServerTimeNow()), 0)
+	local left = math.ceil(deadline - workspace:GetServerTimeNow())
+
+	-- math.ceil of (-1, 0) is -0, which math.max keeps and prints as "-0s".
+	return if left > 0 then left else 0
 end
 
 local function ResolveView(kindName: string): {
@@ -267,8 +270,8 @@ function InteractHandler.RefreshProp(self: InteractHandler, part: BasePart): ()
 	-- countdowns like the oven's stay visible to whoever stands at the station.
 	if prompt then
 		-- A status-only plate stays only on the prop the player last used: elsewhere it would take
-		-- the one shared prompt slot from a nearby prop that has an action.
-		local status = state.Status == true and part == self.LastUsed
+		-- the one shared prompt slot from a nearby prop that has an action. A LineOnly status never does.
+		local status = state.Status == true and state.LineOnly ~= true and part == self.LastUsed
 		-- PromptHandler draws an alert status as StationStatusHandler's icon instead of words. Set
 		-- before the texts: their change signals redraw the plate.
 		prompt:SetAttribute(StationStatusConfig.AlertAttribute, state.Alert == true)

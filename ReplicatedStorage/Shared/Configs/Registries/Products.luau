@@ -43,27 +43,27 @@ local list: { [string]: ProductDefinition } = {
 	cash_1 = {
 		productId = 3715828865,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "7 500$", grant = "Cash", amount = 7500, icon = "rbxassetid://96216232687018" },
+		meta = { name = "Cash", value = "7,500$", grant = "Cash", amount = 7500, icon = "rbxassetid://96216232687018" },
 	},
 	cash_2 = {
 		productId = 3715828878,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "17 500$", grant = "Cash", amount = 17500, icon = "rbxassetid://114454707057271" },
+		meta = { name = "Cash", value = "17,500$", grant = "Cash", amount = 17500, icon = "rbxassetid://114454707057271" },
 	},
 	cash_3 = {
 		productId = 3715828888,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "50 000$", grant = "Cash", amount = 50000, icon = "rbxassetid://71273978435843" },
+		meta = { name = "Cash", value = "50,000$", grant = "Cash", amount = 50000, icon = "rbxassetid://71273978435843" },
 	},
 	cash_4 = {
 		productId = 3715828897,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "120 000$", grant = "Cash", amount = 120000, icon = "rbxassetid://127494963095045" },
+		meta = { name = "Cash", value = "120,000$", grant = "Cash", amount = 120000, icon = "rbxassetid://127494963095045" },
 	},
 	cash_5 = {
 		productId = 3715828907,
 		productType = "devproduct",
-		meta = { name = "Cash", value = "275 000$", grant = "Cash", amount = 275000, icon = "rbxassetid://110097182380053" },
+		meta = { name = "Cash", value = "275,000$", grant = "Cash", amount = 275000, icon = "rbxassetid://110097182380053" },
 	},
 
 	--[[ Gamepasses ]]--
@@ -100,7 +100,7 @@ local list: { [string]: ProductDefinition } = {
 		productType = "permanent_devproduct",
 		meta = {
 			name = "Starter Pack",
-			blurb = "Contains 50 000$ to get the bakery going.",
+			blurb = "Contains 50,000$ to get the bakery going.",
 			grant = "Cash",
 			amount = 50000,
 		},

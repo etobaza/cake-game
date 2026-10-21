@@ -14,17 +14,31 @@ local World = require(ReplicatedStorage.Shared.World)
 --[[ Tables ]]--
 local WallReach = {}
 
--- Wall folders per bakery root. The shell never changes at runtime, so it is gathered once.
+-- Wall folders per bakery root. The shell never changes at runtime, but with streaming a client can
+-- receive a wall folder after its first lookup, so a folder's arrival drops the bakery's list.
 local Walls: { [Instance]: { Instance } } = setmetatable({}, { __mode = "k" }) :: any
+local Watched: { [Instance]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+
+local function isWallFolder(instance: Instance): boolean
+	return instance:IsA("Folder") and table.find(CollisionConfig.WallFolders, instance.Name) ~= nil
+end
 
 local function wallsOf(bakery: Instance): { Instance }
 	local cached = Walls[bakery]
 	if cached then
 		return cached
 	end
+	if not Watched[bakery] then
+		Watched[bakery] = true
+		bakery.DescendantAdded:Connect(function(descendant: Instance): ()
+			if isWallFolder(descendant) then
+				Walls[bakery] = nil
+			end
+		end)
+	end
 	local folders: { Instance } = {}
 	for _, descendant in bakery:GetDescendants() do
-		if descendant:IsA("Folder") and table.find(CollisionConfig.WallFolders, descendant.Name) then
+		if isWallFolder(descendant) then
 			table.insert(folders, descendant)
 		end
 	end

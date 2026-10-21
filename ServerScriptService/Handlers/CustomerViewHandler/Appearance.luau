@@ -1,5 +1,6 @@
 --!strict
--- Bodies are unique across the server. Visits are remembered per cafe owner across rejoins.
+-- Bodies are unique across the server. Visits are remembered per cafe owner across rejoins, for
+-- Street.RevisitSeconds.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -12,7 +13,7 @@ type FriendList = { Items: { Identity }, Ready: boolean }
 local Appearance = {}
 local Friends: { [Player]: FriendList } = {}
 local Taken: { [number]: Identity } = {}
-local Visited: { [string]: { [number]: boolean } } = {}
+local Visited: { [string]: { [number]: number } } = {}
 local Failed: { [number]: number } = {}
 local Rigs: { [number]: Model } = {}
 local CacheOrder: { number } = {}
@@ -91,7 +92,8 @@ end
 
 function Appearance.CanVisit(player: Player, identity: Identity): boolean
 	local visits = Visited[identity.Key]
-	return not visits or not visits[player.UserId]
+	local visitedAt = visits and visits[player.UserId]
+	return not visitedAt or os.clock() - visitedAt >= GuestsConfig.Street.RevisitSeconds
 end
 
 function Appearance.Take(player: Player, allowGenerated: boolean?): Identity?
@@ -120,7 +122,7 @@ function Appearance.Visit(player: Player, identity: Identity): ()
 		visits = {}
 		Visited[identity.Key] = visits
 	end
-	visits[player.UserId] = true
+	visits[player.UserId] = os.clock()
 end
 
 function Appearance.Release(_player: Player, identity: Identity): ()

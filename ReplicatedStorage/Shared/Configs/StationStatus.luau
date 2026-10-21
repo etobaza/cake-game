@@ -22,6 +22,8 @@ return {
 	-- The label's colour while the station waits on the player (a dead fire) and has no firebox to
 	-- carry the icon.
 	Alert = Color3.fromRGB(255, 196, 0),
+	-- A status-only line that refuses the held item (wrong ingredient, hands full at a burnt batch).
+	Refusal = Color3.fromRGB(255, 104, 88),
 	-- Prompt attribute InteractHandler sets from a view's `Alert` (Shared/BuildingViews/Types), so the
 	-- prompt plate leaves an alert to the icon below.
 	AlertAttribute = "StatusAlert",

@@ -118,7 +118,10 @@ local function isShown(gui: GuiObject): boolean
 end
 
 local function unlockLine(level: number): string
+	local tuning = Config.LevelUp
 	local names: { string } = {}
+	-- Dishes the player can supply today: the evening menu takes them.
+	local ready: { string } = {}
 	local missing: { [string]: boolean } = {}
 	local levels = DataClient:GetData({ "Base", "Upgrades" }) or {}
 	for _, recipe in Recipes:GetUnlockedAt(level) do
@@ -126,22 +129,36 @@ local function unlockLine(level: number): string
 			break
 		end
 		table.insert(names, recipe.name)
-		for _, id in RecipeRequirements.GetMissing(recipe, levels) do
+		local needs = RecipeRequirements.GetMissing(recipe, levels)
+		if #needs == 0 then
+			table.insert(ready, recipe.name)
+		end
+		for _, id in needs do
 			missing[id] = true
 		end
 	end
 	if #names == 0 then
 		return ""
 	end
-	local line = if #names == 1 then string.format(Config.LevelUp.UnlockSingle, names[1])
-		else string.format(Config.LevelUp.UnlockMany, table.concat(names, ", "))
+	local lines = {
+		if #names == 1 then string.format(tuning.UnlockSingle, names[1])
+			else string.format(tuning.UnlockMany, table.concat(names, ", ")),
+	}
+	if #ready == #names then
+		table.insert(lines, if #names == 1 then tuning.MenuOne else tuning.MenuAll)
+	elseif #ready > 0 then
+		table.insert(lines, string.format(tuning.MenuSome, table.concat(ready, ", ")))
+	end
 	local ids: { string } = {}
 	for id in missing do
 		table.insert(ids, id)
 	end
 	table.sort(ids)
-	local requirements = RecipeRequirements.Describe(ids, Config.LevelUp.MaxRequirementNames)
-	return if requirements ~= "" then `{line}\n{requirements}` else line
+	local requirements = RecipeRequirements.Describe(ids, tuning.MaxRequirementNames)
+	if requirements ~= "" then
+		table.insert(lines, requirements)
+	end
+	return table.concat(lines, "\n")
 end
 
 -- Listed milestones, then every `MilestoneEvery` sales past the last one.

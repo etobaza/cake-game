@@ -30,6 +30,7 @@ local OvenFuel = require(_Shared.Configs.OvenFuel)
 local Pages = require(_Shared.UI.Stores.Pages)
 local PromptHandler = require(_Handlers.PromptHandler)
 local TextScale = require(_Shared.UI.TextScale)
+local Tints = require(_Shared.BuildingViews.Tints)
 local Theme = require(_Shared.UI.Theme)
 local World = require(_Shared.World)
 
@@ -276,7 +277,8 @@ function StationStatusHandler.Refresh(self: StationStatusHandler): ()
 			self:ShowIcon(part, fire, not covered)
 		else
 			lines[part] = true
-			self:ShowLine(part, state.Label, alert, not covered and plated ~= part)
+			local refusal = state.LineOnly == true and state.Tint == Tints.Bad
+			self:ShowLine(part, state.Label, alert, refusal, not covered and plated ~= part)
 		end
 	end
 
@@ -297,6 +299,7 @@ function StationStatusHandler.ShowLine(
 	part: BasePart,
 	text: string,
 	alert: boolean,
+	refusal: boolean,
 	visible: boolean
 ): ()
 	local tag = self.Tags[part]
@@ -305,7 +308,7 @@ function StationStatusHandler.ShowLine(
 		self.Tags[part] = tag
 	end
 	tag.Line.Text = text
-	tag.Line.TextColor3 = if alert then Config.Alert else Config.Face
+	tag.Line.TextColor3 = if alert then Config.Alert elseif refusal then Config.Refusal else Config.Face
 	tag.Billboard.Enabled = visible
 end
 

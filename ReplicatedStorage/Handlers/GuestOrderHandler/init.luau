@@ -42,8 +42,8 @@ local function findGuests(userId: number): Instance?
 	return nil
 end
 
-local function worldScale(head: BasePart): number
-	return TextScale.World(workspace.CurrentCamera, head.Position + Config.Bubble.Offset) * Config.Bubble.WorldScale
+local function worldScale(head: BasePart, offset: Vector3): number
+	return TextScale.World(workspace.CurrentCamera, head.Position + offset) * Config.Bubble.WorldScale
 end
 
 --[[ Handling ]]--
@@ -102,7 +102,7 @@ end
 -- Bubbles keep a constant world size, so each follows its guest's distance from the camera.
 function GuestOrderHandler.FitWorld(self: GuestOrderHandler): ()
 	for _, bubble in self.Bubbles do
-		bubble:SetScale(worldScale(bubble.Head))
+		bubble:SetScale(worldScale(bubble.Head, bubble.Offset))
 	end
 end
 
@@ -128,7 +128,8 @@ function GuestOrderHandler.Refresh(self: GuestOrderHandler): ()
 			self:Remove(customerId)
 		end
 		if not self.Bubbles[customerId] then
-			self.Bubbles[customerId] = Bubble.new(model, head, self.BarTemplate, worldScale(head))
+			local offset = Bubble.HeadOffset(model, head)
+			self.Bubbles[customerId] = Bubble.new(model, head, offset, self.BarTemplate, worldScale(head, offset))
 		end
 		shown[customerId] = true
 

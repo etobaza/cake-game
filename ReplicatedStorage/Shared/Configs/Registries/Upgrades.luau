@@ -68,7 +68,7 @@ local list: { [string]: UpgradeDefinition } = {
 		costMultiplier = 1,
 		costs = { 525, 1250, 2500, 5525, 7525 },
 		unlockLevel = 1,
-		blurb = "Room for one more pastry in the window.",
+		blurb = "One more display spot. Guests buy from it themselves; stock it before opening.",
 	},
 	cafe_window = {
 		name = "Kitchen Window",

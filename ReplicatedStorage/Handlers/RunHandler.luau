@@ -1,6 +1,6 @@
 --!strict
--- Cross-platform sprint intent: the player runs while holding Shift or the touch Run button. On a
--- controller a click of L3 toggles running, the console convention, so the stick is never held down;
+-- Cross-platform sprint intent: the player runs while holding Shift. A tap of the touch Run button or
+-- a click of L3 on a controller (the console convention) toggles running, so no thumb is held down;
 -- it ends once the player stops moving. The server owns speed and movement locks.
 
 --[[ Services ]]--
@@ -38,6 +38,7 @@ function RunHandler.OnInit(self: RunHandler): ()
 	self.Running = false
 	self.Held = {}
 	self.Toggled = false
+	self.Moved = false
 	self.Still = 0
 end
 
@@ -47,17 +48,9 @@ function RunHandler.OnStart(self: RunHandler): ()
 	self.Janitor:Add(self.Button:GetAttributeChangedSignal("TouchLayoutReady"):Connect(function(): ()
 		self:Refresh()
 	end), "Disconnect")
-	-- A touch is held by its own InputObject, so it ends wherever the finger lifts.
 	self.Janitor:Add(self.Button.InputBegan:Connect(function(input: InputObject): ()
 		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-			self.Held[input] = true
-			self:Refresh()
-		end
-	end), "Disconnect")
-	self.Janitor:Add(UserInputService.InputEnded:Connect(function(input: InputObject): ()
-		if self.Held[input] then
-			self.Held[input] = nil
-			self:Refresh()
+			self:Toggle()
 		end
 	end), "Disconnect")
 	ContextActionService:BindAction(
@@ -79,9 +72,7 @@ function RunHandler.OnStart(self: RunHandler): ()
 		TOGGLE_ACTION,
 		function(_name: string, state: Enum.UserInputState): Enum.ContextActionResult
 			if state == Enum.UserInputState.Begin then
-				self.Toggled = not self.Toggled
-				self.Still = 0
-				self:Refresh()
+				self:Toggle()
 			end
 			return Enum.ContextActionResult.Sink
 		end,
@@ -151,7 +142,15 @@ function RunHandler.Reset(self: RunHandler): ()
 	self:Refresh()
 end
 
--- A toggled run ends once the character has stood still for a moment, as in console games.
+function RunHandler.Toggle(self: RunHandler): ()
+	self.Toggled = not self.Toggled
+	self.Moved = false
+	self.Still = 0
+	self:Refresh()
+end
+
+-- A toggled run ends once the character has moved and then stood still for a moment, as in console
+-- games. Waiting for the first move lets a touch player tap Run before reaching for the thumbstick.
 function RunHandler.StepToggle(self: RunHandler, deltaTime: number): ()
 	if not self.Toggled then
 		return
@@ -159,7 +158,11 @@ function RunHandler.StepToggle(self: RunHandler, deltaTime: number): ()
 	local character = Players.LocalPlayer.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if humanoid and humanoid.MoveDirection.Magnitude > InputCues.RunToggle.MoveThreshold then
+		self.Moved = true
 		self.Still = 0
+		return
+	end
+	if not self.Moved then
 		return
 	end
 	self.Still += deltaTime
@@ -186,10 +189,12 @@ export type RunHandler = typeof(RunHandler) & {
 	Janitor: any,
 	Button: TextButton,
 	Running: boolean,
-	-- Held keys, and the touch or click holding the Run button.
-	Held: { [Enum.KeyCode | InputObject]: boolean? },
-	-- The controller's L3 toggle, and how long the character has stood still since.
+	-- Held Shift keys.
+	Held: { [Enum.KeyCode]: boolean? },
+	-- The Run button's or L3's toggle, whether the character has moved since, and how long it has
+	-- stood still after moving.
 	Toggled: boolean,
+	Moved: boolean,
 	Still: number,
 }
 

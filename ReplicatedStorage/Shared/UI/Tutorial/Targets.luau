@@ -2,7 +2,6 @@
 -- Resolves only the local bakery and authored UI. Hidden/clipped GUI never becomes a spotlight hole.
 
 --[[ Services ]]--
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --[[ Modules ]]--
@@ -18,6 +17,7 @@ local World = require(ReplicatedStorage.Shared.World)
 
 --[[ Tables ]]--
 local Targets = {}
+local MIXER_BILLBOARD = "MixerBillboard"
 local OvenPaths = {
 	{ "1ndFloor", "Kitchen", "Decoration", "Oven" },
 	{ "1ndFloor", "Kitchen", "Upgrades", " OvenUpgrade", "Upgrade2", "Oven" },
@@ -42,11 +42,18 @@ local function bakeryOf(part: Instance): Instance?
 	return if root.Parent then root else nil
 end
 
+-- MixHandler's floating card above the bowl lives beside the authored screens.
+local function mixerBillboard(): Instance?
+	local root = UIHandler.Hud and UIHandler.Hud.Parent
+	return root and root:FindFirstChild(MIXER_BILLBOARD)
+end
+
 local function ui(path: string): GuiObject?
 	local names = string.split(path, ".")
-	local screen = if names[1] == "UI"
+	local screen: Instance? = if names[1] == "UI"
 		then UIHandler.Hud
 		elseif names[1] == "BakeryMenu" then UIHandler.BakeryMenu
+		elseif names[1] == MIXER_BILLBOARD then mixerBillboard()
 		else UIHandler:GetPanel(names[1])
 	local current: Instance? = screen
 	for index = 2, #names do
@@ -201,6 +208,14 @@ local function world(id: string, seatIndex: number?): Target?
 	return { part = part, model = model or part } :: Target
 end
 
+local function nearMixer(): Target?
+	local target = world("mixer_1", nil)
+	if target then
+		target.message = "Walk closer to the mixer"
+	end
+	return target
+end
+
 --[[ Handling ]]--
 function Targets.Resolve(spec: Types.TutorialTarget?, viewport: Vector2): Target?
 	if not spec then
@@ -227,7 +242,17 @@ function Targets.Resolve(spec: Types.TutorialTarget?, viewport: Vector2): Target
 			return target
 		end
 		local element = ui(spec.id)
-		return if element and Geometry.Gui(element, viewport) then { gui = element } else nil
+		if element and Geometry.Gui(element, viewport) then
+			return { gui = element }
+		end
+		-- A cell scrolled out of its list: point at the list until it scrolls into view.
+		local list = element and element.Parent
+		if spec.control == "Scroll" and list and list:IsA("GuiObject") and Geometry.Gui(list, viewport) then
+			local target: Target = { gui = list }
+			return target
+		end
+		-- The mixer's card shows only within reach of the bowl.
+		return if spec.id:match("^[^.]+") == MIXER_BILLBOARD then nearMixer() else nil
 	end
 	if spec.kind == "Recipe" then
 		local control = spec.control or "Start"
@@ -241,12 +266,9 @@ function Targets.Resolve(spec: Types.TutorialTarget?, viewport: Vector2): Target
 			else "Scroll to the recipe's Start button"
 		return if content and Geometry.Gui(content, viewport) then { gui = content, message = message } else nil
 	end
-	local playerGui = Players.LocalPlayer:FindFirstChildOfClass("PlayerGui")
-	if not playerGui then
-		return nil
-	end
-	local root = if spec.kind == "Order" then UIHandler:GetHud("Order") else playerGui:FindFirstChild("MixerBillboard")
-	for _, child in if root then root:GetDescendants() else {} do
+	local root = if spec.kind == "Order" then UIHandler:GetHud("Order") else mixerBillboard()
+	local children: { Instance } = if root then root:GetDescendants() else {}
+	for _, child in children do
 		if not child:IsA("GuiObject") then
 			continue
 		end
@@ -255,11 +277,7 @@ function Targets.Resolve(spec: Types.TutorialTarget?, viewport: Vector2): Target
 			return { gui = child }
 		end
 	end
-	local fallback = if spec.kind == "Ingredient" then world("mixer_1", nil) else nil
-	if fallback then
-		fallback.message = "Walk closer to the mixer"
-	end
-	return fallback
+	return if spec.kind == "Ingredient" then nearMixer() else nil
 end
 
 return Targets

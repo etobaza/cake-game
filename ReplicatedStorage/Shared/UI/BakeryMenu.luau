@@ -12,6 +12,7 @@ local Flux = require(ReplicatedStorage.Packages.flux)
 local InputCue = require(script.Parent.InputCue)
 local InputCues = require(ReplicatedStorage.Shared.Configs.InputCues)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local MenuPlan = require(ReplicatedStorage.Shared.Tutorial.MenuPlan)
 local Pages = require(script.Parent.Stores.Pages)
 local UseData = require(script.Parent.Hooks.UseData)
 
@@ -42,6 +43,10 @@ local NEXT_DAY_SHINE_FROM = Vector2.new(-1, 0)
 local NEXT_DAY_SHINE_TO = Vector2.new(1, 0)
 local NEXT_DAY_BOB = TweenInfo.new(1.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
 local NEXT_DAY_BOB_RISE = 2
+-- The HUD's alert badge, from the mounted UI root, sized by the tab's height at its top-right corner.
+local ALERT_SOURCE = { "UI", "HUD", "SideBtns", "Rewards", "Mark" }
+local ALERT_SIZE = UDim2.fromScale(0.55, 0.5)
+local ALERT_POSITION = UDim2.fromScale(0.97, 0.1)
 
 --[[ Tables ]]--
 local BakeryMenu = {}
@@ -138,6 +143,7 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	nextDay.Size = UDim2.new(1 - #TAB_BUTTONS * tabShare, -NEXT_DAY_GAP - nextDayShift, 1, 0)
 	table.insert(rowButtons, nextDay)
 	janitor:Add(ButtonRow.Bind(buttons, rowButtons), "Destroy")
+	BakeryMenu.BindMenuAlert(screen, buttons:FindFirstChild("Menu") :: GuiObject, data)
 	-- The shoulder buttons walk the evening tabs, skipping any the lock refuses.
 	local function step(direction: number): ()
 		local index = 1
@@ -235,6 +241,44 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 			Pages.Close()
 		end,
 	})
+end
+
+-- The HUD's alert mark on the Menu tab while an unlocked dish the player can make is left off
+-- tomorrow's menu and there is room for it. Menu editing stays an evening task.
+function BakeryMenu.BindMenuAlert(screen: ScreenGui, tab: GuiObject, data: any): ()
+	local source: Instance? = screen.Parent
+	for _, name in ALERT_SOURCE do
+		source = source and source:FindFirstChild(name)
+	end
+	if not source or not source:IsA("GuiObject") then
+		print("[BakeryMenu] no HUD alert artwork for the Menu tab")
+		return
+	end
+	-- StarterGui is place-only, so the authored reward alert is lent; the scope owns this copy.
+	local mark = source:Clone()
+	mark.Active = false
+	mark.Selectable = false
+	mark.Interactable = false
+	mark.SizeConstraint = Enum.SizeConstraint.RelativeYY
+	mark.Size = ALERT_SIZE
+	mark.Position = ALERT_POSITION
+	mark.Parent = tab
+	Flux.cleanup(mark)
+	local missing = Flux(false)
+	local function refresh(): ()
+		local cloud = data:GetData({}, "Cloud")
+		local session = data:GetData({}, "Session")
+		missing:set(
+			cloud ~= nil
+				and session ~= nil
+				and session.Day.Phase == "Summary"
+				and MenuPlan.Missing(cloud, session) ~= nil
+		)
+	end
+	refresh()
+	Flux.cleanup(data:SubscribeToDataType("Cloud", refresh))
+	Flux.cleanup(data:SubscribeToDataType("Session", refresh))
+	Flux.edit(mark)({ Visible = missing })
 end
 
 -- Runs only while the button shows; hiding it returns the shine and the sunrise to rest.

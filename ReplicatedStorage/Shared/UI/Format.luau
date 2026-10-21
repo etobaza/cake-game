@@ -13,9 +13,9 @@ local ABBREVIATIONS = {
 local Format = {}
 
 --[[ Handling ]]--
---- 123456 -> "123 456", 1234567 -> "1.23M". Thin spaces, not commas -- that is how the HUD was
---- authored. Displayed amounts are whole numbers; abbreviations round down, so a balance never
---- reads as more than it is.
+--- 123456 -> "123,456", 1234567 -> "1.23M". Commas, because testers read space-grouped amounts as a
+--- bug. Displayed amounts are whole numbers; abbreviations round down, so a balance never reads as
+--- more than it is.
 function Format.Number(value: number): string
 	local whole = math.round(math.abs(value))
 	local sign = if value < 0 and whole > 0 then "-" else ""
@@ -28,8 +28,8 @@ function Format.Number(value: number): string
 		end
 	end
 
-	local grouped = tostring(whole):reverse():gsub("(%d%d%d)", "%1 "):reverse()
-	return sign .. (grouped:gsub("^%s+", ""))
+	local grouped = tostring(whole):reverse():gsub("(%d%d%d)", "%1,"):reverse()
+	return sign .. (grouped:gsub("^,", ""))
 end
 
 --- Seconds -> "M:SS", or "H:MM:SS" from an hour up so "60:32" never reads as minutes.

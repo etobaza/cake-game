@@ -20,6 +20,8 @@ return {
 		Acknowledge = Enum.KeyCode.ButtonY,
 		-- Loads the next missing pantry ingredient shown on the mixer's floating card.
 		MixerPantry = Enum.KeyCode.ButtonR1,
+		-- Opens the recipe list from that card's dish name, to change the dish in work.
+		MixerRecipes = Enum.KeyCode.ButtonL1,
 		-- Opens the bakery from the HUD clock's Closed sign. Roblox gives R2 to tools; the game has none.
 		OpenBakery = Enum.KeyCode.ButtonR2,
 	},

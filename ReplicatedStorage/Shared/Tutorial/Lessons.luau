@@ -7,6 +7,8 @@ local Buildings = require(script.Parent.Parent.Configs.Buildings)
 local Cooking = require(script.Parent.Cooking)
 local Garden = require(script.Parent.Parent.Configs.Garden)
 local GardenSource = require(script.Parent.Parent.GardenSource)
+local MenuPlan = require(script.Parent.MenuPlan)
+local Recipes = require(script.Parent.Parent.Configs.Registries.Recipes)
 local State = require(script.Parent.State)
 local Types = require(script.Parent.Parent.GameTypes)
 
@@ -39,6 +41,16 @@ end
 local function grownInGarden(ingredientId: string): boolean
 	local _, source = GardenSource.Find(ingredientId)
 	return source ~= nil and source.OutputPath == nil
+end
+
+local function onTodaysMenu(session: any, ingredientId: string): boolean
+	for _, recipeId in session.Day.Menu do
+		local recipe = Recipes:Get(recipeId)
+		if recipe and recipe.ingredients[ingredientId] then
+			return true
+		end
+	end
+	return false
 end
 
 local function delivered(cloud: any): boolean
@@ -137,9 +149,14 @@ local function garden(cloud: any, session: any, props: any): Types.TutorialGoal?
 	if session.Day.Phase ~= "Prep" and not watering then
 		return nil
 	end
+	-- Garden produce cannot go back on its source, so only produce today's menu uses is taught.
 	local ids = {}
 	for id, source in Garden.Sources do
-		if (cloud.Base.Upgrades[source.Upgrade] or 0) > 0 and not cloud.Tutorial.Actions["Harvest:" .. id] then
+		if
+			(cloud.Base.Upgrades[source.Upgrade] or 0) > 0
+			and not cloud.Tutorial.Actions["Harvest:" .. id]
+			and onTodaysMenu(session, source.Produce)
+		then
 			ids[#ids + 1] = id
 		end
 	end
@@ -156,7 +173,7 @@ local function garden(cloud: any, session: any, props: any): Types.TutorialGoal?
 end
 
 --[[ Handling ]]--
-function Lessons.Summary(session: any, page: string): Types.TutorialGoal
+function Lessons.Summary(cloud: any, session: any, page: string): Types.TutorialGoal
 	if page ~= "Inventory" then
 		local target = "BakeryMenu.MainFrame.Header.Buttons.Menu"
 		local goal = State.Gui(
@@ -169,6 +186,13 @@ function Lessons.Summary(session: any, page: string): Types.TutorialGoal
 		return goal
 	end
 	local count = #session.Day.NextMenu
+	-- The menu is not "ready" while a dish the player can make is left off and there is room for it.
+	local missing = MenuPlan.Missing(cloud, session)
+	if missing then
+		local goal = MenuPlan.Step(missing, page)
+		goal.topic = "NextDay"
+		return goal
+	end
 	local ready = count >= 3 and count <= 5
 	local goal = State.Gui(
 		"next_menu",

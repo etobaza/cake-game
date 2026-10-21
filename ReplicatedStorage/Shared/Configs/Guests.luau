@@ -22,6 +22,9 @@ local Guests = {
 		NearbyPopulation = 2,
 		DemandSeconds = 2,
 		ReturnCooldownSeconds = 8,
+		-- A body may visit the same bakery again after this long, so a shared street keeps
+		-- faces the owner can still take instead of filling up with ones it has already served.
+		RevisitSeconds = 240,
 		MinWalkSeconds = 3,
 		HalfLength = 38,
 		PointSpacing = 12,
@@ -36,7 +39,8 @@ local Guests = {
 	},
 
 	--[[ Body ]]--
-	-- Friends are preferred. Once used, new visitors receive generated R15 appearances.
+	-- Friends are preferred. Once used, new visitors receive generated R15 appearances until
+	-- Street.RevisitSeconds lets that friend visit again.
 	Avatar = {
 		-- Friends are read once per visit to the server; one page of the friend list is 50 people.
 		MaxFriends = 50,

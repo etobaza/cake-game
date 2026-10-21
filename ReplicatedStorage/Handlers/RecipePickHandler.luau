@@ -2,7 +2,8 @@
 -- The station pick: which of today's menu recipes the mixer works on next.
 --
 -- Drives the RecipeToCook screen authored in StarterGui. The day menu is decided once, at the end of a
--- day; this page is opened from the mixer prompt and lists what that menu allows here, one row per
+-- day; this page is opened from the mixer prompt, or from the dish name on the mixer's floating card
+-- once a dish is chosen (MixHandler). It lists what that menu allows here, one row per
 -- dish with what it needs, what it pays and a Start button. The row of the recipe in work shows
 -- In-Progress instead, and pressing that cancels the batch: loaded produce goes back to the pantry.
 --

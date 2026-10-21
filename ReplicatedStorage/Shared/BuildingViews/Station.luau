@@ -11,6 +11,8 @@ local _Configs = _Shared.Configs
 --[[ Modules ]]--
 local BuildingsConfig = require(_Configs.Buildings)
 local Bus = require(_Shared.Bus)
+local CarryPolicy = require(_Shared.CarryPolicy)
+local IngredientCard = require(_Shared.UI.IngredientCard)
 local Ingredients = require(_Configs.Registries.Ingredients)
 -- Views run on the client only (InteractHandler is their one consumer), so the page store is safe here.
 local Pages = require(_Shared.UI.Stores.Pages)
@@ -39,10 +41,39 @@ local function SelectedRecipe(context: Types.Context): Recipes.RecipeEntry?
 	return cooking and cooking.SelectedRecipeId and Recipes:Get(cooking.SelectedRecipeId)
 end
 
-local function hasMissingIngredients(recipe: Recipes.RecipeEntry, station: any): boolean
-	for ingredientId, amount in recipe.ingredients do
-		local loaded = (station.Loaded and station.Loaded[ingredientId]) or 0
-		if loaded < amount then
+-- What the bowl still lacks, in the floating card's order.
+local function MissingNames(recipe: Recipes.RecipeEntry, station: any): { string }
+	local names = {}
+	for _, entry in IngredientCard.Sorted(recipe) do
+		local loaded = (station.Loaded and station.Loaded[entry.Id]) or 0
+		if loaded < entry.Amount then
+			names[#names + 1] = string.lower(IngredientCard.Name(entry.Id))
+		end
+	end
+
+	return names
+end
+
+local function GetKind(context: Types.Context): BuildingsConfig.Kind
+	return BuildingsConfig.Kinds[context.Kind]
+end
+
+-- Dough this station bakes: pressing a finished station swaps it for the result.
+local function CanSwap(context: Types.Context, held: any): boolean
+	if GetKind(context).Mixes or not held or held.Kind ~= "Dough" then
+		return false
+	end
+	local recipe = Recipes:Get(held.Id)
+	return recipe ~= nil and recipe.station == context.Kind
+end
+
+-- Whether a dish on today's menu that starts at this station asks for the ingredient: the recipe
+-- list offers only those, so without one it has nothing to pick for what the player carries.
+local function MenuUses(context: Types.Context, ingredientId: string): boolean
+	local day = context.Session("Day")
+	for _, recipeId in (day and day.Menu or {}) do
+		local recipe = Recipes:Get(recipeId)
+		if recipe and Recipes:GetStartStation(recipe) == context.Kind and recipe.ingredients[ingredientId] then
 			return true
 		end
 	end
@@ -50,8 +81,68 @@ local function hasMissingIngredients(recipe: Recipes.RecipeEntry, station: any):
 	return false
 end
 
-local function GetKind(context: Types.Context): BuildingsConfig.Kind
-	return BuildingsConfig.Kinds[context.Kind]
+-- Garden produce the mixer cannot use goes into the pantry instead of the trash. Staples cannot.
+local function DescribeStore(held: any, fireLoad: () -> ()): Types.PromptState?
+	local ingredient = Ingredients:Get(held.Id)
+	if not ingredient or Ingredients:IsInfinite(held.Id) then
+		return nil
+	end
+
+	return { Label = `{ingredient.name} to pantry`, Action = "Store", Fire = fireLoad }
+end
+
+-- An ingredient in hand: added while the batch needs it, garden produce it cannot use goes into the
+-- pantry, and a staple it cannot use goes back to its own tray (that tray's prompt, not this one).
+local function DescribeIngredient(
+	recipe: Recipes.RecipeEntry,
+	station: any,
+	held: any,
+	fireLoad: () -> ()
+): Types.PromptState
+	local ingredient = Ingredients:Get(held.Id)
+	local ingredientName = if ingredient then ingredient.name else held.Id
+	local needed = recipe.ingredients[held.Id]
+	local loaded = (station.Loaded and station.Loaded[held.Id]) or 0
+	if needed and loaded < needed then
+		return { Label = ingredientName, Action = "Add", Fire = fireLoad }
+	end
+
+	local store = DescribeStore(held, fireLoad)
+	if store then
+		return store
+	end
+
+	return {
+		Label = if needed then "Already added" else "Wrong ingredient",
+		Tint = Tints.Bad,
+		Status = true,
+		LineOnly = true,
+	}
+end
+
+-- A finished batch: Take, or Swap for held dough. Any other full hand reads as a status instead of a
+-- press the server would refuse.
+local function DescribeFinished(context: Types.Context, station: any, fireCollect: () -> ()): Types.PromptState
+	local burnt = station.State == "Burnt"
+	local name = context.RecipeName(station.RecipeId)
+	local label = if burnt
+		then "Burnt"
+		elseif (station.HeatPausedAt or 0) > 0 then `{name} · Fire out`
+		elseif station.BurnAt > 0 then `Burns in {context.Seconds(station.BurnAt)}s`
+		else name
+	local tint = if burnt then Tints.Bad else Tints.Ready
+	local held = context.Held()
+	local swap = CanSwap(context, held)
+	if held and not swap and not CarryPolicy.CanReplace(held) then
+		return { Label = `{label} · Hands full`, Tint = tint, Status = true, LineOnly = true }
+	end
+
+	return {
+		Label = label,
+		Action = if swap then "Swap" else "Take",
+		Fire = fireCollect,
+		Tint = tint,
+	}
 end
 
 local function FuelNote(context: Types.Context, station: any): string
@@ -87,12 +178,23 @@ local function DescribeIdle(context: Types.Context, station: any): Types.PromptS
 	end
 
 	if kind.Mixes then
+		local chosen = selected ~= nil and Recipes:GetStartStation(selected) == context.Kind
+		-- Produce no dish on today's menu uses (an empty menu included) would find nothing in the list.
+		if not chosen and held and held.Kind == "Ingredient" and not MenuUses(context, held.Id) then
+			local store = DescribeStore(held, FireLoad)
+			if store then
+				return store
+			end
+		end
+
 		-- Cooking is gated on today's menu: an empty list would open to nothing.
 		if MenuIsEmpty(context) then
 			return { Label = "Choose menu" }
 		end
 
-		if not selected or Recipes:GetStartStation(selected) ~= context.Kind then
+		-- The prompt opens the list only while no dish is chosen. Once one is, the staple trays beside
+		-- the bowl keep the key; the floating card above the bowl changes the dish (MixHandler).
+		if not selected or not chosen then
 			return {
 				Label = kind.Label,
 				Action = "Recipes",
@@ -100,30 +202,12 @@ local function DescribeIdle(context: Types.Context, station: any): Types.PromptS
 			}
 		end
 
-		-- An ingredient in hand always attempts loading, even when the bowl is complete.
-		-- Keep rejected attempts actionable so the server can send the matching status toast.
 		if held and held.Kind == "Ingredient" then
-			local ingredient = Ingredients:Get(held.Id)
-			local ingredientName = if ingredient then ingredient.name else held.Id
-			local needed = selected.ingredients[held.Id]
-			local loaded = (station.Loaded and station.Loaded[held.Id]) or 0
-			if needed and loaded < needed then
-				return {
-					Label = ingredientName,
-					Action = "Add",
-					Fire = FireLoad,
-				}
-			end
-
-			return {
-				Label = if needed then "Already added" else "Wrong ingredient",
-				Action = "Add",
-				Fire = FireLoad,
-				Tint = Tints.Bad,
-			}
+			return DescribeIngredient(selected, station, held, FireLoad)
 		end
 
-		if not hasMissingIngredients(selected, station) then
+		local missing = MissingNames(selected, station)
+		if #missing == 0 then
 			return {
 				Label = selected.name,
 				Action = "Mix",
@@ -133,12 +217,7 @@ local function DescribeIdle(context: Types.Context, station: any): Types.PromptS
 			}
 		end
 
-		-- Nothing useful in the hands: the list is where the dish is swapped or the batch cancelled.
-		return {
-			Label = selected.name,
-			Action = "Recipes",
-			Fire = OpenRecipes,
-		}
+		return { Label = `Needs {table.concat(missing, ", ")}`, Status = true, LineOnly = true }
 	end
 
 	local day = context.Session("Day")
@@ -220,28 +299,8 @@ function Station.Describe(context: Types.Context): Types.PromptState
 		}
 	end
 
-	if state == "Burnt" then
-		return {
-			Label = "Burnt",
-			Action = "Take",
-			Fire = FireCollect,
-			Tint = Tints.Bad,
-		}
-	end
-
-	if state == "Ready" then
-		local name = context.RecipeName(station.RecipeId)
-		local label = if (station.HeatPausedAt or 0) > 0
-			then `{name} · Fire out`
-			elseif station.BurnAt > 0 then `Burns in {context.Seconds(station.BurnAt)}s`
-			else name
-
-		return {
-			Label = label,
-			Action = "Take",
-			Fire = FireCollect,
-			Tint = Tints.Ready,
-		}
+	if state == "Burnt" or state == "Ready" then
+		return DescribeFinished(context, station, FireCollect)
 	end
 
 	return DescribeIdle(context, station)

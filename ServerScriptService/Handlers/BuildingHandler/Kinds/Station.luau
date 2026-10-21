@@ -31,6 +31,7 @@ local Recipes = require(_Configs.Registries.Recipes)
 local Sounds = require(_Configs.Sounds)
 local SoundPlayer = require(_Shared.SoundPlayer)
 local StateMachine = require(_Libs.StateMachine)
+local TutorialEvents = require(ServerScriptService.TutorialEvents)
 local UpgradeHandler = require(_Handlers.UpgradeHandler)
 local VFXConfig = require(_Configs.VFX)
 
@@ -134,7 +135,9 @@ local function ingredientFailure(recipe: Recipes.RecipeEntry, state: any, ingred
 	return nil
 end
 
--- The mixer collects ingredients one by one instead of taking a ready dough.
+-- The mixer collects ingredients one by one instead of taking a ready dough. Garden produce the
+-- batch cannot use is stored in the pantry instead, so it never has to be thrown away; staples go
+-- back to their own tray.
 local function LoadIngredient(building: any, held: any): boolean
 	if not held or held.Kind ~= "Ingredient" then
 		return Reject(building, "nothing_to_load")
@@ -144,13 +147,15 @@ local function LoadIngredient(building: any, held: any): boolean
 	local data = DataHandler:GetData(building.Player)
 	local selectedId = data and data.Session.Cooking.SelectedRecipeId
 	local recipe = selectedId and Recipes:Get(selectedId)
-	if not recipe then
-		return Reject(building, "select_recipe")
-	end
-
-	local failure = ingredientFailure(recipe, state, held.Id)
+	local failure = if recipe then ingredientFailure(recipe, state, held.Id) else "select_recipe"
 	if failure then
-		return Reject(building, failure)
+		local ingredientId = held.Id
+		if not Ingredients:Get(ingredientId) or Ingredients:IsInfinite(ingredientId) then
+			return Reject(building, failure)
+		end
+		InventoryHandler:Pop(building.Player)
+		PantryHandler:Add(building.Player, ingredientId, 1)
+		return true
 	end
 
 	state.Loaded = state.Loaded or {}
@@ -181,6 +186,33 @@ local function PlayDoorSound(building: any): ()
 	if name then
 		SoundPlayer.Play(name, building.Part)
 	end
+end
+
+-- The dough is in. It stays inside an unfuelled oven, and adding a log later starts this same recipe.
+local function StartLoaded(building: any, recipe: Recipes.RecipeEntry): ()
+	local state = building.State
+	state.RecipeId = recipe.id
+
+	Station.Update(building, 0, workspace:GetServerTimeNow())
+	if building.Definition.UsesFuel and state.Fuel == 0 then
+		building:SetState("Loaded")
+		return
+	end
+
+	state.ReadyAt = workspace:GetServerTimeNow() + recipe.cookSeconds
+
+	PlayDoorSound(building)
+	building:SetState("Cooking")
+end
+
+-- Dough that this station bakes, held while it is finished: Collect swaps the two in one press.
+local function SwapDough(building: any): Recipes.RecipeEntry?
+	if building.Definition.Mixes then
+		return nil
+	end
+	local held = InventoryHandler:Peek(building.Player)
+	local recipe = if held and held.Kind == "Dough" then Recipes:Get(held.Id) else nil
+	return if recipe and recipe.station == building.Kind then recipe else nil
 end
 
 -- A finished batch rings and sparkles over the station so the player knows to collect it.
@@ -463,19 +495,7 @@ function Station.Load(building: any): boolean
 	end
 
 	InventoryHandler:Pop(building.Player)
-	state.RecipeId = recipe.id
-
-	-- The dough stays inside an unfuelled oven. Adding a log later starts this same recipe.
-	Station.Update(building, 0, workspace:GetServerTimeNow())
-	if building.Definition.UsesFuel and state.Fuel == 0 then
-		building:SetState("Loaded")
-		return true
-	end
-
-	state.ReadyAt = workspace:GetServerTimeNow() + recipe.cookSeconds
-
-	PlayDoorSound(building)
-	building:SetState("Cooking")
+	StartLoaded(building, recipe)
 
 	return true
 end
@@ -553,39 +573,46 @@ function Station.TakePantry(building: any, ingredientId: string): boolean
 end
 
 -- Take from the station. Burnt goes into the hands and has to be carried to the trash.
+-- Held dough for this station is swapped for the result instead, and starts baking at once.
 function Station.Collect(building: any): boolean
 	local state = building.State
-
-	if state.State == "Burnt" then
-		local item: GameTypes.ItemStack = { Kind = "Burnt", Id = state.RecipeId or "" }
-		if not InventoryHandler:Push(building.Player, item, PickupOrigin.ForBuilding(building)) then
-			return Reject(building, "hands_full")
-		end
-
-		building:SetState("Idle")
-
-		return true
-	end
-
-	if state.State ~= "Ready" then
+	local burnt = state.State == "Burnt"
+	if not burnt and state.State ~= "Ready" then
 		return Reject(building, "not_ready")
 	end
 
 	local recipe = Recipes:Get(state.RecipeId)
-	if not recipe then
+	if not burnt and not recipe then
 		building:SetState("Idle")
 		return false
 	end
 
 	-- Dough leaves the mixer when the recipe continues on another station.
-	local isFinished = not building.Definition.Mixes or recipe.cookSeconds == 0
-	local item: GameTypes.ItemStack = { Kind = if isFinished then "Dish" else "Dough", Id = recipe.id }
+	local isFinished = not building.Definition.Mixes or (recipe ~= nil and recipe.cookSeconds == 0)
+	local item: GameTypes.ItemStack = {
+		Kind = if burnt then "Burnt" elseif isFinished then "Dish" else "Dough",
+		Id = state.RecipeId or "",
+	}
+	local origin = PickupOrigin.ForBuilding(building)
 
-	if not InventoryHandler:Push(building.Player, item, PickupOrigin.ForBuilding(building)) then
+	local dough = SwapDough(building)
+	if dough then
+		if not InventoryHandler:Exchange(building.Player, item, origin) then
+			return false
+		end
+		building:SetState("Idle")
+		StartLoaded(building, dough)
+		TutorialEvents.Action:Fire(building.Player, "Load", building.Id)
+		return true
+	end
+
+	if not InventoryHandler:Push(building.Player, item, origin) then
 		return Reject(building, "hands_full")
 	end
 
-	PlayDoorSound(building)
+	if not burnt then
+		PlayDoorSound(building)
+	end
 	building:SetState("Idle")
 
 	return true

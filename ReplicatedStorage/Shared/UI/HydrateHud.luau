@@ -84,6 +84,8 @@ export type Props = {
 	Phase: UITypes.Reactive<string>,
 	-- True while a running shift is nearly over: the clock plate knocks on every remaining second.
 	TimeUrgent: UITypes.Reactive<boolean>,
+	-- Changes every few seconds while the closed sign should call the player to open; nil otherwise.
+	OpenBeat: UITypes.Reactive<number?>,
 	XPText: UITypes.Reactive<string>,
 	XPVisible: UITypes.Reactive<boolean>,
 	QuestText: UITypes.Reactive<string>,
@@ -505,6 +507,24 @@ return function(hud: Instance, props: Props): ()
 			end
 
 			seenTime = text
+		end, true)
+
+		-- Early mornings the closed sign knocks and swings on each beat, so the way to open is seen.
+		local seenBeat: number? = nil
+
+		Flux(function()
+			local beat = read(props.OpenBeat) :: number?
+
+			if beat ~= nil and seenBeat ~= nil and beat ~= seenBeat then
+				Animate.Pop(plate, POP_FROM_GAIN)
+
+				local sign = resolve(hud, `Time.TimeIcons.{PHASE_ICONS.Prep}`)
+				if sign and sign:IsA("GuiObject") then
+					Animate.Swing(sign)
+				end
+			end
+
+			seenBeat = beat
 		end, true)
 	end
 end

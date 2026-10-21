@@ -84,17 +84,16 @@ function DisplaySlot.Place(building: any): boolean
 	local heldLeftover = held.Kind == "Leftover"
 	local current = display[building.Index]
 	if current then
-		local previous = InventoryHandler:ExchangeDish(
-			building.Player,
-			current,
-			PickupOrigin.ForBuilding(building),
-			leftovers[building.Index]
-		)
+		local shelved: GameTypes.ItemStack = {
+			Kind = if leftovers[building.Index] then "Leftover" else "Dish",
+			Id = current,
+		}
+		local previous = InventoryHandler:Exchange(building.Player, shelved, PickupOrigin.ForBuilding(building))
 		if not previous then
 			return false
 		end
 		SetLeftover(leftovers, building.Index, heldLeftover)
-		display[building.Index] = previous
+		display[building.Index] = previous.Id
 		return true
 	end
 

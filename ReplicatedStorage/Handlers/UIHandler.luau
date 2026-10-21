@@ -185,7 +185,7 @@ function UIHandler.NotifyXP(self: UIHandler, text: string, seconds: number?): ()
 	end)
 end
 
---- 1234 -> "1 234": long amounts are unreadable otherwise.
+--- 1234 -> "1,234": long amounts are unreadable otherwise.
 function UIHandler.FormatNumber(_self: UIHandler, value: number): string
 	return Format.Number(value)
 end

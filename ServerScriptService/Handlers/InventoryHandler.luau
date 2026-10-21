@@ -103,29 +103,30 @@ function InventoryHandler.Peek(_self: InventoryHandler, player: Player): GameTyp
 	return if hands then hands[#hands] else nil
 end
 
--- Server-owned counter exchange: replace the held dish without needing a spare carrying slot.
-function InventoryHandler.ExchangeDish(
+-- Server-owned exchange (a display shelf, an oven): the held item is replaced in one write, so the
+-- hands never replicate empty and no spare slot is needed. The caller has checked what is held.
+function InventoryHandler.Exchange(
 	_self: InventoryHandler,
 	player: Player,
-	recipeId: string,
-	origin: Vector3?,
-	leftover: boolean?
-): string?
+	item: GameTypes.ItemStack,
+	origin: Vector3?
+): GameTypes.ItemStack?
 	local hands = GetHands(player)
 	if not hands then
 		return nil
 	end
 	local count = #hands
 	local held = hands[count]
-	if not held or (held.Kind ~= "Dish" and held.Kind ~= "Leftover") then
+	if not held then
 		return nil
 	end
-	local previous = held.Id
+	local previous: GameTypes.ItemStack = { Kind = held.Kind, Id = held.Id, SourceId = held.SourceId }
 	hands[count] = {
-		Kind = if leftover then "Leftover" else "Dish",
-		Id = recipeId,
+		Kind = item.Kind,
+		Id = item.Id,
+		SourceId = item.SourceId,
 		PickupOrigin = origin,
-		PickupAt = workspace:GetServerTimeNow(),
+		PickupAt = if origin then workspace:GetServerTimeNow() else nil,
 	}
 	return previous
 end

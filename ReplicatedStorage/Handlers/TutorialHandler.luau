@@ -293,9 +293,13 @@ function TutorialHandler.Refresh(self: TutorialHandler): ()
 		self.Janitor:Remove("Frame")
 		return
 	end
-	if session.Day.Phase ~= "Prep" then
+	local phase = session.Day.Phase
+	if phase == "Prep" and self.Phase == "Summary" and cloud.Day <= Config.EarlyOpen.MaxDay then
+		self.JoinedPrep = true
+	elseif phase ~= "Prep" then
 		self.JoinedPrep = false
 	end
+	self.Phase = phase
 	local guestId = incomingGuest(cloud, session)
 	self.GuestHighlight:Update(guestId)
 	local props = Interact:GetOwnedIds()
@@ -395,8 +399,11 @@ export type TutorialHandler = typeof(TutorialHandler) & {
 	HudShown: { [string]: boolean }?,
 	-- The guest whose order card the player tapped.
 	OrderSeen: string?,
-	-- Still in the Prep the player joined into.
+	-- The door reminder is armed: the Prep the player joined into, or an early day's Prep after
+	-- Next Day, until the bakery opens.
 	JoinedPrep: boolean,
+	-- The day phase at the last refresh, to see Next Day start a new Prep.
+	Phase: string?,
 	-- The cart lesson's load prompt was shown, and its dismissal was sent.
 	CartPrompted: boolean?,
 	CartDismissed: boolean?,

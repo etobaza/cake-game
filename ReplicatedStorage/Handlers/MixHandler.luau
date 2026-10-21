@@ -24,6 +24,7 @@ local InteractHandler = require(_Handlers.InteractHandler)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local MixerInteraction = require(_Configs.MixerInteraction)
 local Pages = require(_Shared.UI.Stores.Pages)
+local Press = require(_Shared.UI.Press)
 local Recipes = require(_Configs.Registries.Recipes)
 local UIHandler = require(_Handlers.UIHandler)
 
@@ -176,6 +177,36 @@ function MixHandler.BuildBillboard(self: MixHandler): ()
 		end,
 	})
 	self.Janitor:Add(self.PantryCue, "Destroy")
+
+	-- The mixer prompt offers Recipes only while no dish is chosen, so the card's dish name and
+	-- picture open the list to change it. Like the chips, they press on contact.
+	local function openRecipes(): ()
+		Pages.Open(Pages.Names.RecipeToCook)
+	end
+	for _, name in { "FoodName", "Icon" } do
+		local header = card:FindFirstChild(name)
+		if header and header:IsA("GuiObject") then
+			self.Janitor:Add(Press.Bind(header, openRecipes), "Destroy")
+			self.Janitor:Add(Press.SinkUnlessMouse(header), "Destroy")
+		end
+	end
+	local foodName = card:FindFirstChild("FoodName")
+	if foodName and foodName:IsA("GuiObject") then
+		self.RecipesCue = InputCue.Bind({
+			Name = "MixerRecipes",
+			Target = foodName,
+			Key = InputCues.Keys.MixerRecipes,
+			Placement = "Left",
+			Action = openRecipes,
+			Available = function(): boolean
+				return billboard.Enabled and InMixerReach() and Pages.Current:peek() == Pages.Names.None
+			end,
+			Shown = function(): boolean
+				return Pages.Current:peek() == Pages.Names.None
+			end,
+		})
+		self.Janitor:Add(self.RecipesCue, "Destroy")
+	end
 end
 
 -- The card is sized in studs; a short screen grows it to the pixel size it has on a
@@ -249,6 +280,9 @@ function MixHandler.RefreshBillboard(self: MixHandler): ()
 	if self.PantryCue then
 		self.PantryCue:Refresh()
 	end
+	if self.RecipesCue then
+		self.RecipesCue:Refresh()
+	end
 end
 
 function MixHandler.Destroy(self: MixHandler): ()
@@ -271,6 +305,8 @@ export type MixHandler = typeof(MixHandler) & {
 	BillboardChips: { IngredientCard.ChipPair },
 	-- The gamepad shortcut onto the next pantry chip.
 	PantryCue: InputCue.Cue?,
+	-- The gamepad shortcut that opens the recipe list from the card.
+	RecipesCue: InputCue.Cue?,
 	Accumulator: number,
 }
 

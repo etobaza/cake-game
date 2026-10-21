@@ -42,6 +42,8 @@ export type Bubble = typeof(setmetatable(
 	{} :: {
 		Model: Model,
 		Head: BasePart,
+		-- Where the bubble sits above the head, fixed when it is created.
+		Offset: Vector3,
 		Janitor: any,
 		Billboard: BillboardGui,
 		-- Holds the layout at its configured pixels; Zoom scales it to the guest's world size.
@@ -113,13 +115,32 @@ local function label(name: string, parent: GuiObject, size: number): TextLabel
 end
 
 --[[ Handling ]]--
-function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup, scale: number): Bubble
+-- The bubble is depth-tested (see AlwaysOnTop below), so it sits above the guest's tallest
+-- accessory instead of inside a tall hat.
+function Bubble.HeadOffset(model: Model, head: BasePart): Vector3
+	local top = -math.huge
+	for _, accessory in model:GetChildren() do
+		local handle = if accessory:IsA("Accessory") then accessory:FindFirstChild("Handle") else nil
+		if not handle or not handle:IsA("BasePart") or handle.Transparency >= 1 then
+			continue
+		end
+		local frame, half = handle.CFrame, handle.Size / 2
+		local reach = math.abs(frame.RightVector.Y) * half.X
+			+ math.abs(frame.UpVector.Y) * half.Y
+			+ math.abs(frame.LookVector.Y) * half.Z
+		top = math.max(top, frame.Position.Y + reach)
+	end
+
+	return Vector3.new(0, math.clamp(top - head.Position.Y + STYLE.HatMargin, STYLE.MinHeight, STYLE.MaxHeight), 0)
+end
+
+function Bubble.new(model: Model, head: BasePart, offset: Vector3, barTemplate: CanvasGroup, scale: number): Bubble
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "OrderBubble"
 	billboard.Adornee = head
 	-- Grow upward from the anchor, so a taller bubble never sinks into the guest's head.
 	billboard.SizeOffset = Vector2.new(0, 0.5)
-	billboard.StudsOffsetWorldSpace = STYLE.Offset
+	billboard.StudsOffsetWorldSpace = offset
 	billboard.MaxDistance = STYLE.MaxDistance
 	-- AlwaysOnTop billboards do not draw ViewportFrames or CanvasGroups: the dish preview and the
 	-- patience bar would both vanish.
@@ -225,6 +246,7 @@ function Bubble.new(model: Model, head: BasePart, barTemplate: CanvasGroup, scal
 	local self: Bubble = setmetatable({
 		Model = model,
 		Head = head,
+		Offset = offset,
 		Janitor = Janitor.new(),
 		Billboard = billboard,
 		Root = root,

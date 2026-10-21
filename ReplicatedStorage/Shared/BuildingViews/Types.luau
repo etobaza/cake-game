@@ -15,6 +15,9 @@ export type PromptState = {
 	-- mixing or baking), so the plate does not vanish and pop back in when the action returns.
 	-- InteractHandler honours it only on the prop the player last used.
 	Status: boolean?,
+	-- With Status: only the floating line (StationStatusHandler) shows it, never the prompt plate, so
+	-- a nearby prop's action keeps the key (the staple trays beside the mixer).
+	LineOnly: boolean?,
 	-- The status waits on the player (an oven out of firewood): drawn as an icon, not words.
 	Alert: boolean?,
 }

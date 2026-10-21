@@ -43,7 +43,6 @@ local CLOCK_PATH = "Time"
 local ORDER_PATH = "Order"
 local SIDE_PATH = "SideBtns"
 -- The shared Report/Menu/Upgrades header: its tabs and Next Day stay uncovered while it is up.
-local MENU_PANEL = "BakeryMenu"
 local MENU_HEADER = { "MainFrame", "Header" }
 -- The plate and the progress badge straddle the bubble's top edge; this share of the plate sits
 -- inside the bubble and pushes the text down.
@@ -668,10 +667,9 @@ end
 
 -- Absolute bottom edge of the evening/page header while it reaches below `screenTop`, else nil.
 local function menuHeaderEdge(screenTop: number): number?
-	local found, panel = pcall(function(): ScreenGui?
-		return UIHandler:GetPanel(MENU_PANEL)
-	end)
-	if not found or not panel or not panel.Enabled then
+	-- The shared evening header is mounted beside the panels, not registered as one.
+	local panel = UIHandler.BakeryMenu
+	if not panel or not panel.Enabled then
 		return nil
 	end
 	local header: Instance? = panel

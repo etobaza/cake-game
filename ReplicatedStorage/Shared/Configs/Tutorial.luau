@@ -34,6 +34,10 @@ return {
 	-- off for this many seconds and comes back with them.
 	HudDuringIntro = { "Shop" },
 	HudSideSwapSeconds = 0.45,
+	-- Through Cloud.Day MaxDay every Prep shows the way to open again: the door gets the finger while
+	-- the hands are empty and the kitchen idle (as after a rejoin), and the closed clock sign knocks
+	-- every KnockSeconds until the bakery opens.
+	EarlyOpen = { MaxDay = 3, KnockSeconds = 4 },
 	ReminderSeconds = 18,
 	GuestHighlight = {
 		Color = Color3.fromRGB(255, 221, 128),

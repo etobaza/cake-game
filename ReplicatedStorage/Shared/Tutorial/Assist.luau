@@ -7,6 +7,7 @@ local Buildings = require(script.Parent.Parent.Configs.Buildings)
 local Config = require(script.Parent.Parent.Configs.Tutorial)
 local DayCycle = require(script.Parent.Parent.Configs.DayCycle)
 local Cooking = require(script.Parent.Cooking)
+local Ingredients = require(script.Parent.Parent.Configs.Registries.Ingredients)
 local Policy = require(script.Parent.Parent.TutorialPolicy)
 local Recipes = require(script.Parent.Parent.Configs.Registries.Recipes)
 local State = require(script.Parent.State)
@@ -42,6 +43,10 @@ local Causes: { [string]: string } = {
 	mix = "Everything is in: start mixing",
 	unavailable = "This recipe needs an ingredient you lack",
 	store = "Free your hands to keep working",
+	store_produce = "The bowl doesn't need it: store it",
+	spare = "The bowl doesn't need it: put it back",
+	switch = "Change the dish on the mixer card",
+	swap = "One press: batch out, dough in",
 	discard = "Burnt food can't be served",
 	water = "Thirsty plants stop growing",
 	take_can = "Thirsty plants stop growing",
@@ -164,9 +169,51 @@ local function unwanted(cloud: any, session: any, props: any): Types.CoachSituat
 		return nil
 	end
 	local recipe = Recipes:Get(held.Id)
+	-- Dough a station can still take (idle, or a one-press swap) is never binned.
+	if
+		held.Kind == "Dough"
+		and recipe
+		and (State.SwapGoal(session, "") or State.Station(session, recipe.station, "Idle"))
+	then
+		return nil
+	end
 	local name = if recipe then string.lower(recipe.name) else "dish"
 	local step = State.Goal("discard_" .. held.Id, `Throw away the {name}`, "", "trash")
 	return stuck("unwanted", "Nobody ordered this: bin it", step, "Waste")
+end
+
+-- Garden produce cannot go back on its source, and every dispenser refuses a full hand. The chosen
+-- batch takes it while it still needs it. With no dish chosen the mixer opens the recipes when a
+-- menu dish uses it; otherwise (and when the chosen batch has no use for it) the mixer offers Store.
+local function produce(cloud: any, session: any, props: any): Types.CoachSituation?
+	local held = session.Hands[1]
+	if not held or held.Kind ~= "Ingredient" or Ingredients:IsInfinite(held.Id) then
+		return nil
+	end
+	local mixerId, mixer = State.Station(session, "Mixer", "Idle")
+	if not mixerId or not mixer then
+		return nil
+	end
+	local selected = Recipes:Get(session.Cooking.SelectedRecipeId)
+	local needed = selected and selected.ingredients[held.Id]
+	if selected and needed and (mixer.Loaded[held.Id] or 0) < needed then
+		return cook(cloud, session, props, "produce", selected, "Add what you carry to the mixer")
+	end
+	local dish = nil
+	for _, recipeId in session.Day.Menu do
+		local recipe = Recipes:Get(recipeId)
+		if recipe and recipe.ingredients[held.Id] then
+			dish = recipe
+			break
+		end
+	end
+	if dish and not selected then
+		local step = State.Goal("choose_" .. dish.id, `Pick {dish.name} at the mixer`, "", mixerId)
+		step.recipeId = dish.id
+		return stuck("produce", `Use it in {dish.name}`, step)
+	end
+	local message = if dish then `Store it for {dish.name}` else "No dish needs this today"
+	return stuck("produce", message, State.Goal("store_produce", "Store it in the pantry", "", mixerId))
 end
 
 -- Arrivals take only a free, clean chair and roam away otherwise, so during the shift every used
@@ -254,7 +301,8 @@ local function bakeAhead(cloud: any, session: any, props: any, message: string, 
 	local recipe = if choice then Recipes:Get(choice) else nil
 	local result = if recipe then cook(cloud, session, props, "ahead", recipe, message, delay) else nil
 	-- Before a recipe is chosen the idea matters more than the mixer; later steps keep their cause.
-	if result and result.step and word(result.step.id) == "choose" then
+	local first = if result and result.step then word(result.step.id) else nil
+	if result and (first == "choose" or first == "switch") then
 		result.message = message
 	end
 	return result
@@ -287,6 +335,11 @@ function Assist.Resolve(cloud: any, session: any, props: { [string]: boolean }, 
 	local waste = unwanted(cloud, session, props)
 	if waste then
 		return waste
+	end
+
+	local stray = produce(cloud, session, props)
+	if stray then
+		return stray
 	end
 
 	-- A seated guest close to walking out outranks everything that can wait.

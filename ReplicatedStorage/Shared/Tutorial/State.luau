@@ -58,6 +58,37 @@ function State.EmptyDisplay(session: any, props: { [string]: boolean }): string?
 	return nil
 end
 
+-- A Ready or Burnt station that does not mix (oven, freezer) trades its batch for dough of its own
+-- station in one press.
+function State.Swaps(station: any, held: any): boolean
+	local kind = Buildings.Kinds[station.Kind]
+	if not held or held.Kind ~= "Dough" or not kind or kind.Mixes then
+		return false
+	end
+	local recipe = Recipes:Get(held.Id)
+	return recipe ~= nil
+		and recipe.station == station.Kind
+		and (station.State == "Ready" or station.State == "Burnt")
+end
+
+function State.Swap(id: string, station: any, hint: string): Types.TutorialGoal
+	local out = if station.State == "Burnt" then "the burnt food" else "the dish"
+	return State.Goal("swap_" .. id, "Swap your dough for " .. out, hint, id)
+end
+
+-- The swap for the dough in hand, at the first station that offers one.
+function State.SwapGoal(session: any, hint: string): Types.TutorialGoal?
+	local ids = {}
+	for id, station in session.Stations do
+		if State.Swaps(station, session.Hands[1]) then
+			ids[#ids + 1] = id
+		end
+	end
+	table.sort(ids)
+	local id = ids[1]
+	return if id then State.Swap(id, session.Stations[id], hint) else nil
+end
+
 -- Returns the goal that frees the hand, and whether the hand is already usable.
 -- Dispenser ingredients go back to their source on the next pickup, so they never block.
 -- Only burnt food is thrown away by default. `discard` lets the introduction bin other
@@ -92,6 +123,10 @@ function State.FreeHands(
 		local id = recipe and State.Station(session, recipe.station, "Idle")
 		if recipe and id then
 			return recovery(State.Goal("store_dough", "Put the dough in the " .. string.lower(recipe.station), reason, id))
+		end
+		local swap = State.SwapGoal(session, reason)
+		if swap then
+			return recovery(swap)
 		end
 	end
 	if held.Kind == "Fuel" then

@@ -10,6 +10,11 @@ local Recipes = require(script.Parent.Parent.Configs.Registries.Recipes)
 local State = require(script.Parent.State)
 local Types = require(script.Parent.Parent.GameTypes)
 
+--[[ Constants ]]--
+local SWAP_HINT = "One press takes the batch out and puts your dough in."
+-- Once a dish is chosen the mixer prompt no longer opens the recipes; the dish on its floating card does.
+local MIXER_CARD: Types.TutorialTarget = { kind = "Gui", id = "MixerBillboard.Card.FoodName" }
+
 --[[ Tables ]]--
 local Cooking = {}
 
@@ -20,13 +25,20 @@ local function waiting(id: string, title: string, hint: string, target: string?)
 	return goal
 end
 
-local function choose(recipe: any, page: string, mixer: string): Types.TutorialGoal
+-- `switching`: another dish is already chosen, so the recipes open from the mixer's card.
+local function choose(recipe: any, page: string, mixer: string, switching: boolean): Types.TutorialGoal
 	local goal = State.Goal(
 		"choose_" .. recipe.id,
 		"Go to your mixer",
 		"Use the mixer to open its recipes. Let's start with " .. recipe.name .. ".",
 		mixer
 	)
+	if switching then
+		goal.id = "switch_" .. recipe.id
+		goal.title = "Switch to {" .. recipe.name .. "}"
+		goal.hint = "Press the dish on the mixer's card to open the recipes, then start this one."
+		goal.target = table.clone(MIXER_CARD)
+	end
 	if page == "RecipeToCook" then
 		goal.id = "start_" .. recipe.id
 		goal.title = "Start " .. recipe.name
@@ -53,6 +65,30 @@ local function putBack(session: any, page: string): Types.TutorialGoal?
 		"Pick the recipe at the mixer with empty hands. Each ingredient is fetched after the recipe starts.",
 		held.SourceId
 	)
+	goal.itemId = held.Id
+	goal.itemKind = "Ingredient"
+	goal.recovery = true
+	return goal
+end
+
+-- An ingredient the chosen batch does not take: a staple goes back to its tray, garden produce into
+-- the pantry through the mixer's Store.
+local function spare(held: any, mixer: string): Types.TutorialGoal
+	local entry = Ingredients:Get(held.Id)
+	local name = if entry then string.lower(entry.name) else "ingredient"
+	local goal = if Ingredients:IsInfinite(held.Id)
+		then State.Goal(
+			"spare_" .. held.Id,
+			"Put the {" .. name .. "} back",
+			"This bowl does not need it. Its tray takes it back.",
+			held.SourceId or `{Buildings.Kinds.Ingredient.Prefix}_{held.Id}`
+		)
+		else State.Goal(
+			"store_produce",
+			"Store the {" .. name .. "} at the mixer",
+			"This bowl does not need it. The mixer keeps it in the pantry for later.",
+			mixer
+		)
 	goal.itemId = held.Id
 	goal.itemKind = "Ingredient"
 	goal.recovery = true
@@ -96,6 +132,9 @@ local function stationGoal(session: any, props: any, id: string, station: any, d
 			"It will be ready in a moment. The next hint appears when you can collect it.",
 			id
 		)
+	end
+	if State.Swaps(station, session.Hands[1]) then
+		return State.Swap(id, station, SWAP_HINT)
 	end
 	local clear, ready = State.FreeHands(
 		session,
@@ -231,12 +270,14 @@ local function ingredient(cloud: any, session: any, props: any, id: string, mixe
 	if sourceId and source and (cloud.Base.Upgrades[source.Upgrade] or 0) > 0 then
 		return Cooking.Garden(cloud, session, props, sourceId, source, true)
 	end
-	return State.Goal(
+	local goal = State.Goal(
 		"unavailable_" .. id,
 		"Choose a recipe with ingredients you have",
-		"This recipe needs a garden source you do not own yet. Cancel its idle batch in the recipe list and choose another dish.",
-		mixer
+		"This recipe needs a garden source you do not own yet. Press the dish on the mixer's card, cancel its batch and choose another dish.",
+		nil
 	)
+	goal.target = table.clone(MIXER_CARD)
+	return goal
 end
 
 --[[ Handling ]]--
@@ -328,6 +369,10 @@ function Cooking.Resolve(cloud: any, session: any, props: any, recipe: any, page
 				id
 			)
 		end
+		local swap = State.SwapGoal(session, SWAP_HINT)
+		if swap then
+			return swap
+		end
 	end
 	for id, station in session.Stations do
 		if station.State ~= "Idle" then
@@ -363,7 +408,10 @@ function Cooking.Resolve(cloud: any, session: any, props: any, recipe: any, page
 				return Cooking.Resolve(cloud, session, props, selected, page)
 			end
 		end
-		return putBack(session, page) or choose(recipe, page, stationId)
+		if selected and Recipes:GetStartStation(selected) == startKind then
+			return choose(recipe, page, stationId, true)
+		end
+		return putBack(session, page) or choose(recipe, page, stationId, false)
 	end
 	for id, amount in recipe.ingredients do
 		if (station.Loaded[id] or 0) >= amount or Ingredients:IsInfinite(id) or (cloud.Pantry[id] or 0) > 0 then
@@ -383,9 +431,10 @@ function Cooking.Resolve(cloud: any, session: any, props: any, recipe: any, page
 		local goal = State.Goal(
 			"unavailable_" .. id,
 			"Choose a recipe you can make",
-			"This recipe needs a garden source you do not own. Open the recipes and cancel this batch; loaded garden produce returns to the pantry.",
-			stationId
+			"This recipe needs a garden source you do not own. Press the dish on the mixer's card and cancel this batch; loaded garden produce returns to the pantry.",
+			nil
 		)
+		goal.target = table.clone(MIXER_CARD)
 		goal.recovery = true
 		if page == "RecipeToCook" then
 			goal.title = "Cancel this unfinished recipe"
@@ -420,6 +469,9 @@ function Cooking.Resolve(cloud: any, session: any, props: any, recipe: any, page
 			"You have the ingredient in your hand. Use the mixer to add it to this batch.",
 			stationId
 		)
+	end
+	if held and held.Kind == "Ingredient" then
+		return spare(held, stationId)
 	end
 	local free, ready = State.FreeHands(
 		session,

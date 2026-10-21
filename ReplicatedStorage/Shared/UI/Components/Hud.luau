@@ -30,6 +30,7 @@ local Motion = require(_Shared.UI.Motion)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Progression = require(_Configs.Progression)
 local Sunbeams = require(_Shared.Sunbeams)
+local TutorialConfig = require(_Configs.Tutorial)
 local UseClock = require(_Shared.UI.Hooks.UseClock)
 local UseData = require(_Shared.UI.Hooks.UseData)
 local Upgrades = require(_Configs.Registries.Upgrades)
@@ -38,6 +39,7 @@ local Wallet = require(_Shared.UI.Stores.Wallet)
 --[[ Constants ]]--
 -- The shift countdown turns urgent this many seconds before the doors close.
 local URGENT_SECONDS = 10
+local EARLY_OPEN = TutorialConfig.EarlyOpen
 -- Side buttons with a controller shortcut: the authored button, its page and its key.
 local SIDE_CUES: { { Button: string, Page: string, Key: Enum.KeyCode } } = {
 	{ Button = "Upgrades", Page = Pages.Names.Upgrades, Key = InputCues.Keys.Upgrades },
@@ -86,6 +88,7 @@ return function(hud: Instance, deps: Deps): ()
 	refreshUpgradeCount()
 	Flux.cleanup(data:SubscribeToDataType("Cloud", refreshUpgradeCount))
 	local phase = UseData.Path(data, { "Day", "Phase" }, "Session", "Prep")
+	local day = UseData.Path(data, { "Day" }, "Cloud", 1)
 	local endsAt = UseData.Path(data, { "Day", "EndsAt" }, "Session", 0)
 	local shiftSeconds = UseData.Path(data, { "Day", "ShiftSeconds" }, "Session", 0)
 	local now = UseClock.Now()
@@ -148,6 +151,14 @@ return function(hud: Instance, deps: Deps): ()
 		TimeUrgent = function(): boolean
 			local deadline = endsAt()
 			return deadline > 0 and deadline - now() <= URGENT_SECONDS
+		end,
+		-- A new baker's closed sign knocks every few seconds of the morning until the bakery opens.
+		OpenBeat = function(): number?
+			local calling = phase() == "Prep"
+				and day() <= EARLY_OPEN.MaxDay
+				and HudReveal.Shown("Time")
+				and Pages.Current() == Pages.Names.None
+			return if calling then math.floor(now() / EARLY_OPEN.KnockSeconds) else nil
 		end,
 
 		XPText = deps.XPText,

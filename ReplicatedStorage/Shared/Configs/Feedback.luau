@@ -305,6 +305,10 @@ return {
 		TitleBox = Vector2.new(460, 72),
 		UnlockSingle = "New recipe: %s",
 		UnlockMany = "New recipes: %s",
+		-- Unlocked dishes the player can already supply go on the evening's menu.
+		MenuOne = "Add it to the menu tonight",
+		MenuAll = "Add them to the menu tonight",
+		MenuSome = "Add %s to the menu tonight",
 		-- Banner centre as a fraction of the screen.
 		Anchor = Vector2.new(0.5, 0.34),
 		StarSize = 200,

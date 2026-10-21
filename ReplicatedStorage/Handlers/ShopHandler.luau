@@ -27,10 +27,12 @@ local Bus = require(_Shared.Bus)
 local DataClient = require(_Handlers.DataHandlerClient)
 local Flux = require(ReplicatedStorage.Packages.flux)
 local GameTypes = require(_Shared.GameTypes)
+local Garden = require(_Configs.Garden)
 local InputCue = require(_Shared.UI.InputCue)
 local InputCues = require(_Configs.InputCues)
 local Press = require(_Shared.UI.Press)
 local Pages = require(_Shared.UI.Stores.Pages)
+local Recipes = require(_Configs.Registries.Recipes)
 local Scope = require(_Shared.UI.Scope)
 local StoreHandler = require(_Handlers.StoreHandler)
 local UIHandler = require(_Handlers.UIHandler)
@@ -47,6 +49,8 @@ local TREE_SCROLL_PADDING = 12
 -- A coin pack bought for an upgrade buys that upgrade when its coins land within this many seconds
 -- of the offer, while Upgrades stays open.
 local PACK_WAIT = 120
+-- A garden or animal upgrade's detail names this many dishes its produce goes into, then counts the rest.
+local USED_IN_NAMES = 2
 
 -- Category tabs, in the order they are drawn.
 local TABS = UpgradeTabs.Tabs
@@ -155,7 +159,42 @@ local function requestUpgrade(upgradeId: string, level: number): ()
 	Bus.Progress.BuyUpgrade:Fire(upgradeId, level)
 end
 
--- The line under the name: what the upgrade does, plus how far it has been taken or why it is shut.
+-- "Used in: Apple Tart, Apple Strudel, +1 more" for an upgrade whose source grows an ingredient.
+local function GetUsedIn(upgradeId: string): string?
+	for _, source in Garden.Sources do
+		if source.Upgrade ~= upgradeId then
+			continue
+		end
+
+		local dishes: { Recipes.RecipeEntry } = {}
+		for _, recipe in Recipes:Values() do
+			if recipe.ingredients[source.Produce] ~= nil then
+				table.insert(dishes, recipe)
+			end
+		end
+		if #dishes == 0 then
+			return nil
+		end
+		table.sort(dishes, function(left: Recipes.RecipeEntry, right: Recipes.RecipeEntry)
+			return left.order < right.order
+		end)
+
+		local names: { string } = {}
+		for index = 1, math.min(#dishes, USED_IN_NAMES) do
+			table.insert(names, dishes[index].name)
+		end
+		if #dishes > USED_IN_NAMES then
+			table.insert(names, `+{#dishes - USED_IN_NAMES} more`)
+		end
+
+		return `Used in: {table.concat(names, ", ")}`
+	end
+
+	return nil
+end
+
+-- The line under the name: what the upgrade does (and, for a source, the dishes it feeds), plus how
+-- far it has been taken or why it is shut.
 local function GetDetail(
 	entry: Upgrades.UpgradeEntry,
 	state: string,
@@ -163,18 +202,21 @@ local function GetDetail(
 	targetLevel: number,
 	levels: { [string]: number }
 ): string
+	local usedIn = GetUsedIn(entry.id)
+	local about = if usedIn then `{entry.blurb}\n{usedIn}` else entry.blurb
+
 	if state == "Locked" then
 		if level + 1 < targetLevel then
-			return `{entry.blurb}\nBuy {Upgrades:GetDisplayName(entry.id, targetLevel - 2)} ({targetLevel - 1}/{entry.maxLevel}) first`
+			return `{about}\nBuy {Upgrades:GetDisplayName(entry.id, targetLevel - 2)} ({targetLevel - 1}/{entry.maxLevel}) first`
 		end
 		local missing = Upgrades:GetMissingRequirement(entry, levels)
 		local parentEntry = missing and Upgrades:Get(missing)
 		local reason = if parentEntry then `Buy {parentEntry.name} first` else `Unlocks at level {entry.unlockLevel}`
 
-		return `{entry.blurb}\n{reason}`
+		return `{about}\n{reason}`
 	end
 
-	return `{entry.blurb}\nLevel {targetLevel}/{entry.maxLevel}`
+	return `{about}\nLevel {targetLevel}/{entry.maxLevel}`
 end
 
 -- Art fills the box above a small level caption; nodes without art keep the authored full-box name.

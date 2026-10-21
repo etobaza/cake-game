@@ -137,7 +137,7 @@ return {
 				"1ndFloor.Cafe.Upgrades.DisplayCounter.Upgrade5",
 			},
 			Fade = true,
-			Benefit = "One more pastry on display. More room to sell.",
+			Benefit = "Guests buy from the display themselves. Stock it before opening!",
 		},
 		cafe_window = {
 			Paths = { "1ndFloor.Cafe.Upgrades.KitchenWindow.Upgrade" },

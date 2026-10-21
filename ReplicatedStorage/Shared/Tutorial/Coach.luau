@@ -7,6 +7,7 @@
 local Assist = require(script.Parent.Assist)
 local Config = require(script.Parent.Parent.Configs.Tutorial)
 local Features = require(script.Parent.Features)
+local MenuPlan = require(script.Parent.MenuPlan)
 local Types = require(script.Parent.Parent.GameTypes)
 
 --[[ Constants ]]--
@@ -191,7 +192,9 @@ function Coach.Select(
 ): Types.CoachSituation?
 	local phase = session.Day.Phase
 	if phase == "Summary" then
-		return Features.Summary(cloud, session, page) or Assist.Summary(session, page)
+		return Features.Summary(cloud, session, page)
+			or MenuPlan.Summary(cloud, session, page)
+			or Assist.Summary(session, page)
 	end
 	if page ~= "None" then
 		return nil

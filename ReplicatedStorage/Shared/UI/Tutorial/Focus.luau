@@ -86,7 +86,7 @@ function Focus.Update(self: Focus, dim: boolean?): ()
 		and Interact:Describe(promptPart).Fire ~= nil
 		and Geometry.Gui(root, camera.ViewportSize)
 	then
-		self.Hint:Gui(root, { Key = key .. ":prompt", Dim = false })
+		self.Hint:Gui(root, { Key = key .. ":prompt", Dim = false, TargetPoint = Config.PromptTargetPoint })
 		return
 	end
 

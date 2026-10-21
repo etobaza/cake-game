@@ -160,8 +160,8 @@ local function serve(session: any, now: number, facts: Types.TutorialContext): T
 	)
 end
 
--- Back in the Prep they joined into, the player is shown where the bakery opens whenever nothing is
--- in hand or cooking.
+-- In the Prep they joined into, and in each early day's Prep (TutorialHandler arms `joinedPrep`), the
+-- player is shown where the bakery opens whenever nothing is in hand or cooking.
 local function reopen(session: any, page: string, facts: Types.TutorialContext): Types.TutorialGoal?
 	if not facts.joinedPrep or page ~= "None" or session.Day.Phase ~= "Prep" or session.Hands[1] then
 		return nil
@@ -193,7 +193,7 @@ local function resolve(
 	end
 	if session.Day.Phase == "Summary" then
 		return if not cloud.Tutorial.Lessons.NextDay and not cloud.Tutorial.Lessons["Dismissed:NextDay"]
-			then Lessons.Summary(session, page)
+			then Lessons.Summary(cloud, session, page)
 			else nil
 	end
 	local teachOven = session.Tutorial.OvenLesson

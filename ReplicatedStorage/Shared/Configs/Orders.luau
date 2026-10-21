@@ -11,8 +11,8 @@ return {
 	-- serves (AFK, gamepad, a busy kitchen) orders on their own after this long; 0 restores the old
 	-- automatic order the moment choosing ends.
 	TakeOrderFallbackSeconds = 25,
-	-- A ready guest whistles again at this interval until the order is taken.
-	ReadyWhistleSeconds = 8,
+	-- A ready guest whistles again at this interval until the order is taken; long enough not to nag.
+	ReadyWhistleSeconds = 20,
 	-- The speech bubble and the order card both beat at this interval while the guest is ready.
 	ReadyPulseSeconds = 1.1,
 	Slots = 4,
@@ -61,8 +61,11 @@ return {
 		TailSize = 12,
 		BadgeSize = 26,
 		BadgeTextSize = 18,
-		-- Above the head centre; the bubble grows upward from here, clear of hats.
-		Offset = Vector3.new(0, 1.7, 0),
+		-- Studs above the head centre; the bubble grows upward from there. MinHeight clears ordinary
+		-- hats; a taller accessory lifts it to HatMargin above the accessory's top, up to MaxHeight.
+		MinHeight = 1.7,
+		HatMargin = 0.3,
+		MaxHeight = 4,
 		MaxDistance = 70,
 		-- Below this share of patience the bar turns red and the bubble starts to wobble.
 		LowPatience = 0.3,
