@@ -48,6 +48,14 @@ return {
 		RequestPurchase = Packet("PurchaseRequest", Packet.NumberU32), -- productId
 	},
 
+	Limited = {
+		-- Client -> Server: buy a limited item; the server checks stock and ownership before the
+		-- prompt. Returns "" when the prompt opened, otherwise a UIText failure code.
+		Buy = Packet("LimitedBuy", Packet.String):Response(Packet.String), -- itemId
+		-- Server -> Client: a copy was sold on any server.
+		Sold = Packet("LimitedSold", Packet.String, Packet.String, Packet.NumberU32), -- itemId, buyer, serial
+	},
+
 	-- GAMEPLAY
 	-- The client sends intent only; all state is decided and replicated by the server (Session data).
 	Day = {

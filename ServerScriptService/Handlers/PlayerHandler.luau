@@ -163,8 +163,9 @@ function PlayerHandler.SetMovementLocked(self: PlayerHandler, player: Player, ke
 		if locks[key] then
 			return
 		end
+		-- Running is kept: players always run, so it resumes once the last lock lifts. ApplySpeed
+		-- already pins speed to zero and clears the running animation while locked.
 		locks[key] = true
-		self.Running[player] = nil
 	elseif locks then
 		if not locks[key] then
 			return
@@ -180,9 +181,10 @@ function PlayerHandler.SetMovementLocked(self: PlayerHandler, player: Player, ke
 	self:ApplySpeed(player)
 end
 
--- The client turns running on with its own key, but the server sets the speed.
+-- The client asks to run whenever free movement is available, but the server sets the speed.
 function PlayerHandler.SetRunning(self: PlayerHandler, player: Player, isRunning: boolean): ()
-	if self.Running[player] == isRunning then
+	-- Walking is stored as nil, so compare as booleans.
+	if (self.Running[player] == true) == isRunning then
 		return
 	end
 

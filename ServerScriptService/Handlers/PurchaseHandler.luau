@@ -369,7 +369,13 @@ end
 function PurchaseHandler.OnStart(self: PurchaseHandler)
 	Bus.Purchase.RequestPurchase.OnServerEvent:Connect(function(player: Player, productId: number)
 		-- Only prompt for products this game sells; the client cannot open arbitrary prompts.
-		if typeof(productId) ~= "number" or productId <= 0 or not Products:GetByProductId(productId) then
+		if typeof(productId) ~= "number" or productId <= 0 then
+			return
+		end
+
+		-- Limited items go through LimitedHandler, which checks the shared stock before prompting.
+		local product = Products:GetByProductId(productId)
+		if not product or (product.meta and product.meta.limited) then
 			return
 		end
 

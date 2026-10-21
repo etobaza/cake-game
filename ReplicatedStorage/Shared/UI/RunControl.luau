@@ -80,7 +80,8 @@ function RunControl.Bind(button: TextButton, playerGui: PlayerGui): Janitor.Jani
 			and targetParent ~= nil
 			and targetParent:IsA("GuiObject")
 			and targetParent.Visible
-		local topLeft = jumpCorner:Min(center - Vector2.one * diameter / 2)
+		-- A hidden Run button (players always run) reserves only the jump control.
+		local topLeft = if button.Visible then jumpCorner:Min(center - Vector2.one * diameter / 2) else jumpCorner
 		if ready then
 			publish(bounds - topLeft)
 		else

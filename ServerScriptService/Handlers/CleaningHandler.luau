@@ -378,6 +378,40 @@ function CleaningHandler.Clean(self: CleaningHandler, player: Player, spillId: s
 	return true
 end
 
+--- A puddle on the floor right now, for the Auto-Cleaner (WorkerHandler): its id and part.
+function CleaningHandler.FindSpill(self: CleaningHandler, player: Player): (string?, BasePart?)
+	local runtime = self.Runtime[player]
+	local spills = GetSpills(player)
+	if not runtime or not spills then
+		return nil, nil
+	end
+	for spillId in spills do
+		local part = runtime.Parts[spillId]
+		if part then
+			return spillId, part
+		end
+	end
+	return nil, nil
+end
+
+--- The Auto-Cleaner's mop: the same removal as the player's sweep, without the broom, the reach
+--- check or the player's animation. Returns whether a puddle was removed.
+function CleaningHandler.CleanByWorker(self: CleaningHandler, player: Player, spillId: string): boolean
+	local runtime = self.Runtime[player]
+	local spills = GetSpills(player)
+	local spill = runtime and runtime.Parts[spillId]
+	if not runtime or not spills or not spills[spillId] or not spill then
+		return false
+	end
+
+	spills[spillId] = nil
+	Bus.VFX.Burst:Fire("Cleaning", spill, spill.CFrame, player.UserId, workspace:GetServerTimeNow())
+	SetSpillShown(spill, false)
+	runtime.Parts[spillId] = nil
+	SoundPlayer.Play("BroomSuccess", spill)
+	return true
+end
+
 -- Hides every puddle in the bakery and gives each one its prompt. Called once the base is claimed,
 -- so a fresh bakery starts with a clean floor whatever the artist left visible.
 function CleaningHandler.PrepareSpills(self: CleaningHandler, player: Player): ()

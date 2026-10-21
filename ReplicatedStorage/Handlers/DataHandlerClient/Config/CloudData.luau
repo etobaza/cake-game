@@ -97,6 +97,17 @@ return {
 	-- the store screen. The receipt cache below is the durable record, this is the readable one.
 	Passes = {} :: { string },
 
+	-- [limitedItemId] = serial number of the copy this player owns (Configs/Limited); 0 while the
+	-- number is still being assigned. Presence is ownership. Written by LimitedHandler; Reconcile adds
+	-- the table to older profiles.
+	Limited = {} :: { [string]: number },
+	-- Unused seconds of the paid 2x coin boost. It only runs while the player is in the game, so what
+	-- is left is banked here on leave (Configs/CashBoost); Reconcile adds it to older profiles.
+	CashBoostSeconds = 0,
+	-- The limited item this player was last prompted to buy, so a receipt that arrives after the drop
+	-- rotated still grants that item. Cleared when the receipt is granted.
+	LimitedPending = "",
+
 	-- Bought gamepasses / products / receipt ids
 	_productCache = {},
 }

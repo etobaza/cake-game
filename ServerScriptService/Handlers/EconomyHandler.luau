@@ -13,6 +13,7 @@ local _Libs = _Shared.Libs
 --[[ Modules ]]--
 local Bus = require(_Shared.Bus)
 local AdminConfig = require(_Configs.Admin)
+local CashBoost = require(_Configs.CashBoost)
 local DataHandler = require(ServerScriptService.Handlers.DataHandler)
 local Economy = require(_Configs.Economy)
 local FriendBoostHandler = require(ServerScriptService.Handlers.FriendBoostHandler)
@@ -105,6 +106,10 @@ function EconomyHandler.AddCash(
 	local cashReason: CashReason = reason or "Gameplay"
 	if cashReason == "Gameplay" and not (itemId and Friends.ExcludedGameplayItems[itemId]) then
 		multiplier *= FriendBoostHandler:GetMultiplier(player)
+		-- The paid 2x boost doubles gameplay coins only; its end time lives in the session.
+		local data = DataHandler:GetData(player)
+		local endsAt = data and data.Session.CashBoostEndsAt
+		multiplier *= CashBoost.GetMultiplier(endsAt, workspace:GetServerTimeNow())
 	end
 	local credited = math.round(amount * multiplier)
 	if credited <= 0 then

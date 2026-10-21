@@ -63,11 +63,24 @@ local UIText = {
 		group_not_member = "Join the group to claim the reward",
 		group_check_failed = "Could not check the group right now. Try again soon",
 
+		-- Limited items
+		limited_sold_out = "Sold out! Every copy has been claimed",
+		limited_owned = "You already own this",
+		limited_not_on_sale = "Not on sale yet",
+		limited_cooldown = "One moment...",
+
 		-- Garden
 		need_watering_can = "Fetch the watering can first",
 		cart_full = "Collect the kitchen deliveries first",
 		cart_produce_only = "The cart carries ingredients",
 		nothing_to_harvest = "Nothing to harvest yet",
+	},
+
+	-- The sign on the boarded-up greenhouse arch (GardenGateHandler).
+	GardenGate = {
+		Title = "Greenhouse closed",
+		-- Upgrade name, then its price.
+		Unlock = "Buy %s (%s coins) in Upgrades to open",
 	},
 }
 

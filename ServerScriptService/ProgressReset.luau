@@ -2,7 +2,14 @@
 -- Applies an admin-requested fresh start before PlayerReady; paid ownership survives the reset.
 
 --[[ Constants ]]--
-local PRESERVED: { [string]: boolean } = { Passes = true, _productCache = true, Skins = true }
+local PRESERVED: { [string]: boolean } = {
+	Passes = true,
+	_productCache = true,
+	Skins = true,
+	Limited = true,
+	LimitedPending = true,
+	CashBoostSeconds = true,
+}
 
 --[[ Tables ]]--
 local ProgressReset = {}

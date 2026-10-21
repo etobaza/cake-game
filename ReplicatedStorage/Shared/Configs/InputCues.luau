@@ -58,21 +58,14 @@ return {
 		Fill = 0.9,
 	},
 
-	-- A click of the Run hint's key toggles running; it ends after the character stands still this long.
-	RunToggle = {
-		StopSeconds = 0.35,
-		-- Humanoid.MoveDirection length below which the character counts as standing still.
-		MoveThreshold = 0.1,
-	},
-
 	-- The HUD's glyph row on gamepad: the badge in each authored entry of HUD.Controls.GamepadHint,
-	-- by entry name. NavigationHandler binds Menu and sinks Interact, RunHandler binds Run as a toggle.
+	-- by entry name. NavigationHandler binds Menu and sinks Interact. Players always run, so RunHandler
+	-- hides the authored Run entry instead of binding a key.
 	Hints = {
 		BadgeSize = 28,
 		Keys = {
 			Menu = Enum.KeyCode.ButtonY,
 			Interact = Enum.KeyCode.ButtonX,
-			Run = Enum.KeyCode.ButtonL3,
 		},
 	},
 }

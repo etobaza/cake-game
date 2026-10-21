@@ -2,14 +2,15 @@
 -- Where each product appears on the Store screen, and on the two reward screens.
 --
 -- The registry says what a product IS and what buying it does; this file only says where it is shown.
--- The lists are as long as the drawn sections: five currency tiles, two gamepass rows, one featured
+-- The lists follow the drawn sections: five currency tiles, gamepass rows (extra ones cloned), one featured
 -- row. A shorter list leaves the extra tiles hidden rather than showing something made up.
 
 --[[ Tables ]]--
 local Store = {
 	-- Ids from Configs/Registries/Products, in the order the screen draws them.
 	Currency = { "cash_1", "cash_2", "cash_3", "cash_4", "cash_5" },
-	Gamepasses = { "pass_vip", "pass_display" },
+	-- More passes than drawn rows: the client clones the last drawn row for the rest.
+	Gamepasses = { "pass_vip", "pass_display", "pass_helper", "pass_cleaner" },
 	Featured = { "starter_pack" },
 
 	-- The Robux buttons that live on the reward screens instead of in the store.
@@ -20,7 +21,7 @@ local Store = {
 	},
 
 	-- Shown in the gamepass header as "n/total Owned".
-	OwnedTotal = 2,
+	OwnedTotal = 4,
 
 	-- The shine rays behind each product turn while the store is open, in degrees per second; each
 	-- tile starts ShinePhase degrees on from the one before so they do not turn in lockstep.

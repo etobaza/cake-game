@@ -229,6 +229,7 @@ function StoreHandler.BindSection(self: StoreHandler, parent: Instance?, prefix:
 	end
 
 	local rows = RowsUnder(parent, prefix)
+	self:GrowSection(parent, rows, prefix, #entryIds)
 
 	for index, row in rows do
 		local entryId = entryIds[index]
@@ -281,6 +282,43 @@ function StoreHandler.BindSection(self: StoreHandler, parent: Instance?, prefix:
 			row.Selectable = false
 		end
 	end
+end
+
+--- A list section drawn with fewer rows than it has products gets copies of its last row, and the
+--- section grows by their height so the scrolling content below moves down with it. Grid sections
+--- (no UIListLayout) keep the rows they were drawn with.
+function StoreHandler.GrowSection(_self: StoreHandler, parent: Instance, rows: { Frame }, prefix: string, wanted: number): ()
+	local layout = parent:FindFirstChildOfClass("UIListLayout")
+	local last = rows[#rows]
+	if not layout or not last or #rows >= wanted or not parent:IsA("GuiObject") then
+		return
+	end
+
+	local padding = if layout.Padding.Scale == 0 then layout.Padding.Offset else 0
+	local added = 0
+	for index = #rows + 1, wanted do
+		local copy = last:Clone()
+		copy.Name = `{prefix}{index}`
+		copy.LayoutOrder = last.LayoutOrder + index
+		copy.Parent = parent
+		rows[index] = copy
+		added += 1
+	end
+
+	-- Responsive re-applies the authored WideSize / CompactSize attributes on every resize, so each
+	-- arrangement's height grows by its own row height; the live Size follows the current one.
+	local function grown(size: UDim2, rowHeight: number): UDim2
+		return UDim2.new(size.X.Scale, size.X.Offset, size.Y.Scale, size.Y.Offset + added * (rowHeight + padding))
+	end
+	for _, attribute in { "WideSize", "CompactSize", "ShortSize" } do
+		local size = parent:GetAttribute(attribute)
+		local rowSize = last:GetAttribute(attribute)
+		if typeof(size) == "UDim2" then
+			local rowHeight = if typeof(rowSize) == "UDim2" then rowSize.Y.Offset else last.Size.Y.Offset
+			parent:SetAttribute(attribute, grown(size, rowHeight))
+		end
+	end
+	parent.Size = grown(parent.Size, last.Size.Y.Offset)
 end
 
 --- Turns the shine rays only while the store is open; a closed screen keeps no per-frame work.

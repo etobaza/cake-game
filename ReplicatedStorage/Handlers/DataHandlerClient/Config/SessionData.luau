@@ -128,4 +128,7 @@ return {
 	Playtime = {
 		StartedAt = 0,
 	},
+	-- Server time the paid 2x coin boost runs out this session (0 when none). CashBoostHandler sets it
+	-- from the banked Cloud.CashBoostSeconds on join and banks what is left on leave.
+	CashBoostEndsAt = 0,
 }

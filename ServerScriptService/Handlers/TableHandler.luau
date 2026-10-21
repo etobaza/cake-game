@@ -68,9 +68,9 @@ function TableHandler.FindFree(_self: TableHandler, player: Player): string?
 	return best and best.Id
 end
 
-function TableHandler.FindDirty(_self: TableHandler, player: Player): string?
+function TableHandler.FindDirty(_self: TableHandler, player: Player, except: string?): string?
 	for _, building in BuildingHandler:GetBuildings(player) do
-		if building.Kind == TABLE_KIND and building.State and building.State.Dirty then
+		if building.Kind == TABLE_KIND and building.Id ~= except and building.State and building.State.Dirty then
 			return building.Id
 		end
 	end
