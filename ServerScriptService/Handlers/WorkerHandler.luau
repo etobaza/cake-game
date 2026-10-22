@@ -177,7 +177,8 @@ local function addAura(root: BasePart): ()
 	glow.Parent = attachment
 end
 
--- Hats and tools are Accessory templates in MonetizationAssets; a missing one is simply not worn.
+-- Hats, tools and extras are Accessory templates in MonetizationAssets; a missing one is simply not
+-- worn.
 local function wear(humanoid: Humanoid, templateName: string?): ()
 	if not templateName then
 		return
@@ -189,9 +190,30 @@ local function wear(humanoid: Humanoid, templateName: string?): ()
 	end
 end
 
--- The worker's own outfit. The engine colours an R15 limb as one piece (the hand follows the arm),
--- so the sleeves come from a plain white shirt template tinted to the uniform: it covers the torso
--- and arms down to the wrist and leaves the hands clear, over arms coloured like the skin.
+-- The tool rides on the back between jobs (its template welds to BodyBackAttachment) and is swapped
+-- for its `<Tool>Held` template, gripped in the right hand, only while a clip that swings it plays,
+-- so nothing sticks out of the idle hand. Swapping whole accessories keeps server and clients in
+-- step; the Humanoid rebuilds accessory welds on each side.
+local function holdTool(guest: Guest.Guest, toolName: string?, working: boolean): ()
+	if not toolName then
+		return
+	end
+	local wanted = if working then `{toolName}Held` else toolName
+	local other = if working then toolName else `{toolName}Held`
+	local assets = ReplicatedStorage:FindFirstChild("MonetizationAssets")
+	-- Without the other template the tool simply stays where it is.
+	if guest.Model:FindFirstChild(wanted) or not (assets and assets:FindFirstChild(wanted)) then
+		return
+	end
+	local current = guest.Model:FindFirstChild(other)
+	if current and current:IsA("Accessory") then
+		current:Destroy()
+	end
+	wear(guest.Humanoid, wanted)
+end
+
+-- The worker's own outfit: its catalog shirt and pants (Configs/Workers) instead of the guests'
+-- fallback clothing, over skin-coloured arms and uniform-coloured torso and legs.
 local function dress(rig: Model, worker: Config.Worker): ()
 	for _, child in rig:GetChildren() do
 		if child:IsA("Shirt") or child:IsA("Pants") or child:IsA("Accessory") then
@@ -207,9 +229,11 @@ local function dress(rig: Model, worker: Config.Worker): ()
 	colors.Parent = rig
 
 	local shirt = Instance.new("Shirt")
-	shirt.ShirtTemplate = Config.ShirtTemplate
-	shirt.Color3 = worker.Torso
+	shirt.ShirtTemplate = worker.Shirt
 	shirt.Parent = rig
+	local pants = Instance.new("Pants")
+	pants.PantsTemplate = worker.Pants
+	pants.Parent = rig
 end
 
 --[[ Handling ]]--
@@ -331,6 +355,10 @@ function WorkerHandler.Spawn(self: WorkerHandler, player: Player, crew: Crew, ki
 	local humanoid = guest.Humanoid
 	wear(humanoid, worker.Hat)
 	wear(humanoid, worker.Tool)
+	local extras: { string } = worker.Extras or {}
+	for _, extra in extras do
+		wear(humanoid, extra)
+	end
 	local head = rig:FindFirstChild("Head")
 	if head and head:IsA("BasePart") then
 		addLabel(head, worker.Label, paid)
@@ -340,6 +368,8 @@ function WorkerHandler.Spawn(self: WorkerHandler, player: Player, crew: Crew, ki
 	end
 	rig:SetAttribute("Worker", kind)
 	rig:SetAttribute("OwnerUserId", player.UserId)
+	-- A body spawns with no heading of its own; a zero-length route turns it to face the room.
+	guest:WalkRoute({ idle }, toWorld(player, worker.Face))
 
 	return { Kind = kind, Guest = guest, Paid = paid, Job = 0 }
 end
@@ -390,21 +420,8 @@ function WorkerHandler.Route(_self: WorkerHandler, player: Player, from: Vector3
 	return points
 end
 
--- A held tool can carry a second grip for work: the mop hangs from IdleGrip while walking and
--- switches to WorkGrip (the player's broom hold) while a clip that swings it plays.
-local function setGrip(guest: Guest.Guest, name: string): ()
-	for _, accessory in guest.Model:GetChildren() do
-		local handle = if accessory:IsA("Accessory") then accessory:FindFirstChild("Handle") else nil
-		local grip = handle and handle:FindFirstChild("RightGripAttachment")
-		local pose = handle and handle:FindFirstChild(name)
-		if grip and grip:IsA("Attachment") and pose and pose:IsA("Attachment") then
-			grip.CFrame = pose.CFrame
-		end
-	end
-end
-
 -- The player's own work clip (CharacterAnimations.Clips), looped on the worker for `seconds`.
-local function playClip(guest: Guest.Guest, clipName: string, seconds: number): ()
+local function playClip(guest: Guest.Guest, clipName: string, seconds: number, toolName: string?): ()
 	local clip = CharacterAnimations.Clips[clipName]
 	local animator = guest.Humanoid:FindFirstChildOfClass("Animator")
 	if not clip or not animator or guest.Destroyed then
@@ -418,7 +435,7 @@ local function playClip(guest: Guest.Guest, clipName: string, seconds: number): 
 	track.Looped = true
 	local held = Config.WorkGripClips[clipName] == true
 	if held then
-		setGrip(guest, "WorkGrip")
+		holdTool(guest, toolName, true)
 	end
 	track:Play(CharacterAnimations.FadeTime)
 	task.delay(seconds, function()
@@ -426,7 +443,7 @@ local function playClip(guest: Guest.Guest, clipName: string, seconds: number): 
 		task.delay(CharacterAnimations.FadeTime, function()
 			track:Destroy()
 			if held and not guest.Destroyed then
-				setGrip(guest, "IdleGrip")
+				holdTool(guest, toolName, false)
 			end
 		end)
 	end)
@@ -446,13 +463,15 @@ function WorkerHandler.Walk(
 	body.Job += 1
 	local job = body.Job
 	local guest = body.Guest
+	-- A job belongs to the bakery it was found in; a crew rebuilt meanwhile (a new bakery) skips it.
+	local crew = self.Crews[player]
 	local worker: Config.Worker = (Config :: any)[body.Kind]
 	local stop = approach(guest.Root.Position, target)
 
 	local function back(): ()
 		local idle = toWorld(player, worker.Idle)
 		if idle and not guest.Destroyed and body.Job == job then
-			guest:WalkRoute(self:Route(player, guest.Root.Position, idle))
+			guest:WalkRoute(self:Route(player, guest.Root.Position, idle), toWorld(player, worker.Face))
 		end
 		if finished then
 			finished()
@@ -466,11 +485,11 @@ function WorkerHandler.Walk(
 		end
 		done = true
 		if clip then
-			playClip(guest, clip, pause)
+			playClip(guest, clip, pause, worker.Tool)
 		end
 		task.delay(pause, function()
 			-- The job is server state, so it runs even if a stuck body has faded out on the way.
-			if work and self.Crews[player] then
+			if work and crew and self.Crews[player] == crew then
 				work()
 			end
 			back()

@@ -22,6 +22,8 @@ local TickHandler = require(ServerScriptService.Handlers.TickHandler)
 
 --[[ Constants ]]--
 local ARRIVE_DISTANCE = 1
+-- Share of GuestsConfig.Deceleration a stop is planned with; the rest covers the body's lag.
+local STOP_MARGIN = 0.6
 local HORIZONTAL = Vector3.new(1, 0, 1)
 local TURN_RATE = math.rad(GuestsConfig.TurnRate)
 -- Shorter flat vectors give no usable direction; the current heading is kept instead.
@@ -488,7 +490,16 @@ function Guest.Update(self: Guest, now: number, deltaTime: number): ()
 	-- Facing away from the path holds the pace down, so a guest turns before striding off.
 	local speed = self.SpeedLimit * math.max(self.Heading:Dot(direction), 0)
 	if route.LookAt then
-		speed = math.min(speed, self.SpeedLimit * RemainingDistance(route, position) / GuestsConfig.SlowdownDistance)
+		-- The linear ease alone asks for more braking than Deceleration allows from a fast walk, so a
+		-- quick walker (a worker) slid past its spot. The square-root cap is the pace it can still
+		-- stop from before the arrival radius, with headroom for the body lagging the commanded pace.
+		local remaining = RemainingDistance(route, position)
+		local braking = math.max(remaining - ARRIVE_DISTANCE / 2, 0)
+		speed = math.min(
+			speed,
+			self.SpeedLimit * remaining / GuestsConfig.SlowdownDistance,
+			math.sqrt(2 * GuestsConfig.Deceleration * STOP_MARGIN * braking)
+		)
 	end
 	self:Steer(direction, speed, deltaTime)
 end

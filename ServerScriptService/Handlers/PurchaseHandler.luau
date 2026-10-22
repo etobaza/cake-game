@@ -238,10 +238,13 @@ local function resolveReceipt(player: Player, receiptInfo: any): any
 			return { decision = Enum.ProductPurchaseDecision.PurchaseGranted, alreadyOwned = true }
 		end
 
+		-- Spend is tracked before the owned flag: if tracking throws, the retried receipt must not
+		-- read as already owned and skip the grant.
+		trackRobuxSpent(player, receiptInfo.CurrencySpent or 0)
 		data.Cloud._productCache[ownedKey] = true
+	else
+		trackRobuxSpent(player, receiptInfo.CurrencySpent or 0)
 	end
-
-	trackRobuxSpent(player, receiptInfo.CurrencySpent or 0)
 
 	return {
 		decision = Enum.ProductPurchaseDecision.PurchaseGranted,
@@ -329,8 +332,9 @@ function PurchaseHandler.OnInit(_self: PurchaseHandler)
 	end)
 
 	Players.PlayerRemoving:Connect(function(player: Player)
+		local prefix = `{player.UserId}_`
 		for key, _ in pairs(pendingPromises) do
-			if not string.find(key, `{player.UserId}_`, 1, true) then
+			if string.sub(key, 1, #prefix) ~= prefix then
 				continue
 			end
 

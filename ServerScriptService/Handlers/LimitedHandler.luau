@@ -106,6 +106,7 @@ function LimitedHandler.OnInit(self: LimitedHandler): ()
 	self.Items = {}
 	self.Skins = {}
 	self.LastBuy = {}
+	self.PendingAt = {}
 	self.Showcases = {}
 	self.ShownItem = nil
 	self.Slot = Products:Get(Config.SlotProduct)
@@ -155,6 +156,7 @@ function LimitedHandler.OnStart(self: LimitedHandler): ()
 			if data then
 				data.Cloud.LimitedPending = ""
 			end
+			self.PendingAt[player] = nil
 		end
 	)
 
@@ -181,9 +183,10 @@ function LimitedHandler.OnStart(self: LimitedHandler): ()
 
 	Players.PlayerRemoving:Connect(function(player: Player)
 		self.LastBuy[player] = nil
+		self.PendingAt[player] = nil
 	end)
 
-	self:UpdateShowcases()
+	-- The refresh loop draws the showcases first; it waits for the bakeries, so it stays off OnStart.
 	task.spawn(function()
 		self:Subscribe()
 	end)
@@ -342,6 +345,12 @@ function LimitedHandler.Buy(self: LimitedHandler, player: Player, itemId: string
 	if owns(player, item.Id) then
 		return "limited_owned"
 	end
+	-- A paid prompt whose receipt has not landed yet still reads as not owned; a second prompt in
+	-- that window would charge for a copy the player is about to own.
+	local pendingAt = self.PendingAt[player]
+	if data.Cloud.LimitedPending ~= "" and pendingAt and clock - pendingAt < Config.PendingSeconds then
+		return "limited_cooldown"
+	end
 	if item.Sold >= item.Config.Stock then
 		return "limited_sold_out"
 	end
@@ -351,6 +360,7 @@ function LimitedHandler.Buy(self: LimitedHandler, player: Player, itemId: string
 
 	-- Bound before the prompt: a receipt that lands after the window closes still buys this item.
 	data.Cloud.LimitedPending = item.Id
+	self.PendingAt[player] = clock
 	PurchaseHandler:PurchaseProduct(player, slot.productId)
 	return ""
 end
@@ -365,6 +375,7 @@ function LimitedHandler.GrantSlot(self: LimitedHandler, player: Player): ()
 	local pending = data.Cloud.LimitedPending
 	local pendingItem = if typeof(pending) == "string" then self.Items[pending] else nil
 	data.Cloud.LimitedPending = ""
+	self.PendingAt[player] = nil
 	-- Bus.Limited.Buy always records the item, so a receipt without one came from a prompt opened
 	-- some other way. Only the drop on sale with copies left is honoured then; anything else would
 	-- skip the window and stock checks.
@@ -537,6 +548,7 @@ export type LimitedHandler = typeof(LimitedHandler) & {
 	Items: { [string]: ItemState },
 	Skins: { [Folder]: { SkinnedPart } },
 	LastBuy: { [Player]: number },
+	PendingAt: { [Player]: number },
 	Showcases: { Model },
 	ShownItem: string?,
 	Slot: Products.ProductEntry?,

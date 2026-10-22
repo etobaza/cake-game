@@ -85,6 +85,9 @@ local Limited = {
 	SerialRetryDelay = 5,
 	-- Per-player spacing between purchase requests.
 	BuyCooldown = 2,
+	-- After a prompt, further purchase requests wait this long for its receipt (a dismissed prompt
+	-- frees the player at once).
+	PendingSeconds = 30,
 
 	-- Showcase presentation on the client.
 	PromptDistance = 10,
