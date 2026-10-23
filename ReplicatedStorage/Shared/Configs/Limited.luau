@@ -47,7 +47,8 @@ local Limited = {
 			Stock = 5000,
 			Showcase = "GoldenOvenShowcase",
 			-- The kitchen wall beside the ovens, where the artist's plate shelf used to hang.
-			Placement = CFrame.new(8.8, 3, 81.6) * CFrame.Angles(0, math.rad(180), 0),
+			-- Raised clear of the wainscot ledge so the hanging plaque reads above it.
+			Placement = CFrame.new(8.8, 5, 81.6) * CFrame.Angles(0, math.rad(180), 0),
 			OvenSurface = "GoldenOvenSurface",
 			OvenRoot = { "1ndFloor", "Kitchen" },
 			OvenModel = "Oven",
