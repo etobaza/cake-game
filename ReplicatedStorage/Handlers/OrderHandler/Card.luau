@@ -5,6 +5,7 @@
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextService = game:GetService("TextService")
 local UserInputService = game:GetService("UserInputService")
 
 --[[ References ]]--
@@ -53,7 +54,50 @@ export type View = {
 local Card = {}
 Card.__index = Card
 
+-- One-line status widths in pixels, keyed by text size and text, measured once each.
+local statusWidths: { [string]: number } = {}
+local measuring: { [string]: boolean } = {}
+
 --[[ Private Functions ]]--
+-- The width `text` takes on one line at `size`, or nil while it is being measured; `onMeasured` runs
+-- once the measurement lands.
+local function statusWidth(text: string, size: number, onMeasured: () -> ()): number?
+	local key = `{size}|{text}`
+	local width = statusWidths[key]
+	if width or measuring[key] then
+		return width
+	end
+	measuring[key] = true
+	task.spawn(function(): ()
+		local params = Instance.new("GetTextBoundsParams")
+		params.Text = text
+		params.Font = Theme.Fonts.ExtraBold
+		params.Size = size
+		params.Width = math.huge
+		local ok, bounds = pcall(TextService.GetTextBoundsAsync, TextService, params)
+		-- A failed measurement keeps the line whole, as before.
+		statusWidths[key] = if ok then bounds.X else 0
+		measuring[key] = nil
+		onMeasured()
+	end)
+	return nil
+end
+
+-- Breaks a one-line status at the space nearest its middle.
+local function splitStatus(text: string): string?
+	local best: number? = nil
+	local middle = #text / 2
+	for index in string.gmatch(text, "() ") do
+		if not best or math.abs(index - middle) < math.abs(best - middle) then
+			best = index
+		end
+	end
+	if not best then
+		return nil
+	end
+	return `{string.sub(text, 1, best - 1)}\n{string.sub(text, best + 1)}`
+end
+
 local function drawFill(clip: Frame, fill: Frame, value: number): ()
 	local ratio = math.clamp(value, 0, 1)
 	clip.Size = UDim2.fromScale(ratio, 1)
@@ -106,6 +150,9 @@ function Card.new(root: Frame, tooltip: Tooltip, onTap: (customerId: string) -> 
 		Icon = slot:FindFirstChild("Icon") :: ImageLabel,
 		Ponder = ponder,
 		Status = status,
+		Limit = limit,
+		-- The status as OrderHandler sent it, before ApplyStatus breaks a long line.
+		StatusText = "",
 		Bar = bar,
 		-- Authored looks the status states tint over and restore.
 		ArtColor = background.ImageColor3,
@@ -191,6 +238,7 @@ function Card.new(root: Frame, tooltip: Tooltip, onTap: (customerId: string) -> 
 		local scale = if screen then density(screen.AbsoluteSize) else 1
 		limit.MinTextSize = HudLayout.TextSize(STATUS.MinTextSize, scale)
 		limit.MaxTextSize = HudLayout.TextSize(STATUS.MaxTextSize, scale)
+		self:ApplyStatus()
 	end
 	self.Janitor:Add(root:GetPropertyChangedSignal("AbsoluteSize"):Connect(refreshText), "Disconnect")
 	refreshText()
@@ -215,8 +263,13 @@ function Card.RefreshHeader(self: Card): ()
 	if parentSize.X <= 0 or parentSize.Y <= 0 then
 		return
 	end
-	-- Convert rendered card geometry to the shared tooltip parent's coordinate space.
-	local topCenter = self.Background.AbsolutePosition + Vector2.new(self.Background.AbsoluteSize.X / 2, 0)
+	-- Convert rendered card geometry to the shared tooltip parent's coordinate space. The tooltip rests
+	-- above the whole card, status line included: on a phone it is wider than two cards, so resting on
+	-- the art hid every card's status and the row read as cut off.
+	local topCenter = Vector2.new(
+		self.Background.AbsolutePosition.X + self.Background.AbsoluteSize.X / 2,
+		self.Root.AbsolutePosition.Y
+	)
 	local relative = topCenter - parent.AbsolutePosition
 	local parentHud = parent.Parent
 	local hud = if parentHud and parentHud:IsA("GuiObject") then parentHud else nil
@@ -274,8 +327,8 @@ function Card.Show(self: Card, view: View): ()
 		Animate.Pop(self.Slot, STATUS.ReadyPulseFrom)
 	end
 
-	self.Status.Text = view.Status
-	self:Layout(string.find(view.Status, "\n", 1, true) ~= nil)
+	self.StatusText = view.Status
+	self:ApplyStatus()
 	self.Status.TextColor3 = if view.Low then STATUS.Colors.Low else STATUS.Colors[view.Need]
 	self.Background.ImageColor3 = if view.Low then STATUS.LowTint else self.ArtColor
 	self.Background.ImageTransparency = if eating then STATUS.EatingTransparency else self.ArtTransparency
@@ -306,8 +359,8 @@ function Card.Clear(self: Card): ()
 	self.Root:SetAttribute("CustomerId", nil)
 	self.Root:SetAttribute("RecipeId", nil)
 	self.Root.Visible = false
-	self.Status.Text = ""
-	self:Layout(false)
+	self.StatusText = ""
+	self:ApplyStatus()
 	self.Background.ImageColor3 = self.ArtColor
 	self.Background.ImageTransparency = self.ArtTransparency
 	self.Ponder.TextColor3 = self.PonderColor
@@ -318,6 +371,28 @@ function Card.Clear(self: Card): ()
 	self.Motion:setPosition(0)
 	self.Motion:setVelocity(0)
 	drawFill(self.Clip, self.Fill, 0)
+end
+
+-- Draws the status line. A one-dish name wider than the card at the smallest text size (French
+-- Baguette on a phone) would wrap inside the one-line box and lose its second line, so it breaks at a
+-- space and takes the two-line layout instead.
+function Card.ApplyStatus(self: Card): ()
+	local text = self.StatusText
+	local multiline = string.find(text, "\n", 1, true) ~= nil
+	if not multiline and text ~= "" then
+		local width = statusWidth(text, self.Limit.MinTextSize, function(): ()
+			if self.StatusText == text then
+				self:ApplyStatus()
+			end
+		end)
+		local split = if width and width > self.Status.AbsoluteSize.X then splitStatus(text) else nil
+		if split then
+			text = split
+			multiline = true
+		end
+	end
+	self.Status.Text = text
+	self:Layout(multiline)
 end
 
 -- Keeps the status line above the authored card number and dish art; a two-line status takes more
@@ -341,6 +416,8 @@ export type Card = typeof(setmetatable(
 		Icon: ImageLabel,
 		Ponder: TextLabel,
 		Status: TextLabel,
+		Limit: UITextSizeConstraint,
+		StatusText: string,
 		Bar: CanvasGroup,
 		ArtColor: Color3,
 		ArtTransparency: number,

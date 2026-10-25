@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Base = require(ReplicatedStorage.Shared.Configs.Base)
 local Buildings = require(ReplicatedStorage.Shared.Configs.Buildings)
 local Garden = require(ReplicatedStorage.Shared.Configs.Garden)
+local Authored = require(script.Parent.Parent.Authored)
 local Geometry = require(script.Parent.Geometry)
 local Interact = require(ReplicatedStorage.Handlers.InteractHandler)
 local Pages = require(script.Parent.Parent.Stores.Pages)
@@ -23,6 +24,11 @@ local OvenPaths = {
 	{ "1ndFloor", "Kitchen", "Upgrades", " OvenUpgrade", "Upgrade2", "Oven" },
 	{ "1ndFloor", "Kitchen", "Upgrades", " OvenUpgrade", "Upgrade1", "Oven" },
 }
+
+-- When each cell was last scrolled into view. A player who scrolls away is not pulled back every
+-- frame, only after REVEAL_SECONDS, and a layout that was still settling gets another try.
+local REVEAL_SECONDS = 8
+local revealed: { [GuiObject]: number } = setmetatable({}, { __mode = "k" }) :: any
 
 export type Target = {
 	gui: GuiObject?,
@@ -63,6 +69,29 @@ local function ui(path: string): GuiObject?
 		current = screen:FindFirstChild("Exit", true) or screen:FindFirstChild("CloseButton", true)
 	end
 	return if current and current:IsA("GuiObject") then current else nil
+end
+
+-- Scrolls `list` so `element` sits in the middle of its window. CanvasPosition is in the list's own
+-- layout pixels, so the on-screen distance is converted out of any UIScale above it.
+local function reveal(element: GuiObject, list: ScrollingFrame): ()
+	local now = os.clock()
+	if now - (revealed[element] or -math.huge) < REVEAL_SECONDS or not list.ScrollingEnabled then
+		return
+	end
+	revealed[element] = now
+	local unscaled = Authored.UnscaledSize(list)
+	if unscaled.X <= 0 or unscaled.Y <= 0 then
+		return
+	end
+	local scale = list.AbsoluteSize / unscaled
+	local offset = (element.AbsolutePosition + element.AbsoluteSize / 2)
+		- (list.AbsolutePosition + list.AbsoluteWindowSize / 2)
+	local wanted = list.CanvasPosition + offset / scale
+	local limit = (list.AbsoluteCanvasSize - list.AbsoluteWindowSize) / scale
+	list.CanvasPosition = Vector2.new(
+		math.clamp(wanted.X, 0, math.max(0, limit.X)),
+		math.clamp(wanted.Y, 0, math.max(0, limit.Y))
+	)
 end
 
 local function findCloseButton(screen: Instance, viewport: Vector2): GuiButton?
@@ -245,8 +274,14 @@ function Targets.Resolve(spec: Types.TutorialTarget?, viewport: Vector2): Target
 		if element and Geometry.Gui(element, viewport) then
 			return { gui = element }
 		end
-		-- A cell scrolled out of its list: point at the list until it scrolls into view.
+		-- A cell scrolled out of its list: scroll it into view; until it shows, point at the list.
 		local list = element and element.Parent
+		if element and spec.control == "Scroll" and list and list:IsA("ScrollingFrame") then
+			reveal(element, list)
+			if Geometry.Gui(element, viewport) then
+				return { gui = element }
+			end
+		end
 		if spec.control == "Scroll" and list and list:IsA("GuiObject") and Geometry.Gui(list, viewport) then
 			local target: Target = { gui = list }
 			return target

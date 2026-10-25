@@ -1,5 +1,5 @@
 --!strict
--- The 2x Cash button in the top-right corner of the HUD (Configs/CashBoost).
+-- The 2x Cash button in the top-right corner of the HUD (Configs/CashBoost, placed by HudLayout).
 --
 -- It is a clone of the authored side Shop button stripped to its icon and label, so it keeps the
 -- HUD's lettering; this handler swaps the icon, pulses it gently and shows the time left while the
@@ -45,10 +45,8 @@ function CashBoostHandler.OnStart(self: CashBoostHandler): ()
 	end
 
 	local button = template:Clone()
+	-- Shared/UI/HudLayout places and sizes it as soon as it joins the HUD.
 	button.Name = spec.Name
-	button.AnchorPoint = spec.AnchorPoint
-	button.Position = spec.Position
-	button.Size = spec.Size
 	button.LayoutOrder = 0
 	button.Parent = template.Parent and template.Parent.Parent
 	self.Button = button

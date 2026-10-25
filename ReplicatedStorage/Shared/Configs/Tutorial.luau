@@ -77,6 +77,9 @@ return {
 		-- so on phones, where that row sits beside the hotbar, it stays low.
 		OrderGap = 14,
 		BottomMargin = 110,
+		-- While a page hides the HUD the bubble rests this close to the bottom edge, so on a phone it
+		-- covers the page's footer rather than the middle of its content.
+		PageMargin = 16,
 		-- Gap below the clock when the dialog moves to the top to clear its own target.
 		TopGap = 14,
 		TopFallback = 130,

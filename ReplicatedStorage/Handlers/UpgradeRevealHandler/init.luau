@@ -264,7 +264,7 @@ function UpgradeRevealHandler.Next(self: UpgradeRevealHandler): ()
 	shield.Selectable = false
 	shield.Active = true
 	shield.ZIndex = 1
-	shield.Parent = self.Card.Root
+	shield.Parent = self.Card.Cover
 	run.Lifetime:Add(shield, "Destroy")
 	ContextActionService:BindActionAtPriority(
 		INPUT_ACTION,

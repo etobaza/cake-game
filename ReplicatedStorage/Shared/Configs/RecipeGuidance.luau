@@ -5,9 +5,12 @@ return {
 	MaxNames = 2,
 	TextSize = 16,
 	MinTextSize = 11,
+	-- The menu card's caption ends where the dish name starts (0.78) and is bottom-aligned, so on a
+	-- small card, where the text floor makes it taller than its box, it grows up over the lock art
+	-- instead of down over the name.
 	Card = {
-		Position = UDim2.fromScale(0.5, 0.67),
-		Size = UDim2.fromScale(0.94, 0.23),
+		Position = UDim2.fromScale(0.5, 0.61),
+		Size = UDim2.fromScale(0.94, 0.34),
 		IconPosition = UDim2.fromScale(0.5, 0.34),
 		IconSize = UDim2.fromScale(0.38, 0.38),
 	},

@@ -18,6 +18,10 @@ export type Card = typeof(setmetatable(
 	{} :: {
 		Screen: ScreenGui,
 		Root: Frame,
+		-- Full-device layer under the receipt: the cut veil and the input shield must reach past the
+		-- safe area (notch, status bar) that the receipt keeps clear of.
+		CoverScreen: ScreenGui,
+		Cover: Frame,
 		Plate: CanvasGroup,
 		Scale: UIScale,
 		-- Screen density from the last layout; the arrival pop multiplies it.
@@ -72,13 +76,27 @@ function Card.new(skip: () -> ()): Card
 	root.Size = UDim2.fromScale(1, 1)
 	root.Parent = screen
 	local tuning = Config.Card
+	local coverScreen = Instance.new("ScreenGui")
+	coverScreen.Name = "UpgradeRevealCover"
+	coverScreen.ResetOnSpawn = false
+	coverScreen.IgnoreGuiInset = true
+	coverScreen.ScreenInsets = Enum.ScreenInsets.None
+	coverScreen.DisplayOrder = Config.DisplayOrder - 1
+	coverScreen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	coverScreen.Enabled = false
+	local cover = Instance.new("Frame")
+	cover.Name = "Cover"
+	cover.BackgroundTransparency = 1
+	cover.Size = UDim2.fromScale(1, 1)
+	cover.Parent = coverScreen
 	local veil = Instance.new("Frame")
 	veil.Name = "Transition"
 	veil.Size = UDim2.fromScale(1, 1)
 	veil.BackgroundColor3 = tuning.Veil
 	veil.BackgroundTransparency = 1
 	veil.BorderSizePixel = 0
-	veil.Parent = root
+	veil.ZIndex = 2
+	veil.Parent = cover
 	local plate = Instance.new("CanvasGroup")
 	plate.Name = "Receipt"
 	plate.AnchorPoint = Vector2.new(0.5, 1)
@@ -139,10 +157,14 @@ function Card.new(skip: () -> ()): Card
 	skipButton.ZIndex = 4
 	round(skipButton, tuning.SkipCorner)
 	skipButton.Parent = plate
-	screen.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+	coverScreen.Parent = playerGui
+	screen.Parent = playerGui
 	local self: Card = setmetatable({
 		Screen = screen,
 		Root = root,
+		CoverScreen = coverScreen,
+		Cover = cover,
 		Plate = plate,
 		Scale = scale,
 		Fit = 1,
@@ -194,6 +216,7 @@ function Card.Show(self: Card, id: string, level: number): ()
 		else tuning.FallbackCategory
 	self.Tag.Text = `NEW · {category}` .. (if entry and entry.maxLevel > 1 then ` · {level}/{entry.maxLevel}` else "")
 	self.Icon.Image = if entry then entry.icon or "" else ""
+	self.CoverScreen.Enabled = true
 	self.Screen.Enabled = true
 	self.Plate.GroupTransparency = 1
 	self:Layout()
@@ -264,6 +287,7 @@ function Card.Hide(self: Card): ()
 	self.TwinklePending = false
 	self.Sparks:Clear()
 	self.Screen.Enabled = false
+	self.CoverScreen.Enabled = false
 	self.Veil.BackgroundTransparency = 1
 end
 
@@ -274,6 +298,7 @@ function Card.Destroy(self: Card): ()
 	table.clear(self.Connections)
 	self.Sparks:Destroy()
 	self.Screen:Destroy()
+	self.CoverScreen:Destroy()
 end
 
 return Card

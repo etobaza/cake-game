@@ -31,6 +31,9 @@ function RecipeRequirementLabel.Create(parent: GuiObject, row: boolean): TextLab
 	label.TextSize = Config.TextSize
 	label.TextWrapped = true
 	label.TextScaled = true
+	if not row then
+		label.TextYAlignment = Enum.TextYAlignment.Bottom
+	end
 	label.Visible = false
 	label.ZIndex = 6
 	local constraint = Instance.new("UITextSizeConstraint")

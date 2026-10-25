@@ -6,6 +6,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --[[ Modules ]]--
+local CashBoost = require(ReplicatedStorage.Shared.Configs.CashBoost)
 local HudConfig = require(ReplicatedStorage.Shared.Configs.HudLayout)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local OrderLayout = require(script.Parent.OrderLayout)
@@ -23,6 +24,11 @@ local QUESTS_SIZE = Vector2.new(300, 190)
 local BUTTON_SIDE = 100
 local BUTTON_GAP = 8
 local QUEST_ARROW = 44
+-- The 2x Cash button (CashBoostHandler) rests in the top-right corner. Phones lift the quests to the
+-- top edge, so there it stands just left of them instead of over their caption and price.
+local BOOST_SIZE = Vector2.new(120, 76)
+local BOOST_EDGE = 8
+local BOOST_GAP = 8
 local XP_SIZE = Vector2.new(200, 44)
 local HOTBAR_SIZE = Vector2.new(128, 126)
 local HOTBAR_BOTTOM = 12
@@ -36,6 +42,13 @@ local TOPBAR_SCREEN = "TopbarStandard"
 local TOPBAR_GAP = 12
 -- The controller hint row (Controls.GamepadHint) keeps this far from the hotbar and the coin plate.
 local HINT_GAP = 16
+-- The hint row's remembered unscaled width, and how far a new measurement may drift from it before
+-- it counts as new content (a pill shown or hidden) rather than font-size snapping under the UIScale.
+local HINT_NATURAL = "NaturalWidth"
+local HINT_SNAP_TOLERANCE = 0.12
+-- A gap that cannot hold the row still draws it this small instead of at zero or a negative scale.
+local HINT_MIN_SCALE = 0.1
+local HINT_SCALE_EPSILON = 1e-3
 
 --[[ Tables ]]--
 local HudLayout = {}
@@ -85,8 +98,24 @@ local function placeHint(hud: GuiObject): ()
 	local plateRight = EDGE + CURRENCY_SIZE.X
 	-- A plate lifted above the hotbar (narrow screens) leaves the corner free.
 	local left = if plateRight > right + HINT_GAP then EDGE else plateRight + HINT_GAP
-	local natural = layout.AbsoluteContentSize.X / scaler.Scale
-	scaler.Scale = if natural > 0 then math.min(scale, (right - left) * scale / natural) else scale
+	-- The row's unscaled width, kept until the content really changes: its labels snap to whole font
+	-- sizes under the UIScale, so measuring it again after every rescale reads a slightly different
+	-- width, rescales again, and AbsoluteContentSize re-enters this function without end.
+	local measured = layout.AbsoluteContentSize.X / scaler.Scale
+	local natural = hint:GetAttribute(HINT_NATURAL)
+	if
+		measured > 0
+		and (typeof(natural) ~= "number" or math.abs(measured - natural) > natural * HINT_SNAP_TOLERANCE)
+	then
+		natural = measured
+		hint:SetAttribute(HINT_NATURAL, measured)
+	end
+	local width = if typeof(natural) == "number" and natural > 0 then natural else 0
+	local target = if width > 0 then math.min(scale, (right - left) * scale / width) else scale
+	target = math.max(target, HINT_MIN_SCALE)
+	if math.abs(scaler.Scale - target) > HINT_SCALE_EPSILON then
+		scaler.Scale = target
+	end
 	hint.AnchorPoint = Vector2.new(1, 0.5)
 	hint.Position = UDim2.new(0, right * scale, 1, -(HOTBAR_BOTTOM + HOTBAR_SIZE.Y / 2) * scale)
 end
@@ -192,6 +221,16 @@ function HudLayout.Apply(hud: GuiObject): ()
 	else
 		placeGroup("Quests", UDim2.new(1, -EDGE, 0.5, 0), QUESTS_SIZE)
 	end
+	local boost = hud:FindFirstChild(CashBoost.Button.Name)
+	if boost and boost:IsA("GuiObject") then
+		local besideQuests = compact and not portrait
+		local boostRight = if besideQuests then EDGE + QUESTS_SIZE.X + BOOST_GAP else BOOST_EDGE
+		local boostTop = if besideQuests then EDGE else BOOST_EDGE
+		-- Its pulse is a UIScale, so the resting rectangle is written directly.
+		boost.AnchorPoint = Vector2.new(1, 0)
+		boost.Position = UDim2.new(1, -boostRight * scale, 0, boostTop * scale)
+		boost.Size = UDim2.fromOffset(BOOST_SIZE.X * scale, BOOST_SIZE.Y * scale)
+	end
 	OrderLayout.Apply(hud, scale, reserve)
 	local quests = hud:FindFirstChild("Quests")
 	if quests and quests:IsA("GuiObject") then
@@ -286,6 +325,12 @@ function HudLayout.Bind(hud: GuiObject): any
 		print("[HudLayout] Controls.GamepadHint needs a UIScale and a UIListLayout")
 	end
 	janitor:Add(hud:GetPropertyChangedSignal("AbsoluteSize"):Connect(apply), "Disconnect")
+	-- The 2x Cash button is cloned in after the HUD binds.
+	janitor:Add(hud.ChildAdded:Connect(function(child: Instance): ()
+		if child.Name == CashBoost.Button.Name then
+			apply()
+		end
+	end), "Disconnect")
 	-- The row shifts with Roblox's own buttons and grows or shrinks as icons come and go.
 	local topbarJanitor = Janitor.new()
 	janitor:Add(topbarJanitor, "Destroy")

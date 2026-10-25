@@ -251,6 +251,12 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 		end)
 
 		if dim and dim:IsA("GuiObject") then
+			-- The authored backdrop uses DeviceSafeInsets, which leaves a phone's notch and status
+			-- bar undimmed; the shade must cover the whole device.
+			if backdropScreen and backdropScreen:IsA("ScreenGui") then
+				backdropScreen.IgnoreGuiInset = true
+				backdropScreen.ScreenInsets = Enum.ScreenInsets.None
+			end
 			local fade = Animate.Track(dim, "BackgroundTransparency", 1, function(value: number)
 				dim.BackgroundTransparency = value
 			end)

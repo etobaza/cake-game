@@ -79,6 +79,8 @@ export type Guest = typeof(setmetatable(
 		-- Where a guest who has arrived turns to face.
 		LookDirection: Vector3?,
 		Seating: Seating?,
+		-- The seat this body is welded to once seated, read even when Humanoid.SeatPart is not.
+		SeatedOn: BasePart?,
 		StandingUntil: number?,
 		ApproachFrame: CFrame?,
 		ExitAt: number?,
@@ -196,6 +198,13 @@ local function LookAheadPoint(route: Route, position: Vector3): Vector3
 	return cursor
 end
 
+-- The SeatWeld holding `root` on `seat`, if any. The weld, not the Humanoid's Seated state, is what
+-- holds the body: the state can end while the weld stays, which left a guest frozen in the chair.
+local function WeldOn(seat: BasePart?, root: BasePart): Weld?
+	local weld = seat and seat:FindFirstChild("SeatWeld")
+	return if weld and weld:IsA("Weld") and weld.Part1 == root then weld else nil
+end
+
 -- Studs left to walk: straight to the end of the current leg, then along the remaining legs.
 local function RemainingDistance(route: Route, position: Vector3): number
 	local points = route.Points
@@ -299,6 +308,9 @@ function Guest.WalkRoute(self: Guest, points: { Vector3 }, lookAt: Vector3?, onA
 		return
 	end
 	self.Janitor:Remove("SeatMotion")
+	-- Found before the pending sit is dropped, so a body welded mid-sit is stood up too.
+	local weld = self:FindSeatWeld()
+	local seat = weld and weld.Part0
 	self.Seating = nil
 	self.StandingUntil = nil
 	self.LookDirection = nil
@@ -312,11 +324,10 @@ function Guest.WalkRoute(self: Guest, points: { Vector3 }, lookAt: Vector3?, onA
 		OnArrive = onArrive,
 		Deadline = now + GuestsConfig.WalkTimeout,
 	}
-	local seat = self.Humanoid.SeatPart
-	local weld = seat and seat:FindFirstChild("SeatWeld")
-	if seat and weld and weld:IsA("Weld") and weld.Part1 == self.Root and self.ApproachFrame then
+	if weld and seat and self.ApproachFrame then
 		-- Return to the walkable approach before releasing physics; detaching over the chair
 		-- lets Humanoid's standing-height correction kick the body upwards in one frame.
+		self.SeatedOn = seat
 		self.StandingUntil = now + GuestsConfig.SeatTransitionSeconds
 		local tween = TweenService:Create(weld, TweenInfo.new(GuestsConfig.SeatTransitionSeconds), {
 			C0 = seat.CFrame:ToObjectSpace(self.ApproachFrame) * weld.C1,
@@ -327,7 +338,7 @@ function Guest.WalkRoute(self: Guest, points: { Vector3 }, lookAt: Vector3?, onA
 		return
 	end
 	self.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-	self.Humanoid.Sit = false
+	self:ReleaseSeat(weld)
 	if not self.Facing.Enabled then
 		self:ResumeFacing()
 	end
@@ -450,7 +461,7 @@ function Guest.Update(self: Guest, now: number, deltaTime: number): ()
 		return
 	end
 	if self.StandingUntil then
-		if now < self.StandingUntil and self.Humanoid.SeatPart then
+		if now < self.StandingUntil and self:FindSeatWeld() then
 			return
 		end
 		self:StandUp(now)
@@ -461,8 +472,11 @@ function Guest.Update(self: Guest, now: number, deltaTime: number): ()
 	end
 	local route = self.Route
 	if not route then
-		-- Brake out of the last stride and finish turning towards the spot; a seat holds its own pose.
-		if not self.Humanoid.SeatPart then
+		-- Brake out of the last stride and finish turning towards the spot; a seat holds its own pose,
+		-- and a welded body keeps sitting even if its Humanoid has left the Seated state.
+		if self:FindSeatWeld() then
+			self:Play(SIT)
+		elseif not self.Humanoid.SeatPart then
 			self:Steer(self.LookDirection, 0, deltaTime)
 		end
 		return
@@ -512,7 +526,7 @@ function Guest.Arrive(self: Guest, route: Route): ()
 		route.OnArrive()
 	end
 	local lookAt = route.LookAt
-	local seated = self.Seating ~= nil or self.Humanoid.SeatPart ~= nil
+	local seated = self.Seating ~= nil or self.Humanoid.SeatPart ~= nil or self:FindSeatWeld() ~= nil
 	if not lookAt or self.Destroyed or seated or self.RouteRevision ~= revision then
 		return
 	end
@@ -547,7 +561,7 @@ end
 function Guest.StandUp(self: Guest, now: number): ()
 	self.StandingUntil = nil
 	self.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-	self.Humanoid.Sit = false
+	self:ReleaseSeat()
 	self.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
 	self.Root.AssemblyLinearVelocity = Vector3.zero
 	self.Root.AssemblyAngularVelocity = Vector3.zero
@@ -557,6 +571,23 @@ function Guest.StandUp(self: Guest, now: number): ()
 		route.Origin = self.Root.Position
 		route.Deadline = now + GuestsConfig.WalkTimeout
 	end
+end
+
+function Guest.FindSeatWeld(self: Guest): Weld?
+	return WeldOn(self.SeatedOn, self.Root)
+		or WeldOn(self.Humanoid.SeatPart, self.Root)
+		or WeldOn(self.Seating and self.Seating.Seat, self.Root)
+end
+
+-- Sit = false alone does not always remove the SeatWeld (CleaningAction meets the same with players):
+-- a body still welded walks on the spot in the chair until its route times out and it fades away.
+function Guest.ReleaseSeat(self: Guest, weld: Weld?): ()
+	self.Humanoid.Sit = false
+	local held = weld or self:FindSeatWeld()
+	if held then
+		held:Destroy()
+	end
+	self.SeatedOn = nil
 end
 
 -- Hands orientation back to the heading, starting from where the body faces now.
@@ -652,8 +683,12 @@ function Guest.UpdateSeating(self: Guest, now: number, deltaTime: number): ()
 		self.Janitor:Add(tween, "Cancel", "SeatMotion")
 		tween:Play()
 	end
-	if seat.Parent and seat.Occupant == self.Humanoid and self.Humanoid.SeatPart == seat then
+	-- The weld is the seat: Occupant and SeatPart follow the Humanoid's state, which can lag or end
+	-- on its own, while the body stays where the weld holds it.
+	local seated = seat.Occupant == self.Humanoid and self.Humanoid.SeatPart == seat
+	if seat.Parent and (seated or (pending.Adjusted and WeldOn(seat, self.Root))) then
 		self.Seating = nil
+		self.SeatedOn = seat
 		self:Play(SIT)
 		pending.OnSeated()
 		return
@@ -669,6 +704,8 @@ function Guest.UpdateSeating(self: Guest, now: number, deltaTime: number): ()
 		end
 	end
 	if not seat.Parent or now >= pending.Deadline then
+		-- A weld from a half-finished sit would hold the body in the chair for its next route.
+		self:ReleaseSeat()
 		self.Seating = nil
 		self:ResumeFacing()
 		pending.OnFailed()
@@ -691,6 +728,7 @@ function Guest.Destroy(self: Guest): ()
 	self.Destroyed = true
 	self.Route = nil
 	self.Seating = nil
+	self.SeatedOn = nil
 	self.StandingUntil = nil
 	self.Janitor:Destroy()
 end

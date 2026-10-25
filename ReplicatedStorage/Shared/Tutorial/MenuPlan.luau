@@ -18,29 +18,38 @@ local MENU_GRID = "Inventory.MainFrame.Container.Content"
 local MenuPlan = {}
 
 --[[ Handling ]]--
---- The newest such dish while tomorrow's menu still has room. Only dishes still new from a level-up
---- count, so a menu the player keeps short on purpose is not nagged every evening; starter dishes
---- are marked new at grant too, so level 1 is left out.
-function MenuPlan.Missing(cloud: any, session: any): Recipes.RecipeEntry?
+-- Recipes the Menu grid shows unlocked (MenuHandler's rule: level, station, ingredient sources)
+-- and not yet on tomorrow's menu.
+local function addable(cloud: any, session: any): { Recipes.RecipeEntry }
 	local menu = session.Day.NextMenu
-	if #menu >= DayCycle.MenuMax then
-		return nil
-	end
 	local stations: { [string]: boolean } = {}
 	for _, station in session.Stations do
 		stations[station.Kind] = true
 	end
-	local best: Recipes.RecipeEntry? = nil
+	local found: { Recipes.RecipeEntry } = {}
 	for _, recipe in Recipes:GetAvailable(cloud.Level or 1) do
-		local newUntil = cloud.NewRecipeUntilDay[recipe.id]
 		if
-			recipe.unlockLevel <= 1
-			or not newUntil
-			or cloud.Day > newUntil
-			or table.find(menu, recipe.id)
-			or not stations[recipe.station]
-			or not RecipeRequirements.IsObtainable(recipe, cloud.Base.Upgrades)
+			not table.find(menu, recipe.id)
+			and stations[recipe.station]
+			and RecipeRequirements.IsObtainable(recipe, cloud.Base.Upgrades)
 		then
+			table.insert(found, recipe)
+		end
+	end
+	return found
+end
+
+--- The newest such dish while tomorrow's menu still has room. Only dishes still new from a level-up
+--- count, so a menu the player keeps short on purpose is not nagged every evening; starter dishes
+--- are marked new at grant too, so level 1 is left out.
+function MenuPlan.Missing(cloud: any, session: any): Recipes.RecipeEntry?
+	if #session.Day.NextMenu >= DayCycle.MenuMax then
+		return nil
+	end
+	local best: Recipes.RecipeEntry? = nil
+	for _, recipe in addable(cloud, session) do
+		local newUntil = cloud.NewRecipeUntilDay[recipe.id]
+		if recipe.unlockLevel <= 1 or not newUntil or cloud.Day > newUntil then
 			continue
 		end
 		local newer = not best
@@ -51,6 +60,25 @@ function MenuPlan.Missing(cloud: any, session: any): Recipes.RecipeEntry?
 		end
 	end
 	return best
+end
+
+--- The first dish in grid order (unlock level, then menu order) the player can still add, so a
+--- "choose recipes" step points at a cell that takes the tap rather than at the grid's middle,
+--- which may be a locked dish.
+function MenuPlan.Pickable(cloud: any, session: any): Recipes.RecipeEntry?
+	if #session.Day.NextMenu >= DayCycle.MenuMax then
+		return nil
+	end
+	local first: Recipes.RecipeEntry? = nil
+	for _, recipe in addable(cloud, session) do
+		local earlier = not first
+			or recipe.unlockLevel < first.unlockLevel
+			or (recipe.unlockLevel == first.unlockLevel and recipe.order < first.order)
+		if earlier then
+			first = recipe
+		end
+	end
+	return first
 end
 
 --- The press that adds `recipe`: its cell while the menu is open, the Menu tab before that.

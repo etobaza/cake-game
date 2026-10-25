@@ -123,6 +123,21 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 		Position = rowPosition,
 		Size = rowSize,
 	})
+	-- The page panels are authored as selection groups that stop the D-pad at every edge. This header
+	-- is a separate screen, so in the evening their top edge lets the D-pad up onto the tabs and Next Day.
+	for _, page in TABS do
+		local pageScreen = screen.Parent and screen.Parent:FindFirstChild(page)
+		local pagePanel = pageScreen and pageScreen:FindFirstChild("MainFrame")
+		if not pagePanel or not pagePanel:IsA("GuiObject") then
+			continue
+		end
+		local authoredUp = pagePanel.SelectionBehaviorUp
+		Flux.edit(pagePanel)({
+			SelectionBehaviorUp = function(): Enum.SelectionBehavior
+				return if isSummary() then Enum.SelectionBehavior.Escape else authoredUp
+			end,
+		})
+	end
 	local rowButtons: { GuiObject } = {}
 	local tabShare = 1 / (#TAB_BUTTONS + NEXT_DAY_SHARE)
 	for index, name in TAB_BUTTONS do

@@ -139,6 +139,7 @@ function DayCycleHandler.OnInit(self: DayCycleHandler): ()
 	self.GuestBodies = {}
 	self.ClosingChecks = {}
 	self.ClosingDeadlines = {}
+	self.ClosingLimits = {}
 end
 
 function DayCycleHandler.OnStart(self: DayCycleHandler): ()
@@ -161,6 +162,7 @@ function DayCycleHandler.OnStart(self: DayCycleHandler): ()
 		self.GuestBodies[player] = nil
 		self.ClosingChecks[player] = nil
 		self.ClosingDeadlines[player] = nil
+		self.ClosingLimits[player] = nil
 		self.Machines[player] = nil
 	end)
 
@@ -355,6 +357,7 @@ function DayCycleHandler.EnterClosing(self: DayCycleHandler, player: Player): ()
 	local now = workspace:GetServerTimeNow()
 	self.ClosingChecks[player] = now + DayCycleConfig.ClosingCheckSeconds
 	self.ClosingDeadlines[player] = now + DayCycleConfig.ClosingMaxSeconds
+	self.ClosingLimits[player] = now + DayCycleConfig.ClosingHardMaxSeconds
 	self.PhaseChanged:Fire(player, "Closing")
 end
 
@@ -381,15 +384,23 @@ function DayCycleHandler.CanFinishClosing(self: DayCycleHandler, player: Player)
 	end
 	self.ClosingChecks[player] = now + DayCycleConfig.ClosingCheckSeconds
 	-- The closing wait is bounded; guests still inside are handled like a manual early close.
-	if now >= (self.ClosingDeadlines[player] or math.huge) then
+	if now >= (self.ClosingLimits[player] or math.huge) then
 		return true
 	end
+	local waited = now >= (self.ClosingDeadlines[player] or math.huge)
 	local data = DataHandler:GetData(player)
 	if not data then
-		return false
+		return waited
 	end
-	for _ in data.Session.Customers do
-		return false
+	-- A guest being served still leaves on their own (served, or out of patience), so the day waits
+	-- for them instead of sending them away with the dish on its way to the table.
+	for _, customer in data.Session.Customers do
+		if not waited or not customer.TutorialProtected then
+			return false
+		end
+	end
+	if waited then
+		return true
 	end
 	local bodies = self.GuestBodies[player]
 	if bodies then
@@ -429,6 +440,7 @@ function DayCycleHandler.EnterSummary(self: DayCycleHandler, player: Player): ()
 
 	self.ClosingChecks[player] = nil
 	self.ClosingDeadlines[player] = nil
+	self.ClosingLimits[player] = nil
 	day.SummaryStartedAt = workspace:GetServerTimeNow()
 	-- Phase commits the report only after its values and tomorrow's draft exist.
 	day.Phase = "Summary"
@@ -645,6 +657,7 @@ export type DayCycleHandler = typeof(DayCycleHandler) & {
 	GuestBodies: { [Player]: GuestBodySet },
 	ClosingChecks: { [Player]: number },
 	ClosingDeadlines: { [Player]: number },
+	ClosingLimits: { [Player]: number },
 }
 
 return DayCycleHandler :: DayCycleHandler

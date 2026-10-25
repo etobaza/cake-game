@@ -44,6 +44,8 @@ local ORDER_PATH = "Order"
 local SIDE_PATH = "SideBtns"
 -- The shared Report/Menu/Upgrades header: its tabs and Next Day stay uncovered while it is up.
 local MENU_HEADER = { "MainFrame", "Header" }
+-- Every page screen draws its panel in this child.
+local PAGE_FRAME = "MainFrame"
 -- The plate and the progress badge straddle the bubble's top edge; this share of the plate sits
 -- inside the bubble and pushes the text down.
 local PLATE_INSIDE = 0.35
@@ -570,6 +572,27 @@ end
 -- Whether `rect` meets the dialog drawn with this left edge, bottom edge and size.
 local function overlaps(rect: Rect, left: number, bottom: number, width: number, height: number): boolean
 	return rect.Max.X > left and rect.Min.X < left + width and rect.Max.Y > bottom - height and rect.Min.Y < bottom
+end
+
+-- How much of `rect` the dialog drawn with this left edge, bottom edge and size covers, in pixels².
+local function overlapArea(rect: Rect, left: number, bottom: number, width: number, height: number): number
+	local across = math.min(rect.Max.X, left + width) - math.max(rect.Min.X, left)
+	local down = math.min(rect.Max.Y, bottom) - math.max(rect.Min.Y, bottom - height)
+	return if across > 0 and down > 0 then across * down else 0
+end
+
+-- The open page's panel in absolute GUI space, or nil when no page is open.
+local function pageRect(): Rect?
+	local name = Pages.Current:peek()
+	if name == Pages.Names.None then
+		return nil
+	end
+	local screen = UIHandler:GetPanel(name)
+	local frame = screen and screen:FindFirstChild(PAGE_FRAME)
+	if not frame or not frame:IsA("GuiObject") or not frame.Visible then
+		return nil
+	end
+	return Rect.new(frame.AbsolutePosition, frame.AbsolutePosition + frame.AbsoluteSize)
 end
 
 -- Absolute Y where `gui` itself draws, or nil when it draws nothing. Text counts from its line: the
@@ -1141,10 +1164,11 @@ function Dialog.Boing(self: Dialog, now: number): ()
 end
 
 -- Bottom centre above the hotbar (raised above an order row reaching into that band, so the mentor
--- always talks from the middle); at the top, below the clock and any page header, when that would
--- cover the target. A target too
--- large to dodge (a page's whole recipe grid) is covered either way, so the bubble then stays at
--- the bottom, clear of the header tabs and Next Day.
+-- always talks from the middle); while a page hides the HUD, low on the screen so it covers as
+-- little of the page as it can. When that would cover the target it moves to the top, below the
+-- clock and any page header, or else to the bottom left or right corner. A target too large to
+-- dodge (a page's whole recipe grid) is covered either way, so the bubble then stays at the bottom,
+-- clear of the header tabs and Next Day.
 function Dialog.Place(self: Dialog, deltaTime: number, scale: number): ()
 	local view = self.View
 	local size = view.Root.Size
@@ -1157,7 +1181,11 @@ function Dialog.Place(self: Dialog, deltaTime: number, scale: number): ()
 	-- The HUD slides off screen while a page is open; then the plain bottom margin applies.
 	local hotbar = hudTop(HOTBAR_PATH, self.HotbarEdge)
 	local onScreen = hotbar ~= nil and hotbar < bounds.Max.Y
-	local bottom = if hotbar and onScreen then hotbar - gap else bounds.Max.Y - STYLE.BottomMargin * scale
+	local pageOpen = Pages.Current:peek() ~= Pages.Names.None
+	local bottom = if hotbar and onScreen
+		then hotbar - gap
+		elseif pageOpen then bounds.Max.Y - STYLE.PageMargin * scale
+		else bounds.Max.Y - STYLE.BottomMargin * scale
 	local centre = (bounds.Min.X + bounds.Max.X) / 2 - width / 2
 	local left = centre
 	local side = hudRect(SIDE_PATH, bounds)
@@ -1177,6 +1205,18 @@ function Dialog.Place(self: Dialog, deltaTime: number, scale: number): ()
 		bottom = math.min(bottom, order.Min.Y - orderGap)
 	end
 	left = math.max(left, leftLimit(bottom))
+	-- Beside a page, a bottom corner often covers less of the panel than the centre (on a wide
+	-- screen it only clips the panel's edge, leaving the selected-recipe strip readable).
+	local page = if pageOpen then pageRect() else nil
+	if page then
+		local least = overlapArea(page, left, bottom, width, height)
+		for _, cornerLeft in { bounds.Max.X - gap - width, leftLimit(bottom) } do
+			local area = overlapArea(page, cornerLeft, bottom, width, height)
+			if area < least then
+				least, left = area, cornerLeft
+			end
+		end
+	end
 	local avoid = self.Avoid
 	local goalX, goalY = left, bottom
 	if avoid and overlaps(avoid, left, bottom, width, height) then
@@ -1185,8 +1225,16 @@ function Dialog.Place(self: Dialog, deltaTime: number, scale: number): ()
 		local top = if clock and clock > bounds.Min.Y then clock else bounds.Min.Y + STYLE.TopFallback * scale
 		top = math.max(top, menuHeaderEdge(bounds.Min.Y) or top)
 		local raised = top + STYLE.TopGap * scale + height
-		if not overlaps(avoid, centre, raised, width, height) then
-			goalX, goalY = centre, raised
+		local candidates = {
+			Vector2.new(centre, raised),
+			Vector2.new(leftLimit(bottom), bottom),
+			Vector2.new(bounds.Max.X - gap - width, bottom),
+		}
+		for _, candidate in candidates do
+			if not overlaps(avoid, candidate.X, candidate.Y, width, height) then
+				goalX, goalY = candidate.X, candidate.Y
+				break
+			end
 		end
 	end
 	local blend = 1 - math.exp(-deltaTime / STYLE.MoveSmoothing)

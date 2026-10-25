@@ -25,9 +25,13 @@ local DayCycle = {
 	StageFirstSpawnShare = 0.2,
 	-- BP_DailyCycle checks for the last departing guest every three seconds.
 	ClosingCheckSeconds = 3,
-	-- After closing time the bakery waits this long for the last guests, then closes anyway: a guest
-	-- still waiting for food (or stuck on the way out) must not keep the day open.
+	-- After closing time the bakery waits for the guests still inside, as BP_DailyCycle does: each of
+	-- them leaves on their own once served or out of patience, so the player can finish serving them.
+	-- Only what cannot end by itself is cut off after ClosingMaxSeconds: a protected introduction
+	-- guest, whose patience never runs out, and a body stuck on its way out.
 	ClosingMaxSeconds = 30,
+	-- Nothing keeps the day open longer: the longest patience (190) plus a meal and the walk out.
+	ClosingHardMaxSeconds = 240,
 	-- One shift represents the bakery's working day. Prep stays at opening time, Summary stays at
 	-- closing time, while the lighting moves farther into the evening.
 	OpenHour = 8,

@@ -194,12 +194,20 @@ function Lessons.Summary(cloud: any, session: any, page: string): Types.Tutorial
 		return goal
 	end
 	local ready = count >= 3 and count <= 5
+	-- Point at a dish that takes the tap: the grid's middle can be a locked one.
+	local pickable = if ready then nil else MenuPlan.Pickable(cloud, session)
 	local goal = State.Gui(
 		"next_menu",
 		if ready then "Your next menu is ready" else "Choose 3–5 recipes for tomorrow",
 		"Select recipes you want to sell. Next Day saves the menu and starts a new preparation period with no timer.",
-		if ready then "BakeryMenu.MainFrame.Header.Buttons.NextDay" else "Inventory.MainFrame.Container.Content"
+		if ready
+			then "BakeryMenu.MainFrame.Header.Buttons.NextDay"
+			elseif pickable then `Inventory.MainFrame.Container.Content.{pickable.id}`
+			else "Inventory.MainFrame.Container.Content"
 	)
+	if pickable and goal.target then
+		goal.target.control = "Scroll"
+	end
 	goal.topic = "NextDay"
 	return goal
 end

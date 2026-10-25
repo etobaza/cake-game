@@ -28,6 +28,7 @@ local DataClient = require(_Handlers.DataHandlerClient)
 local Press = require(_Shared.UI.Press)
 local Products = require(_Configs.Registries.Products)
 local StoreConfig = require(_Configs.Store)
+local Theme = require(_Shared.UI.Theme)
 local UIHandler = require(_Handlers.UIHandler)
 
 --[[ Constants ]]--
@@ -56,6 +57,8 @@ local MUTED_EDGE = Color3.fromRGB(80, 80, 80)
 local ICON_TO_SHINE = 0.85
 -- Seconds between Marketplace price reads; one is made when a screen showing prices opens.
 local PRICE_REFRESH = 60
+-- Seconds within which a second press on the same tile is the same tap.
+local PRESS_DEBOUNCE = 0.25
 
 --[[ Tables ]]--
 local StoreHandler = {
@@ -112,6 +115,29 @@ local function IconOf(row: Instance): ImageLabel?
 	created.ZIndex = shine.ZIndex
 	created.Parent = row
 	return created
+end
+
+-- A currency tile's Buy plate is under 30 pixels tall on phones. A transparent pad centred on the plate
+-- grows its pointer target to a touch-sized square without making the rest of the tile buy. Its size
+-- is a share of the plate, so the plate's UIScale ancestors do not need converting.
+local function TouchPad(buy: GuiObject): GuiObject
+	local pad = Instance.new("Frame")
+	pad.Name = "TouchPad"
+	pad.BackgroundTransparency = 1
+	pad.AnchorPoint = Vector2.new(0.5, 0.5)
+	pad.Position = UDim2.fromScale(0.5, 0.5)
+	-- Above the plate's Bg and Price, so the pad receives the press and sinks it from the plate.
+	pad.ZIndex = 10
+
+	local function fit(): ()
+		local drawn = buy.AbsoluteSize:Max(Vector2.one)
+		local minimum = Theme.ScreenScale.MinTouchPixels
+		pad.Size = UDim2.fromScale(math.max(1, minimum / drawn.X), math.max(1, minimum / drawn.Y))
+	end
+	fit()
+	buy:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
+	pad.Parent = buy
+	return pad
 end
 
 -- Every color on a Buy plate that says "green": the fill gradient and the outlines.
@@ -271,15 +297,23 @@ function StoreHandler.BindSection(self: StoreHandler, parent: Instance?, prefix:
 
 		local buy = row:FindFirstChild("Buy")
 		if buy and buy:IsA("GuiObject") then
+			local boughtAt = -math.huge
 			local function purchase(): ()
+				-- One release must not prompt twice if both the plate and its pad saw it.
+				if os.clock() - boughtAt < PRESS_DEBOUNCE then
+					return
+				end
+				boughtAt = os.clock()
 				self:Buy(entryId :: string)
 			end
 			Animate.Press(buy)
+			-- The plate keeps the gamepad binding; pointer presses land on its touch pad, which sinks
+			-- them from the plate, so one tap buys once. The rest of the tile does not buy.
 			Press.BindTap(buy, purchase)
-			-- A currency tile's Buy plate is under 30 pixels tall on phones, so the whole tile buys.
-			-- A press on the plate never reaches the tile; the plate stays the gamepad's stop.
-			Press.BindTap(row, purchase)
-			row.Selectable = false
+			local pad = TouchPad(buy)
+			Animate.Press(pad, buy)
+			Press.BindTap(pad, purchase)
+			pad.Selectable = false
 		end
 	end
 end
