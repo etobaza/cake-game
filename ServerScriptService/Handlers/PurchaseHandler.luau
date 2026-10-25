@@ -8,6 +8,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Signal = require(ReplicatedStorage.Shared.Libs.Signal)
 local LoggerUtil = require(ReplicatedStorage.Shared.Libs.Logger)
 local Products = require(ReplicatedStorage.Shared.Configs.Registries.Products)
+local AdminConfig = require(ReplicatedStorage.Shared.Configs.Admin)
 local DataHandler = require(ServerScriptService.Handlers.DataHandler)
 local Bus = require(ReplicatedStorage.Shared.Bus)
 
@@ -23,8 +24,9 @@ local PurchaseHandler = {
 	dependencies = { "DataHandler" },
 }
 
--- Signal fired when any purchase completes successfully
-PurchaseHandler.PurchaseCompleted = Signal() :: Signal.Signal<Player, number, boolean> -- player, productId, isGift
+-- Signal fired when any purchase completes successfully. `isFree` marks a tester's free grant (the
+-- admin panel's free purchases), which analytics must not count as revenue.
+PurchaseHandler.PurchaseCompleted = Signal() :: Signal.Signal<Player, number, boolean, boolean> -- player, productId, isGift, isFree
 -- Signal fired when a known product's purchase prompt is shown (player, productId)
 PurchaseHandler.PurchasePrompted = Signal() :: Signal.Signal<Player, number>
 
@@ -168,8 +170,8 @@ local function trackRobuxSpent(player: Player, spent: number)
 end
 
 -- Grant after durable receipt/ownership writes. Side effects (signals) are last.
-local function grantProduct(player: Player, productId: number, isGift: boolean)
-	PurchaseHandler.PurchaseCompleted:Fire(player, productId, isGift)
+local function grantProduct(player: Player, productId: number, isGift: boolean, isFree: boolean?)
+	PurchaseHandler.PurchaseCompleted:Fire(player, productId, isGift, isFree == true)
 	resolvePromise(player, productId)
 end
 
@@ -351,6 +353,29 @@ function PurchaseHandler.PurchaseProduct(_self: PurchaseHandler, player: Player,
 	local product = Products:GetByProductId(productId)
 	if not product then
 		MarketplaceService:PromptProductPurchase(player, productId)
+		return promise
+	end
+
+	-- A tester with free purchases on (admin panel) gets the product as if the receipt had landed,
+	-- through the same PurchaseCompleted grant, with no prompt and no spend.
+	if player:GetAttribute(AdminConfig.FreePurchaseAttribute) == true then
+		if product.productType == "permanent_devproduct" then
+			if ownsPermanent(player, product) then
+				rejectLater(key, "Already owned")
+				return promise
+			end
+			local data = DataHandler:GetData(player)
+			if not data then
+				rejectLater(key, "Profile not loaded")
+				return promise
+			end
+			if data.Cloud._productCache == nil then
+				data.Cloud._productCache = {}
+			end
+			data.Cloud._productCache[`owned_{product.id}`] = true
+		end
+		Logger:Info(`{player.Name} got {product.id} free (admin free purchases)`)
+		task.defer(grantProduct, player, productId, false, true)
 		return promise
 	end
 

@@ -14,6 +14,7 @@ local InputCues = require(ReplicatedStorage.Shared.Configs.InputCues)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
 local MenuPlan = require(ReplicatedStorage.Shared.Tutorial.MenuPlan)
 local Pages = require(script.Parent.Stores.Pages)
+local Press = require(script.Parent.Press)
 local UseData = require(script.Parent.Hooks.UseData)
 
 --[[ Constants ]]--
@@ -256,6 +257,14 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 			Pages.Close()
 		end,
 	})
+	-- The cross is under 20 pixels on a phone, so a touch pad around it takes pointer presses.
+	local pad = Press.TouchPad(close)
+	pad.Selectable = false
+	local resetPad = Animate.Press(pad, close, janitor)
+	janitor:Add(screen:GetPropertyChangedSignal("Enabled"):Connect(resetPad), "Disconnect")
+	janitor:Add(Press.BindTap(pad, function(): ()
+		Pages.Close()
+	end), "Destroy")
 end
 
 -- The HUD's alert mark on the Menu tab while an unlocked dish the player can make is left off

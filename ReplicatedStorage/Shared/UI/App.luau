@@ -24,6 +24,7 @@ local HudComponent = require(_Shared.UI.Components.Hud)
 local InputCue = require(_Shared.UI.InputCue)
 local InputCues = require(_Shared.Configs.InputCues)
 local Pages = require(_Shared.UI.Stores.Pages)
+local Press = require(_Shared.UI.Press)
 local Responsive = require(_Shared.UI.Responsive)
 local Scope = require(_Shared.UI.Scope)
 local StatusLayout = require(_Shared.UI.StatusLayout)
@@ -79,15 +80,22 @@ local function borrowClose(screen: ScreenGui, donor: GuiButton): GuiButton
 	local main = screen:FindFirstChild("MainFrame")
 	local host = (main and main:FindFirstChild("Header")) or main or screen
 	local wrapper = donor.Parent
+	local lent: GuiButton
 	if wrapper and wrapper:GetAttribute("CloseWrapper") then
 		local clone = wrapper:Clone()
 		clone.Parent = host
-		return clone:FindFirstChild(donor.Name) :: GuiButton
+		lent = clone:FindFirstChild(donor.Name) :: GuiButton
+	else
+		lent = donor:Clone()
+		lent.Parent = host
 	end
-	local clone = donor:Clone()
-	clone.Parent = host
+	-- The donor's touch pad answers the donor only; the copy is given its own when it is bound.
+	local pad = lent:FindFirstChild("TouchPad")
+	if pad then
+		pad:Destroy()
+	end
 
-	return clone
+	return lent
 end
 
 --[[ Handling ]]--
@@ -138,6 +146,27 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 	local bakeryMenu = root:WaitForChild("BakeryMenu", FIND_TIMEOUT) :: ScreenGui
 	assert(bakeryMenu and bakeryMenu:IsA("ScreenGui"), "[UI.App] StarterGui.BakeryMenu is missing")
 
+	--- A close button hides while the pages are locked and clears the open page. The authored cross is
+	--- under 20 pixels on a phone, so a touch pad around it takes pointer presses; B still closes the
+	--- page through NavigationHandler.
+	local function bindClose(close: GuiButton): ()
+		Animate.Press(close)
+		edit(close)({
+			Visible = function(): boolean
+				return not Pages.Locked()
+			end,
+			Activated = function()
+				Pages.Close()
+			end,
+		})
+		local pad = Press.TouchPad(close)
+		Animate.Press(pad, close)
+		Press.BindTap(pad, function()
+			Pages.Close()
+		end)
+		pad.Selectable = false
+	end
+
 	--- Visibility follows the store, and the screen's own close button clears it.
 	---
 	--- The ScreenGui is not bound straight to the store: it stays on while the panel springs away, or
@@ -180,16 +209,7 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 
 		donor = donor or close
 		closes[#closes + 1] = close
-
-		Animate.Press(close)
-		edit(close)({
-			Visible = function(): boolean
-				return not Pages.Locked()
-			end,
-			Activated = function()
-				Pages.Close()
-			end,
-		})
+		bindClose(close)
 	end
 
 	local scope = Scope.Run(function(): ()
@@ -302,16 +322,7 @@ return function(deps: Deps, root: Instance): (Flux.Node<any>, Mounted)
 
 			local lent = borrowClose(screen, donor)
 			closes[#closes + 1] = lent
-
-			Animate.Press(lent)
-			edit(lent)({
-				Visible = function(): boolean
-					return not Pages.Locked()
-				end,
-				Activated = function()
-					Pages.Close()
-				end,
-			})
+			bindClose(lent)
 		end
 
 		-- B closes a page (NavigationHandler). Its glyph is added after the lending above, so no

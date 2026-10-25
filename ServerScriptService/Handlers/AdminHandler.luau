@@ -67,7 +67,7 @@ local function inspect(target: Player): Reply
 		true,
 		`@{target.Name} • ID {target.UserId}\nCoins: {cloud.Cash} • Level: {cloud.Level} • XP: {cloud.XP}\nDay: {cloud.Day} • Phase: {session.Day.Phase} • Tutorial: {cloud.Tutorial.Status}\nHeld items: {#session.Hands} • Reset pending: {tostring(
 			cloud.ProgressResetPending
-		)}`
+		)} • Free purchases: {if target:GetAttribute(Config.FreePurchaseAttribute) == true then "ON" else "off"}`
 	)
 end
 
@@ -169,6 +169,15 @@ local function execute(action: string, target: Player, amount: number): Reply
 		DataHandler:ResendSnapshot(target)
 	elseif action == "resetProgress" then
 		return reply(true, DataHandler:RequestProgressReset(target))
+	elseif action == "freePurchases" then
+		local enabled = target:GetAttribute(Config.FreePurchaseAttribute) ~= true
+		target:SetAttribute(Config.FreePurchaseAttribute, if enabled then true else nil)
+		return reply(
+			true,
+			if enabled
+				then "Free purchases ON until they leave: Robux products are granted without a charge."
+				else "Free purchases off: purchases prompt for Robux again."
+		)
 	else
 		return reply(false, "Unknown action.")
 	end

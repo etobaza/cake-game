@@ -181,8 +181,8 @@ function AnalyticsHandler.OnStart(self: AnalyticsHandler): ()
 	PurchaseHandler.PurchasePrompted:Connect(function(player: Player, productId: number)
 		self:StoreStep(player, productId, "Prompted")
 	end)
-	PurchaseHandler.PurchaseCompleted:Connect(function(player: Player, productId: number, isGift: boolean)
-		if not isGift then
+	PurchaseHandler.PurchaseCompleted:Connect(function(player: Player, productId: number, isGift: boolean, isFree: boolean)
+		if not isGift and not isFree then
 			self:StoreStep(player, productId, "Purchased")
 		end
 	end)

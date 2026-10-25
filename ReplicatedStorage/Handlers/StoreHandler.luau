@@ -11,6 +11,7 @@
 
 --[[ Services ]]--
 local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
@@ -26,9 +27,9 @@ local Authored = require(_Shared.UI.Authored)
 local Bus = require(_Shared.Bus)
 local DataClient = require(_Handlers.DataHandlerClient)
 local Press = require(_Shared.UI.Press)
+local AdminConfig = require(_Configs.Admin)
 local Products = require(_Configs.Registries.Products)
 local StoreConfig = require(_Configs.Store)
-local Theme = require(_Shared.UI.Theme)
 local UIHandler = require(_Handlers.UIHandler)
 
 --[[ Constants ]]--
@@ -115,29 +116,6 @@ local function IconOf(row: Instance): ImageLabel?
 	created.ZIndex = shine.ZIndex
 	created.Parent = row
 	return created
-end
-
--- A currency tile's Buy plate is under 30 pixels tall on phones. A transparent pad centred on the plate
--- grows its pointer target to a touch-sized square without making the rest of the tile buy. Its size
--- is a share of the plate, so the plate's UIScale ancestors do not need converting.
-local function TouchPad(buy: GuiObject): GuiObject
-	local pad = Instance.new("Frame")
-	pad.Name = "TouchPad"
-	pad.BackgroundTransparency = 1
-	pad.AnchorPoint = Vector2.new(0.5, 0.5)
-	pad.Position = UDim2.fromScale(0.5, 0.5)
-	-- Above the plate's Bg and Price, so the pad receives the press and sinks it from the plate.
-	pad.ZIndex = 10
-
-	local function fit(): ()
-		local drawn = buy.AbsoluteSize:Max(Vector2.one)
-		local minimum = Theme.ScreenScale.MinTouchPixels
-		pad.Size = UDim2.fromScale(math.max(1, minimum / drawn.X), math.max(1, minimum / drawn.Y))
-	end
-	fit()
-	buy:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
-	pad.Parent = buy
-	return pad
 end
 
 -- Every color on a Buy plate that says "green": the fill gradient and the outlines.
@@ -310,7 +288,7 @@ function StoreHandler.BindSection(self: StoreHandler, parent: Instance?, prefix:
 			-- The plate keeps the gamepad binding; pointer presses land on its touch pad, which sinks
 			-- them from the plate, so one tap buys once. The rest of the tile does not buy.
 			Press.BindTap(buy, purchase)
-			local pad = TouchPad(buy)
+			local pad = Press.TouchPad(buy)
 			Animate.Press(pad, buy)
 			Press.BindTap(pad, purchase)
 			pad.Selectable = false
@@ -409,7 +387,9 @@ function StoreHandler.Buy(self: StoreHandler, entryId: string): ()
 		return
 	end
 
-	if entry.productId <= 0 or self.Sale[entryId] == false then
+	-- A tester with free purchases on (Configs/Admin) may take products that are off sale.
+	local free = Players.LocalPlayer:GetAttribute(AdminConfig.FreePurchaseAttribute) == true
+	if entry.productId <= 0 or (self.Sale[entryId] == false and not free) then
 		UIHandler:Toast(`{if entry.meta then entry.meta.name else entryId} is not on sale yet`)
 		return
 	end

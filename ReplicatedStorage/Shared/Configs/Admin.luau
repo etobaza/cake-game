@@ -20,6 +20,13 @@ export type Action = {
 }
 
 local actions: { Action } = {
+	{
+		id = "freePurchases",
+		label = "Free purchases on/off",
+		section = "Testing",
+		-- Kept short: the confirmation travels in one packet string.
+		warning = "While on, every Robux product they buy is granted free. Turns off when they leave.",
+	},
 	{ id = "addCash", label = "Add coins", section = "Resources", max = 100000000 },
 	{
 		id = "setCash",
@@ -102,6 +109,9 @@ return {
 	RequestCooldown = 0.4,
 	ConfirmationSeconds = 30,
 	AccessAttribute = "AdminPanelAccess",
+	-- Player attribute the server sets for a tester; PurchaseHandler grants instead of prompting while
+	-- it is true. Server-set only, so clients cannot turn it on for themselves.
+	FreePurchaseAttribute = "FreePurchases",
 	DisplayOrder = 100,
 	-- The panel toggle sits at the right end of Roblox's topbar row, clear of every HUD group. Touch
 	-- has no F4 key, so it drops the hint there and keeps a touch-sized height.

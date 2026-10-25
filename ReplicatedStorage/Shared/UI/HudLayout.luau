@@ -36,6 +36,11 @@ local HOTBAR_BOTTOM = 12
 local XP_GAP = 16
 -- RunControl's published bottom-right area of the live touch jump/run controls.
 local TOUCH_RESERVE = "TouchReserve"
+-- Roblox's dynamic thumbstick rests its ring in the bottom-left corner, where the coin plate sits. The
+-- ring's resting area, in pixels from the HUD's bottom-left corner, is kept on the HUD under this
+-- attribute, and the plate stands right of it (or above it, where the plate is lifted over the hotbar).
+local THUMBSTICK_RESERVE = "ThumbstickReserve"
+local THUMBSTICK_GAP = 8
 -- TopbarPlus's screen holding the left icon row (Daily Rewards, Codes, the group reward). Phones
 -- seat the clock at the row's end; the gap leaves room for the sun art reaching past its frame.
 local TOPBAR_SCREEN = "TopbarStandard"
@@ -75,6 +80,40 @@ local function touchReserve(hud: Instance): Vector2?
 	local run = runButton(hud)
 	local reserve = run and run:GetAttribute(TOUCH_RESERVE)
 	return if typeof(reserve) == "Vector2" then reserve else nil
+end
+
+local function thumbstickRing(hud: Instance): GuiObject?
+	local playerGui = hud:FindFirstAncestorOfClass("PlayerGui")
+	local touchGui = playerGui and playerGui:FindFirstChild("TouchGui")
+	local frame = touchGui and touchGui:FindFirstChild("TouchControlFrame")
+	local stick = frame and frame:FindFirstChild("DynamicThumbstickFrame")
+	local ring = stick and stick:FindFirstChild("ThumbstickStart")
+	return if ring and ring:IsA("GuiObject") then ring else nil
+end
+
+-- The resting ring's area, or nil without a shown thumbstick. `moved` while the ring is away from its
+-- rest: a touch puts it under the finger (offset from the top edge instead of the bottom one), and
+-- the plate must not chase the finger, so the caller keeps the last resting area.
+local function thumbstickReserve(hud: GuiObject, ring: GuiObject?): (Vector2?, boolean)
+	if not ring then
+		return nil, false
+	end
+	local current: Instance? = ring
+	while current and not current:IsA("PlayerGui") do
+		if current:IsA("GuiObject") and not current.Visible then
+			return nil, false
+		end
+		if current:IsA("LayerCollector") and not current.Enabled then
+			return nil, false
+		end
+		current = current.Parent
+	end
+	if ring.Position.Y.Scale ~= 1 then
+		return nil, true
+	end
+	local right = ring.AbsolutePosition.X + ring.AbsoluteSize.X - hud.AbsolutePosition.X
+	local top = hud.AbsolutePosition.Y + hud.AbsoluteSize.Y - ring.AbsolutePosition.Y
+	return Vector2.new(math.ceil(right), math.ceil(top)), false
 end
 
 local function gamepadHint(hud: Instance): GuiObject?
@@ -170,12 +209,16 @@ function HudLayout.Apply(hud: GuiObject): ()
 	local scale = HudLayout.Scale(size)
 	local logical = size / scale
 	local reserve = touchReserve(hud)
+	local stickReserve = hud:GetAttribute(THUMBSTICK_RESERVE)
+	local stick = if typeof(stickReserve) == "Vector2" then stickReserve / scale else nil
 	local hotbarLeft = (logical.X - HOTBAR_SIZE.X) / 2
-	-- The plate rests in the bottom-left corner on every device, as on desktop: Roblox's touch controls
-	-- never move it. Only a screen too narrow for it beside the hotbar lifts it above the hotbar.
-	local currencyLeft = EDGE
-	local currencyBottom = if currencyLeft + CURRENCY_SIZE.X > hotbarLeft
-		then HOTBAR_BOTTOM + HOTBAR_SIZE.Y + BUTTON_GAP
+	-- The plate rests in the bottom-left corner, beside the resting thumbstick ring on touch screens.
+	-- A screen too narrow for it beside the hotbar lifts it above the hotbar and above the ring.
+	local besideStick = if stick then math.max(EDGE, stick.X + THUMBSTICK_GAP) else EDGE
+	local lifted = besideStick + CURRENCY_SIZE.X > hotbarLeft
+	local currencyLeft = if lifted then EDGE else besideStick
+	local currencyBottom = if lifted
+		then math.max(HOTBAR_BOTTOM + HOTBAR_SIZE.Y + BUTTON_GAP, if stick then stick.Y + THUMBSTICK_GAP else 0)
 		else EDGE
 	-- The button column fits between the top edge and the plate; short screens shrink its buttons.
 	local columnRoom = logical.Y - currencyBottom - CURRENCY_SIZE.Y - EDGE * 2
@@ -314,6 +357,41 @@ function HudLayout.Bind(hud: GuiObject): any
 	if run then
 		janitor:Add(run:GetAttributeChangedSignal(TOUCH_RESERVE):Connect(apply), "Disconnect")
 	end
+	janitor:Add(hud:GetAttributeChangedSignal(THUMBSTICK_RESERVE):Connect(apply), "Disconnect")
+	-- The ring is Roblox's: it is rebuilt when the touch controls change, and it moves, hides and resizes
+	-- with them.
+	local stickJanitor = Janitor.new()
+	janitor:Add(stickJanitor, "Destroy")
+	local function measureStick(): ()
+		local area, moved = thumbstickReserve(hud, thumbstickRing(hud))
+		if not moved and hud:GetAttribute(THUMBSTICK_RESERVE) ~= area then
+			hud:SetAttribute(THUMBSTICK_RESERVE, area)
+		end
+	end
+	local function watchStick(): ()
+		stickJanitor:Cleanup()
+		local ring = thumbstickRing(hud)
+		if ring then
+			for _, property in { "Position", "AbsolutePosition", "AbsoluteSize", "Visible" } do
+				stickJanitor:Add(ring:GetPropertyChangedSignal(property):Connect(measureStick), "Disconnect")
+			end
+			local current = ring.Parent
+			while current and not current:IsA("PlayerGui") do
+				local property = if current:IsA("LayerCollector")
+					then "Enabled"
+					elseif current:IsA("GuiObject") then "Visible"
+					else nil
+				if property then
+					stickJanitor:Add(current:GetPropertyChangedSignal(property):Connect(measureStick), "Disconnect")
+				end
+				current = current.Parent
+			end
+			stickJanitor:Add(ring.AncestryChanged:Connect(function(): ()
+				task.defer(watchStick)
+			end), "Disconnect")
+		end
+		measureStick()
+	end
 	local hint = gamepadHint(hud)
 	local hintLayout = hint and hint:FindFirstChildOfClass("UIListLayout")
 	if hint and hintLayout and hint:FindFirstChildOfClass("UIScale") then
@@ -351,8 +429,14 @@ function HudLayout.Bind(hud: GuiObject): any
 				apply()
 			end
 		end), "Disconnect")
+		janitor:Add(playerGui.DescendantAdded:Connect(function(instance: Instance): ()
+			if instance.Name == "ThumbstickStart" then
+				watchStick()
+			end
+		end), "Disconnect")
 	end
 	watchTopbar()
+	watchStick()
 	janitor:LinkToInstance(hud)
 	HudLayout.Apply(hud)
 	return janitor

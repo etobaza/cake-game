@@ -14,6 +14,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --[[ Modules ]]--
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local Theme = require(script.Parent.Theme)
 
 --[[ Constants ]]--
 local TAP_DISTANCE = 10
@@ -101,6 +102,29 @@ function Press.SinkUnlessMouse(object: GuiObject): any
 	janitor:Add(UserInputService:GetPropertyChangedSignal("PreferredInput"):Connect(apply), "Disconnect")
 	janitor:LinkToInstance(object)
 	return janitor
+end
+
+--- A transparent pad centred on `object` that grows its pointer target to a touch-sized square without
+--- making anything around it pressable: a phone draws Buy plates and close crosses under 30 pixels.
+--- Its size is a share of the object, so the object's UIScale ancestors do not need converting. Bind the
+--- press to the pad; it sits above the object's art, so it receives the press and sinks it from the object.
+function Press.TouchPad(object: GuiObject): GuiObject
+	local pad = Instance.new("Frame")
+	pad.Name = "TouchPad"
+	pad.BackgroundTransparency = 1
+	pad.AnchorPoint = Vector2.new(0.5, 0.5)
+	pad.Position = UDim2.fromScale(0.5, 0.5)
+	pad.ZIndex = 10
+
+	local function fit(): ()
+		local drawn = object.AbsoluteSize:Max(Vector2.one)
+		local minimum = Theme.ScreenScale.MinTouchPixels
+		pad.Size = UDim2.fromScale(math.max(1, minimum / drawn.X), math.max(1, minimum / drawn.Y))
+	end
+	fit()
+	object:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
+	pad.Parent = object
+	return pad
 end
 
 --- Owns pointer and gamepad bindings until the returned Janitor or object is destroyed.
