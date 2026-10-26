@@ -2,7 +2,8 @@
 -- This data gets saved in to the cloud
 
 return {
-	Cash = 2500,
+	-- Lemon Cake's starting 5 at the x100 scale: below the first upgrade, which the first shift pays for.
+	Cash = 500,
 	-- Coin scale of this save (ServerScriptService/EconomyMigration). New profiles start at the current
 	-- version; a save without the key predates the x100 rescale and is migrated once on load.
 	EconomyVersion = 1,

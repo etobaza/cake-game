@@ -10,6 +10,7 @@
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextService = game:GetService("TextService")
 
 --[[ References ]]--
 local _Shared = ReplicatedStorage.Shared
@@ -48,6 +49,8 @@ local POP_FROM_GAIN = 1.12
 -- Delay between one HUD group arriving and the next: a small parade instead of one block.
 local INTRO_STAGGER = 0.08
 local QUEST_PRICE = HudConfig.QuestPrice
+-- Text size the quest price is measured at; its fitted size scales from this.
+local PRICE_MEASURE_SIZE = 100
 
 -- HUD groups that ride in from the screen edges on spawn and leave while a page is open, each
 -- through the edge it lives against. XP is a notification with its own slide, and Quests folds
@@ -110,6 +113,11 @@ export type Props = {
 	OnXPPlus: (() -> ())?,
 	OnQuestsToggle: (() -> ())?,
 }
+
+--[[ Tables ]]--
+-- One-line quest price bounds at PRICE_MEASURE_SIZE, measured once per text.
+local priceBounds: { [string]: Vector2 } = {}
+local measuringPrice: { [string]: boolean } = {}
 
 --[[ Private Functions ]]--
 -- Reads a Reactive<T> inside an effect: calls a function prop, unwraps a node, passes a value through.
@@ -230,6 +238,67 @@ local function fill(root: Instance, path: string, alpha: UITypes.Reactive<number
 	})
 end
 
+-- The UIScales `element` renders under, which press and pop springs animate.
+local function inheritedScale(element: Instance): number
+	local scale = 1
+	local current: Instance? = element
+	while current and not current:IsA("LayerCollector") do
+		local scaler = current:FindFirstChildOfClass("UIScale")
+		if scaler then
+			scale *= scaler.Scale
+		end
+		current = current.Parent
+	end
+	return scale
+end
+
+--- Sizes the quest price to one unwrapped line. TextScaled forces TextWrapped, and on some screens
+--- it picks a size the price misses by a fraction of a pixel, wrapping the "$" onto a line that
+--- overflows the badge. `labels` are the price and its `Inside` copy, kept at one size.
+local function fitPrice(price: TextLabel, labels: { TextLabel }): ()
+	for _, each in labels do
+		each.TextScaled = false
+		each.TextWrapped = false
+	end
+
+	local function fit(): ()
+		local text = price.Text
+		local bounds = priceBounds[text]
+		if bounds then
+			-- Unscaled, so a running spring does not refit the text every frame.
+			local box = price.AbsoluteSize / inheritedScale(price)
+			local size = math.max(1, math.floor(PRICE_MEASURE_SIZE * math.min(box.X / bounds.X, box.Y / bounds.Y)))
+			for _, each in labels do
+				each.TextSize = size
+			end
+			return
+		end
+		if text == "" or measuringPrice[text] then
+			return
+		end
+		measuringPrice[text] = true
+		task.spawn(function(): ()
+			local params = Instance.new("GetTextBoundsParams")
+			params.Text = text
+			params.Font = price.FontFace
+			params.Size = PRICE_MEASURE_SIZE
+			params.Width = math.huge
+			local ok, measured = pcall(TextService.GetTextBoundsAsync, TextService, params)
+			measuringPrice[text] = nil
+			if not ok then
+				warn(`[HydrateHud] could not measure the quest price '{text}': {measured}`)
+				return
+			end
+			priceBounds[text] = measured
+			fit()
+		end)
+	end
+
+	Flux.cleanup(price:GetPropertyChangedSignal("Text"):Connect(fit))
+	Flux.cleanup(price:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit))
+	fit()
+end
+
 --[[ Handling ]]--
 --- Binds `hud` -- the HUD frame inside the authored UI screen -- to the props.
 --- Call inside a Flux.scope; every binding is torn down with it.
@@ -262,6 +331,8 @@ return function(hud: Instance, props: Props): ()
 		questCost.AutomaticSize = Enum.AutomaticSize.None
 		questCost.Size = QUEST_PRICE.LabelSize
 		questCost.TextColor3 = QUEST_PRICE.TextColor
+		local inside = questCost:FindFirstChild("Inside")
+		fitPrice(questCost, if inside and inside:IsA("TextLabel") then { questCost, inside } else { questCost })
 		for _, child in questCost:GetDescendants() do
 			if child:IsA("UIStroke") then
 				child.Color = QUEST_PRICE.TextColor
