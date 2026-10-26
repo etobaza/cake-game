@@ -15,13 +15,13 @@ export type Item = {
 	Entry: string,
 	-- Copies of this item across all servers, ever.
 	Stock: number,
-	-- Model in ReplicatedStorage.MonetizationAssets cloned into every bakery while this item is
+	-- Model in Shared/MonetizationAssets (Assets.Models.Monetization) cloned into every bakery while this item is
 	-- the displayed drop.
 	Showcase: string,
 	-- Showcase pivot relative to each bakery's Entrance anchor. Every bakery authors its own
 	-- Entrance, so this follows the rotated copies on the other side of the street.
 	Placement: CFrame,
-	-- Optional SurfaceAppearance in MonetizationAssets put on the owner's ovens, and where those
+	-- Optional SurfaceAppearance in Shared/MonetizationAssets put on the owner's ovens, and where those
 	-- ovens are: every Model named OvenModel under OvenRoot (the authored oven and both upgrades).
 	OvenSurface: string?,
 	OvenRoot: { string }?,
@@ -61,7 +61,6 @@ local Limited = {
 		{ Item = "golden_oven", StartsAt = 1792540800, EndsAt = 1795219200 },
 	} :: { Drop },
 
-	AssetsFolder = "MonetizationAssets",
 	-- Workspace folder the showcases are cloned into; the authored world package stays untouched.
 	ShowcaseFolder = "LimitedShowcases",
 	-- Attributes on each showcase model. The server writes them, the client draws from them.

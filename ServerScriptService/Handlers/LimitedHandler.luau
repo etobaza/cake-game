@@ -37,6 +37,7 @@ local Config = require(_Configs.Limited)
 local DataHandler = require(_Handlers.DataHandler)
 local DataList = require(_Shared.DataList)
 local LoggerUtil = require(_Libs.Logger)
+local MonetizationAssets = require(_Shared.MonetizationAssets)
 local Products = require(_Configs.Registries.Products)
 local PurchaseHandler = require(_Handlers.PurchaseHandler)
 local UpgradeHandler = require(_Handlers.UpgradeHandler)
@@ -236,10 +237,9 @@ end
 
 --- Clones the item's showcase into every bakery, next to that bakery's Entrance anchor.
 function LimitedHandler.SpawnShowcases(self: LimitedHandler, item: ItemState): ()
-	local assets = ReplicatedStorage:FindFirstChild(Config.AssetsFolder)
-	local template = assets and assets:FindFirstChild(item.Config.Showcase)
+	local template = MonetizationAssets.Find(item.Config.Showcase)
 	if not template or not template:IsA("Model") then
-		Logger:Warn(`Showcase {item.Config.Showcase} is missing from {Config.AssetsFolder}`)
+		Logger:Warn(`Showcase {item.Config.Showcase} is missing from {MonetizationAssets.Path}`)
 		return
 	end
 
@@ -496,9 +496,8 @@ function LimitedHandler.ApplySkinFor(self: LimitedHandler, player: Player): ()
 end
 
 function LimitedHandler.ApplySkin(self: LimitedHandler, bakery: Folder, item: ItemState): ()
-	local assets = ReplicatedStorage:FindFirstChild(Config.AssetsFolder)
 	local surfaceName = item.Config.OvenSurface
-	local template = assets and surfaceName and assets:FindFirstChild(surfaceName)
+	local template = if surfaceName then MonetizationAssets.Find(surfaceName) else nil
 	local rootPath = item.Config.OvenRoot
 	local root = rootPath and resolvePath(bakery, rootPath)
 	if not template or not template:IsA("SurfaceAppearance") or not root then

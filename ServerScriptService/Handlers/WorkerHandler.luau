@@ -34,18 +34,20 @@ local DataHandler = require(_Handlers.DataHandler)
 local DataList = require(_Shared.DataList)
 local Guest = require(_CustomerView.Guest)
 local LoggerUtil = require(_Shared.Libs.Logger)
+local MonetizationAssets = require(_Shared.MonetizationAssets)
 local TableHandler = require(_Handlers.TableHandler)
+local Theme = require(_Shared.UI.Theme)
 local TutorialPolicy = require(_Shared.TutorialPolicy)
 local UpgradeHandler = require(_Handlers.UpgradeHandler)
 
 --[[ Constants ]]--
 local RECONCILE_SECONDS = 2
 local APPROACH_DISTANCE = 2.5
-local LABEL_COLOR = Color3.fromRGB(255, 255, 255)
-local PAID_LABEL_COLOR = Color3.fromRGB(255, 214, 90)
 
 --[[ Private Variables ]]--
 local Logger = LoggerUtil.new({ name = "WorkerHandler" })
+-- Accessory templates already reported missing, so the console names each one once.
+local warnedTemplates: { [string]: boolean } = {}
 
 --[[ Types ]]--
 type Body = {
@@ -104,89 +106,200 @@ local function approach(from: Vector3, target: Vector3): Vector3
 	return Vector3.new(stop.X, from.Y, stop.Z)
 end
 
-local function addLabel(head: BasePart, text: string, paid: boolean): ()
-	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "WorkerLabel"
-	billboard.Size = UDim2.fromOffset(140, 30)
-	billboard.StudsOffset = Vector3.new(0, 2.2, 0)
-	billboard.MaxDistance = 60
-	billboard.LightInfluence = 0
-	billboard.Parent = head
+-- World height of a part's highest point, whatever its rotation.
+local function topOf(part: BasePart): number
+	local frame, half = part.CFrame, part.Size / 2
+	local reach = math.abs(frame.RightVector.Y) * half.X
+		+ math.abs(frame.UpVector.Y) * half.Y
+		+ math.abs(frame.LookVector.Y) * half.Z
+	return frame.Position.Y + reach
+end
 
+-- The top of the head and of what is worn on it (an accessory whose handle attaches to one of the
+-- head's attachments, such as a hat). Back-worn tools and held props are left out, so a mop handle
+-- sticking up behind the shoulders does not lift the tag.
+local function headTop(rig: Model, head: BasePart): number
+	local top = topOf(head)
+	for _, accessory in rig:GetChildren() do
+		local handle = if accessory:IsA("Accessory") then accessory:FindFirstChild("Handle") else nil
+		if not handle or not handle:IsA("BasePart") then
+			continue
+		end
+		for _, child in handle:GetChildren() do
+			if child:IsA("Attachment") and head:FindFirstChild(child.Name) then
+				top = math.max(top, topOf(handle))
+				break
+			end
+		end
+	end
+	return top
+end
+
+-- A tag line: bare text in the HUD's font, in a band of the tag's height, with a thick dark outline
+-- when `outlined`.
+local function addTagLine(
+	billboard: BillboardGui,
+	name: string,
+	text: string,
+	top: number,
+	height: number,
+	outlined: boolean
+): TextLabel
+	local tag = Config.Tag
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.fromScale(1, 1)
+	label.Name = name
+	label.AnchorPoint = Vector2.new(0.5, 0.5)
+	label.Position = UDim2.fromScale(0.5, top + height / 2)
+	label.Size = UDim2.fromScale(0.94, height * 0.86)
 	label.BackgroundTransparency = 1
 	label.Text = text
 	label.TextScaled = true
-	label.Font = Enum.Font.FredokaOne
-	label.TextColor3 = if paid then PAID_LABEL_COLOR else LABEL_COLOR
+	label.TextWrapped = true
+	label.FontFace = Theme.Fonts.ExtraBold
+	label.TextColor3 = tag.Text
+	label.ZIndex = 1
 	label.Parent = billboard
-
-	local stroke = Instance.new("UIStroke")
-	stroke.Thickness = 2
-	stroke.Color = Color3.fromRGB(70, 35, 15)
-	stroke.Parent = label
+	if outlined then
+		local outline = Instance.new("UIStroke")
+		outline.StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize
+		outline.Thickness = tag.OutlineScale
+		outline.Color = tag.Outline
+		outline.LineJoinMode = Enum.LineJoinMode.Round
+		outline.Parent = label
+	end
+	return label
 end
 
-local function addAura(root: BasePart): ()
+-- The name tag: the name over a caption saying what the worker does, sized in studs over the top
+-- of the hat (read once the accessories are on). Paid workers' name gets the holographic gradient
+-- over a soft glow; WorkerTagHandler slides both gradients on each client.
+local function addLabel(rig: Model, head: BasePart, worker: Config.Worker, paid: boolean): ()
+	local tag = Config.Tag
+	local top = headTop(rig, head)
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "WorkerLabel"
+	billboard.Size = UDim2.fromScale(tag.Size.X, tag.Size.Y)
+	billboard.StudsOffsetWorldSpace = Vector3.new(0, top - head.Position.Y + tag.Gap + tag.Size.Y / 2, 0)
+	billboard.MaxDistance = tag.MaxDistance
+	billboard.LightInfluence = 0
+	billboard.ClipsDescendants = false
+	billboard.Adornee = head
+	billboard.Parent = head
+
+	local nameShare = tag.NameShare
+	if paid then
+		local glow = Instance.new("ImageLabel")
+		glow.Name = "Glow"
+		glow.AnchorPoint = Vector2.new(0.5, 0.5)
+		glow.Position = UDim2.fromScale(0.5, nameShare / 2)
+		glow.Size = UDim2.fromScale(tag.GlowSize.X, tag.GlowSize.Y * nameShare)
+		glow.BackgroundTransparency = 1
+		glow.Image = tag.Glow
+		glow.ImageTransparency = tag.GlowTransparency
+		glow.ZIndex = 0
+		glow.Parent = billboard
+		local glowGradient = Instance.new("UIGradient")
+		glowGradient.Name = tag.HoloName
+		glowGradient.Color = Config.HoloColors(-tag.Holo.GlowLag, tag.Holo.GlowSaturation)
+		glowGradient.Parent = glow
+	end
+
+	local label = addTagLine(billboard, "Label", worker.Label, 0, nameShare, true)
+	if paid then
+		local gradient = Instance.new("UIGradient")
+		gradient.Name = tag.HoloName
+		gradient.Color = Config.HoloColors(0, tag.Holo.Saturation)
+		gradient.Parent = label
+	end
+	local roleCentre = nameShare + (1 - nameShare) / 2
+	local chip = Instance.new("Frame")
+	chip.Name = "RoleChip"
+	chip.AnchorPoint = Vector2.new(0.5, 0.5)
+	chip.Position = UDim2.fromScale(0.5, roleCentre)
+	chip.Size = UDim2.fromScale(tag.RoleChipSize.X, tag.RoleChipSize.Y)
+	chip.BackgroundColor3 = tag.RoleChip
+	chip.BackgroundTransparency = tag.RoleChipTransparency
+	chip.ZIndex = 0
+	chip.Parent = billboard
+	local chipCorner = Instance.new("UICorner")
+	chipCorner.CornerRadius = Theme.Corners.Pill
+	chipCorner.Parent = chip
+	local role = addTagLine(billboard, "Role", worker.Role, nameShare, 1 - nameShare, false)
+	role.Size = UDim2.fromScale(tag.RoleChipSize.X - 0.1, tag.RoleChipSize.Y * 0.8)
+	role.TextColor3 = tag.RoleText
+end
+
+-- Paid workers stand in a soft pool of golden light on the floor, with a few star sparkles drifting
+-- up around the body. The pool's copies cross-fade, so it holds still but breathes. It floats a
+-- little over the feet, so a raised floor part (a build placeholder plank) does not cover it.
+local function addAura(root: BasePart, humanoid: Humanoid): ()
+	local aura = Config.Aura
 	local attachment = Instance.new("Attachment")
 	attachment.Name = "WorkerAura"
+	attachment.Position = Vector3.new(0, -(root.Size.Y / 2 + humanoid.HipHeight) + aura.PoolLift, 0)
 	attachment.Parent = root
 
-	local sparkles = Instance.new("ParticleEmitter")
-	sparkles.Name = "Sparkles"
-	sparkles.Texture = Config.AuraSparkle
-	sparkles.Rate = 5
-	sparkles.Lifetime = NumberRange.new(0.8, 1.4)
-	sparkles.Speed = NumberRange.new(0.5, 1.2)
-	sparkles.SpreadAngle = Vector2.new(180, 180)
-	sparkles.Rotation = NumberRange.new(0, 360)
-	sparkles.LightEmission = 1
-	sparkles.LightInfluence = 0
-	sparkles.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0),
-		NumberSequenceKeypoint.new(0.3, 0.35),
-		NumberSequenceKeypoint.new(1, 0),
-	})
-	sparkles.Color = ColorSequence.new(Color3.fromRGB(255, 226, 140))
-	sparkles.Shape = Enum.ParticleEmitterShape.Cylinder
-	sparkles.ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface
-	sparkles.Parent = attachment
-
-	local glow = Instance.new("ParticleEmitter")
-	glow.Name = "Glow"
-	glow.Texture = Config.AuraGlow
-	glow.Rate = 1
-	glow.Lifetime = NumberRange.new(2)
-	glow.Speed = NumberRange.new(0)
-	glow.LockedToPart = true
-	glow.LightEmission = 1
-	glow.LightInfluence = 0
-	glow.ZOffset = -1
-	glow.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 4.5),
-		NumberSequenceKeypoint.new(0.5, 5.2),
-		NumberSequenceKeypoint.new(1, 4.5),
-	})
-	glow.Transparency = NumberSequence.new({
+	local pool = Instance.new("ParticleEmitter")
+	pool.Name = "Pool"
+	pool.Texture = aura.Pool
+	pool.Orientation = Enum.ParticleOrientation.VelocityPerpendicular
+	pool.EmissionDirection = Enum.NormalId.Top
+	pool.Speed = NumberRange.new(0.001)
+	pool.LockedToPart = true
+	pool.Rate = 1.2
+	pool.Lifetime = NumberRange.new(2.5)
+	pool.Rotation = NumberRange.new(0, 360)
+	pool.Size = NumberSequence.new(aura.PoolSize * 0.9, aura.PoolSize)
+	pool.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(0.5, 0.75),
+		NumberSequenceKeypoint.new(0.5, 0.1),
 		NumberSequenceKeypoint.new(1, 1),
 	})
-	glow.Color = ColorSequence.new(Color3.fromRGB(255, 200, 90))
-	glow.Parent = attachment
+	pool.Color = ColorSequence.new(aura.Color)
+	pool.LightEmission = 1
+	pool.LightInfluence = 0
+	pool.Brightness = 3
+	pool.ZOffset = 0.5
+	pool.Parent = attachment
+
+	-- From the surface of a cylinder around the root, so they rise beside the body, not out of it.
+	local sparkles = Instance.new("ParticleEmitter")
+	sparkles.Name = "WorkerSparkles"
+	sparkles.Texture = aura.Sparkle
+	sparkles.Shape = Enum.ParticleEmitterShape.Cylinder
+	sparkles.ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface
+	sparkles.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
+	sparkles.EmissionDirection = Enum.NormalId.Top
+	sparkles.Rate = 3
+	sparkles.Lifetime = NumberRange.new(1.2, 1.8)
+	sparkles.Speed = NumberRange.new(0.3, 0.6)
+	sparkles.Acceleration = Vector3.new(0, 1.5, 0)
+	sparkles.Rotation = NumberRange.new(0, 360)
+	sparkles.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0),
+		NumberSequenceKeypoint.new(0.25, 0.45),
+		NumberSequenceKeypoint.new(1, 0),
+	})
+	sparkles.Color = ColorSequence.new(aura.Color)
+	sparkles.LightEmission = 1
+	sparkles.LightInfluence = 0
+	sparkles.Brightness = 3
+	sparkles.Parent = root
 end
 
--- Hats, tools and extras are Accessory templates in MonetizationAssets; a missing one is simply not
--- worn.
+-- Hats, tools and extras are Accessory templates in Shared/MonetizationAssets; a missing one is not
+-- worn. The folder is authored content (not on disk), so a place whose Assets package lacks it still
+-- runs the synced code and leaves the workers bare; the warning says so once per template.
 local function wear(humanoid: Humanoid, templateName: string?): ()
 	if not templateName then
 		return
 	end
-	local assets = ReplicatedStorage:FindFirstChild("MonetizationAssets")
-	local template = assets and assets:FindFirstChild(templateName)
+	local template = MonetizationAssets.Find(templateName)
 	if template and template:IsA("Accessory") then
 		humanoid:AddAccessory(template:Clone())
+	elseif not warnedTemplates[templateName] then
+		warnedTemplates[templateName] = true
+		Logger:Warn(`Worker accessory {templateName} is missing from {MonetizationAssets.Path}`)
 	end
 end
 
@@ -200,9 +313,8 @@ local function holdTool(guest: Guest.Guest, toolName: string?, working: boolean)
 	end
 	local wanted = if working then `{toolName}Held` else toolName
 	local other = if working then toolName else `{toolName}Held`
-	local assets = ReplicatedStorage:FindFirstChild("MonetizationAssets")
 	-- Without the other template the tool simply stays where it is.
-	if guest.Model:FindFirstChild(wanted) or not (assets and assets:FindFirstChild(wanted)) then
+	if guest.Model:FindFirstChild(wanted) or not MonetizationAssets.Find(wanted) then
 		return
 	end
 	local current = guest.Model:FindFirstChild(other)
@@ -361,10 +473,10 @@ function WorkerHandler.Spawn(self: WorkerHandler, player: Player, crew: Crew, ki
 	end
 	local head = rig:FindFirstChild("Head")
 	if head and head:IsA("BasePart") then
-		addLabel(head, worker.Label, paid)
+		addLabel(rig, head, worker, paid)
 	end
 	if paid then
-		addAura(guest.Root)
+		addAura(guest.Root, humanoid)
 	end
 	rig:SetAttribute("Worker", kind)
 	rig:SetAttribute("OwnerUserId", player.UserId)

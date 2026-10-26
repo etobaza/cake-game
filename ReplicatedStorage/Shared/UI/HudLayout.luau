@@ -4,6 +4,7 @@
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
 
 --[[ Modules ]]--
 local CashBoost = require(ReplicatedStorage.Shared.Configs.CashBoost)
@@ -27,6 +28,10 @@ local QUEST_ARROW = 44
 -- The 2x Cash button (CashBoostHandler) rests in the top-right corner. Phones lift the quests to the
 -- top edge, so there it stands just left of them instead of over their caption and price.
 local BOOST_SIZE = Vector2.new(120, 76)
+-- Screen pixels left free at the top-right for Roblox's player list on desktops. The list keeps a
+-- fixed pixel width that game scripts cannot read; this fits it without leaderstats columns (add a
+-- column's width here if the game ever adds leaderstats).
+local PLAYER_LIST_RESERVE = 200
 local BOOST_EDGE = 8
 local BOOST_GAP = 8
 -- HydrateHud sets this on the Quests group: "Hidden" while the introduction has not revealed the
@@ -288,9 +293,17 @@ function HudLayout.Apply(hud: GuiObject): ()
 			elseif questsAway == "Folded" then EDGE + arrowSide + BOOST_GAP
 			else EDGE + QUESTS_SIZE.X + BOOST_GAP
 		local boostTop = if besideQuests then EDGE else BOOST_EDGE
-		-- Its pulse is a UIScale, so the resting rectangle is written directly.
+		-- Its press spring is a UIScale, so the resting rectangle is written directly.
+		-- Desktops draw Roblox's player list in the top-right corner, so there the button stands just
+		-- left of the list's reserved width instead of under it.
+		local playerList = not compact and StarterGui:GetCoreGuiEnabled(Enum.CoreGuiType.PlayerList)
 		boost.AnchorPoint = Vector2.new(1, 0)
-		boost.Position = UDim2.new(1, -boostRight * scale, 0, boostTop * scale)
+		boost.Position = UDim2.new(
+			1,
+			-boostRight * scale - (if playerList then PLAYER_LIST_RESERVE else 0),
+			0,
+			boostTop * scale
+		)
 		boost.Size = UDim2.fromOffset(BOOST_SIZE.X * scale, BOOST_SIZE.Y * scale)
 	end
 	OrderLayout.Apply(hud, scale, reserve)

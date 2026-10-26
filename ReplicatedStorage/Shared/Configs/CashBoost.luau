@@ -13,15 +13,32 @@ local CashBoost = {
 	SaveInterval = 30,
 
 	-- HUD button: the authored side Shop button's icon and label only (its tile and input cue are
-	-- dropped). Shared/UI/HudLayout places it in the top-right corner, beside the quests on phones.
+	-- dropped). Shared/UI/HudLayout places it in the top-right corner, left of the player list on desktops.
 	Button = {
 		Template = { "HUD", "SideBtns", "Shop" },
 		Name = "CashBoost",
 		Icon = "rbxassetid://109504819496800",
-		PulseScale = 0.06,
-		PulsePeriod = 1.4,
 		IdleText = "2x Cash",
 		ActiveColor = Color3.fromRGB(120, 255, 120),
+		-- While the offer is up, the Store's shine rays turn behind the coin.
+		Rays = "rbxassetid://80513051336918",
+		-- Ray side as a share of the button's height, turn speed in degrees per second.
+		RaysSize = 1.6,
+		RaysSpeed = 35,
+		RaysColor = Color3.fromRGB(255, 200, 40),
+		RaysTransparency = 0,
+		-- Idle: the coin rocks gently and hops every HopPeriod seconds, rising HopHeight of the button's
+		-- height and growing by HopScale at the top of the hop.
+		TiltDegrees = 5,
+		TiltPeriod = 2.2,
+		HopPeriod = 2.6,
+		HopSeconds = 0.5,
+		HopHeight = 0.12,
+		HopScale = 0.12,
+		-- A tap pops the button and shakes the coin, decaying over TapSeconds; the rays spin faster.
+		TapSeconds = 0.6,
+		TapDegrees = 16,
+		TapRaysBoost = 5,
 	},
 }
 
