@@ -62,3 +62,21 @@ Use case: stylized-concept. Asset type: one Roblox bakery game UI icon for the "
 ## Arrow generation prompt
 
 Use case: stylized-concept. Asset type: one Roblox bakery game UI icon, transparent PNG. Primary request: a bold "go forward" double chevron arrow pointing to the right: two chunky rounded chevrons (like >>) side by side, the front one slightly larger, filled warm cream-white #FFF6E0 with a soft top gloss highlight and a light orange-gold inner rim #EEA54B. Chunky hand-painted cartoon game UI style matching the two attached reference images: bold dark cocoa-brown outer outline #5F3333 around each chevron, broad clean forms, restrained glossy highlights and subtle volume. Front-facing, centered, full uncropped silhouette filling about 80 percent of a square canvas. Readable when scaled down to 32 px on a bright green button. Actual transparent background with clean alpha edges, no surrounding button/card/circle/shadow plate, no scene, no lettering, no numbers, no watermark, no other objects. Generate a single polished production icon.
+
+# Worker, boost and limited product icons
+
+Creator Dashboard icons for the four products that still showed Roblox's grey placeholders on 2026-10-27 (the passes shared `133448903949274`, the two developer products `88963008124478`). Each is a 512 by 512 transparent PNG, trimmed and centred with a 6 percent margin. They are not used in game; upload each one on its product's Creator Dashboard page.
+
+- `hire-helper.png` (`pass_helper`, `2046249065`) and `auto-cleaner.png` (`pass_cleaner`, `2047982350`): the in-game Store tile art (`rbxassetid://76365950185800`, `rbxassetid://125288289282098`) taken from its 420 px Roblox thumbnail and upscaled, so the Dashboard matches the Store.
+- `cash-boost-2x.png` (`boost_cash_2x`, `3720887751`): a gold coin embossed with a green "2x" over a small coin pile.
+- `limited-golden-oven.png` (`limited_slot`, `3720767346`): the Golden Oven drop, a gold-brick oven with a clock chimney, a fire mouth and three magenta gems, drawn after a capture of the `GoldenOvenShowcase` model.
+
+The last two were generated with the Codex CLI image generator on 2026-10-27, with the existing Dashboard product icons (and, for the oven, the in-game capture) attached as references.
+
+## 2x Cash generation prompt
+
+It is the Roblox developer-product icon for "2x Cash", a 15-minute double-coins boost in a cosy cartoon bakery game. Subject: a big shiny gold coin standing slightly tilted with a bold chunky green "2x" embossed on its face, a small pile of gold coins at its base, a few sparkles. The only text in the whole image is "2x", spelled exactly. Style: match the attached store icons exactly (the gold coin stacks there are the same family) - glossy hand-painted mobile game icon, thick dark brown outline, warm saturated colours, soft highlights, centred, fills about 80% of the square. No other text, no background scenery, no frame or badge behind it. 1024x1024 PNG, transparent background.
+
+## Golden Oven generation prompt
+
+It is the Roblox developer-product icon for "Golden Oven", a limited item in a cosy cartoon bakery game. Subject: a small arched brick bakery oven made entirely of shiny gold, with a round clock on the chimney, a glowing warm orange fire mouth, three magenta ruby gems set in the gold bricks (one on top, one on each side), a few gold sparkles and a soft golden glow around it. The attached capture shows the in-game model to copy the design from. Style: match the attached store and pass icons exactly - glossy hand-painted mobile game icon, thick dark brown outline around the whole object, warm saturated colours, soft highlights, centred, the object fills about 80% of the square, slight 3/4 view. No text, no letters, no numbers, no background scenery, no frame or badge behind it. 1024x1024 PNG, transparent background.
