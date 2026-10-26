@@ -45,6 +45,34 @@ function Resolve-Definitions {
     throw "No Roblox definitions file found. Run scripts/setup-zed.ps1, open a Luau file in VS Code/Cursor, or pass -Definitions <path>."
 }
 
+# luau-lsp and Selene cannot open paths with non-ASCII characters on Windows (the project lives
+# under the localized OneDrive Documents folder), and the 8.3 short path does not help because luau-lsp canonicalises
+# its working directory. Run them through an ASCII junction in %TEMP% that points here.
+function Resolve-AnalysisRoot {
+    if ($projectRoot -notmatch "[^\x00-\x7F]") {
+        return $projectRoot
+    }
+
+    $safeName = ((Split-Path -Leaf $projectRoot) -replace "[^A-Za-z0-9_-]", "_")
+    $junction = Join-Path $env:TEMP "luau-check\$safeName"
+    if (Test-Path -LiteralPath $junction) {
+        $existing = Get-Item -LiteralPath $junction -Force
+        # Compare normalised paths: a junction target can come back with a "\\?\" prefix or a trailing
+        # backslash, and -eq already ignores case.
+        $target = "$(@($existing.Target)[0])" -replace "^\\\\\?\\", ""
+        $sameTarget = $target.TrimEnd("\") -eq "$projectRoot".TrimEnd("\")
+        if ($existing.LinkType -eq "Junction" -and $sameTarget) {
+            return $junction
+        }
+        # Never clear this path with Remove-Item -Recurse: on a junction it deletes the target's files.
+        throw "Path $junction already exists and is not a junction to $projectRoot. Remove it with 'cmd /c rmdir `"$junction`"' and run again."
+    }
+
+    New-Item -ItemType Directory -Path (Split-Path -Parent $junction) -Force | Out-Null
+    New-Item -ItemType Junction -Path $junction -Target $projectRoot | Out-Null
+    return $junction
+}
+
 function Invoke-Step {
     param(
         [Parameter(Mandatory = $true)][string]$Name,
@@ -61,7 +89,8 @@ function Invoke-Step {
 Push-Location -LiteralPath $projectRoot
 try {
     $definitionsPath = Resolve-Definitions -Requested $Definitions
-    $roots = $sourceRoots | Where-Object { Test-Path -LiteralPath (Join-Path $projectRoot $_) -PathType Container }
+    $roots = @($sourceRoots | Where-Object { Test-Path -LiteralPath (Join-Path $projectRoot $_) -PathType Container })
+    $analysisRoot = Resolve-AnalysisRoot
 
     Invoke-Step -Name "Sourcemap" -Action {
         & (Join-Path $projectRoot ".vscode\generate-sourcemap.ps1")
@@ -69,7 +98,13 @@ try {
     }
 
     Invoke-Step -Name "Selene" -Action {
-        & selene .
+        Push-Location -LiteralPath $analysisRoot
+        try {
+            & selene .
+        }
+        finally {
+            Pop-Location
+        }
     }
 
     # Every first-party module is strict; vendored code is exempt through the analyzer's own ignore globs.
@@ -94,12 +129,34 @@ try {
     }
 
     Invoke-Step -Name "Luau analysis (luau-lsp $(& luau-lsp --version))" -Action {
-        & luau-lsp analyze `
-            --platform roblox `
-            --definitions $definitionsPath `
-            --sourcemap sourcemap.json `
-            --settings .vscode/settings.json `
-            @roots
+        Push-Location -LiteralPath $analysisRoot
+        $previousPreference = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        try {
+            $output = @(& luau-lsp analyze `
+                    --platform roblox `
+                    --definitions $definitionsPath `
+                    --sourcemap sourcemap.json `
+                    --settings .vscode/settings.json `
+                    @roots 2>&1 | ForEach-Object { "$_" })
+            $exitCode = $LASTEXITCODE
+        }
+        finally {
+            $ErrorActionPreference = $previousPreference
+            Pop-Location
+        }
+        $output | ForEach-Object { Write-Host $_ }
+
+        # luau-lsp reports an unreadable project as one line and analyses nothing, so a run that only
+        # failed to load must not pass as a clean or ordinary type-error result.
+        $fatal = @($output | Where-Object { $_ -match "path does not exist|Failed to load sourcemap" })
+        if ($fatal.Count -gt 0) {
+            throw "luau-lsp could not read the project; the analysis did not run"
+        }
+        # A file in the sourcemap prints its instance path in brackets before the position; others do not.
+        $diagnostics = @($output | Where-Object { $_ -match "^.+?\.luau?( \[[^\]]*\])?\(\d+,\d+\): " })
+        Write-Host "Type diagnostics: $($diagnostics.Count)"
+        $global:LASTEXITCODE = $exitCode
     }
 
     Write-Host "All checks passed." -ForegroundColor Green

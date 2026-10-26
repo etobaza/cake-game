@@ -84,6 +84,8 @@ After adding, removing, or modifying any `.lua` or `.luau` file:
 
 `scripts/check.ps1` runs steps 1–3 with the correct arguments and also fails when a first-party module does not start with `--!strict`. A bare `luau-lsp analyze .` is not a valid check: without the definitions, sourcemap and settings it reports every Roblox global and `require` as unknown.
 
+luau-lsp and Selene cannot open the project's non-ASCII path (the localized OneDrive `Documents` folder) on Windows, so `scripts/check.ps1` runs them through an ASCII junction at `%TEMP%\luau-check\Bake_A_Cake` and fails loudly when luau-lsp prints `path does not exist` or `Failed to load sourcemap` instead of analysing. Do not remove that workaround; a bare run from the real path is not a valid check. Never delete the junction with `Remove-Item -Recurse` (it can delete the project's files); use `cmd /c rmdir "%TEMP%\luau-check\Bake_A_Cake"`.
+
 After changing a `wally.toml`, run `scripts/install-packages.ps1` (never a bare `wally install`): it also flattens the packages into the layout Studio's Script Sync expects and regenerates the sourcemap and link-file types.
 
 Run the gate from the repository root. Use `scripts/check.ps1 -Definitions <path>` when definitions cannot be resolved automatically. Restore tools with `rokit install` when needed; do not substitute an unrelated analyzer from PATH. If a required check cannot run or fails, report the exact blocker and do not claim verified completion.
