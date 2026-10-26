@@ -1,19 +1,36 @@
 --!strict
 -- Background music on the local client: Configs/Music's tracks play one after another and loop.
 -- Each track fades in over its first FadeSeconds and out over its last, so consecutive tracks never
--- overlap and never cut. Purely presentation; nothing here touches game state.
+-- overlap and never cut. A topbar toggle mutes the music group; the choice is saved in
+-- Cloud.Settings.MusicMuted (SettingsHandler) and the label follows the replicated value.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 
+--[[ References ]]--
+local _Handlers = ReplicatedStorage.Handlers
+
 --[[ Modules ]]--
+local Bus = require(ReplicatedStorage.Shared.Bus)
 local Config = require(ReplicatedStorage.Shared.Configs.Music)
+local DataClient = require(_Handlers.DataHandlerClient)
 local Janitor = require(ReplicatedStorage.Packages.janitor)
+local TopbarHandler = require(_Handlers.TopbarHandler)
+
+--[[ Constants ]]--
+local ACTION_KEY = "Music"
+local LABEL_ON = "Music: On"
+local LABEL_OFF = "Music: Off"
+local CAPTION = "Turn the music on or off"
+-- After Daily Rewards (1), Codes (2) and the group reward (3).
+local ORDER = 4
 
 --[[ Tables ]]--
-local MusicHandler = {}
+local MusicHandler = {
+	dependencies = { "DataClient", "TopbarHandler" },
+}
 
 --[[ Private Functions ]]--
 -- Volume at the sound's current position: ramps up after the start and down before the end.
@@ -41,6 +58,19 @@ function MusicHandler.OnStart(self: MusicHandler): ()
 	group.Name = Config.GroupName
 	group.Parent = SoundService
 	self.Janitor:Add(group, "Destroy")
+
+	-- Muting silences the group and lets the playlist run on, so unmuting resumes mid-track.
+	local toggle = TopbarHandler:CreateAction(ACTION_KEY, LABEL_ON, CAPTION, ORDER, function(): ()
+		Bus.Player.SetMusicMuted:Fire(not self:IsMuted())
+	end)
+	local function applyMuted(): ()
+		local muted = self:IsMuted()
+		group.Volume = if muted then 0 else 1
+		toggle:setLabel(if muted then LABEL_OFF else LABEL_ON)
+	end
+	DataClient:WaitForData()
+	applyMuted()
+	self.Janitor:Add(DataClient:SubscribeToPath({ "Settings", "MusicMuted" }, applyMuted, "Cloud"), "Disconnect")
 
 	for _, track in Config.Tracks do
 		local sound = Instance.new("Sound")
@@ -110,6 +140,10 @@ function MusicHandler.Step(self: MusicHandler): ()
 		return
 	end
 	sound.Volume = fadedVolume(sound)
+end
+
+function MusicHandler.IsMuted(_self: MusicHandler): boolean
+	return DataClient:GetData({ "Settings", "MusicMuted" }, "Cloud") == true
 end
 
 function MusicHandler.Destroy(self: MusicHandler): ()

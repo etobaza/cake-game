@@ -7,7 +7,7 @@ local UIText = {
 	-- Refusal codes the server sends in Progress.ActionFailed.
 	Failures = {
 		-- Day and menu
-		not_summary_phase = "Plan tomorrow's menu after closing",
+		not_summary_phase = "Change the menu before opening or after closing",
 		menu_too_small = "Pick at least 3 recipes",
 		menu_too_large = "Pick no more than 5 recipes",
 		menu_not_ready = "Set today's menu first",

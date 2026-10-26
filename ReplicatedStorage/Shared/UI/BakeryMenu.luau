@@ -15,6 +15,7 @@ local Janitor = require(ReplicatedStorage.Packages.janitor)
 local MenuPlan = require(ReplicatedStorage.Shared.Tutorial.MenuPlan)
 local Pages = require(script.Parent.Stores.Pages)
 local Press = require(script.Parent.Press)
+local TutorialPolicy = require(ReplicatedStorage.Shared.TutorialPolicy)
 local UseData = require(script.Parent.Hooks.UseData)
 
 --[[ Constants ]]--
@@ -76,6 +77,18 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	local isSummary = Flux(function(): boolean
 		return phase() == "Summary"
 	end)
+	-- Before opening, once the introduction is over, today's menu can still change (MenuHandler.CanEdit),
+	-- so the Upgrades and Menu tabs show without the report and Next Day.
+	local tutorialStatus = UseData.Path(data, { "Tutorial", "Status" }, "Cloud", "")
+	local menuToday = Flux(function(): boolean
+		return phase() == "Prep" and not TutorialPolicy.IsActive({ Tutorial = { Status = tutorialStatus() } })
+	end)
+	local showTabs = Flux(function(): boolean
+		return isSummary() or menuToday()
+	end)
+	local function tabAvailable(page: Pages.Page): boolean
+		return (isSummary() or (menuToday() and page ~= Pages.Names.Report)) and Pages.CanOpen(page)
+	end
 	local janitor = Janitor.new()
 	Flux.cleanup(function(): ()
 		janitor:Destroy()
@@ -97,7 +110,7 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	local title = header:FindFirstChild("Title") :: Frame
 	Flux.edit(title)({
 		Visible = function(): boolean
-			return not isSummary()
+			return not showTabs()
 		end,
 	})
 	for _, label in title:GetChildren() do
@@ -120,7 +133,7 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	buttons:SetAttribute("WideSize", rowSize)
 	buttons:SetAttribute("CompactSize", rowSize)
 	Flux.edit(buttons)({
-		Visible = isSummary,
+		Visible = showTabs,
 		Position = rowPosition,
 		Size = rowSize,
 	})
@@ -135,7 +148,7 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 		local authoredUp = pagePanel.SelectionBehaviorUp
 		Flux.edit(pagePanel)({
 			SelectionBehaviorUp = function(): Enum.SelectionBehavior
-				return if isSummary() then Enum.SelectionBehavior.Escape else authoredUp
+				return if showTabs() then Enum.SelectionBehavior.Escape else authoredUp
 			end,
 		})
 	end
@@ -170,7 +183,7 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 		end
 		for offset = 1, #TAB_BUTTONS - 1 do
 			local page = TABS[TAB_BUTTONS[(index - 1 + direction * offset) % #TAB_BUTTONS + 1]]
-			if Pages.CanOpen(page) then
+			if tabAvailable(page) then
 				Pages.Open(page)
 				return
 			end
@@ -223,7 +236,7 @@ function BakeryMenu.Bind(screen: ScreenGui, data: any): ()
 	for name, page in TABS do
 		local button = buttons:FindFirstChild(name) :: TextButton
 		local available = Flux(function(): boolean
-			return isSummary() and Pages.CanOpen(page)
+			return tabAvailable(page)
 		end)
 		Flux.edit(button)({
 			Interactable = available,

@@ -2,10 +2,12 @@
 -- Level progression: 25 levels, XP accumulates inside the current level.
 
 --[[ Constants ]]--
--- The whole ladder to level 25 costs around four thousand XP: with the small dish prices of the
--- design-sheet economy a Lemon Cake-paced shift earns 40-50 XP early (about 550 an hour), so the
--- recipe ladder tops out after several hours of shifts.
-local XP_BASE = 10
+-- The whole ladder to level 25 costs about 5 500 XP: with the small dish prices of the design-sheet
+-- economy a Lemon Cake-paced shift earns 40-50 XP early (about 550 an hour), so the recipe ladder
+-- tops out after several hours of shifts. The base was 10 until playtesters reported levels (new
+-- recipes) arriving faster than the coins for the stations and tables to cook and serve them; at
+-- 14, level 5 takes 155 XP instead of 110, about four early shifts instead of three.
+local XP_BASE = 14
 local XP_POWER = 1.1
 
 --[[ Tables ]]--

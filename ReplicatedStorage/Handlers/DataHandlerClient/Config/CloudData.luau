@@ -108,6 +108,11 @@ return {
 	-- rotated still grants that item. Cleared when the receipt is granted.
 	LimitedPending = "",
 
+	-- Player preferences set from the topbar (MusicHandler); Reconcile adds them to older profiles.
+	Settings = {
+		MusicMuted = false,
+	},
+
 	-- Bought gamepasses / products / receipt ids
 	_productCache = {},
 }

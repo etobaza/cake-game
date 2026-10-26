@@ -3,7 +3,8 @@
 -- adds (garden sources, animals, the rail cart) are placed by its ID, so their stat only counts them.
 -- The buy order and every price (times 100, in whole coins) follow the design sheet: cost gates
 -- progression, not player level, so unlockLevel is 1 everywhere and `requires` chains carry the
--- intended order.
+-- intended order. Playtest feedback changed two early entries on purpose: the second table
+-- (cafe_tables) and the second oven (kitchen_oven) are cheaper, and the table grows from the display.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -118,11 +119,13 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "TableCount",
 		perLevel = 1,
 		maxLevel = 1,
-		baseCost = 29050,
+		-- Playtest feedback: guests outgrew the one starting table long before a 29 050 table behind the
+		-- Cat Café was affordable. It now grows straight from the Display Counter, about two early shifts.
+		baseCost = 9500,
 		costMultiplier = 1,
 		unlockLevel = 1,
 		blurb = "Another table with two independent seats for guests.",
-		requires = "cafe_catcafe",
+		requires = "cafe_display",
 	},
 	cafe_assistant = {
 		name = "Assistant",
@@ -172,9 +175,10 @@ local list: { [string]: UpgradeDefinition } = {
 		stat = "OvenCount",
 		perLevel = 1,
 		maxLevel = 2,
-		baseCost = 8575,
+		-- The second oven is cheaper than the design sheet's 8 575 (playtest feedback); the third keeps its price.
+		baseCost = 5500,
 		costMultiplier = 1,
-		costs = { 8575, 24550 },
+		costs = { 5500, 24550 },
 		unlockLevel = 1,
 		blurb = "One more oven, one more bake at a time.",
 		requires = "kitchen_counter",

@@ -220,8 +220,14 @@ function HudLayout.Apply(hud: GuiObject): ()
 	local currencyBottom = if lifted
 		then math.max(HOTBAR_BOTTOM + HOTBAR_SIZE.Y + BUTTON_GAP, if stick then stick.Y + THUMBSTICK_GAP else 0)
 		else EDGE
-	-- The button column fits between the top edge and the plate; short screens shrink its buttons.
-	local columnRoom = logical.Y - currencyBottom - CURRENCY_SIZE.Y - EDGE * 2
+	-- The button column fits between the top edge and the plate; short screens shrink its buttons. On
+	-- touch screens it also stays above the resting thumbstick ring, where the thumb lands to walk, so
+	-- a walk does not start on Rewards.
+	local columnFloor = currencyBottom + CURRENCY_SIZE.Y
+	if stick then
+		columnFloor = math.max(columnFloor, stick.Y + THUMBSTICK_GAP)
+	end
+	local columnRoom = logical.Y - columnFloor - EDGE * 2
 	local fit = (columnRoom - BUTTON_GAP * 2) / (UpgradeReveal.Hud.SizeMultiplier + 2)
 	local buttonSide = math.min(BUTTON_SIDE, math.max(fit, Theme.ScreenScale.MinTouchPixels / scale))
 	local upgradeSide = buttonSide * UpgradeReveal.Hud.SizeMultiplier

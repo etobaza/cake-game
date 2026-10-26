@@ -76,6 +76,8 @@ return {
 	Player = {
 		-- Client -> Server: the player started or stopped running
 		SetRunning = Packet("PlayerSetRunning", Packet.Boolean8), -- isRunning
+		-- Client -> Server: save the music preference from the topbar toggle
+		SetMusicMuted = Packet("PlayerSetMusicMuted", Packet.Boolean8), -- muted
 		-- Server -> Client: an accepted work action should play its character animation
 		PlayAction = Packet("PlayerPlayAction", Packet.String), -- actionName
 	},

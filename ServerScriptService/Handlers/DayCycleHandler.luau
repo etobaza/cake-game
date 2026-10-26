@@ -99,6 +99,28 @@ local function hasLoaded(station: any): boolean
 	return false
 end
 
+-- An idle batch whose dish is still on today's menu stays in the bowl with its selection: the
+-- player may have carried it from the garden just before closing. Completed or running work
+-- remains collectible. A batch for a dish that left the menu goes back to the pantry.
+local function settleMixers(data: any): ()
+	local selected = data.Session.Cooking.SelectedRecipeId
+	local keepBatch = selected ~= nil and DataList.Contains(data.Session.Day.Menu, selected)
+	local keptAny = false
+	for stationId in data.Session.Stations do
+		local station = data.Session.Stations[stationId]
+		if station.Kind == "Mixer" and station.State == "Idle" then
+			if keepBatch and hasLoaded(station) then
+				keptAny = true
+			else
+				returnLoadedProduce(data, station)
+			end
+		end
+	end
+	if not keptAny then
+		data.Session.Cooking.SelectedRecipeId = nil
+	end
+end
+
 local function isStationAvailable(player: Player, station: GameTypes.StationKind): boolean
 	local kind = BuildingsConfig.Kinds[station]
 	if not kind or not kind.Stat then
@@ -295,26 +317,7 @@ function DayCycleHandler.EnterPrep(self: DayCycleHandler, player: Player): ()
 	day.EndsAt = 0
 	day.Menu = copyList(data.Cloud.DayMenu)
 	day.NextMenu = {}
-
-	-- An idle batch whose dish is still on today's menu stays in the bowl with its selection: the
-	-- player may have carried it from the garden just before closing. Completed or running work
-	-- remains collectible. A batch for a dish that left the menu goes back to the pantry.
-	local selected = data.Session.Cooking.SelectedRecipeId
-	local keepBatch = selected ~= nil and DataList.Contains(day.Menu, selected)
-	local keptAny = false
-	for stationId in data.Session.Stations do
-		local station = data.Session.Stations[stationId]
-		if station.Kind == "Mixer" and station.State == "Idle" then
-			if keepBatch and hasLoaded(station) then
-				keptAny = true
-			else
-				returnLoadedProduce(data, station)
-			end
-		end
-	end
-	if not keptAny then
-		data.Session.Cooking.SelectedRecipeId = nil
-	end
+	settleMixers(data)
 
 	day.Summary.Coins = 0
 	day.Summary.XP = 0
@@ -474,10 +477,16 @@ function DayCycleHandler.GetShiftProgress(_self: DayCycleHandler, player: Player
 	return DayCycleConfig.GetShiftProgress(day.EndsAt, day.ShiftSeconds, workspace:GetServerTimeNow())
 end
 
--- The evening screen edits only tomorrow's draft; today's menu remains immutable.
+-- The evening screen edits tomorrow's draft. Before opening, once the introduction is over, the
+-- same screen edits today's menu, which the bakery opens with (OpenBakery checks its size).
 function DayCycleHandler.SelectMenu(_self: DayCycleHandler, player: Player, menu: { string }): boolean
-	local day = getDay(player)
-	if not day or day.Phase ~= "Summary" then
+	local data = DataHandler:GetData(player)
+	if not data then
+		return false
+	end
+	local day = data.Session.Day
+	local today = day.Phase == "Prep" and not TutorialPolicy.IsActive(data.Cloud)
+	if day.Phase ~= "Summary" and not today then
 		Bus.Progress.ActionFailed:FireClient(player, "not_summary_phase")
 		return false
 	end
@@ -488,7 +497,13 @@ function DayCycleHandler.SelectMenu(_self: DayCycleHandler, player: Player, menu
 		return false
 	end
 
-	day.NextMenu = menu
+	if not today then
+		day.NextMenu = menu
+		return true
+	end
+	day.Menu = copyList(menu)
+	data.Cloud.DayMenu = copyList(menu)
+	settleMixers(data)
 	return true
 end
 

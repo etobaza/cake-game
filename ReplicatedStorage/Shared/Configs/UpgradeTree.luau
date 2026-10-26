@@ -23,13 +23,14 @@ return {
 		Cafe = {
 			[0] = { Id = "cafe_display", Level = 1 },
 			[1] = { Id = "cafe_display", Level = 2 },
+			-- Moved up from Lemon Cake's Row4R cell: the second table grows straight from the Display Counter.
+			[2] = { Id = "cafe_tables", Level = 1 },
 			[3] = { Id = "cafe_display", Level = 3 },
 			[4] = { Id = "cafe_window", Level = 1 },
 			[5] = { Id = "cafe_display", Level = 4 },
 			[6] = { Id = "cafe_catcafe", Level = 1 },
 			[7] = { Id = "cafe_coffee", Level = 1 },
 			[8] = { Id = "cafe_display", Level = 5 },
-			[9] = { Id = "cafe_tables", Level = 1 },
 			[10] = { Id = "cafe_catcafe", Level = 2 },
 			[11] = { Id = "cafe_assistant", Level = 1 },
 		},

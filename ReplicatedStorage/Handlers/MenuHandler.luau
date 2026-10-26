@@ -1,5 +1,6 @@
 --!strict
--- End-of-day menu: pick 3-5 unlocked recipes for tomorrow, then advance to its prep.
+-- Day menu: in the evening, pick 3-5 unlocked recipes for tomorrow, then advance to its prep. Before
+-- opening (once the introduction is over) the same screen changes today's menu instead.
 --
 -- Drives the Inventory screen authored in StarterGui. That screen was drawn for exactly this: a grid
 -- of dishes with a price and a lock, a filter strip, a row of picked recipes with a capacity count,
@@ -39,6 +40,7 @@ local RequirementLabel = require(_Shared.UI.RecipeRequirementLabel)
 local GuidanceConfig = require(_Configs.RecipeGuidance)
 local Responsive = require(_Shared.UI.Responsive)
 local Scope = require(_Shared.UI.Scope)
+local TutorialPolicy = require(_Shared.TutorialPolicy)
 local UIHandler = require(_Handlers.UIHandler)
 
 --[[ Constants ]]--
@@ -534,9 +536,19 @@ function MenuHandler.Rebuild(self: MenuHandler): ()
 	self:RefreshPicked()
 	self:RefreshBonuses()
 
-	if dropped and DataClient:GetData({ "Day", "Phase" }, "Session") == "Summary" then
+	if dropped and self:CanEdit() then
 		self:Commit()
 	end
+end
+
+--- Tomorrow's draft in the evening; today's menu before opening, once the introduction is over. The
+--- server applies the same rule (DayCycleHandler.SelectMenu).
+function MenuHandler.CanEdit(_self: MenuHandler): boolean
+	local phase = DataClient:GetData({ "Day", "Phase" }, "Session")
+	if phase == "Summary" then
+		return true
+	end
+	return phase == "Prep" and not TutorialPolicy.IsActive(DataClient:GetData({}, "Cloud") or {})
 end
 
 function MenuHandler.PaintCell(self: MenuHandler, cell: Frame, recipe: Recipes.RecipeEntry, selectable: boolean): ()
@@ -679,8 +691,8 @@ function MenuHandler.CountSelected(self: MenuHandler): number
 end
 
 function MenuHandler.ToggleRecipe(self: MenuHandler, recipeId: string): ()
-	if DataClient:GetData({ "Day", "Phase" }, "Session") ~= "Summary" then
-		UIHandler:Toast("Tomorrow's menu is planned after closing")
+	if not self:CanEdit() then
+		UIHandler:Toast("Change the menu before opening or after closing")
 		return
 	end
 
@@ -721,7 +733,7 @@ function MenuHandler.ToggleRecipe(self: MenuHandler, recipeId: string): ()
 	self:Commit()
 end
 
--- Every evening pick is sent right away so the server remains the draft's authority.
+-- Every pick is sent right away so the server remains the menu's authority.
 function MenuHandler.Commit(self: MenuHandler): ()
 	Bus.Day.SelectMenu:Fire(self:GetSelection())
 end
