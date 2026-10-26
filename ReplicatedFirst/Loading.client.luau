@@ -53,6 +53,14 @@ local CONTENT_PROPERTIES: { [string]: { string } } = {
 	Beam = { "Texture" },
 	Trail = { "Texture" },
 }
+-- PreloadAsync fetches a bare content string as an image, so a mesh, sound or animation id passed
+-- that way fails with "Asset type does not match requested type". Those are preloaded through
+-- their instance instead, which the engine fetches with the right type.
+local INSTANCE_PROPERTIES: { [string]: boolean } = {
+	MeshId = true,
+	SoundId = true,
+	AnimationId = true,
+}
 -- The canvas is drawn at this logical size and fitted uniformly to the screen.
 local DESIGN = Vector2.new(canvas.Size.X.Offset, canvas.Size.Y.Offset)
 
@@ -87,16 +95,20 @@ local function resolve(path: { string }): Instance?
 	return current
 end
 
--- Unique content ids under `paths`, plus the instances whose content scripts cannot read
--- (SurfaceAppearance); `withSounds` adds the sound effects.
+-- Unique image ids under `paths`, one instance per unique mesh, sound or animation id, plus the
+-- instances whose content scripts cannot read (SurfaceAppearance); `withSounds` adds the sound
+-- effects.
 local function collectContent(paths: { { string } }, withSounds: boolean): { string | Instance }
 	local items: { string | Instance } = {}
 	local seen: { [string]: boolean } = {}
-	local function add(content: unknown): ()
+	-- True when `content` was new and went in, as itself or through `holder`.
+	local function add(content: unknown, holder: Instance?): boolean
 		if typeof(content) == "string" and content ~= "" and not seen[content] then
 			seen[content] = true
-			table.insert(items, content)
+			table.insert(items, holder or content)
+			return true
 		end
+		return false
 	end
 
 	for _, path in paths do
@@ -109,8 +121,19 @@ local function collectContent(paths: { { string } }, withSounds: boolean): { str
 		for _, instance in source:GetDescendants() do
 			local properties = CONTENT_PROPERTIES[instance.ClassName]
 			if properties then
+				local preloadsAll = false
 				for _, property in properties do
-					add((instance :: any)[property])
+					local content = (instance :: any)[property]
+					if preloadsAll then
+						-- The instance already went in and fetches this one itself.
+						if typeof(content) == "string" and content ~= "" then
+							seen[content] = true
+						end
+					elseif INSTANCE_PROPERTIES[property] then
+						preloadsAll = add(content, instance)
+					else
+						add(content)
+					end
 				end
 			elseif instance:IsA("SurfaceAppearance") then
 				table.insert(items, instance)
@@ -118,9 +141,12 @@ local function collectContent(paths: { { string } }, withSounds: boolean): { str
 		end
 	end
 	if withSounds then
+		-- Unparented carriers for the effect ids; nothing keeps them once the preload returns.
 		for _, sound in SoundsConfig.Sounds do
-			if typeof(sound) == "table" then
-				add(sound.Id)
+			if typeof(sound) == "table" and typeof(sound.Id) == "string" and not seen[sound.Id] then
+				local carrier = Instance.new("Sound")
+				carrier.SoundId = sound.Id
+				add(sound.Id, carrier)
 			end
 		end
 	end
