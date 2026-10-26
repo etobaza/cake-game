@@ -402,8 +402,14 @@ return function(hud: Instance, props: Props): ()
 		draw()
 		Flux(function()
 			local collapsed = Flux.read(props.QuestsCollapsed)
-			local hidden = not read(props.HudShown) or not HudReveal.Shown("Quests")
+			local revealed = HudReveal.Shown("Quests")
+			local hidden = not read(props.HudShown) or not revealed
 			slide:spring(if hidden then 2 elseif collapsed then 1 else 0)
+			-- A page hides the whole HUD, so only the introduction and the fold free the corner.
+			quests:SetAttribute(
+				HudLayout.QuestsAwayAttribute,
+				if not revealed then "Hidden" elseif collapsed then "Folded" else nil
+			)
 			spin:spring(if collapsed then 180 else 0)
 		end, true)
 	end

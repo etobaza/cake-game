@@ -29,6 +29,10 @@ local QUEST_ARROW = 44
 local BOOST_SIZE = Vector2.new(120, 76)
 local BOOST_EDGE = 8
 local BOOST_GAP = 8
+-- HydrateHud sets this on the Quests group: "Hidden" while the introduction has not revealed the
+-- panel, "Folded" while only its arrow shows, nil while it is open. On landscape phones the 2x Cash
+-- button then moves into the space the panel leaves: to the right edge, or just left of the arrow.
+local QUESTS_AWAY = "QuestsAway"
 local XP_SIZE = Vector2.new(200, 44)
 local HOTBAR_SIZE = Vector2.new(128, 126)
 local HOTBAR_BOTTOM = 12
@@ -57,6 +61,7 @@ local HINT_SCALE_EPSILON = 1e-3
 
 --[[ Tables ]]--
 local HudLayout = {}
+HudLayout.QuestsAwayAttribute = QUESTS_AWAY
 
 --[[ Private Functions ]]--
 local function place(hud: Instance, name: string, position: UDim2, size: Vector2, scale: number): ()
@@ -272,8 +277,16 @@ function HudLayout.Apply(hud: GuiObject): ()
 	end
 	local boost = hud:FindFirstChild(CashBoost.Button.Name)
 	if boost and boost:IsA("GuiObject") then
+		local questsGroup = hud:FindFirstChild("Quests")
+		local questsAway = if questsGroup then questsGroup:GetAttribute(QUESTS_AWAY) else nil
 		local besideQuests = compact and not portrait
-		local boostRight = if besideQuests then EDGE + QUESTS_SIZE.X + BOOST_GAP else BOOST_EDGE
+		-- The folded arrow keeps a touch-sized square at the right edge (see the Quests block below).
+		local arrowSide = math.max(QUEST_ARROW, Theme.ScreenScale.MinTouchPixels / scale)
+		local boostRight = if not besideQuests
+			then BOOST_EDGE
+			elseif questsAway == "Hidden" then EDGE
+			elseif questsAway == "Folded" then EDGE + arrowSide + BOOST_GAP
+			else EDGE + QUESTS_SIZE.X + BOOST_GAP
 		local boostTop = if besideQuests then EDGE else BOOST_EDGE
 		-- Its pulse is a UIScale, so the resting rectangle is written directly.
 		boost.AnchorPoint = Vector2.new(1, 0)
@@ -364,6 +377,10 @@ function HudLayout.Bind(hud: GuiObject): any
 		janitor:Add(run:GetAttributeChangedSignal(TOUCH_RESERVE):Connect(apply), "Disconnect")
 	end
 	janitor:Add(hud:GetAttributeChangedSignal(THUMBSTICK_RESERVE):Connect(apply), "Disconnect")
+	local questsGroup = hud:FindFirstChild("Quests")
+	if questsGroup then
+		janitor:Add(questsGroup:GetAttributeChangedSignal(QUESTS_AWAY):Connect(apply), "Disconnect")
+	end
 	-- The ring is Roblox's: it is rebuilt when the touch controls change, and it moves, hides and resizes
 	-- with them.
 	local stickJanitor = Janitor.new()
