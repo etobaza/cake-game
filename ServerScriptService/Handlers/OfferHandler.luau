@@ -252,7 +252,9 @@ function OfferHandler.Grant(_self: OfferHandler, player: Player, entry: Products
 			AddCharge(player, "RescueDish", "Saved! The next dish that burns will be rescued.")
 		end
 	elseif meta.grant == "KeepGuest" then
-		if KeepGuests(player) == 0 then
+		-- Only a guest about to walk out is the moment: patient guests would waste the purchase.
+		local applies = Config.Applies("KeepGuest", data.Session, workspace:GetServerTimeNow())
+		if not applies or KeepGuests(player) == 0 then
 			AddCharge(player, "KeepGuest", "Saved! Guests about to leave will get more patience.")
 		end
 	end
