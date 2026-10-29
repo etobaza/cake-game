@@ -83,10 +83,11 @@ It is the Roblox developer-product icon for "Golden Oven", a limited item in a c
 
 # HUD offer icons
 
-Generated with the Codex CLI image generator on 2026-10-29, with `cash-boost-2x.png` and `starter-pack.png` as style references, trimmed and centred at 512 by 512 with a 6 percent margin. The client `CashBoostHandler` swaps the HUD's 2x Cash button to them while the offer applies (`Configs/Offers` `Hud.Icon`). Uploaded through `AssetService:CreateAssetAsync` as images owned by group `712136202`.
+Generated with the Codex CLI image generator on 2026-10-29, with `cash-boost-2x.png` and `starter-pack.png` as style references, trimmed and centred at 512 by 512 with a 6 percent margin. The Store rows use them (`meta.icon`), and the client `CashBoostHandler` swaps the HUD's 2x Cash button to the first two (`Configs/Offers` `Hud.Icon`). Uploaded through `AssetService:CreateAssetAsync` as images owned by group `712136202`.
 
 - `rescue-dish.png` (`rescue_dish`): a golden baguette rising out of grey smoke with a green circular restore badge, `rbxassetid://78412774375162`.
 - `keep-guests.png` (`keep_guest`): a gold hourglass with turquoise sand and a pink heart badge with a white plus, `rbxassetid://134349148673729`.
+- `double-profit.png` (`double_shift`): two gold coin stacks before a cream-and-turquoise money bag with a green double-chevron badge, `rbxassetid://84848092757195`. Generated the same day with `rescue-dish.png` as a third reference; shown on the Store row only.
 
 ## Prompt
 

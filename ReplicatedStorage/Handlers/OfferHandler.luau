@@ -1,8 +1,8 @@
 --!strict
 -- The Double Profit button on the day report (Configs/Offers). A clone of the report's Next Menu
 -- button, recoloured and set in the Daily Profits row, shown while the evening's shift can be
--- doubled. It breathes while idle; a press asks the server, which checks the offer and prompts.
--- The other offers have no button: the server prompts them at the moment they apply.
+-- doubled. It breathes while idle; a press buys it through the client StoreHandler like any Robux
+-- product. Rescue Dish and Keep Guests wear the HUD's 2x Cash button instead (CashBoostHandler).
 
 --[[ Services ]]--
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -17,11 +17,11 @@ local _Handlers = ReplicatedStorage.Handlers
 --[[ Modules ]]--
 local Animate = require(_Shared.UI.Animate)
 local Authored = require(_Shared.UI.Authored)
-local Bus = require(_Shared.Bus)
 local Config = require(_Configs.Offers)
 local DataClient = require(_Handlers.DataHandlerClient)
 local Press = require(_Shared.UI.Press)
 local Products = require(_Configs.Registries.Products)
+local StoreHandler = require(_Handlers.StoreHandler)
 local UIHandler = require(_Handlers.UIHandler)
 
 --[[ Constants ]]--
@@ -30,7 +30,7 @@ local ROBUX = utf8.char(0xE002)
 --[[ Tables ]]--
 local OfferHandler = {
 	-- The report lays its panel out first.
-	dependencies = { "DataClient", "UIHandler", "ReportHandler" },
+	dependencies = { "DataClient", "UIHandler", "ReportHandler", "StoreHandler" },
 }
 
 --[[ Private Functions ]]--
@@ -75,7 +75,7 @@ function OfferHandler.OnStart(self: OfferHandler): ()
 	Animate.Press(button)
 	Press.BindTap(button, function()
 		Animate.Pop(button)
-		Bus.Offer.Request:Fire("DoubleShift")
+		StoreHandler:Buy(Config.DoubleShift.Product)
 	end)
 
 	DataClient:WaitForData()

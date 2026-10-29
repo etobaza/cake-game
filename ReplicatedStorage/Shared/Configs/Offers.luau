@@ -1,17 +1,19 @@
 --!strict
--- Small contextual Robux offers, shown at the moment they matter instead of waiting in the Store:
---   * DoubleShift: pays a finished shift's profit once more, from a button on the day report;
---   * RescueDish: a dish that just burned in the oven comes back ready to serve;
+-- Small repeatable Robux offers, sold in the Store and pushed at the moment they matter:
+--   * DoubleShift: pays a finished shift's profit once more, also from a button on the day report;
+--   * RescueDish: a dish that burned in the oven comes back ready to serve;
 --   * KeepGuest: every waiting guest's patience fills up again.
 --
--- The server opens the Roblox prompt on its own for these, so they are limited hard: never during
--- the tutorial or the first days, at most one automatic prompt per GlobalCooldown, and each offer has
--- its own cooldown on top. A receipt always pays: when the moment it was bought for is already gone
--- (the dish was thrown out, the guests left), it pays its fallback in coins instead.
+-- A purchase works at once when its moment is there; otherwise it waits as a charge
+-- (Cloud.OfferCharges) and is spent automatically the next time (OfferHandler).
 --
--- Rescue Dish and Keep Guests also take over the HUD's 2x Cash button while they apply (an oven holds
--- a burnt dish, a guest is about to walk out); the client CashBoostHandler swaps it back once the
--- moment is gone. Their `Hud` rows hold that face.
+-- The server also opens the Roblox prompt on its own at those moments, so it is limited hard: never
+-- during the tutorial or the first days, at most one automatic prompt per GlobalCooldown, and each
+-- offer has its own cooldown on top.
+--
+-- Rescue Dish and Keep Guests take over the HUD's 2x Cash button too: at once while they apply (a
+-- burnt dish, a guest about to walk out), and in turn for a few seconds every Hud.RotateEvery
+-- otherwise. Their `Hud` rows hold that face.
 --
 -- Every offer is a Registries/Products row (grant = the offer name, `offer = true`). Rows with
 -- productId 0 are not on sale and are never prompted.
@@ -44,14 +46,15 @@ local Offers = {
 	MinDay = 2,
 	-- Seconds between any two automatic prompts for one player, whichever offers they are.
 	GlobalCooldown = 120,
-	-- Per-player spacing of offer requests sent by the client (the report and HUD buttons).
-	RequestCooldown = 2,
 
-	-- The HUD's 2x Cash button: which offers may take it over, first match wins, and how often the
-	-- client checks whether one applies.
+	-- The HUD's 2x Cash button: which offers may take it over (an applying one first, else in turn),
+	-- how often the client checks, and the rotation: every RotateEvery seconds the next offer in
+	-- Order wears the button for RotateShow seconds.
 	Hud = {
 		Order = { "RescueDish", "KeepGuest" },
 		CheckInterval = 0.5,
+		RotateEvery = 30,
+		RotateShow = 6,
 	},
 	-- Guest states whose patience can run out (GuestState's `expire`).
 	WaitingStates = {
@@ -93,9 +96,6 @@ local Offers = {
 	RescueDish = {
 		Product = "rescue_dish",
 		Cooldown = 180,
-		-- Coins paid when nothing is burnt any more by the time the receipt lands, and the dish
-		-- that burned is unknown.
-		FallbackCash = 500,
 		Hud = {
 			-- A baguette rising out of smoke with a green restore badge (assets/ui/rescue-dish.png).
 			Icon = "rbxassetid://78412774375162",
@@ -110,8 +110,6 @@ local Offers = {
 		Threshold = 0.3,
 		-- Seconds between patience checks.
 		CheckInterval = 1,
-		-- Coins paid when no guest is waiting by the time the receipt lands.
-		FallbackCash = 1000,
 		Hud = {
 			-- A gold hourglass with a heart and plus badge (assets/ui/keep-guests.png).
 			Icon = "rbxassetid://134349148673729",
@@ -121,9 +119,14 @@ local Offers = {
 }
 
 --[[ Handling ]]--
---- Whether this player is past the introduction: no offer interrupts the tutorial or the first days.
+--- Whether automatic prompts may open: no Roblox prompt interrupts the tutorial or the first days.
 function Offers.IsUnlocked(cloud: any): boolean
-	return cloud ~= nil and not TutorialPolicy.IsActive(cloud) and (cloud.Day or 0) >= Offers.MinDay
+	return Offers.IsPastTutorial(cloud) and (cloud.Day or 0) >= Offers.MinDay
+end
+
+--- Whether the HUD button may wear an offer: it is only a face, so the tutorial is the one gate.
+function Offers.IsPastTutorial(cloud: any): boolean
+	return cloud ~= nil and not TutorialPolicy.IsActive(cloud)
 end
 
 --- Share of patience a guest has left, or nil for a guest whose patience is not running.

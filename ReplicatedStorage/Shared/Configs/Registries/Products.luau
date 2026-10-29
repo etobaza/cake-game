@@ -43,7 +43,7 @@ export type ProductMeta = {
 	icon: string?,
 	-- Sold only through LimitedHandler, which checks the shared stock first (Configs/Limited).
 	limited: boolean?,
-	-- Sold only through OfferHandler, which checks the offer still applies (Configs/Offers).
+	-- A Configs/Offers offer: OfferHandler grants it, now or as a charge for its next moment.
 	offer: boolean?,
 }
 
@@ -157,14 +157,15 @@ local list: { [string]: ProductDefinition } = {
 	},
 
 	--[[ Contextual offers ]]--
-	-- Cheap, repeatable and prompted at the moment they help (Configs/Offers): 18, 5 and 9 Robux.
-	-- `amount` is unused; what each pays is decided by OfferHandler from the moment it was bought for.
+	-- Cheap and repeatable (Configs/Offers): 18, 5 and 9 Robux. Sold in the Store and prompted at the
+	-- moment they help; bought early, they wait as a charge. `amount` is unused: OfferHandler decides.
 	double_shift = {
 		productId = 3723479500,
 		productType = "devproduct",
 		meta = {
+			icon = "rbxassetid://84848092757195",
 			name = "Double Profit",
-			blurb = "Get this shift's profit once more.",
+			blurb = "Your shift's profit pays twice: tonight's, or the next shift's.",
 			grant = "DoubleShift",
 			amount = 0,
 			offer = true,
@@ -174,8 +175,9 @@ local list: { [string]: ProductDefinition } = {
 		productId = 3723479537,
 		productType = "devproduct",
 		meta = {
+			icon = "rbxassetid://78412774375162",
 			name = "Rescue Dish",
-			blurb = "The burnt dish comes back out of the oven, ready to serve.",
+			blurb = "A burnt dish comes back out of the oven, ready to serve: now or the next one.",
 			grant = "RescueDish",
 			amount = 0,
 			offer = true,
@@ -185,8 +187,9 @@ local list: { [string]: ProductDefinition } = {
 		productId = 3723479755,
 		productType = "devproduct",
 		meta = {
+			icon = "rbxassetid://134349148673729",
 			name = "Keep Guests",
-			blurb = "Every waiting guest's patience fills up again.",
+			blurb = "Waiting guests' patience fills up again: now or when they next run out.",
 			grant = "KeepGuest",
 			amount = 0,
 			offer = true,

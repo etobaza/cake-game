@@ -116,6 +116,14 @@ return {
 		Coins = 0,
 		Doubled = false,
 	},
+	-- Offers bought before their moment (Configs/Offers), spent automatically when it comes: the next
+	-- shift's profit, the next burnt dish, the next guest about to leave. Reconcile adds it to older
+	-- profiles.
+	OfferCharges = {
+		DoubleShift = 0,
+		RescueDish = 0,
+		KeepGuest = 0,
+	},
 
 	-- Player preferences set from the topbar (MusicHandler); Reconcile adds them to older profiles.
 	Settings = {

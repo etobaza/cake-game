@@ -7,9 +7,10 @@
 -- the button and a tap pops it and shakes the coin. Pressing it goes through the client StoreHandler
 -- like any Robux offer.
 --
--- While Rescue Dish or Keep Guests applies (Configs/Offers.Applies: a burnt dish in an oven, a guest
--- about to walk out) the button takes that offer's face instead, popping and swinging as it swaps;
--- a press then asks the server for that offer. Once the moment is gone it swaps back to 2x Cash.
+-- Rescue Dish and Keep Guests wear the button too (Configs/Offers.Hud): at once while one applies
+-- (Offers.Applies: a burnt dish in an oven, a guest about to walk out), otherwise in turn for
+-- RotateShow seconds every RotateEvery. The swap pops the button and shakes the coin; a press buys the
+-- offer on the button.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -23,7 +24,6 @@ local _Handlers = ReplicatedStorage.Handlers
 --[[ Modules ]]--
 local Animate = require(_Shared.UI.Animate)
 local Authored = require(_Shared.UI.Authored)
-local Bus = require(_Shared.Bus)
 local Config = require(_Configs.CashBoost)
 local DataClient = require(_Handlers.DataHandlerClient)
 local Offers = require(_Configs.Offers)
@@ -117,11 +117,12 @@ function CashBoostHandler.OnStart(self: CashBoostHandler): ()
 	Press.BindTap(target, function()
 		self.TapAt = os.clock()
 		Animate.Pop(button)
+		local product = Config.Product
 		if self.Offer then
-			Bus.Offer.Request:Fire(self.Offer)
-		else
-			StoreHandler:Buy(Config.Product)
+			local _, offerProduct = Offers.GetHud(self.Offer)
+			product = offerProduct or product
 		end
+		StoreHandler:Buy(product)
 	end)
 	self.Offer = nil
 	self.OfferCheckAt = 0
@@ -133,8 +134,8 @@ function CashBoostHandler.OnStart(self: CashBoostHandler): ()
 	end)
 end
 
---- The offer standing in for 2x Cash: the first one in Offers.Hud.Order that applies, re-read every
---- CheckInterval. A change swaps the icon with a pop and the tap's shake.
+--- The offer standing in for 2x Cash, re-read every CheckInterval: the first one in Offers.Hud.Order
+--- that applies, else the rotation's turn. A change swaps the icon with a pop and the tap's shake.
 function CashBoostHandler.SwapFace(self: CashBoostHandler, clock: number): ()
 	if clock < self.OfferCheckAt then
 		return
@@ -144,16 +145,24 @@ function CashBoostHandler.SwapFace(self: CashBoostHandler, clock: number): ()
 	local cloud = DataClient:GetData({}, "Cloud")
 	local session = DataClient:GetData({}, "Session")
 	local now = workspace:GetServerTimeNow()
+	local hud = Offers.Hud
+	local onSale: { string } = {}
 	local offer: string? = nil
-	if Offers.IsUnlocked(cloud) then
-		for _, name in Offers.Hud.Order do
+	if Offers.IsPastTutorial(cloud) then
+		for _, name in hud.Order do
 			local _, product = Offers.GetHud(name)
 			local entry = if product then Products:Get(product) else nil
-			if entry and entry.productId > 0 and Offers.Applies(name, session, now) then
-				offer = name
-				break
+			if entry and entry.productId > 0 then
+				onSale[#onSale + 1] = name
+				if not offer and Offers.Applies(name, session, now) then
+					offer = name
+				end
 			end
 		end
+	end
+	-- Nothing urgent: the offers take turns, each for RotateShow seconds of every RotateEvery.
+	if not offer and #onSale > 0 and clock % hud.RotateEvery < hud.RotateShow then
+		offer = onSale[(clock // hud.RotateEvery) % #onSale + 1]
 	end
 	if offer == self.Offer then
 		return

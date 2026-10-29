@@ -56,11 +56,6 @@ return {
 		Sold = Packet("LimitedSold", Packet.String, Packet.String, Packet.NumberU32), -- itemId, buyer, serial
 	},
 
-	Offer = {
-		-- Client -> Server: prompt a contextual offer (Configs/Offers) the player pressed; the server
-		-- checks it still applies.
-		Request = Packet("OfferRequest", Packet.String), -- offer name
-	},
 
 	-- GAMEPLAY
 	-- The client sends intent only; all state is decided and replicated by the server (Session data).

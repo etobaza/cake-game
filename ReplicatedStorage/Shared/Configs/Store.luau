@@ -9,8 +9,18 @@
 local Store = {
 	-- Ids from Configs/Registries/Products, in the order the screen draws them.
 	Currency = { "cash_1", "cash_2", "cash_3", "cash_4", "cash_5" },
-	-- More passes than drawn rows: the client clones the last drawn row for the rest.
-	Gamepasses = { "pass_vip", "pass_display", "pass_helper", "pass_cleaner" },
+	-- More passes than drawn rows: the client clones the last drawn row for the rest. The repeatable
+	-- boosts and offers follow the passes; they never read as owned.
+	Gamepasses = {
+		"pass_vip",
+		"pass_display",
+		"pass_helper",
+		"pass_cleaner",
+		"boost_cash_2x",
+		"double_shift",
+		"rescue_dish",
+		"keep_guest",
+	},
 	Featured = { "starter_pack" },
 
 	-- The Robux buttons that live on the reward screens instead of in the store.
