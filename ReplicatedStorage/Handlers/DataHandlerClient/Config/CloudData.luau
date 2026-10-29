@@ -108,6 +108,14 @@ return {
 	-- The limited item this player was last prompted to buy, so a receipt that arrives after the drop
 	-- rotated still grants that item. Cleared when the receipt is granted.
 	LimitedPending = "",
+	-- The last finished shift's profit, for the Double Profit offer (Configs/Offers). Kept in the
+	-- save so a receipt that lands after a rejoin still pays that shift; Doubled hides the report
+	-- button once bought. Reconcile adds it to older profiles.
+	DoubleShift = {
+		Day = 0,
+		Coins = 0,
+		Doubled = false,
+	},
 
 	-- Player preferences set from the topbar (MusicHandler); Reconcile adds them to older profiles.
 	Settings = {

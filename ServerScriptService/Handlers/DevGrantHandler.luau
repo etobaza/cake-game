@@ -15,6 +15,7 @@ local CashBoostHandler = require(ServerScriptService.Handlers.CashBoostHandler)
 local DataHandler = require(ServerScriptService.Handlers.DataHandler)
 local DataList = require(ReplicatedStorage.Shared.DataList)
 local LimitedHandler = require(ServerScriptService.Handlers.LimitedHandler)
+local OfferHandler = require(ServerScriptService.Handlers.OfferHandler)
 local Products = require(ReplicatedStorage.Shared.Configs.Registries.Products)
 local UpgradeHandler = require(ServerScriptService.Handlers.UpgradeHandler)
 
@@ -23,7 +24,7 @@ local ATTRIBUTE = "DevGrant"
 
 --[[ Tables ]]--
 local DevGrantHandler = {
-	dependencies = { "DataHandler", "UpgradeHandler", "CashBoostHandler", "LimitedHandler" },
+	dependencies = { "DataHandler", "UpgradeHandler", "CashBoostHandler", "LimitedHandler", "OfferHandler" },
 }
 
 --[[ Handling ]]--
@@ -61,6 +62,9 @@ function DevGrantHandler.Grant(_self: DevGrantHandler, player: Player, entryId: 
 	elseif meta.grant == "Limited" then
 		-- As a slot receipt with no prompt behind it: the drop on sale, while copies remain.
 		LimitedHandler:GrantSlot(player)
+	elseif meta.offer then
+		-- As a receipt for that offer at this moment: it pays its fallback when nothing applies.
+		OfferHandler:Grant(player, entry)
 	elseif entry.productType == "gamepass" and not DataList.Contains(data.Cloud.Passes, entry.id) then
 		DataList.Append(data.Cloud.Passes, entry.id)
 		UpgradeHandler:Invalidate(player)

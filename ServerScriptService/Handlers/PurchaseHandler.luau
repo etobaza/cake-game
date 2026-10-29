@@ -402,9 +402,10 @@ function PurchaseHandler.OnStart(self: PurchaseHandler)
 			return
 		end
 
-		-- Limited items go through LimitedHandler, which checks the shared stock before prompting.
+		-- Limited items go through LimitedHandler, which checks the shared stock before prompting;
+		-- offers through OfferHandler, which checks the moment they were made for.
 		local product = Products:GetByProductId(productId)
-		if not product or (product.meta and product.meta.limited) then
+		if not product or (product.meta and (product.meta.limited or product.meta.offer)) then
 			return
 		end
 

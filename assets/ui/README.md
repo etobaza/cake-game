@@ -80,3 +80,17 @@ It is the Roblox developer-product icon for "2x Cash", a 15-minute double-coins 
 ## Golden Oven generation prompt
 
 It is the Roblox developer-product icon for "Golden Oven", a limited item in a cosy cartoon bakery game. Subject: a small arched brick bakery oven made entirely of shiny gold, with a round clock on the chimney, a glowing warm orange fire mouth, three magenta ruby gems set in the gold bricks (one on top, one on each side), a few gold sparkles and a soft golden glow around it. The attached capture shows the in-game model to copy the design from. Style: match the attached store and pass icons exactly - glossy hand-painted mobile game icon, thick dark brown outline around the whole object, warm saturated colours, soft highlights, centred, the object fills about 80% of the square, slight 3/4 view. No text, no letters, no numbers, no background scenery, no frame or badge behind it. 1024x1024 PNG, transparent background.
+
+# HUD offer icons
+
+Generated with the Codex CLI image generator on 2026-10-29, with `cash-boost-2x.png` and `starter-pack.png` as style references, trimmed and centred at 512 by 512 with a 6 percent margin. The client `CashBoostHandler` swaps the HUD's 2x Cash button to them while the offer applies (`Configs/Offers` `Hud.Icon`). Uploaded through `AssetService:CreateAssetAsync` as images owned by group `712136202`.
+
+- `rescue-dish.png` (`rescue_dish`): a golden baguette rising out of grey smoke with a green circular restore badge, `rbxassetid://78412774375162`.
+- `keep-guests.png` (`keep_guest`): a gold hourglass with turquoise sand and a pink heart badge with a white plus, `rbxassetid://134349148673729`.
+
+## Prompt
+
+Both are small HUD offer icons for a cosy cartoon bakery Roblox game. Style: match the two attached reference icons exactly (cash-boost-2x.png and starter-pack.png): glossy hand-painted mobile game icon, bold dark cocoa-brown outer outline #5F3333, orange-gold rim accents #EEA54B, warm cream #FDEAC3 and soft turquoise accents, broad clean forms, restrained glossy highlights and subtle volume, a few small sparkles. Front-facing, centered, full uncropped silhouette filling about 80 percent of a square 1024x1024 canvas. Actual transparent background with clean alpha edges, no surrounding button/card/circle/shadow plate, no scene, no lettering, no numbers, no faces, no watermark, no tiny details. Must read clearly at 60 px on a bright bakery wall.
+
+1. "Rescue Dish": a plump freshly baked golden-brown French baguette loaf, glossy and perfect, rising out of a small puff of soft grey smoke at its base, with a big glossy green circular "undo / restore" arrow badge overlapping the lower right corner, and a couple of gold sparkles around the bread.
+2. "Keep Guests": a chunky gold-framed hourglass with cream glass and turquoise sand, tilted slightly, with a big glossy pink-red heart badge with a small white plus overlapping its lower right corner, and a couple of gold sparkles.

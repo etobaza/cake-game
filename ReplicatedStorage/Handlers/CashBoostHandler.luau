@@ -6,6 +6,10 @@
 -- the offer is up the Store's shine rays turn behind the coin, which rocks and hops; a press squashes
 -- the button and a tap pops it and shakes the coin. Pressing it goes through the client StoreHandler
 -- like any Robux offer.
+--
+-- While Rescue Dish or Keep Guests applies (Configs/Offers.Applies: a burnt dish in an oven, a guest
+-- about to walk out) the button takes that offer's face instead, popping and swinging as it swaps;
+-- a press then asks the server for that offer. Once the moment is gone it swaps back to 2x Cash.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -19,10 +23,13 @@ local _Handlers = ReplicatedStorage.Handlers
 --[[ Modules ]]--
 local Animate = require(_Shared.UI.Animate)
 local Authored = require(_Shared.UI.Authored)
+local Bus = require(_Shared.Bus)
 local Config = require(_Configs.CashBoost)
 local DataClient = require(_Handlers.DataHandlerClient)
+local Offers = require(_Configs.Offers)
 local Pages = require(_Shared.UI.Stores.Pages)
 local Press = require(_Shared.UI.Press)
+local Products = require(_Configs.Registries.Products)
 local StoreHandler = require(_Handlers.StoreHandler)
 local UIHandler = require(_Handlers.UIHandler)
 
@@ -110,14 +117,54 @@ function CashBoostHandler.OnStart(self: CashBoostHandler): ()
 	Press.BindTap(target, function()
 		self.TapAt = os.clock()
 		Animate.Pop(button)
-		StoreHandler:Buy(Config.Product)
+		if self.Offer then
+			Bus.Offer.Request:Fire(self.Offer)
+		else
+			StoreHandler:Buy(Config.Product)
+		end
 	end)
+	self.Offer = nil
+	self.OfferCheckAt = 0
 
 	self.LastStep = os.clock()
 	DataClient:WaitForData()
 	RunService.PreRender:Connect(function()
 		self:Step()
 	end)
+end
+
+--- The offer standing in for 2x Cash: the first one in Offers.Hud.Order that applies, re-read every
+--- CheckInterval. A change swaps the icon with a pop and the tap's shake.
+function CashBoostHandler.SwapFace(self: CashBoostHandler, clock: number): ()
+	if clock < self.OfferCheckAt then
+		return
+	end
+	self.OfferCheckAt = clock + Offers.Hud.CheckInterval
+
+	local cloud = DataClient:GetData({}, "Cloud")
+	local session = DataClient:GetData({}, "Session")
+	local now = workspace:GetServerTimeNow()
+	local offer: string? = nil
+	if Offers.IsUnlocked(cloud) then
+		for _, name in Offers.Hud.Order do
+			local _, product = Offers.GetHud(name)
+			local entry = if product then Products:Get(product) else nil
+			if entry and entry.productId > 0 and Offers.Applies(name, session, now) then
+				offer = name
+				break
+			end
+		end
+	end
+	if offer == self.Offer then
+		return
+	end
+
+	self.Offer = offer
+	local face = if offer then Offers.GetHud(offer) else nil
+	self.Icon.Image = if face then face.Icon else Config.Button.Icon
+	-- The same pop, coin shake and ray spin as a tap, so the swap catches the eye.
+	self.TapAt = clock
+	Animate.Pop(self.Button)
 end
 
 --- Animates the offer while idle and counts down while the boost runs.
@@ -135,7 +182,10 @@ function CashBoostHandler.Step(self: CashBoostHandler): ()
 
 	local endsAt = DataClient:GetData({ "CashBoostEndsAt" }, "Session")
 	local left = if typeof(endsAt) == "number" then endsAt - workspace:GetServerTimeNow() else 0
-	local active = left > 0
+	self:SwapFace(clock)
+	local offer = self.Offer
+	-- An offer's face is idle art like the 2x offer's: rays, rocking and hopping.
+	local active = left > 0 and offer == nil
 
 	-- The tap's shake decays to nothing over TapSeconds.
 	local sinceTap = clock - self.TapAt
@@ -157,7 +207,8 @@ function CashBoostHandler.Step(self: CashBoostHandler): ()
 		self.IconScale.Scale = 1 + lift * spec.HopScale
 	end
 
-	local text = if active then formatLeft(left) else spec.IdleText
+	local face = if offer then Offers.GetHud(offer) else nil
+	local text = if face then face.Text elseif active then formatLeft(left) else spec.IdleText
 	local label = self.Label
 	if label and label:IsA("TextLabel") and self.Text ~= text then
 		self.Text = text
@@ -184,6 +235,9 @@ export type CashBoostHandler = typeof(CashBoostHandler) & {
 	Label: Instance?,
 	Text: string?,
 	FaceColor: Color3?,
+	-- The contextual offer wearing the button (Configs/Offers), and when to check again.
+	Offer: string?,
+	OfferCheckAt: number,
 }
 
 return CashBoostHandler :: CashBoostHandler

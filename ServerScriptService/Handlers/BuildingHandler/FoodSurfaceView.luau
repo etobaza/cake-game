@@ -227,6 +227,11 @@ local function applyOvenBurn(self: FoodSurfaceView, now: number): ()
 	end
 	ovenFood:SetBurn(FoodBurn.Fade(self.Building.State, now))
 	if self.Building.State.State ~= "Burnt" then
+		-- A rescued dish (OfferHandler) is Ready again on the burnt copy: rebuild it fresh, steam and all.
+		-- An empty key never matches a dish's, so Update rebuilds the contents.
+		if ovenFood.Model:GetAttribute(FRESH.FoodKind) == "Burnt" then
+			self.Key = ""
+		end
 		return
 	end
 	ovenFood.Model:RemoveTag(Motion.FreshTag)

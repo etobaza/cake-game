@@ -15,6 +15,7 @@ export type ProductType = "gamepass" | "permanent_devproduct" | "devproduct" | "
 -- Limited: whichever limited item is on sale; LimitedHandler resolves and grants it.
 -- Worker: a pass whose effect is a bakery worker (Configs/Workers); recording ownership is the grant.
 -- CashBoost: adds time to the 2x coin boost (Configs/CashBoost); CashBoostHandler owns it.
+-- DoubleShift / RescueDish / KeepGuest: the contextual offers in Configs/Offers; OfferHandler owns them.
 export type GrantKind =
 	"Cash"
 	| "Stat"
@@ -25,6 +26,9 @@ export type GrantKind =
 	| "Limited"
 	| "Worker"
 	| "CashBoost"
+	| "DoubleShift"
+	| "RescueDish"
+	| "KeepGuest"
 
 export type ProductMeta = {
 	-- What the store shows. `value` is the big number on a currency tile.
@@ -39,6 +43,8 @@ export type ProductMeta = {
 	icon: string?,
 	-- Sold only through LimitedHandler, which checks the shared stock first (Configs/Limited).
 	limited: boolean?,
+	-- Sold only through OfferHandler, which checks the offer still applies (Configs/Offers).
+	offer: boolean?,
 }
 
 -- The authored shape; Registry.Build stamps `id` onto every entry.
@@ -147,6 +153,43 @@ local list: { [string]: ProductDefinition } = {
 			blurb = "Every sale pays double for 15 minutes.",
 			grant = "CashBoost",
 			amount = 15 * 60,
+		},
+	},
+
+	--[[ Contextual offers ]]--
+	-- Cheap, repeatable and prompted at the moment they help (Configs/Offers): 18, 5 and 9 Robux.
+	-- `amount` is unused; what each pays is decided by OfferHandler from the moment it was bought for.
+	double_shift = {
+		productId = 3723479500,
+		productType = "devproduct",
+		meta = {
+			name = "Double Profit",
+			blurb = "Get this shift's profit once more.",
+			grant = "DoubleShift",
+			amount = 0,
+			offer = true,
+		},
+	},
+	rescue_dish = {
+		productId = 3723479537,
+		productType = "devproduct",
+		meta = {
+			name = "Rescue Dish",
+			blurb = "The burnt dish comes back out of the oven, ready to serve.",
+			grant = "RescueDish",
+			amount = 0,
+			offer = true,
+		},
+	},
+	keep_guest = {
+		productId = 3723479755,
+		productType = "devproduct",
+		meta = {
+			name = "Keep Guests",
+			blurb = "Every waiting guest's patience fills up again.",
+			grant = "KeepGuest",
+			amount = 0,
+			offer = true,
 		},
 	},
 
