@@ -39,6 +39,13 @@ local CashBoost = {
 		TapSeconds = 0.6,
 		TapDegrees = 16,
 		TapRaysBoost = 5,
+		-- A face change (Configs/Offers.Hud) slides the coin and label out sideways, fading, for
+		-- SlideOut seconds, then the new face slides in with a little overshoot over SlideIn. An offer
+		-- leaves to the left and comes in from the right; the way back to 2x Cash runs the other way.
+		-- SlideDistance is a share of the button's width.
+		SlideOut = 0.18,
+		SlideIn = 0.4,
+		SlideDistance = 0.6,
 	},
 }
 

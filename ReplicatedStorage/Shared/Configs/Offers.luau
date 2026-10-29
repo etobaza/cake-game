@@ -12,8 +12,8 @@
 -- offer has its own cooldown on top.
 --
 -- Rescue Dish and Keep Guests take over the HUD's 2x Cash button too: at once while they apply (a
--- burnt dish, a guest about to walk out), and in turn for a few seconds every Hud.RotateEvery
--- otherwise. Their `Hud` rows hold that face.
+-- burnt dish, a guest about to walk out), and otherwise taking turns with it every Hud.SwapEvery
+-- seconds. Their `Hud` rows hold that face.
 --
 -- Every offer is a Registries/Products row (grant = the offer name, `offer = true`). Rows with
 -- productId 0 are not on sale and are never prompted.
@@ -48,13 +48,12 @@ local Offers = {
 	GlobalCooldown = 120,
 
 	-- The HUD's 2x Cash button: which offers may take it over (an applying one first, else in turn),
-	-- how often the client checks, and the rotation: every RotateEvery seconds the next offer in
-	-- Order wears the button for RotateShow seconds.
+	-- how often the client checks, and the rotation: the face changes every SwapEvery seconds,
+	-- 2x Cash and the offers of Order taking turns (2x, RescueDish, 2x, KeepGuest, ...).
 	Hud = {
 		Order = { "RescueDish", "KeepGuest" },
 		CheckInterval = 0.5,
-		RotateEvery = 30,
-		RotateShow = 6,
+		SwapEvery = 15,
 	},
 	-- Guest states whose patience can run out (GuestState's `expire`).
 	WaitingStates = {
@@ -124,7 +123,7 @@ function Offers.IsUnlocked(cloud: any): boolean
 	return Offers.IsPastTutorial(cloud) and (cloud.Day or 0) >= Offers.MinDay
 end
 
---- Whether the HUD button may wear an offer: it is only a face, so the tutorial is the one gate.
+--- Whether the tutorial is over (the HUD face ignores it: it never prompts by itself).
 function Offers.IsPastTutorial(cloud: any): boolean
 	return cloud ~= nil and not TutorialPolicy.IsActive(cloud)
 end

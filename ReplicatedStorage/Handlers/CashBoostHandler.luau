@@ -8,9 +8,9 @@
 -- like any Robux offer.
 --
 -- Rescue Dish and Keep Guests wear the button too (Configs/Offers.Hud): at once while one applies
--- (Offers.Applies: a burnt dish in an oven, a guest about to walk out), otherwise in turn for
--- RotateShow seconds every RotateEvery. The swap pops the button and shakes the coin; a press buys the
--- offer on the button.
+-- (Offers.Applies: a burnt dish in an oven, a guest about to walk out), otherwise taking turns with
+-- 2x Cash every SwapEvery seconds. A change slides the old face out sideways and the new one in, which
+-- lands with the tap's pop and shake; a press buys the face on the button.
 
 --[[ Services ]]--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -51,6 +51,13 @@ local function hop(clock: number, period: number, duration: number): number
 		return 0
 	end
 	return math.sin(t / duration * math.pi)
+end
+
+-- 0 to 1, overshooting a little past 1 before settling.
+local function backOut(t: number): number
+	local overshoot = 1.70158
+	local u = t - 1
+	return 1 + (overshoot + 1) * u * u * u + overshoot * u * u
 end
 
 --[[ Handling ]]--
@@ -109,6 +116,21 @@ function CashBoostHandler.OnStart(self: CashBoostHandler): ()
 	self.TapAt = -math.huge
 
 	self.Label = button:FindFirstChild("Shop")
+	local label = self.Label
+	self.LabelPosition = if label and label:IsA("GuiObject") then label.Position else nil
+	-- What a slide fades: the coin, and the label's shadow and face with their outlines.
+	self.Fading = { icon }
+	if label then
+		local inside = label:FindFirstChild("Inside")
+		local parts: { Instance } = if inside then { label, inside } else { label }
+		for _, part in parts do
+			table.insert(self.Fading, part)
+			local outline = part:FindFirstChildOfClass("UIStroke")
+			if outline then
+				table.insert(self.Fading, outline)
+			end
+		end
+	end
 
 	local hitbox = button:FindFirstChild("Btn")
 	local target = if hitbox and hitbox:IsA("GuiObject") then hitbox else button
@@ -118,14 +140,17 @@ function CashBoostHandler.OnStart(self: CashBoostHandler): ()
 		self.TapAt = os.clock()
 		Animate.Pop(button)
 		local product = Config.Product
-		if self.Offer then
-			local _, offerProduct = Offers.GetHud(self.Offer)
+		if self.Shown then
+			local _, offerProduct = Offers.GetHud(self.Shown)
 			product = offerProduct or product
 		end
 		StoreHandler:Buy(product)
 	end)
 	self.Offer = nil
+	self.Shown = nil
 	self.OfferCheckAt = 0
+	self.SlideAt = -math.huge
+	self.SlideDirection = 1
 
 	self.LastStep = os.clock()
 	DataClient:WaitForData()
@@ -142,38 +167,77 @@ function CashBoostHandler.SwapFace(self: CashBoostHandler, clock: number): ()
 	end
 	self.OfferCheckAt = clock + Offers.Hud.CheckInterval
 
-	local cloud = DataClient:GetData({}, "Cloud")
+	-- No tutorial gate: the face never prompts by itself, and the 2x offer it replaces is up from the
+	-- first minute too.
 	local session = DataClient:GetData({}, "Session")
 	local now = workspace:GetServerTimeNow()
 	local hud = Offers.Hud
 	local onSale: { string } = {}
 	local offer: string? = nil
-	if Offers.IsPastTutorial(cloud) then
-		for _, name in hud.Order do
-			local _, product = Offers.GetHud(name)
-			local entry = if product then Products:Get(product) else nil
-			if entry and entry.productId > 0 then
-				onSale[#onSale + 1] = name
-				if not offer and Offers.Applies(name, session, now) then
-					offer = name
-				end
+	for _, name in hud.Order do
+		local _, product = Offers.GetHud(name)
+		local entry = if product then Products:Get(product) else nil
+		if entry and entry.productId > 0 then
+			onSale[#onSale + 1] = name
+			if not offer and Offers.Applies(name, session, now) then
+				offer = name
 			end
 		end
 	end
-	-- Nothing urgent: the offers take turns, each for RotateShow seconds of every RotateEvery.
-	if not offer and #onSale > 0 and clock % hud.RotateEvery < hud.RotateShow then
-		offer = onSale[(clock // hud.RotateEvery) % #onSale + 1]
+	-- Nothing urgent: every other SwapEvery slot belongs to 2x Cash, the rest to the offers in turn.
+	local slot = clock // hud.SwapEvery
+	if not offer and #onSale > 0 and slot % 2 == 1 then
+		offer = onSale[(slot // 2) % #onSale + 1]
 	end
 	if offer == self.Offer then
 		return
 	end
 
+	-- The face itself changes halfway through the slide (SlideStep).
 	self.Offer = offer
-	local face = if offer then Offers.GetHud(offer) else nil
+	self.SlideAt = clock
+	self.SlideDirection = if offer then 1 else -1
+end
+
+--- Puts the target face on the button, landing with the same pop, coin shake and ray spin as a tap.
+function CashBoostHandler.ShowFace(self: CashBoostHandler, clock: number): ()
+	self.Shown = self.Offer
+	local face = if self.Shown then Offers.GetHud(self.Shown) else nil
 	self.Icon.Image = if face then face.Icon else Config.Button.Icon
-	-- The same pop, coin shake and ray spin as a tap, so the swap catches the eye.
 	self.TapAt = clock
 	Animate.Pop(self.Button)
+end
+
+--- The slide's sideways offset (a share of the button's width) and fade (0 opaque, 1 gone) at
+--- `clock`: out along -SlideDirection, then in from +SlideDirection with an overshoot.
+function CashBoostHandler.SlideStep(self: CashBoostHandler, clock: number): (number, number)
+	local spec = Config.Button
+	local t = clock - self.SlideAt
+	if t >= spec.SlideOut and self.Shown ~= self.Offer then
+		self:ShowFace(clock)
+	end
+	if t >= spec.SlideOut + spec.SlideIn then
+		return 0, 0
+	end
+	local direction = self.SlideDirection
+	if t < spec.SlideOut then
+		local p = t / spec.SlideOut
+		return -direction * p * p * spec.SlideDistance, p
+	end
+	local p = (t - spec.SlideOut) / spec.SlideIn
+	return direction * (1 - backOut(p)) * spec.SlideDistance, math.max(0, 1 - p * 2)
+end
+
+function CashBoostHandler.SetFade(self: CashBoostHandler, fade: number): ()
+	for _, part in self.Fading do
+		if part:IsA("ImageLabel") then
+			part.ImageTransparency = fade
+		elseif part:IsA("TextLabel") then
+			part.TextTransparency = fade
+		elseif part:IsA("UIStroke") then
+			part.Transparency = fade
+		end
+	end
 end
 
 --- Animates the offer while idle and counts down while the boost runs.
@@ -192,7 +256,13 @@ function CashBoostHandler.Step(self: CashBoostHandler): ()
 	local endsAt = DataClient:GetData({ "CashBoostEndsAt" }, "Session")
 	local left = if typeof(endsAt) == "number" then endsAt - workspace:GetServerTimeNow() else 0
 	self:SwapFace(clock)
-	local offer = self.Offer
+	local slide, fade = self:SlideStep(clock)
+	local offset = UDim2.fromScale(slide, 0)
+	self:SetFade(fade)
+	if self.LabelPosition and self.Label and self.Label:IsA("GuiObject") then
+		self.Label.Position = self.LabelPosition + offset
+	end
+	local offer = self.Shown
 	-- An offer's face is idle art like the 2x offer's: rays, rocking and hopping.
 	local active = left > 0 and offer == nil
 
@@ -205,14 +275,14 @@ function CashBoostHandler.Step(self: CashBoostHandler): ()
 	rays.Visible = not active
 	if active then
 		self.Icon.Rotation = shake
-		self.Icon.Position = self.IconPosition
+		self.Icon.Position = self.IconPosition + offset
 		self.IconScale.Scale = 1
 	else
 		self.RaysTurn = (self.RaysTurn + delta * spec.RaysSpeed * (1 + spec.TapRaysBoost * tap)) % 360
 		rays.Rotation = self.RaysTurn
 		local lift = hop(clock, spec.HopPeriod, spec.HopSeconds)
 		self.Icon.Rotation = math.sin(clock * 2 * math.pi / spec.TiltPeriod) * spec.TiltDegrees + shake
-		self.Icon.Position = self.IconPosition - UDim2.fromScale(0, lift * spec.HopHeight)
+		self.Icon.Position = self.IconPosition + offset - UDim2.fromScale(0, lift * spec.HopHeight)
 		self.IconScale.Scale = 1 + lift * spec.HopScale
 	end
 
@@ -244,9 +314,16 @@ export type CashBoostHandler = typeof(CashBoostHandler) & {
 	Label: Instance?,
 	Text: string?,
 	FaceColor: Color3?,
-	-- The contextual offer wearing the button (Configs/Offers), and when to check again.
+	LabelPosition: UDim2?,
+	Fading: { Instance },
+	-- The contextual offer due on the button (Configs/Offers), the one drawn on it (they differ
+	-- during the first half of a slide), and when to check again.
 	Offer: string?,
+	Shown: string?,
 	OfferCheckAt: number,
+	-- When the last face change started sliding, and which way (1 offer in, -1 back to 2x Cash).
+	SlideAt: number,
+	SlideDirection: number,
 }
 
 return CashBoostHandler :: CashBoostHandler

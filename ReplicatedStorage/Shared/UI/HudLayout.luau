@@ -297,12 +297,14 @@ function HudLayout.Apply(hud: GuiObject): ()
 		-- Desktops draw Roblox's player list in the top-right corner, so there the button stands just
 		-- left of the list's reserved width instead of under it.
 		local playerList = not compact and StarterGui:GetCoreGuiEnabled(Enum.CoreGuiType.PlayerList)
-		boost.AnchorPoint = Vector2.new(1, 0)
+		-- Anchored at its centre, because UIScale grows an element around its anchor point: the pop,
+		-- the press and the face swap then grow and shrink the button in place.
+		boost.AnchorPoint = Vector2.new(0.5, 0.5)
 		boost.Position = UDim2.new(
 			1,
-			-boostRight * scale - (if playerList then PLAYER_LIST_RESERVE else 0),
+			-(boostRight + BOOST_SIZE.X / 2) * scale - (if playerList then PLAYER_LIST_RESERVE else 0),
 			0,
-			boostTop * scale
+			(boostTop + BOOST_SIZE.Y / 2) * scale
 		)
 		boost.Size = UDim2.fromOffset(BOOST_SIZE.X * scale, BOOST_SIZE.Y * scale)
 	end
